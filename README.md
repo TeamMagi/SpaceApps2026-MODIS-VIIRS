@@ -35,8 +35,16 @@ The key demo feature: users can switch between raw multi-sensor data (showing th
 crates/
   core/           Harmonization engine — models, dedup, VZA correction, fusion, calendar
   firms-client/   NASA FIRMS API client with CSV parsing
-  server/         Axum web API serving harmonized data
-web/              React frontend (TypeScript compiled with SWC — a Rust-based compiler)
+  server/         Axum web API serving harmonized data + static files
+web/
+  src/
+    components/   React UI components (Layout, Toggle, Stats)
+    hooks/        Custom React hooks (useApi)
+    services/     API client layer
+    types/        TypeScript type definitions
+    mocks/        Sample data for development
+docs/             Project documentation (architecture, etc.)
+tools/            Utility scripts (env check, data fetching)
 ```
 
 ## Tech Stack
@@ -51,26 +59,43 @@ web/              React frontend (TypeScript compiled with SWC — a Rust-based 
 
 ## Quick Start
 
-### Prerequisites
-
-- [Rust](https://rustup.rs/) (1.85+)
-- [Node.js](https://nodejs.org/) (20+)
-- NASA FIRMS API key ([get one free](https://firms.modaps.eosdis.nasa.gov/api/area/))
-
-### Run
+### Docker ile (30 saniyede kurulum)
 
 ```bash
-# Backend
-export FIRMS_API_KEY=your_key_here
-cargo run -p pyrosync-server
+cp .env.example .env
+# .env dosyasına FIRMS_API_KEY değerini girin
 
-# Frontend (separate terminal)
-cd web
-npm install
-npm run dev
+docker compose up -d
+```
+
+Open http://localhost:3001 — ready.
+
+### Development (manual)
+
+**Prerequisites:** [Rust](https://rustup.rs/) 1.85+, [Node.js](https://nodejs.org/) 20+, [NASA FIRMS API key](https://firms.modaps.eosdis.nasa.gov/api/area/)
+
+```bash
+cp .env.example .env
+# .env dosyasına FIRMS_API_KEY değerini girin
+
+# Backend
+make dev-backend
+
+# Frontend (ayrı terminal)
+make dev-frontend
 ```
 
 Open http://localhost:5173 — the frontend proxies API calls to the Rust backend on port 3001.
+
+### Useful Commands
+
+```bash
+make help          # Show all available commands
+make build         # Build backend + frontend
+make test          # Run all tests
+make docker-up     # Start with Docker
+make docker-down   # Stop containers
+```
 
 ## Team
 

@@ -1,0 +1,19 @@
+services:
+  pyrosync:
+    build: .
+    container_name: pyrosync
+    ports:
+      - "${PORT:-3001}:3001"
+    environment:
+      - FIRMS_API_KEY=${FIRMS_API_KEY}
+      - RUST_LOG=${RUST_LOG:-pyrosync=info}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+    internal: true

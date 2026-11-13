@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
 
 use pyrosync_core::models::BBox;
@@ -33,15 +34,19 @@ async fn main() -> anyhow::Result<()> {
         .with_env_filter(EnvFilter::from_default_env().add_directive("pyrosync=info".parse()?))
         .init();
 
+    let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "web/dist".to_string());
+
     let app = Router::new()
         .route("/api/health", get(health))
         .route("/api/harmonize", get(harmonize))
+        .fallback_service(ServeDir::new(&static_dir))
         .layer(CorsLayer::permissive());
 
-    let addr = "0.0.0.0:3001";
-    tracing::info!("PyroSync server listening on {addr}");
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3001".to_string());
+    let addr = format!("0.0.0.0:{port}");
+    tracing::info!("PyroSync server listening on {addr}, static files from {static_dir}");
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
 
     Ok(())

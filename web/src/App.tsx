@@ -1,48 +1,50 @@
 import { useState } from "react";
-
-type ViewMode = "raw" | "harmonized";
+import type { ViewMode } from "./types";
+import AppShell from "./components/Layout/AppShell";
+import ViewToggle from "./components/Toggle/ViewToggle";
+import StatsBar from "./components/Stats/StatsBar";
+import { SAMPLE_RESPONSE } from "./mocks/sample-data";
 
 export default function App() {
   const [mode, setMode] = useState<ViewMode>("harmonized");
 
-  return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
-      <header>
-        <h1>PyroSync</h1>
-        <p>MODIS / VIIRS Fire Hotspot Harmonization</p>
-      </header>
+  const data = SAMPLE_RESPONSE;
+  const duplicates = data.raw.total_raw - data.harmonized.count;
 
-      <div style={{ margin: "1rem 0" }}>
-        <button
-          onClick={() => setMode("raw")}
-          style={{ fontWeight: mode === "raw" ? "bold" : "normal", marginRight: "0.5rem" }}
-        >
-          Raw Data
-        </button>
-        <button
-          onClick={() => setMode("harmonized")}
-          style={{ fontWeight: mode === "harmonized" ? "bold" : "normal" }}
-        >
-          Harmonized
-        </button>
+  return (
+    <AppShell>
+      <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
+        <ViewToggle mode={mode} onChange={setMode} />
       </div>
 
-      <main>
+      <StatsBar
+        rawCount={data.raw.total_raw}
+        harmonizedCount={data.harmonized.count}
+        duplicatesRemoved={duplicates > 0 ? duplicates : 0}
+      />
+
+      <section style={{ marginTop: "2rem" }}>
         {mode === "raw" ? (
-          <section>
+          <>
             <h2>Raw Sensor Data</h2>
             <p>Showing unprocessed MODIS and VIIRS detections with sensor-specific biases.</p>
-          </section>
+            <p style={{ color: "var(--color-muted, #6b7280)", fontSize: "0.875rem" }}>
+              MODIS: {data.raw.modis_count.toLocaleString()} &middot; VIIRS: {data.raw.viirs_count.toLocaleString()}
+            </p>
+          </>
         ) : (
-          <section>
+          <>
             <h2>Harmonized View</h2>
             <p>
               Unified burning activity calendar — interscan duplicates removed,
               VZA-corrected, cross-sensor matched, and quality-fused.
             </p>
-          </section>
+            <p style={{ color: "var(--color-muted, #6b7280)", fontSize: "0.875rem" }}>
+              {data.harmonized.count.toLocaleString()} unique fire detections &middot; {data.calendar.length} months of data
+            </p>
+          </>
         )}
-      </main>
-    </div>
+      </section>
+    </AppShell>
   );
 }

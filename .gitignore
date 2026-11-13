@@ -25,6 +25,9 @@ dist/
 Thumbs.db
 desktop.ini
 
+# Data
+data/
+
 # IDE
 .idea/
 .vscode/
