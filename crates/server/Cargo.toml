@@ -1,0 +1,18 @@
+[package]
+name = "pyrosync-server"
+description = "Web API server for PyroSync"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+pyrosync-core = { path = "../core" }
+pyrosync-firms = { path = "../firms-client" }
+axum = "0.8"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
