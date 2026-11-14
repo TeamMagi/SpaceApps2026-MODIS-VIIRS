@@ -16,6 +16,15 @@ pub struct Availability {
 
 impl Availability {
     pub async fn fetch(http: &reqwest::Client, api_root: &str, api_key: &str) -> Result<Self> {
+        Self::from_csv(&Self::fetch_text(http, api_root, api_key).await?)
+    }
+
+    /// Raw response body, so callers can persist exactly what FIRMS sent.
+    pub(crate) async fn fetch_text(
+        http: &reqwest::Client,
+        api_root: &str,
+        api_key: &str,
+    ) -> Result<String> {
         let url = format!("{api_root}{AVAILABILITY_PATH}/{api_key}/ALL");
         let response = http
             .get(&url)
@@ -35,7 +44,7 @@ impl Availability {
             );
         }
 
-        Self::from_csv(&body)
+        Ok(body)
     }
 
     pub fn from_csv(csv_text: &str) -> Result<Self> {

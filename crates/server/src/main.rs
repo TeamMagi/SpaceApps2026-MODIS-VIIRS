@@ -28,11 +28,12 @@ use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
 use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_years, filter_bbox};
-use pyrosync_firms::{DayRange, FirmsClient, FirmsSource};
+use pyrosync_firms::{AreaCache, DayRange, FirmsClient, FirmsSource};
 
 const DEFAULT_CACHE_BUDGET_MB: usize = 128;
 const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 300;
 const DEFAULT_ARCHIVE_CACHE_DIR: &str = ".cache/firms-archive";
+const DEFAULT_AREA_CACHE_DIR: &str = ".cache/firms-area";
 const ARCHIVE_FETCH_CONCURRENCY: usize = 4;
 // NRT (`days`) responses update continuously as new satellite passes arrive, so keep their TTL short.
 const CACHE_TTL_NRT_SECS: u64 = 600;
@@ -546,6 +547,31 @@ fn parse_request_timeout(raw: Option<&str>) -> Option<Duration> {
     }
 }
 
+fn parse_area_cache_dir(raw: Option<&str>) -> Option<PathBuf> {
+    match raw.map(str::trim) {
+        None => Some(PathBuf::from(DEFAULT_AREA_CACHE_DIR)),
+        Some("") => None,
+        Some(dir) => Some(PathBuf::from(dir)),
+    }
+}
+
+fn parse_area_cache_nrt_ttl(raw: Option<&str>) -> Duration {
+    let default = Duration::from_secs(CACHE_TTL_NRT_SECS);
+    let Some(raw) = raw else {
+        return default;
+    };
+    let trimmed = raw.trim();
+    match trimmed.parse::<u64>() {
+        Ok(secs) => Duration::from_secs(secs),
+        Err(_) => {
+            tracing::warn!(
+                "Invalid AREA_CACHE_NRT_TTL_SECS value '{trimmed}'; falling back to {CACHE_TTL_NRT_SECS}s"
+            );
+            default
+        }
+    }
+}
+
 fn parse_cors_origin(raw: &str) -> Option<HeaderValue> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
@@ -652,7 +678,23 @@ async fn main() -> anyhow::Result<()> {
     // Keep the server bootable without an API key so health checks and static assets stay live.
     let firms = match std::env::var("FIRMS_API_KEY") {
         Ok(key) if !key.trim().is_empty() => match FirmsClient::new(key) {
-            Ok(client) => Some(Arc::new(client)),
+            Ok(mut client) => {
+                match parse_area_cache_dir(std::env::var("AREA_CACHE_DIR").ok().as_deref()) {
+                    Some(dir) => {
+                        let ttl = parse_area_cache_nrt_ttl(
+                            std::env::var("AREA_CACHE_NRT_TTL_SECS").ok().as_deref(),
+                        );
+                        tracing::info!(
+                            "FIRMS area cache at {} (NRT TTL {}s)",
+                            dir.display(),
+                            ttl.as_secs()
+                        );
+                        client = client.with_area_cache(AreaCache::new(dir, ttl));
+                    }
+                    None => tracing::info!("FIRMS area cache disabled"),
+                }
+                Some(Arc::new(client))
+            }
             Err(err) => {
                 tracing::error!("Failed to initialize FIRMS client: {err}");
                 None
@@ -2689,6 +2731,20 @@ mod tests {
         assert!(non_api.starts_with("HTTP/1.1 404 Not Found\r\n"));
 
         server.abort();
+    }
+
+    #[test]
+    fn area_cache_env_parsers_apply_defaults_and_fallbacks() {
+        assert_eq!(
+            parse_area_cache_dir(None),
+            Some(PathBuf::from(".cache/firms-area"))
+        );
+        assert_eq!(parse_area_cache_dir(Some("  ")), None);
+        assert_eq!(parse_area_cache_dir(Some("/data/a")), Some(PathBuf::from("/data/a")));
+        assert_eq!(parse_area_cache_nrt_ttl(None), Duration::from_secs(600));
+        assert_eq!(parse_area_cache_nrt_ttl(Some("0")), Duration::ZERO);
+        assert_eq!(parse_area_cache_nrt_ttl(Some("30")), Duration::from_secs(30));
+        assert_eq!(parse_area_cache_nrt_ttl(Some("abc")), Duration::from_secs(600));
     }
 
     #[test]

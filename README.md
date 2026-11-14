@@ -157,6 +157,8 @@ Open `http://localhost:5173` — the frontend proxies API calls to the Rust back
 | `DOCKER_USER` | `999:999` | Container `uid:gid` for Docker; set to `$(id -u):$(id -g)` on Linux for bind-mount write access |
 | `CACHE_BUDGET_MB` | `128` | Response cache memory budget; `0` disables caching |
 | `REQUEST_TIMEOUT_SECS` | `300` | Request timeout; `0` disables it |
+| `AREA_CACHE_DIR` | `.cache/firms-area` | On-disk cache of FIRMS Area API windows (cache hits cost no transactions); empty disables it |
+| `AREA_CACHE_NRT_TTL_SECS` | `600` | How long a cached near-real-time window stays valid; science-quality (SP) windows never expire; `0` never serves NRT from cache |
 | `CORS_ALLOWED_ORIGINS` | — | Comma-separated allowed origins; unset means permissive CORS |
 
 ### Useful Commands

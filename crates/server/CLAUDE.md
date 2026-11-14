@@ -29,6 +29,8 @@
 | `RUST_LOG` | `pyrosync=info` | Log seviyesi |
 | `CACHE_BUDGET_MB` | `128` | Response cache bellek bütçesi (MB). `0` cache'i devre dışı bırakır |
 | `REQUEST_TIMEOUT_SECS` | `300` | İstek zaman aşımı (saniye). `0` zaman aşımını devre dışı bırakır |
+| `AREA_CACHE_DIR` | `.cache/firms-area` | FIRMS Area API pencere önbelleği dizini (cache hit transaction harcamaz). Boş değer devre dışı bırakır |
+| `AREA_CACHE_NRT_TTL_SECS` | `600` | Önbellekteki NRT penceresinin geçerlilik süresi (sn). SP pencereleri süresizdir; `0` NRT'yi önbellekten hiç sunmaz |
 | `CORS_ALLOWED_ORIGINS` | — | Virgülle ayrılmış izinli origin listesi. Tanımsızsa CORS permissive olur |
 | `PYROSYNC_CONFIG` | — | Pipeline eşikleri için TOML dosya yolu. Verilirse dosya zorunludur; verilmezse çalışma dizinindeki `pyrosync.toml` varsa kullanılır. Geçersiz konfigürasyon başlangıçta hata ile durdurur |
 | `PYROSYNC_DEDUP_MAX_TIME_DIFF_SECS` | `8` | Interscan duplikat zaman farkı (sn); TOML'u ezer |

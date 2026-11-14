@@ -9,6 +9,7 @@ use reqwest::header::{HeaderMap, RETRY_AFTER};
 use tokio::sync::OnceCell;
 use tokio::task::JoinSet;
 
+use crate::area_cache::AreaCache;
 use crate::availability::Availability;
 use crate::day_range::{DayRange, date_windows, recent_window};
 use crate::limiter::RateLimiter;
@@ -31,6 +32,7 @@ pub struct FirmsClient {
     limiter: Arc<RateLimiter>,
     availability: OnceCell<Availability>,
     concurrency: usize,
+    area_cache: Option<Arc<AreaCache>>,
 }
 
 impl std::fmt::Debug for FirmsClient {
@@ -59,6 +61,7 @@ struct RequestCtx {
     api_key: String,
     api_root: String,
     limiter: Arc<RateLimiter>,
+    area_cache: Option<Arc<AreaCache>>,
 }
 
 #[derive(Clone, Copy)]
@@ -93,6 +96,7 @@ impl FirmsClient {
             limiter: Arc::new(RateLimiter::firms_default(concurrency)),
             availability: OnceCell::new(),
             concurrency: concurrency.max(1),
+            area_cache: None,
         })
     }
 
@@ -102,15 +106,42 @@ impl FirmsClient {
         self
     }
 
+    /// Windows already bought are served from disk and cost no transactions.
+    pub fn with_area_cache(mut self, cache: AreaCache) -> Self {
+        self.area_cache = Some(Arc::new(cache));
+        self
+    }
+
     /// Lazily fetched once and cached; every date-routing decision needs it.
     pub async fn availability(&self) -> anyhow::Result<&Availability> {
         self.availability
             .get_or_try_init(|| async {
-                Availability::fetch(&self.http, &self.api_root, &self.api_key)
-                    .await
-                    .map_err(|err| {
-                        anyhow::anyhow!("{}", redact_key(&format!("{err:#}"), &self.api_key))
-                    })
+                let fetched = match Availability::fetch_text(&self.http, &self.api_root, &self.api_key).await {
+                    Ok(text) => Availability::from_csv(&text).map(|avail| (avail, text)),
+                    Err(err) => Err(err),
+                };
+                match fetched {
+                    Ok((avail, text)) => {
+                        if let Some(cache) = &self.area_cache {
+                            cache.store_availability(&text).await;
+                        }
+                        Ok(avail)
+                    }
+                    Err(err) => {
+                        if let Some(cache) = &self.area_cache
+                            && let Some(avail) = cache.load_availability().await
+                        {
+                            tracing::warn!(
+                                "FIRMS availability fetch failed; using the cached availability table"
+                            );
+                            return Ok(avail);
+                        }
+                        Err(anyhow::anyhow!(
+                            "{}",
+                            redact_key(&format!("{err:#}"), &self.api_key)
+                        ))
+                    }
+                }
             })
             .await
     }
@@ -297,6 +328,7 @@ impl FirmsClient {
             api_key: self.api_key.clone(),
             api_root: self.api_root.clone(),
             limiter: Arc::clone(&self.limiter),
+            area_cache: self.area_cache.clone(),
         }
     }
 
@@ -398,6 +430,12 @@ impl RequestCtx {
         let cost = u32::from(days.get());
         let mut spent = 0u32;
 
+        if let Some(cache) = &self.area_cache
+            && let Some(body) = cache.load(source, bbox_str, start, days).await
+        {
+            return (Ok(body), 0);
+        }
+
         for attempt in 0..=MAX_RETRIES {
             let guard = self.limiter.acquire(cost).await;
             spent += cost;
@@ -456,6 +494,11 @@ impl RequestCtx {
             };
 
             let validated = validate_firms_csv(status, body, &safe_url, &self.api_key);
+            if let Ok(csv) = &validated
+                && let Some(cache) = &self.area_cache
+            {
+                cache.store(source, bbox_str, start, days, csv).await;
+            }
             return (validated, spent);
         }
 
@@ -724,6 +767,54 @@ mod tests {
         let msg = err.to_string();
         assert!(!msg.contains(secret), "key leaked in error message: {msg}");
         assert!(msg.contains("***"));
+    }
+
+    #[tokio::test]
+    async fn cached_window_returns_hotspots_without_spending_transactions() {
+        use pyrosync_core::models::Sensor;
+
+        use crate::source::Processing;
+
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!(
+            "pyrosync-client-cache-test-{}-{nanos}",
+            std::process::id()
+        ));
+        let cache = AreaCache::new(dir.clone(), Duration::from_secs(600));
+        let source = FirmsSource::new(Sensor::ModisTerra, Processing::Sp);
+        let bbox = "-10,10,10,20";
+        let days = DayRange::clamped(2);
+        let csv = concat!(
+            "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n",
+            "38.9486,28.1108,308.5,1,1,2011-01-09,1113,Aqua,MODIS,67,6.2,283.8,10.3,D,0\n",
+        );
+        cache.store(source, bbox, d(2011, 1, 9), days, csv).await;
+        cache.store(source, bbox, d(2011, 1, 11), days, "").await;
+
+        let ctx = RequestCtx {
+            http: reqwest::Client::new(),
+            api_key: "secret".to_string(),
+            api_root: FIRMS_API_ROOT.to_string(),
+            limiter: Arc::new(RateLimiter::firms_default(1)),
+            area_cache: Some(Arc::new(cache)),
+        };
+
+        let (res, spent) = ctx
+            .fetch_window_counted(source, bbox, d(2011, 1, 9), days)
+            .await;
+        assert_eq!(res.unwrap().len(), 1);
+        assert_eq!(spent, 0);
+
+        let (res, spent) = ctx
+            .fetch_window_counted(source, bbox, d(2011, 1, 11), days)
+            .await;
+        assert!(res.unwrap().is_empty());
+        assert_eq!(spent, 0);
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
