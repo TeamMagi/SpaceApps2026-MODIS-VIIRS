@@ -442,6 +442,7 @@ const EMPTY_STAGES: PointStages = {
   rawModis: 0,
   rawViirs: 0,
   interscanRemoved: 0,
+  fleetMerged: 0,
   matchedPairs: 0,
   harmonized: 0,
 };
@@ -451,6 +452,7 @@ const EMPTY_TOTALS: RegionTotals = {
   raw: 0,
   harmonized: 0,
   interscanRemoved: 0,
+  fleetMerged: 0,
   matched: 0,
   doubleCounts: 0,
   doubleCountShare: 0,
@@ -822,6 +824,7 @@ export function useRegionData(): UseRegionDataResult {
     let raw = 0;
     let harmonized = 0;
     let interscanRemoved = 0;
+    let fleetMerged = 0;
     let matched = 0;
 
     for (const y of years) {
@@ -830,6 +833,7 @@ export function useRegionData(): UseRegionDataResult {
       raw += y.raw;
       harmonized += y.harmonized;
       interscanRemoved += y.interscanRemoved;
+      fleetMerged += y.fleetMerged;
       matched += y.matched;
     }
 
@@ -842,6 +846,7 @@ export function useRegionData(): UseRegionDataResult {
       raw,
       harmonized,
       interscanRemoved,
+      fleetMerged,
       matched,
       doubleCounts,
       doubleCountShare,
@@ -873,6 +878,7 @@ export function useRegionData(): UseRegionDataResult {
     const stages: PipelineStage[] = [
       { key: "collect" },
       { key: "dedup", removed: interscanRemoved },
+      { key: "fleet", removed: fleetMerged },
       { key: "angle", frpDeltaPct: frpAngleCorrectionPct ?? undefined },
       { key: "grid" },
       { key: "match", removed: matched },

@@ -651,6 +651,7 @@ struct YearEntry {
     modis_only: usize,
     viirs_only: usize,
     interscan_removed: usize,
+    fleet_merged: usize,
     first_date: Option<NaiveDate>,
     last_date: Option<NaiveDate>,
     /// A sensor contributing to this year did not observe all of it (see [`DateSpan::covers_year`]).
@@ -765,6 +766,7 @@ fn year_stats(year: i32, data: YearData, observed: &[DateSpan]) -> YearStats {
         modis_only: count_source(HotspotSource::ModisOnly),
         viirs_only: count_source(HotspotSource::ViirsOnly),
         interscan_removed: linked.interscan_removed,
+        fleet_merged: linked.fleet_merged,
         first_date: [modis_span, viirs_span].iter().flatten().map(|s| s.0).min(),
         last_date: [modis_span, viirs_span].iter().flatten().map(|s| s.1).max(),
         partial: observed.iter().any(|s| !s.covers_year(year)),
@@ -984,6 +986,7 @@ struct Stages {
     raw_modis: usize,
     raw_viirs: usize,
     interscan_removed: usize,
+    fleet_merged: usize,
     matched_pairs: usize,
     harmonized: usize,
 }
@@ -1160,6 +1163,7 @@ async fn points(
             raw_modis,
             raw_viirs,
             interscan_removed: linked.interscan_removed,
+            fleet_merged: linked.fleet_merged,
             matched_pairs: linked.matched_pairs,
             harmonized: linked.hotspots.len(),
         };

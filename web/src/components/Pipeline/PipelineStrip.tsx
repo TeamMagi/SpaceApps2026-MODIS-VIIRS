@@ -50,10 +50,13 @@ export default function PipelineStrip() {
   const dedupRemoved = usePeriodStages
     ? points.stages.interscanRemoved
     : (stages.find((stage) => stage.key === "dedup")?.removed ?? 0);
+  const fleetRemoved = usePeriodStages
+    ? points.stages.fleetMerged
+    : (stages.find((stage) => stage.key === "fleet")?.removed ?? 0);
   const matchRemoved = usePeriodStages
     ? points.stages.matchedPairs
     : (stages.find((stage) => stage.key === "match")?.removed ?? 0);
-  const totalRemoved = usePeriodStages ? dedupRemoved + matchRemoved : totals.doubleCounts;
+  const totalRemoved = usePeriodStages ? dedupRemoved + fleetRemoved + matchRemoved : totals.doubleCounts;
 
   const canShowTotals =
     revealAnswer &&
@@ -64,7 +67,7 @@ export default function PipelineStrip() {
     canShowTotals ? t("pipelineProgressTotal", { removed: fmt.signed(-totalRemoved) }) : null;
   const split =
     canShowTotals
-      ? t("pipelineSplit", { dedup: fmt.signed(-dedupRemoved), match: fmt.signed(-matchRemoved) })
+      ? t("pipelineSplit", { dedup: fmt.signed(-dedupRemoved), fleet: fmt.signed(-fleetRemoved), match: fmt.signed(-matchRemoved) })
       : null;
 
   const pulseSeconds = reduceMotion ? 0 : Math.min(0.28, (durations.merge || 200) / 1000);

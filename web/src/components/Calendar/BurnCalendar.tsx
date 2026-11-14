@@ -247,6 +247,7 @@ function BurnCalendar() {
         modisOnly: 0,
         viirsOnly: 0,
         interscanRemoved: 0,
+        fleetMerged: 0,
         firstDate: null,
         lastDate: null,
         partial: false,

@@ -129,6 +129,7 @@ export interface PointStages {
   rawModis: number;
   rawViirs: number;
   interscanRemoved: number;
+  fleetMerged: number;
   matchedPairs: number;
   harmonized: number;
 }
@@ -174,6 +175,7 @@ export interface YearlyPoint {
   modisOnly: number;
   viirsOnly: number;
   interscanRemoved: number;
+  fleetMerged: number;
   firstDate: string | null;
   lastDate: string | null;
   /** True when a sensor's data for that year starts after Jan 15 or ends before Dec 15. */
@@ -186,7 +188,7 @@ export interface YearlyPoint {
 
 export type YearlySeries = readonly YearlyPoint[];
 
-export type PipelineStageKey = "collect" | "dedup" | "angle" | "grid" | "match" | "fuse" | "calendar";
+export type PipelineStageKey = "collect" | "dedup" | "fleet" | "angle" | "grid" | "match" | "fuse" | "calendar";
 
 export interface PipelineStage {
   key: PipelineStageKey;
@@ -202,6 +204,7 @@ export interface RegionTotals {
   raw: number;
   harmonized: number;
   interscanRemoved: number;
+  fleetMerged: number;
   matched: number;
   doubleCounts: number;
   /** doubleCounts / raw, as a ratio. */

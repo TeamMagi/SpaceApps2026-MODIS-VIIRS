@@ -103,6 +103,10 @@ export default function Receipt({ id }: ReceiptProps) {
                   <dd>{fmt.signed(-points.stages.interscanRemoved)}</dd>
                 </div>
                 <div className={styles.row}>
+                  <dt>{t(PIPELINE_COPY.fleet.name)}</dt>
+                  <dd>{fmt.signed(-points.stages.fleetMerged)}</dd>
+                </div>
+                <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.match.name)}</dt>
                   <dd>{fmt.signed(-points.stages.matchedPairs)}</dd>
                 </div>
