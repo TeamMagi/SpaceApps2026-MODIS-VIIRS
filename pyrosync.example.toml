@@ -29,3 +29,30 @@ window_secs = 10800
 a = 0.85
 b = 0.12
 c = 1.0
+
+[calibration]
+# Latitude-band MODIS->VIIRS FRP scaling applied only to ModisOnly records (Matched and
+# ViirsOnly already use VIIRS FRP). Ratios are VIIRS/MODIS from Li et al. (2018),
+# "Comparison of Fire Radiative Power Estimates From VIIRS and MODIS Observations"
+# (JGR: Atmospheres, doi:10.1029/2017JD027823), mirrored by |lat| across hemispheres.
+# Transition gaps between bands (50-55 deg) are linearly interpolated; |lat| > 70 clamps to
+# the last band. ratio_sigma values are derived spread estimates, not fitted sigmas.
+enabled = true
+
+[[calibration.bands]]
+min_abs_lat = 0.0
+max_abs_lat = 30.0
+ratio = 1.16
+ratio_sigma = 0.13
+
+[[calibration.bands]]
+min_abs_lat = 30.0
+max_abs_lat = 50.0
+ratio = 0.97
+ratio_sigma = 0.03
+
+[[calibration.bands]]
+min_abs_lat = 55.0
+max_abs_lat = 70.0
+ratio = 0.82
+ratio_sigma = 0.18

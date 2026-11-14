@@ -107,6 +107,7 @@ mod tests {
             } else {
                 None
             },
+            calibration_ratio: None,
             n_obs: 1,
             platforms: vec![Sensor::ModisTerra],
             confidence: Confidence::Nominal,

@@ -1,4 +1,5 @@
-use crate::config::{MatchingConfig, PipelineConfig, VzaConfig};
+use crate::calibration;
+use crate::config::{CalibrationConfig, MatchingConfig, PipelineConfig, VzaConfig};
 use crate::dedup::{haversine_km, remove_interscan_duplicates_indexed_with};
 use crate::fleet::{self, FleetObservation};
 use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
@@ -148,7 +149,7 @@ pub fn harmonize_with_links_config(
             matched_pairs += 1;
             result.push(fuse_matched(m, &viirs_fleet[j]));
         } else {
-            result.push(from_modis_only_with(m, &config.vza));
+            result.push(from_modis_only_with(m, &config.vza, &config.calibration));
         }
     }
 
@@ -216,6 +217,7 @@ fn fuse_matched(m: &FleetObservation, v: &FleetObservation) -> HarmonizedHotspot
         frp: vh.frp,
         frp_corrected: v.frp_corrected_mean,
         vza_factor: None,
+        calibration_ratio: None,
         n_obs: m.n_obs.saturating_add(v.n_obs),
         platforms,
         confidence: higher_confidence(mh.confidence, vh.confidence),
@@ -225,16 +227,29 @@ fn fuse_matched(m: &FleetObservation, v: &FleetObservation) -> HarmonizedHotspot
     }
 }
 
-fn from_modis_only_with(m: &FleetObservation, vza_config: &VzaConfig) -> HarmonizedHotspot {
+fn from_modis_only_with(
+    m: &FleetObservation,
+    vza_config: &VzaConfig,
+    calibration_config: &CalibrationConfig,
+) -> HarmonizedHotspot {
     let mh = &m.hotspot;
     let factor = vza::vza_factor_with(mh, vza_config);
+    // Harmonized FRP lives on the VIIRS scale, so only MODIS-only observations are shifted
+    // using the latitude-band ratio (Matched and ViirsOnly already use VIIRS FRP).
+    let (frp_corrected, calibration_ratio) = if calibration_config.enabled {
+        let cal = calibration::calibration_for(mh.lat, calibration_config);
+        (m.frp_corrected_mean * cal.ratio, Some(cal.ratio))
+    } else {
+        (m.frp_corrected_mean, None)
+    };
 
     HarmonizedHotspot {
         lat: mh.lat,
         lon: mh.lon,
         frp: mh.frp,
-        frp_corrected: m.frp_corrected_mean,
+        frp_corrected,
         vza_factor: factor,
+        calibration_ratio,
         n_obs: m.n_obs,
         platforms: m.platforms.clone(),
         confidence: mh.confidence,
@@ -246,7 +261,7 @@ fn from_modis_only_with(m: &FleetObservation, vza_config: &VzaConfig) -> Harmoni
 
 #[cfg(test)]
 fn from_modis_only(m: &FleetObservation) -> HarmonizedHotspot {
-    from_modis_only_with(m, &VzaConfig::default())
+    from_modis_only_with(m, &VzaConfig::default(), &CalibrationConfig::default())
 }
 
 fn from_viirs_only(v: &FleetObservation) -> HarmonizedHotspot {
@@ -257,6 +272,7 @@ fn from_viirs_only(v: &FleetObservation) -> HarmonizedHotspot {
         frp: vh.frp,
         frp_corrected: v.frp_corrected_mean,
         vza_factor: None,
+        calibration_ratio: None,
         n_obs: v.n_obs,
         platforms: v.platforms.clone(),
         confidence: vh.confidence,
@@ -392,6 +408,10 @@ mod tests {
             assert_eq!(
                 a.vza_factor, e.vza_factor,
                 "vza_factor mismatch at index {i}"
+            );
+            assert_eq!(
+                a.calibration_ratio, e.calibration_ratio,
+                "calibration_ratio mismatch at index {i}"
             );
             assert_eq!(a.n_obs, e.n_obs, "n_obs mismatch at index {i}");
             assert_eq!(a.platforms, e.platforms, "platforms mismatch at index {i}");
@@ -746,8 +766,9 @@ mod tests {
         assert_eq!(out[0].frp, 100.0);
         let factor = out[0].vza_factor.expect("expected Some(vza_factor)");
         assert!(factor > 1.0);
+        assert_eq!(out[0].calibration_ratio, Some(0.97));
         assert!(out[0].frp_corrected < out[0].frp);
-        assert!((out[0].frp_corrected - (100.0 / factor)).abs() < 1e-12);
+        assert!((out[0].frp_corrected - ((100.0 / factor) * 0.97)).abs() < 1e-12);
         assert_eq!(out[0].n_obs, 1);
         assert_eq!(out[0].platforms, vec![Sensor::ModisTerra]);
     }
@@ -760,7 +781,8 @@ mod tests {
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].source, HotspotSource::ModisOnly);
         assert_eq!(out[0].frp, 80.0);
-        assert_eq!(out[0].frp_corrected, 80.0);
+        assert_eq!(out[0].calibration_ratio, Some(0.97));
+        assert!((out[0].frp_corrected - 80.0 * 0.97).abs() < 1e-12);
         assert_eq!(out[0].vza_factor, None);
         assert_eq!(out[0].n_obs, 1);
         assert_eq!(out[0].platforms, vec![Sensor::ModisAqua]);
@@ -1232,6 +1254,7 @@ mod tests {
 
         let mut config = PipelineConfig::default();
         config.vza = crate::config::VzaConfig { a: 0.0, b: 0.0, c: 1.0 };
+        config.calibration.enabled = false;
         let out = harmonize_with_config(vec![modis], vec![], &config);
         assert_eq!(out[0].frp_corrected, out[0].frp);
     }
@@ -1302,7 +1325,7 @@ mod tests {
                 matched_pairs += 1;
                 result.push(fuse_matched(m, &viirs_fleet[j]));
             } else {
-                result.push(from_modis_only_with(m, &config.vza));
+                result.push(from_modis_only_with(m, &config.vza, &config.calibration));
             }
         }
 
@@ -1381,6 +1404,11 @@ mod tests {
                 a.vza_factor.map(f64::to_bits),
                 e.vza_factor.map(f64::to_bits),
                 "{ctx} [{i}]: vza_factor"
+            );
+            assert_eq!(
+                a.calibration_ratio.map(f64::to_bits),
+                e.calibration_ratio.map(f64::to_bits),
+                "{ctx} [{i}]: calibration_ratio"
             );
             assert_eq!(a.n_obs, e.n_obs, "{ctx} [{i}]: n_obs");
             assert_eq!(a.platforms, e.platforms, "{ctx} [{i}]: platforms");
@@ -1536,5 +1564,83 @@ mod tests {
                 assert_links_bits_eq(&actual, &expected, &format!("{label} seed={seed}"));
             }
         }
+    }
+
+    #[test]
+    fn calibration_varies_by_latitude_for_modis_only_and_leaves_viirs_and_matched_untouched() {
+        let mut modis_tropics =
+            make_hotspot(Sensor::ModisTerra, 10.0, 20.0, 0, 100.0, Confidence::High);
+        modis_tropics.vza = Some(30.0);
+
+        let mut modis_boreal =
+            make_hotspot(Sensor::ModisTerra, 60.0, 90.0, 10, 100.0, Confidence::High);
+        modis_boreal.vza = Some(30.0);
+
+        let mut modis_for_match =
+            make_hotspot(Sensor::ModisAqua, -10.0, 30.0, 20, 100.0, Confidence::Nominal);
+        modis_for_match.vza = Some(30.0);
+        let viirs_matched =
+            make_hotspot(Sensor::ViirsSNPP, -10.002, 30.002, 80, 50.0, Confidence::High);
+
+        let viirs_only =
+            make_hotspot(Sensor::ViirsNOAA20, 62.0, 95.0, 120, 40.0, Confidence::High);
+
+        let out = harmonize(
+            vec![modis_tropics, modis_boreal, modis_for_match],
+            vec![viirs_matched, viirs_only],
+        );
+        assert_eq!(out.len(), 4);
+
+        let tropics = &out[0];
+        let boreal = &out[1];
+        let matched = &out[2];
+        let v_only = &out[3];
+
+        assert_eq!(tropics.source, HotspotSource::ModisOnly);
+        assert_eq!(boreal.source, HotspotSource::ModisOnly);
+        assert_eq!(tropics.frp, 100.0);
+        assert_eq!(boreal.frp, 100.0);
+        assert_eq!(tropics.calibration_ratio, Some(1.16));
+        assert_eq!(boreal.calibration_ratio, Some(0.82));
+        assert!(tropics.frp_corrected > boreal.frp_corrected);
+
+        let factor = tropics.vza_factor.unwrap();
+        assert!((tropics.frp_corrected - (100.0 / factor) * 1.16).abs() < 1e-12);
+        assert!((boreal.frp_corrected - (100.0 / factor) * 0.82).abs() < 1e-12);
+
+        assert_eq!(matched.source, HotspotSource::Matched);
+        assert_eq!(matched.calibration_ratio, None);
+        assert_eq!(matched.frp_corrected, 50.0);
+
+        assert_eq!(v_only.source, HotspotSource::ViirsOnly);
+        assert_eq!(v_only.calibration_ratio, None);
+        assert_eq!(v_only.frp_corrected, 40.0);
+    }
+
+    #[test]
+    fn disabled_calibration_is_bit_identical_to_vza_only_with_none_ratio() {
+        let mut m_trop = make_hotspot(Sensor::ModisTerra, 10.0, 20.0, 0, 100.0, Confidence::High);
+        m_trop.vza = Some(40.0);
+        let mut m_boreal = make_hotspot(Sensor::ModisAqua, 60.0, 90.0, 60, 75.0, Confidence::Nominal);
+        m_boreal.vza = Some(25.0);
+
+        let cfg_disabled = PipelineConfig {
+            calibration: CalibrationConfig {
+                enabled: false,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let out = harmonize_with_config(vec![m_trop.clone(), m_boreal.clone()], vec![], &cfg_disabled);
+        assert_eq!(out.len(), 2);
+
+        let expected_trop = vza::apply_vza_correction(m_trop.frp, vza::vza_factor(&m_trop));
+        let expected_boreal = vza::apply_vza_correction(m_boreal.frp, vza::vza_factor(&m_boreal));
+
+        assert_eq!(out[0].calibration_ratio, None);
+        assert_eq!(out[1].calibration_ratio, None);
+        assert_eq!(out[0].frp_corrected.to_bits(), expected_trop.to_bits());
+        assert_eq!(out[1].frp_corrected.to_bits(), expected_boreal.to_bits());
     }
 }

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub use crate::calibration::CalibrationBand;
+use crate::calibration::default_bands;
 use crate::dedup::{MAX_TIME_DIFF_SECS, MIN_OVERLAP_RATIO};
 use crate::fleet::{FLEET_RADIUS_KM, MODIS_FLEET_WINDOW_SECS, VIIRS_FLEET_WINDOW_SECS};
 use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS};
@@ -16,6 +18,7 @@ pub struct PipelineConfig {
     pub fleet: FleetConfig,
     pub matching: MatchingConfig,
     pub vza: VzaConfig,
+    pub calibration: CalibrationConfig,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -46,6 +49,13 @@ pub struct VzaConfig {
     pub a: f64,
     pub b: f64,
     pub c: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct CalibrationConfig {
+    pub enabled: bool,
+    pub bands: Vec<CalibrationBand>,
 }
 
 impl Default for DedupConfig {
@@ -86,6 +96,15 @@ impl Default for VzaConfig {
     }
 }
 
+impl Default for CalibrationConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            bands: default_bands(),
+        }
+    }
+}
+
 impl PipelineConfig {
     /// Checks every field and names the offending one in the error.
     pub fn validate(&self) -> Result<(), String> {
@@ -116,8 +135,61 @@ impl PipelineConfig {
                 return Err(format!("{name} must be finite, got {value}"));
             }
         }
+        validate_calibration(&self.calibration)?;
         Ok(())
     }
+}
+
+fn validate_calibration(cal: &CalibrationConfig) -> Result<(), String> {
+    if cal.enabled && cal.bands.is_empty() {
+        return Err("calibration.bands must not be empty when calibration is enabled".to_string());
+    }
+    let mut prev_max: Option<f64> = None;
+    for (i, band) in cal.bands.iter().enumerate() {
+        check_abs_lat(&format!("calibration.bands[{i}].min_abs_lat"), band.min_abs_lat)?;
+        check_abs_lat(&format!("calibration.bands[{i}].max_abs_lat"), band.max_abs_lat)?;
+        if band.min_abs_lat > band.max_abs_lat {
+            return Err(format!(
+                "calibration.bands[{i}].max_abs_lat ({}) must be >= min_abs_lat ({})",
+                band.max_abs_lat, band.min_abs_lat
+            ));
+        }
+        if !band.ratio.is_finite() || band.ratio <= 0.0 {
+            return Err(format!(
+                "calibration.bands[{i}].ratio must be finite and > 0, got {}",
+                band.ratio
+            ));
+        }
+        if !band.ratio_sigma.is_finite() || band.ratio_sigma < 0.0 {
+            return Err(format!(
+                "calibration.bands[{i}].ratio_sigma must be finite and >= 0, got {}",
+                band.ratio_sigma
+            ));
+        }
+        if let Some(prev) = prev_max {
+            if band.min_abs_lat < prev {
+                return Err(format!(
+                    "calibration.bands[{i}].min_abs_lat ({}) overlaps previous max_abs_lat ({prev})",
+                    band.min_abs_lat
+                ));
+            }
+            if band.max_abs_lat <= prev {
+                return Err(format!(
+                    "calibration.bands[{i}].max_abs_lat ({}) must be strictly greater than previous ({prev})",
+                    band.max_abs_lat
+                ));
+            }
+        }
+        prev_max = Some(band.max_abs_lat);
+    }
+    Ok(())
+}
+
+fn check_abs_lat(name: &str, value: f64) -> Result<(), String> {
+    if !value.is_finite() || !(0.0..=90.0).contains(&value) {
+        return Err(format!("{name} must be within 0.0..=90.0, got {value}"));
+    }
+    Ok(())
 }
 
 fn check_secs(name: &str, value: i64) -> Result<(), String> {
@@ -149,6 +221,11 @@ mod tests {
         assert_eq!(c.matching.radius_km, 2.0);
         assert_eq!(c.matching.window_secs, 10_800);
         assert_eq!((c.vza.a, c.vza.b, c.vza.c), (0.85, 0.12, 1.0));
+        assert!(c.calibration.enabled);
+        assert_eq!(c.calibration.bands.len(), 3);
+        assert_eq!(c.calibration.bands[0].ratio, 1.16);
+        assert_eq!(c.calibration.bands[1].ratio, 0.97);
+        assert_eq!(c.calibration.bands[2].ratio, 0.82);
         assert_eq!(c.validate(), Ok(()));
     }
 
@@ -170,6 +247,38 @@ mod tests {
         rejected(|c| c.vza.b = f64::NAN, "vza.b");
         rejected(|c| c.vza.a = f64::INFINITY, "vza.a");
         rejected(|c| c.matching.radius_km = 10.5, "matching.radius_km");
+        rejected(|c| c.calibration.bands[0].ratio = 0.0, "calibration.bands[0].ratio");
+        rejected(|c| c.calibration.bands[1].ratio = -0.5, "calibration.bands[1].ratio");
+        rejected(|c| c.calibration.bands[0].ratio = f64::NAN, "calibration.bands[0].ratio");
+        rejected(
+            |c| c.calibration.bands[0].ratio_sigma = -0.1,
+            "calibration.bands[0].ratio_sigma",
+        );
+        rejected(
+            |c| c.calibration.bands[2].max_abs_lat = 95.0,
+            "calibration.bands[2].max_abs_lat",
+        );
+        rejected(
+            |c| c.calibration.bands[0].min_abs_lat = -1.0,
+            "calibration.bands[0].min_abs_lat",
+        );
+        rejected(
+            |c| {
+                c.calibration.bands[1].min_abs_lat = 20.0;
+            },
+            "calibration.bands[1].min_abs_lat",
+        );
+        rejected(
+            |c| {
+                c.calibration.bands[1].min_abs_lat = 30.0;
+                c.calibration.bands[1].max_abs_lat = 30.0;
+            },
+            "calibration.bands[1].max_abs_lat",
+        );
+        rejected(
+            |c| c.calibration.bands.clear(),
+            "calibration.bands",
+        );
     }
 
     #[test]
@@ -191,11 +300,37 @@ mod tests {
         assert_eq!(c.matching.window_secs, 600);
         assert_eq!(c.matching.radius_km, 2.0);
         assert_eq!(c.dedup, DedupConfig::default());
+        assert_eq!(c.calibration, CalibrationConfig::default());
+    }
+
+    #[test]
+    fn custom_calibration_bands_deserialize_and_validate() {
+        let json = r#"{
+            "calibration": {
+                "enabled": true,
+                "bands": [
+                    {"min_abs_lat": 0.0, "max_abs_lat": 45.0, "ratio": 1.1, "ratio_sigma": 0.05},
+                    {"min_abs_lat": 50.0, "max_abs_lat": 80.0, "ratio": 0.9, "ratio_sigma": 0.1}
+                ]
+            }
+        }"#;
+        let c: PipelineConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(c.validate(), Ok(()));
+        assert_eq!(c.calibration.bands.len(), 2);
+        assert_eq!(c.calibration.bands[0].ratio, 1.1);
+        assert_eq!(c.calibration.bands[1].max_abs_lat, 80.0);
     }
 
     #[test]
     fn unknown_fields_are_rejected() {
         assert!(serde_json::from_str::<PipelineConfig>(r#"{"bogus":1}"#).is_err());
         assert!(serde_json::from_str::<PipelineConfig>(r#"{"dedup":{"bogus":1}}"#).is_err());
+        assert!(serde_json::from_str::<PipelineConfig>(r#"{"calibration":{"bogus":1}}"#).is_err());
+        assert!(
+            serde_json::from_str::<PipelineConfig>(
+                r#"{"calibration":{"bands":[{"min_abs_lat":0.0,"max_abs_lat":30.0,"ratio":1.0,"ratio_sigma":0.0,"bogus":1}]}}"#
+            )
+            .is_err()
+        );
     }
 }

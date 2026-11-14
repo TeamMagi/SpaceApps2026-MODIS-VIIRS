@@ -103,6 +103,8 @@ pub struct HarmonizedHotspot {
     pub frp: f64,
     pub frp_corrected: f64,
     pub vza_factor: Option<f64>,
+    #[serde(default)]
+    pub calibration_ratio: Option<f64>,
     pub n_obs: u16,
     pub platforms: Vec<Sensor>,
     pub confidence: Confidence,
