@@ -151,15 +151,18 @@ fn parse_confidence(s: &str) -> Confidence {
 
 fn parse_hhmm(s: &str) -> Option<NaiveTime> {
     let s = s.trim();
-    if s.len() == 4 {
-        let h: u32 = s[..2].parse().ok()?;
-        let m: u32 = s[2..].parse().ok()?;
-        NaiveTime::from_hms_opt(h, m, 0)
-    } else if s.contains(':') {
-        NaiveTime::parse_from_str(s, "%H:%M").ok()
-    } else {
-        None
+
+    if s.contains(':') {
+        return NaiveTime::parse_from_str(s, "%H:%M").ok();
     }
+
+    if s.is_empty() || s.len() > 4 || !s.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+
+    // MODIS_NRT strips leading zeros, so "614" is 06:14 rather than a malformed HHMM.
+    let digits: u32 = s.parse().ok()?;
+    NaiveTime::from_hms_opt(digits / 100, digits % 100, 0)
 }
 
 #[cfg(test)]
@@ -236,5 +239,77 @@ mod tests {
 
         retain_wildfires(&mut hotspots);
         assert_eq!(hotspots.len(), 2);
+    }
+
+    #[test]
+    fn parse_hhmm_reads_four_digit_value() {
+        assert_eq!(
+            parse_hhmm("1507"),
+            Some(NaiveTime::from_hms_opt(15, 7, 0).unwrap())
+        );
+    }
+
+    #[test]
+    fn parse_hhmm_pads_three_digit_value_with_leading_zero() {
+        assert_eq!(
+            parse_hhmm("614"),
+            Some(NaiveTime::from_hms_opt(6, 14, 0).unwrap())
+        );
+        assert_eq!(
+            parse_hhmm("149"),
+            Some(NaiveTime::from_hms_opt(1, 49, 0).unwrap())
+        );
+        assert_eq!(
+            parse_hhmm("102"),
+            Some(NaiveTime::from_hms_opt(1, 2, 0).unwrap())
+        );
+    }
+
+    #[test]
+    fn parse_hhmm_pads_short_values_with_leading_zeroes() {
+        assert_eq!(
+            parse_hhmm("45"),
+            Some(NaiveTime::from_hms_opt(0, 45, 0).unwrap())
+        );
+        assert_eq!(
+            parse_hhmm("7"),
+            Some(NaiveTime::from_hms_opt(0, 7, 0).unwrap())
+        );
+        assert_eq!(
+            parse_hhmm("0"),
+            Some(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        );
+    }
+
+    #[test]
+    fn parse_hhmm_accepts_colon_separated_value() {
+        assert_eq!(
+            parse_hhmm("15:07"),
+            Some(NaiveTime::from_hms_opt(15, 7, 0).unwrap())
+        );
+    }
+
+    #[test]
+    fn parse_hhmm_rejects_malformed_values() {
+        for input in ["", "abcd", "12345", "2561", "1999", "12:3x", "1 5", "é"] {
+            assert!(
+                parse_hhmm(input).is_none(),
+                "input {input:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn modis_nrt_three_digit_acq_time_parses_to_utc_timestamp() {
+        let csv = concat!(
+            "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n",
+            "-20.1,57.5,330.5,1.0,1.0,2024-01-15,614,Terra,MODIS,75,6.1NRT,290.1,12.5,D,0\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(
+            hotspots[0].acquired,
+            Utc.with_ymd_and_hms(2024, 1, 15, 6, 14, 0).unwrap()
+        );
     }
 }
