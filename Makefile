@@ -1,5 +1,13 @@
 .PHONY: dev build test lint clean docker docker-up docker-down check
 
+# The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
+# cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
+# Put MinGW-w64 ahead of it for all targets. Empty (and harmless) on Linux/Docker.
+MINGW64_BIN ?= $(firstword $(wildcard $(HOME)/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.*/mingw64/bin))
+ifneq ($(MINGW64_BIN),)
+export PATH := $(MINGW64_BIN):$(PATH)
+endif
+
 # ---- Development ----
 
 dev-backend:
