@@ -15,6 +15,7 @@ import {
   useHarmonizeTransition,
 } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
+import { useNrtData } from "../../hooks/useNrtData";
 import { PIPELINE_NODE_COUNT, useAppStore } from "../../store/useAppStore";
 import styles from "./PipelineStrip.module.css";
 
@@ -29,6 +30,7 @@ export default function PipelineStrip() {
   }));
   const { status, hasData, stages, totals } = useRegionData();
   const points = useMapPoints();
+  const nrt = useNrtData(points.bbox);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
   const reduceMotion = useReducedMotion();
 
@@ -128,6 +130,11 @@ export default function PipelineStrip() {
           <span className={styles.status}>
             {totalStatus}
             {split && <span className={styles.split}>{split}</span>}
+          </span>
+        )}
+        {nrt.status === "ready" && nrt.stats && (
+          <span className={styles.nrtMeta}>
+            {t("nrtTransactions", { n: nrt.stats.pipeline.transactionsSpent })}
           </span>
         )}
         <span className={styles.count}>{count}</span>

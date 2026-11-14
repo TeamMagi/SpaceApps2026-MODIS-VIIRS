@@ -13,7 +13,8 @@ import { animate, AnimatePresence, useReducedMotion } from "motion/react";
 import { formatApiError } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
-import { useRegionData } from "../../hooks/useRegionData";
+import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
+import { useNrtData } from "../../hooks/useNrtData";
 import { useAppStore } from "../../store/useAppStore";
 import Receipt from "./Receipt";
 import styles from "./CountDelta.module.css";
@@ -24,6 +25,8 @@ export default function CountDelta() {
   const { t, fmt } = useCopy();
   const revealAnswer = useHarmonizeTransition((v) => v.revealAnswer);
   const { status, hasData, error, retry, totals } = useRegionData();
+  const { bbox } = useMapPoints();
+  const nrt = useNrtData(bbox);
   const reduceMotion = useReducedMotion();
   const receiptOpen = useAppStore((state) => state.openDrawer === "receipt");
   const toggleDrawer = useAppStore((state) => state.toggleDrawer);
@@ -115,6 +118,14 @@ export default function CountDelta() {
         </span>
       </button>
       <AnimatePresence>{receiptOpen && <Receipt key="receipt" id={receiptId} />}</AnimatePresence>
+      {nrt.status === "ready" && nrt.compare && (
+        <p className={styles.nrtLine}>
+          {t("nrtLiveSummary", {
+            raw: fmt.number(nrt.compare.counts.rawTotal),
+            harmonized: fmt.number(nrt.compare.counts.harmonizedTotal),
+          })}
+        </p>
+      )}
     </div>
   );
 }

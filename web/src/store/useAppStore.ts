@@ -51,6 +51,7 @@ export interface AppState {
   selectedMonth: MonthRef | null;
   openDrawer: DrawerId | null;
   presentation: boolean;
+  nrtDays: number;
 
   setRegion: (region: RegionId) => void;
   /** The single user-facing mode action (button click, H key). */
@@ -65,6 +66,7 @@ export interface AppState {
   toggleDrawer: (id: DrawerId) => void;
   setPresentation: (on: boolean) => void;
   togglePresentation: () => void;
+  setNrtDays: (days: number) => void;
   /** Applies a parsed URL hash; mode changes snap without animation. */
   applyUrlState: (url: Partial<UrlState>) => void;
   /** Jumps to the final state of the current target, cancelling any run. */
@@ -128,6 +130,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   selectedMonth: initialUrl.month ?? null,
   openDrawer: null,
   presentation: false,
+  nrtDays: 2,
 
   setRegion: (region) => {
     const state = get();
@@ -152,6 +155,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   toggleDrawer: (id) => set((s) => ({ openDrawer: s.openDrawer === id ? null : id })),
   setPresentation: (presentation) => set({ presentation }),
   togglePresentation: () => set((s) => ({ presentation: !s.presentation })),
+  setNrtDays: (days) => set({ nrtDays: Math.max(1, Math.min(5, Math.round(days))) }),
   applyUrlState: (url) => {
     const state = get();
     const nextRegion = url.region ?? state.region;

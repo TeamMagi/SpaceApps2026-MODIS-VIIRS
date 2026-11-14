@@ -2,15 +2,25 @@ import {
   Confidence,
   DayNight,
   HotspotSource,
+  Sensor,
   type ApiErrorKind,
   type BBox,
+  type CalendarApiResponse,
+  type CalendarCell,
   type CliffSummary,
+  type CompareResponse,
+  type EffortInfo,
+  type HarmonizedHotspot,
   type HarmonizedPoint,
+  type HarmonizeResponse,
   type PointStages,
+  type RawHotspot,
   type RawPoint,
   type RegionSummary,
+  type ReportInfo,
   type SensorFamily,
   type SeriesCoverage,
+  type StatsResponse,
   type YearlyPoint,
   type YearSpan,
 } from "../types";
@@ -180,6 +190,203 @@ interface WirePointsResponse {
   bbox: BBox | null;
 }
 
+// --- NRT wire types ---
+
+interface WireCalendarCell {
+  year: number;
+  month: number;
+  count: number;
+  count_normalized: number | null;
+  effort_omega: number | null;
+  mean_frp: number;
+  mean_frp_raw: number;
+  anomaly: number | null;
+}
+
+interface WireEffortFactor {
+  has_modis: boolean;
+  viirs_platforms: string[];
+  platforms: string[];
+  months: number;
+  total: number;
+  modis_observable: number;
+  omega: number | null;
+}
+
+interface WireEffortInfo {
+  reliable: boolean;
+  reason: string | null;
+  factors: WireEffortFactor[];
+}
+
+interface WireReportInfo {
+  per_source: [string, number][];
+  failures: [string, string][];
+  transactions_spent: number;
+  uncovered: [string, string][];
+}
+
+interface WireRawHotspot {
+  lat: number;
+  lon: number;
+  frp: number;
+  sensor: string;
+  acquired: string;
+  daynight: string;
+}
+
+interface WireHarmonizedHotspot {
+  lat: number;
+  lon: number;
+  frp: number;
+  frp_corrected: number;
+  vza_factor: number | null;
+  n_obs: number;
+  platforms: string[];
+  confidence: string;
+  source: string;
+  acquired: string;
+  daynight: string;
+}
+
+interface WireHarmonizeResponse {
+  raw: {
+    modis_count: number;
+    viirs_count: number;
+    total_raw: number;
+    hotspots?: WireRawHotspot[] | null;
+  };
+  harmonized: {
+    count: number;
+    hotspots: WireHarmonizedHotspot[];
+  };
+  calendar: WireCalendarCell[];
+  effort: WireEffortInfo;
+  warnings: string[];
+  report: WireReportInfo;
+}
+
+interface WireCompareResponse {
+  counts: {
+    raw_total: number;
+    raw_modis: number;
+    raw_viirs: number;
+    harmonized_total: number;
+    removed_total: number;
+    removed_pct: number;
+    by_source: {
+      modis_only: number;
+      viirs_only: number;
+      matched: number;
+    };
+  };
+  frp: {
+    raw_sum: number;
+    harmonized_raw_sum: number;
+    harmonized_corrected_sum: number;
+    reduction_pct: number;
+  };
+  merging: {
+    records_with_multiple_observations: number;
+    observations_merged: number;
+    max_observations_in_one_record: number;
+    platform_combinations: {
+      platforms: string[];
+      records: number;
+    }[];
+  };
+  vza: {
+    records_with_correction: number;
+    mean_factor: number | null;
+    max_factor: number | null;
+    mean_frp_reduction_pct: number | null;
+  };
+  warnings: string[];
+  report: WireReportInfo;
+}
+
+interface WireStatsResponse {
+  totals: {
+    raw_detections: number;
+    harmonized_records: number;
+    calendar_months: number;
+    distinct_platforms: number;
+  };
+  sensor_breakdown: {
+    sensor: string;
+    firms_source: string;
+    raw_detections: number;
+    share_pct: number;
+  }[];
+  confidence_breakdown: {
+    low: number;
+    nominal: number;
+    high: number;
+  };
+  daynight_breakdown: {
+    day: number;
+    night: number;
+  };
+  frp: {
+    harmonized_sum: number;
+    harmonized_mean: number;
+    harmonized_max: number;
+    harmonized_median: number;
+  };
+  temporal: {
+    first_detection: string | null;
+    last_detection: string | null;
+    months_covered: number;
+  };
+  pipeline: {
+    transactions_spent: number;
+    sources_queried: number;
+    sources_failed: number;
+  };
+  warnings: string[];
+  report: WireReportInfo;
+}
+
+interface WireCalendarApiResponse {
+  country: string;
+  years: {
+    requested_from: number;
+    requested_to: number;
+    effective_from: number;
+    effective_to: number;
+  };
+  bbox: {
+    west: number;
+    south: number;
+    east: number;
+    north: number;
+  } | null;
+  coverage: {
+    sensors_available: string[];
+    sensors_unavailable: string[];
+    note: string;
+  };
+  counts: {
+    raw_detections: number;
+    harmonized_records: number;
+  };
+  calendar: WireCalendarCell[];
+  effort: WireEffortInfo;
+  fetch: {
+    per_sensor_year: {
+      sensor: string;
+      year: number;
+      detections: number;
+    }[];
+    failures: {
+      sensor: string;
+      year: number;
+      error: string;
+    }[];
+  };
+  warnings: string[];
+}
+
 // --- Adapted camelCase types -------------------------------------------------
 
 export interface RegionsResponse {
@@ -335,6 +542,55 @@ function adaptSource(value: string): HotspotSource {
   return HotspotSource.ModisOnly;
 }
 
+function adaptSensor(value: string): Sensor {
+  switch (value) {
+    case "MODIS_Terra": return Sensor.ModisTerra;
+    case "MODIS_Aqua": return Sensor.ModisAqua;
+    case "VIIRS_SNPP": return Sensor.ViirsSNPP;
+    case "VIIRS_NOAA20": return Sensor.ViirsNOAA20;
+    case "VIIRS_NOAA21": return Sensor.ViirsNOAA21;
+    default: return Sensor.ViirsSNPP;
+  }
+}
+
+function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
+  return {
+    year: w.year,
+    month: w.month,
+    count: w.count,
+    countNormalized: w.count_normalized,
+    effortOmega: w.effort_omega,
+    meanFrp: w.mean_frp,
+    meanFrpRaw: w.mean_frp_raw,
+    anomaly: w.anomaly,
+  };
+}
+
+function adaptEffortInfo(w: WireEffortInfo): EffortInfo {
+  return {
+    reliable: w.reliable,
+    reason: w.reason,
+    factors: w.factors.map((f) => ({
+      hasModis: f.has_modis,
+      viirsPlatforms: f.viirs_platforms.map(adaptSensor),
+      platforms: f.platforms.map(adaptSensor),
+      months: f.months,
+      total: f.total,
+      modisObservable: f.modis_observable,
+      omega: f.omega,
+    })),
+  };
+}
+
+function adaptReportInfo(w: WireReportInfo): ReportInfo {
+  return {
+    perSource: w.per_source,
+    failures: w.failures,
+    transactionsSpent: w.transactions_spent,
+    uncovered: w.uncovered,
+  };
+}
+
 // --- Public endpoint fetchers ------------------------------------------------
 
 export async function fetchRegions(signal?: AbortSignal): Promise<RegionsResponse> {
@@ -480,5 +736,226 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       harmonized: wire.stages.harmonized,
     },
     bbox: wire.bbox ?? null,
+  };
+}
+
+// --- NRT endpoint fetchers ---
+
+export interface HarmonizeParams {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+  days?: number;
+  start?: string;
+  end?: string;
+  includeRaw?: boolean;
+}
+
+function harmonizeQuery(params: HarmonizeParams): Record<string, string> {
+  const q: Record<string, string> = {
+    west: String(params.west),
+    south: String(params.south),
+    east: String(params.east),
+    north: String(params.north),
+  };
+  if (params.days != null) q.days = String(params.days);
+  if (params.start != null) q.start = params.start;
+  if (params.end != null) q.end = params.end;
+  if (params.includeRaw != null) q.include_raw = String(params.includeRaw);
+  return q;
+}
+
+function adaptRawHotspot(w: WireRawHotspot): RawHotspot {
+  return {
+    lat: w.lat,
+    lon: w.lon,
+    frp: w.frp,
+    sensor: adaptSensor(w.sensor),
+    acquired: w.acquired,
+    daynight: adaptDayNight(w.daynight),
+  };
+}
+
+function adaptHarmonizedHotspot(w: WireHarmonizedHotspot): HarmonizedHotspot {
+  return {
+    lat: w.lat,
+    lon: w.lon,
+    frp: w.frp,
+    frpCorrected: w.frp_corrected,
+    vzaFactor: w.vza_factor,
+    nObs: w.n_obs,
+    platforms: w.platforms.map(adaptSensor),
+    confidence: adaptConfidence(w.confidence),
+    source: adaptSource(w.source),
+    acquired: w.acquired,
+    daynight: adaptDayNight(w.daynight),
+  };
+}
+
+export async function fetchHarmonize(
+  params: HarmonizeParams,
+  signal?: AbortSignal,
+): Promise<HarmonizeResponse> {
+  const wire = await requestJson<WireHarmonizeResponse>("/harmonize", harmonizeQuery(params), signal);
+  return {
+    raw: {
+      modisCount: wire.raw.modis_count,
+      viirsCount: wire.raw.viirs_count,
+      totalRaw: wire.raw.total_raw,
+      hotspots: wire.raw.hotspots ? wire.raw.hotspots.map(adaptRawHotspot) : null,
+    },
+    harmonized: {
+      count: wire.harmonized.count,
+      hotspots: wire.harmonized.hotspots.map(adaptHarmonizedHotspot),
+    },
+    calendar: wire.calendar.map(adaptCalendarCell),
+    effort: adaptEffortInfo(wire.effort),
+    warnings: wire.warnings,
+    report: adaptReportInfo(wire.report),
+  };
+}
+
+export async function fetchCompare(
+  params: HarmonizeParams,
+  signal?: AbortSignal,
+): Promise<CompareResponse> {
+  const wire = await requestJson<WireCompareResponse>("/compare", harmonizeQuery(params), signal);
+  return {
+    counts: {
+      rawTotal: wire.counts.raw_total,
+      rawModis: wire.counts.raw_modis,
+      rawViirs: wire.counts.raw_viirs,
+      harmonizedTotal: wire.counts.harmonized_total,
+      removedTotal: wire.counts.removed_total,
+      removedPct: wire.counts.removed_pct,
+      bySource: {
+        modisOnly: wire.counts.by_source.modis_only,
+        viirsOnly: wire.counts.by_source.viirs_only,
+        matched: wire.counts.by_source.matched,
+      },
+    },
+    frp: {
+      rawSum: wire.frp.raw_sum,
+      harmonizedRawSum: wire.frp.harmonized_raw_sum,
+      harmonizedCorrectedSum: wire.frp.harmonized_corrected_sum,
+      reductionPct: wire.frp.reduction_pct,
+    },
+    merging: {
+      recordsWithMultipleObservations: wire.merging.records_with_multiple_observations,
+      observationsMerged: wire.merging.observations_merged,
+      maxObservationsInOneRecord: wire.merging.max_observations_in_one_record,
+      platformCombinations: wire.merging.platform_combinations.map((pc) => ({
+        platforms: pc.platforms.map(adaptSensor),
+        records: pc.records,
+      })),
+    },
+    vza: {
+      recordsWithCorrection: wire.vza.records_with_correction,
+      meanFactor: wire.vza.mean_factor,
+      maxFactor: wire.vza.max_factor,
+      meanFrpReductionPct: wire.vza.mean_frp_reduction_pct,
+    },
+    warnings: wire.warnings,
+    report: adaptReportInfo(wire.report),
+  };
+}
+
+export async function fetchStats(
+  params: HarmonizeParams,
+  signal?: AbortSignal,
+): Promise<StatsResponse> {
+  const wire = await requestJson<WireStatsResponse>("/stats", harmonizeQuery(params), signal);
+  return {
+    totals: {
+      rawDetections: wire.totals.raw_detections,
+      harmonizedRecords: wire.totals.harmonized_records,
+      calendarMonths: wire.totals.calendar_months,
+      distinctPlatforms: wire.totals.distinct_platforms,
+    },
+    sensorBreakdown: wire.sensor_breakdown.map((s) => ({
+      sensor: adaptSensor(s.sensor),
+      firmsSource: s.firms_source,
+      rawDetections: s.raw_detections,
+      sharePct: s.share_pct,
+    })),
+    confidenceBreakdown: wire.confidence_breakdown,
+    daynightBreakdown: wire.daynight_breakdown,
+    frp: {
+      harmonizedSum: wire.frp.harmonized_sum,
+      harmonizedMean: wire.frp.harmonized_mean,
+      harmonizedMax: wire.frp.harmonized_max,
+      harmonizedMedian: wire.frp.harmonized_median,
+    },
+    temporal: {
+      firstDetection: wire.temporal.first_detection,
+      lastDetection: wire.temporal.last_detection,
+      monthsCovered: wire.temporal.months_covered,
+    },
+    pipeline: {
+      transactionsSpent: wire.pipeline.transactions_spent,
+      sourcesQueried: wire.pipeline.sources_queried,
+      sourcesFailed: wire.pipeline.sources_failed,
+    },
+    warnings: wire.warnings,
+    report: adaptReportInfo(wire.report),
+  };
+}
+
+export interface CalendarParams {
+  country: string;
+  from?: number;
+  to?: number;
+  west?: number;
+  south?: number;
+  east?: number;
+  north?: number;
+}
+
+export async function fetchCalendar(
+  params: CalendarParams,
+  signal?: AbortSignal,
+): Promise<CalendarApiResponse> {
+  const q: Record<string, string> = { country: params.country };
+  if (params.from != null) q.from = String(params.from);
+  if (params.to != null) q.to = String(params.to);
+  if (params.west != null) q.west = String(params.west);
+  if (params.south != null) q.south = String(params.south);
+  if (params.east != null) q.east = String(params.east);
+  if (params.north != null) q.north = String(params.north);
+  const wire = await requestJson<WireCalendarApiResponse>("/calendar", q, signal);
+  return {
+    country: wire.country,
+    years: {
+      requestedFrom: wire.years.requested_from,
+      requestedTo: wire.years.requested_to,
+      effectiveFrom: wire.years.effective_from,
+      effectiveTo: wire.years.effective_to,
+    },
+    bbox: wire.bbox,
+    coverage: {
+      sensorsAvailable: wire.coverage.sensors_available.map(adaptSensor),
+      sensorsUnavailable: wire.coverage.sensors_unavailable.map(adaptSensor),
+      note: wire.coverage.note,
+    },
+    counts: {
+      rawDetections: wire.counts.raw_detections,
+      harmonizedRecords: wire.counts.harmonized_records,
+    },
+    calendar: wire.calendar.map(adaptCalendarCell),
+    effort: adaptEffortInfo(wire.effort),
+    fetch: {
+      perSensorYear: wire.fetch.per_sensor_year.map((s) => ({
+        sensor: adaptSensor(s.sensor),
+        year: s.year,
+        detections: s.detections,
+      })),
+      failures: wire.fetch.failures.map((f) => ({
+        sensor: adaptSensor(f.sensor),
+        year: f.year,
+        error: f.error,
+      })),
+    },
+    warnings: wire.warnings,
   };
 }

@@ -243,6 +243,8 @@ const enBase = {
   briefingPrint: "Print this briefing",
   briefingCopyLink: "Copy link to this view",
   briefingLinkCopied: "Link copied",
+  nrtLiveSummary: "Live: {raw} → {harmonized}",
+  nrtTransactions: "{n} API calls",
 } as const;
 
 const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn } as const;
@@ -439,6 +441,8 @@ const trBase = {
   briefingPrint: "Bu brifingi yazdır",
   briefingCopyLink: "Bu görünümün bağlantısını kopyala",
   briefingLinkCopied: "Bağlantı kopyalandı",
+  nrtLiveSummary: "Canlı: {raw} → {harmonized}",
+  nrtTransactions: "{n} API çağrısı",
 } as const;
 
 const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr };

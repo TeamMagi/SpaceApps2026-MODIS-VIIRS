@@ -82,3 +82,10 @@ button.count[aria-expanded="true"] {
     text-align: right;
   }
 }
+
+.nrtLine {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: right;
+}
