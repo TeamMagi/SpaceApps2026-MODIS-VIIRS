@@ -109,7 +109,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | Kimlik | Görev | Sahip | Bekler | Açar | Durum |
 |--------|-------|-------|--------|------|-------|
 | G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | ✅ |
-| G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ⬜ |
+| G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | 🔄 |
 | G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ⏸ |
 | G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ⏸ |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ |
@@ -162,15 +162,21 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Doğrulama (2026-11-14):** 43 test geçiyor, clippy temiz. Canlı API `--bbox 15,-15,30,0` ile: MODIS_NRT 21, VIIRS_SNPP_NRT 2300, VIIRS_NOAA20_NRT 348 hotspot parse edildi.
 - **Not:** Canlı doğrulama `acq_time` parse hatasını ortaya çıkardı — FIRMS baştaki sıfırları atıyor (`614` = 06:14), eski kod yalnızca 4 karakterlik değer kabul ediyordu. MODIS_NRT çekimi tümüyle başarısız oluyordu; `data/sample/` altındaki üç NRT dosyası da aynı sebeple offline parse edilemiyordu. `parse_hhmm` 1–4 haneli değerleri kabul edecek şekilde düzeltildi, 6 regresyon testi eklendi.
 
-### G2 — Harmonizasyon pipeline tamamlama ⏸
+### G2 — Harmonizasyon pipeline tamamlama 🔄
 - **Bekler:** G1 · **Açar:** G3, G4, S1
 - Pipeline iskeletleri mevcut (dedup, VZA, matching, calendar). Yapılacaklar:
-  - H3 hexagonal grid entegrasyonu — mekansal agregatör olarak. `h3o` crate ile 1 km MODIS pikselini H3 hücresine eşleme, aynı hücredeki VIIRS deteksiyonlarıyla gruplama.
-  - VZA polinom katsayılarını gerçek overlap-period verisinden hesaplama (şu an placeholder).
-  - Cross-sensor matching'de BallTree ile O(n log n) optimizasyonu (şu an O(n²)).
-  - Fleet rule: aynı anda birden fazla VIIRS uydusu gördüğünde ortalama alma (toplama değil).
-  - Gerçek FIRMS verisiyle uçtan uca pipeline testi.
+  - ✅ H3 hexagonal grid entegrasyonu — `h3o` 0.11, Resolution 8 (hücre 0,74 km², MODIS 1 km ayak izine en yakın ölçek), k-ring 3 ile aday arama (~2,8 km garantili kapsama; k=2 tam 2,0 km'de sınırda kalıp eşleşme kaçırıyordu). `crates/core/src/h3index.rs`
+  - ⛔ VZA polinom katsayılarını gerçek overlap-period verisinden hesaplama — **FIRMS ile yapılamaz**, bkz. aşağıdaki not. Katsayılar placeholder kaldı.
+  - ✅ Cross-sensor matching optimizasyonu — BallTree yerine H3 kullanıldı. Rust'ta olgun BallTree crate'i yok ve H3 zaten gerekiyordu; iki indeks yerine tek indeks hem agregasyon hem aday arama için kullanılıyor.
+  - ✅ Fleet rule — `crates/core/src/fleet.rs`, ayrı aşama olarak sensör-içi dedup'tan sonra ve MODIS eşleştirmesinden önce çalışıyor.
+  - ✅ Gerçek FIRMS verisiyle uçtan uca pipeline testi — `/api/harmonize` üzerinden koşuldu.
 - **Bitti sayılır:** `cargo test -p pyrosync-core` geçiyor; gerçek veriyle MODIS+VIIRS → harmonized → calendar akışı çalışıyor; dedup sonrası FRP %15–20 azalıyor (beklenen), VZA correction R²'si hesaplanıyor.
+- **Doğrulama (2026-11-14):** 57 core testi geçiyor, clippy temiz. Canlı `/api/harmonize` (Zambiya/Angola, 2 gün): 699 ham tespit / 6769,57 MW → 597 harmonize kayıt / 5785,87 MW. Tespit azalması %14,6, **FRP azalması %14,5 — beklenen %15–20 band'ının hemen altında.**
+- **Kalan 1: cross-sensor eşleştirme penceresi kararı.** `MATCH_WINDOW_SECS` 300 saniye ve gerçek veride ULAŞILAMAZ, bu yüzden `Matched` kategorisi hiç üretilmiyor (çıktı: `ViirsOnly` 577, `ModisOnly` 20, `Matched` 0). FRP azalmasının band altında kalmasının sebebi de bu: azalmanın tamamı interscan dedup + filo birleştirmesinden geliyor, cross-sensor füzyonundan sıfır katkı var.
+  - Ölçüm: 26.505 co-located MODIS-VIIRS noktası, 4 bölge (Zambiya/Angola, Sahel, Brezilya Cerrado, Kuzey Avustralya), 5 tarih, üç VIIRS platformu. **30 dakika altında sıfır çift.** Mutlak minimum 34 dk. Medyan 158 dk (NOAA-20/21), 122 dk (SNPP). Kümülatif: ≤45 dk %0,2 · ≤90 dk %9,5 · ≤120 dk %27,9 · ≤180 dk ~%49.
+  - Öneri: pencere 180 dakikaya çıkarılsın **ve** `Matched` "eşzamanlı gözlem" yerine "aynı yangın olayının iki sensörle gözlemi" olarak yeniden tanımlansın. Yanma takviminin ihtiyacı olan şey budur. 300 saniyelik sabit ayrı bir isimle korunsun, kalibrasyon için gerekecek.
+- **Kalan 2: VZA katsayı kalibrasyonu ve R² — FIRMS verisiyle yapılamaz.** Katsayı türetmek için eşzamanlı MODIS/VIIRS gözlem çiftleri gerekiyor; yukarıdaki ölçüm bu çiftlerin FIRMS'te bulunmadığını gösterdi (minimum 34 dk). Granül/arşiv seviyesi veri veya literatürden hazır katsayı gerekir. S7 (case study veri seti) ile birlikte planlanmalı. Bu madde kapanmadan G2 ✅ işaretlenmeyecek.
+- **Yan bulgu:** `VIIRS_SNPP_NRT` beslemesi 2026-11-02'de duruyor, diğer NRT kaynakları günceldir. `availability.rs` bunu doğru yönetiyor (SNPP sorgularını kendi aralığına kırpıyor), ama kısa pencereli isteklerde SNPP hiç katkı vermiyor.
 
 ### G3 — Effort normalization (Ω) ⏸
 - **Bekler:** G2 · **Açar:** G4
