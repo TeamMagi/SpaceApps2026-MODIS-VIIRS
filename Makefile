@@ -1,4 +1,4 @@
-.PHONY: dev build test lint clean docker docker-up docker-down check
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell fetch-sample clean clean-cache help
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
@@ -57,7 +57,11 @@ check: ## Quick compilation check (no tests)
 docker: ## Build Docker image
 	docker compose build
 
-docker-up: ## Start containers
+docker-up: ## Start containers (requires .env)
+	@if [ ! -f .env ]; then \
+		echo "Error: .env file not found. Copy .env.example to .env and set FIRMS_API_KEY."; \
+		exit 1; \
+	fi
 	docker compose up -d
 
 docker-down: ## Stop containers
@@ -66,17 +70,27 @@ docker-down: ## Stop containers
 docker-logs: ## Show container logs
 	docker compose logs -f pyrosync
 
+docker-shell: ## Open a shell inside the running container
+	docker compose exec pyrosync /bin/sh
+
 # ---- Data ----
 
-fetch-sample: ## Fetch sample data from FIRMS API
-	@echo "Requires FIRMS_API_KEY in .env"
-	cargo run -p pyrosync-server -- --fetch-sample
+fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
+	@if [ -z "$$FIRMS_API_KEY" ]; then \
+		echo "Error: FIRMS_API_KEY must be set in the environment (e.g. from .env)."; \
+		exit 1; \
+	fi
+	cargo run -p pyrosync-firms --example nrt_check -- --save-samples
 
 # ---- Clean ----
 
-clean: ## Clean build artifacts
+# Preserve .cache/ because re-downloading ~2.4 GB of FIRMS archives is slow
+clean: ## Clean build artifacts (preserves .cache/)
 	cargo clean
 	rm -rf web/node_modules web/dist
+
+clean-cache: ## Remove local FIRMS archive cache (.cache/)
+	rm -rf .cache
 
 # ---- Help ----
 

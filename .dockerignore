@@ -1,0 +1,32 @@
+# Build outputs and local caches (prevents sending multi-GB target/ and .cache/ to the Docker daemon)
+target/
+.cache/
+web/node_modules/
+web/dist/
+web/.vite/
+*.tsbuildinfo
+**/*.rs.bk
+*.pdb
+
+# Version control and CI metadata
+.git/
+.github/
+
+# Local research, docs, and helper tooling not required for image builds
+reference-projects/
+academic-papers/
+docs/
+tools/
+*.pdf
+*.log
+.claude/
+
+# Secrets and local overrides (keep .env.example as template)
+.env
+.env.*
+!.env.example
+
+# Exclude runtime/downloaded data while keeping checked-in offline sample fixtures
+# Use data/* instead of data/ so the negation can take effect
+data/*
+!data/sample/
