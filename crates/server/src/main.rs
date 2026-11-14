@@ -1,3 +1,5 @@
+mod archive_api;
+
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -578,16 +580,26 @@ async fn api_not_found(OriginalUri(uri): OriginalUri) -> ApiError {
     ApiError::not_found(format!("Unknown API endpoint: {}", uri.path()))
 }
 
-fn build_router(state: AppState, static_dir: &str, cors: CorsLayer) -> Router {
-    let api_router = Router::new()
+fn build_router(
+    state: AppState,
+    archive_api: Option<Arc<archive_api::ArchiveState>>,
+    static_dir: &str,
+    cors: CorsLayer,
+) -> Router {
+    let mut api_router = Router::new()
         .route("/health", get(health))
         .route("/harmonize", get(harmonize))
         .route("/availability", get(availability))
         .route("/compare", get(compare))
         .route("/stats", get(stats))
         .route("/calendar", get(calendar))
-        .fallback(api_not_found)
         .with_state(state);
+
+    if let Some(archive_api) = archive_api {
+        api_router = api_router.merge(archive_api::api_routes(archive_api));
+    }
+
+    let api_router = api_router.fallback(api_not_found);
 
     Router::new()
         .nest("/api", api_router)
@@ -619,8 +631,21 @@ async fn main() -> anyhow::Result<()> {
     let archive_cache_dir = std::env::var("ARCHIVE_CACHE_DIR")
         .ok()
         .filter(|s| !s.trim().is_empty())
+        .or_else(|| {
+            std::env::var("FIRMS_ARCHIVE_DIR")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+        })
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(DEFAULT_ARCHIVE_CACHE_DIR));
+    let archive_api = Arc::new(archive_api::ArchiveState::new(
+        archive_cache_dir.clone(),
+        archive_api::ArchiveLimits::from_env(),
+    ));
+    if archive_cache_dir.is_dir() {
+        let warm_state = archive_api.clone();
+        tokio::spawn(async move { warm_state.warm().await });
+    }
     let archive = match ArchiveClient::new(archive_cache_dir.clone()) {
         Ok(client) => Some(Arc::new(client)),
         Err(err) => {
@@ -643,7 +668,7 @@ async fn main() -> anyhow::Result<()> {
         request_timeout,
     };
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "web/dist".to_string());
-    let app = build_router(state, &static_dir, cors_layer);
+    let app = build_router(state, Some(archive_api), &static_dir, cors_layer);
 
     let port = std::env::var("PORT").unwrap_or_else(|_| "3001".to_string());
     let addr = format!("0.0.0.0:{port}");
@@ -2231,8 +2256,12 @@ mod tests {
     #[tokio::test]
     async fn router_returns_json_404_for_unknown_api_and_serves_cors_headers() {
         let state = test_state(1024, None);
+        let archive_api = Arc::new(archive_api::ArchiveState::new(
+            PathBuf::from("nonexistent-archive-dir-for-test"),
+            archive_api::ArchiveLimits::from_env(),
+        ));
         let cors = build_cors_layer(Some("https://allowed.example, invalid origin, http://localhost:5173"));
-        let app = build_router(state, "nonexistent-static-dir-for-test", cors);
+        let app = build_router(state, Some(archive_api), "nonexistent-static-dir-for-test", cors);
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
@@ -2241,6 +2270,14 @@ mod tests {
         let server = tokio::spawn(async move {
             let _ = axum::serve(listener, app).await;
         });
+
+        let api_regions = send_http_request(
+            addr,
+            "GET /api/regions HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(api_regions.starts_with("HTTP/1.1 503 Service Unavailable\r\n"));
+        assert!(api_regions.to_ascii_lowercase().contains("content-type: application/json"));
 
         let api_404 = send_http_request(
             addr,
