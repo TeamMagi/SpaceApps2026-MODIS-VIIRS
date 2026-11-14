@@ -11,6 +11,8 @@ import styles from "./MapLabels.module.css";
 export interface MapLabelsProps {
   readonly dataset: GeoDataset | null;
   readonly regionId: string;
+  /** Index-aligned archive region per feature; falls back to the feature's build-time link. */
+  readonly featureRegionIds?: readonly (string | null)[];
   readonly selectedDisplayName: string;
   readonly projection: RegionProjection | null;
   readonly transform: ViewTransform;
@@ -113,6 +115,7 @@ function rectsOverlap(a: ScreenRect, b: ScreenRect): boolean {
 function MapLabels({
   dataset,
   regionId,
+  featureRegionIds,
   selectedDisplayName,
   projection,
   transform,
@@ -142,9 +145,11 @@ function MapLabels({
       }
     >();
 
-    for (const feature of dataset.features) {
-      const key = feature.regionId ?? feature.code;
-      const isSelected = feature.regionId === regionId;
+    for (let fIdx = 0; fIdx < dataset.features.length; fIdx++) {
+      const feature = dataset.features[fIdx];
+      const featureRegionId = featureRegionIds?.[fIdx] ?? feature.regionId;
+      const key = featureRegionId ?? feature.code;
+      const isSelected = featureRegionId === regionId;
 
       for (const poly of feature.polygons) {
         const outerRing = poly[0];
@@ -158,7 +163,7 @@ function MapLabels({
             key,
             code: feature.code,
             isSelected,
-            regionId: feature.regionId,
+            regionId: featureRegionId,
             rawName: feature.name,
             anchorX: info.anchorX,
             anchorY: info.anchorY,
@@ -206,7 +211,7 @@ function MapLabels({
     });
 
     return list;
-  }, [dataset, regionId, projection]);
+  }, [dataset, regionId, featureRegionIds, projection]);
 
   const visibleLabels = useMemo<readonly VisibleLabel[]>(() => {
     const { width, height } = size;

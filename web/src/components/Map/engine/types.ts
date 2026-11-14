@@ -64,9 +64,36 @@ export interface ScenePointInput {
   readonly harmonized: readonly HarmonizedPoint[];
 }
 
+/** One boundary feature projected to the plane; rings are shared with the context/selected lists. */
+export interface SceneFeature {
+  readonly rings: readonly Float32Array[];
+  readonly minX: number;
+  readonly minY: number;
+  readonly maxX: number;
+  readonly maxY: number;
+  readonly path: Path2D | null;
+}
+
+export interface SceneGeometry {
+  readonly features: readonly SceneFeature[];
+  readonly contextRings: readonly Float32Array[];
+  readonly selectedRings: readonly Float32Array[];
+  readonly contextPath: Path2D | null;
+  readonly selectedPath: Path2D | null;
+  readonly selectedBounds: PlaneBounds | null;
+  readonly allBounds: PlaneBounds | null;
+}
+
+export interface ScenePoints {
+  readonly raw: ScenePointLayer;
+  readonly harmonized: ScenePointLayer;
+}
+
 export interface MapScene {
   readonly regionId: string;
   readonly bounds: PlaneBounds;
+  /** Index-aligned with the geo feature list passed to buildScene. */
+  readonly features: readonly SceneFeature[];
   readonly contextRings: readonly Float32Array[];
   readonly selectedRings: readonly Float32Array[];
   readonly contextPath: Path2D | null;

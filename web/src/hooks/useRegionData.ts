@@ -648,6 +648,9 @@ export interface UseRegionsResult {
   retry: () => void;
 }
 
+// Shared so consumers memoizing on `regions` stay stable while the list is loading.
+const NO_REGIONS: readonly RegionSummary[] = [];
+
 export function useRegions(): UseRegionsResult {
   useSyncExternalStore(subscribeCache, getSnapshotVersion, getSnapshotVersion);
   const lang = useAppStore((state) => state.lang);
@@ -679,7 +682,7 @@ export function useRegions(): UseRegionsResult {
     status: regionsEntry.status,
     regionsEmpty,
     source: regionsEntry.data?.source ?? "FIRMS archive",
-    regions: regionsEntry.status === "ready" && regionsEntry.data ? regionsEntry.data.regions : [],
+    regions: regionsEntry.status === "ready" && regionsEntry.data ? regionsEntry.data.regions : NO_REGIONS,
     error,
     retry,
   };

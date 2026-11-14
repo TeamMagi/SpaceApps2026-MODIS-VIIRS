@@ -11,8 +11,12 @@ import {
   type MapPalette,
   type MapScene,
   type PlaneBounds,
+  type SceneFeature,
+  type SceneGeometry,
   type ScenePointInput,
+  type ScenePoints,
   type ScenePointLayer,
+  type ViewTransform,
 } from "./types";
 
 export const DEFAULT_MAX_DRAWN = 30_000;
@@ -402,29 +406,29 @@ function buildHarmonizedLayer(
   };
 }
 
-export function buildScene(
+const EMPTY_GEOMETRY: SceneGeometry = {
+  features: [],
+  contextRings: [],
+  selectedRings: [],
+  contextPath: null,
+  selectedPath: null,
+  selectedBounds: null,
+  allBounds: null,
+};
+
+/** Projected boundaries only; independent of points so period changes never re-project geometry. */
+export function buildSceneGeometry(
   datasetOrFeatures: GeoDataset | readonly GeoFeature[] | null | undefined,
   regionId: string,
-  points: ScenePointInput | null | undefined,
   projection: RegionProjection | null | undefined,
-): MapScene {
-  if (!projection) {
-    const empty = emptyPointLayer();
-    return {
-      regionId,
-      bounds: { minX: -1, minY: -1, maxX: 1, maxY: 1 },
-      contextRings: [],
-      selectedRings: [],
-      contextPath: null,
-      selectedPath: null,
-      raw: empty,
-      harmonized: empty,
-    };
-  }
+  selectedFeatures?: ReadonlySet<number> | null,
+): SceneGeometry {
+  if (!projection) return EMPTY_GEOMETRY;
 
   const features = extractFeatures(datasetOrFeatures);
   const contextRings: Float32Array[] = [];
   const selectedRings: Float32Array[] = [];
+  const sceneFeatures: SceneFeature[] = [];
 
   let selMinX = Infinity;
   let selMinY = Infinity;
@@ -438,9 +442,16 @@ export function buildScene(
 
   for (let fIdx = 0; fIdx < features.length; fIdx++) {
     const feature = features[fIdx];
-    const isSelected = feature.regionId === regionId;
+    const isSelected = selectedFeatures
+      ? selectedFeatures.has(fIdx)
+      : feature.regionId === regionId;
     const targetRings = isSelected ? selectedRings : contextRings;
     const polygons = feature.polygons;
+    const featureRings: Float32Array[] = [];
+    let fMinX = Infinity;
+    let fMinY = Infinity;
+    let fMaxX = -Infinity;
+    let fMaxY = -Infinity;
 
     for (let pIdx = 0; pIdx < polygons.length; pIdx++) {
       const rings = polygons[pIdx];
@@ -454,20 +465,61 @@ export function buildScene(
           const [px, py] = projection.project(pos[0], pos[1]);
           coords[i * 2] = px;
           coords[i * 2 + 1] = py;
-          if (px < allMinX) allMinX = px;
-          if (py < allMinY) allMinY = py;
-          if (px > allMaxX) allMaxX = px;
-          if (py > allMaxY) allMaxY = py;
-          if (isSelected) {
-            if (px < selMinX) selMinX = px;
-            if (py < selMinY) selMinY = py;
-            if (px > selMaxX) selMaxX = px;
-            if (py > selMaxY) selMaxY = py;
-          }
+          if (px < fMinX) fMinX = px;
+          if (py < fMinY) fMinY = py;
+          if (px > fMaxX) fMaxX = px;
+          if (py > fMaxY) fMaxY = py;
         }
         targetRings.push(coords);
+        featureRings.push(coords);
       }
     }
+
+    if (fMinX < allMinX) allMinX = fMinX;
+    if (fMinY < allMinY) allMinY = fMinY;
+    if (fMaxX > allMaxX) allMaxX = fMaxX;
+    if (fMaxY > allMaxY) allMaxY = fMaxY;
+    if (isSelected) {
+      if (fMinX < selMinX) selMinX = fMinX;
+      if (fMinY < selMinY) selMinY = fMinY;
+      if (fMaxX > selMaxX) selMaxX = fMaxX;
+      if (fMaxY > selMaxY) selMaxY = fMaxY;
+    }
+
+    sceneFeatures.push({
+      rings: featureRings,
+      minX: fMinX,
+      minY: fMinY,
+      maxX: fMaxX,
+      maxY: fMaxY,
+      path: buildPathFromRings(featureRings),
+    });
+  }
+
+  return {
+    features: sceneFeatures,
+    contextRings,
+    selectedRings,
+    contextPath: buildPathFromRings(contextRings),
+    selectedPath: buildPathFromRings(selectedRings),
+    selectedBounds:
+      Number.isFinite(selMinX) && Number.isFinite(selMaxX)
+        ? { minX: selMinX, minY: selMinY, maxX: selMaxX, maxY: selMaxY }
+        : null,
+    allBounds:
+      Number.isFinite(allMinX) && Number.isFinite(allMaxX)
+        ? { minX: allMinX, minY: allMinY, maxX: allMaxX, maxY: allMaxY }
+        : null,
+  };
+}
+
+export function buildScenePoints(
+  points: ScenePointInput | null | undefined,
+  projection: RegionProjection | null | undefined,
+): ScenePoints {
+  if (!projection) {
+    const empty = emptyPointLayer();
+    return { raw: empty, harmonized: empty };
   }
 
   const rawPoints = points?.raw ?? [];
@@ -488,12 +540,21 @@ export function buildScene(
     }
   }
 
-  const rawLayer = buildRawLayer(rawPoints, rawCountByHarmId, matchedHarmIds, projection);
-  const harmonizedLayer = buildHarmonizedLayer(harmPoints, rawCountByHarmId, projection);
+  return {
+    raw: buildRawLayer(rawPoints, rawCountByHarmId, matchedHarmIds, projection),
+    harmonized: buildHarmonizedLayer(harmPoints, rawCountByHarmId, projection),
+  };
+}
 
+export function composeScene(
+  regionId: string,
+  geometry: SceneGeometry,
+  points: ScenePoints,
+): MapScene {
+  const rawLayer = points.raw;
   let bounds: PlaneBounds;
-  if (Number.isFinite(selMinX) && Number.isFinite(selMaxX)) {
-    bounds = { minX: selMinX, minY: selMinY, maxX: selMaxX, maxY: selMaxY };
+  if (geometry.selectedBounds) {
+    bounds = geometry.selectedBounds;
   } else if (rawLayer.count > 0) {
     bounds = {
       minX: rawLayer.spatialIndex.minX,
@@ -501,8 +562,8 @@ export function buildScene(
       maxX: rawLayer.spatialIndex.maxX,
       maxY: rawLayer.spatialIndex.maxY,
     };
-  } else if (Number.isFinite(allMinX) && Number.isFinite(allMaxX)) {
-    bounds = { minX: allMinX, minY: allMinY, maxX: allMaxX, maxY: allMaxY };
+  } else if (geometry.allBounds) {
+    bounds = geometry.allBounds;
   } else {
     bounds = { minX: -1, minY: -1, maxX: 1, maxY: 1 };
   }
@@ -510,13 +571,28 @@ export function buildScene(
   return {
     regionId,
     bounds,
-    contextRings,
-    selectedRings,
-    contextPath: buildPathFromRings(contextRings),
-    selectedPath: buildPathFromRings(selectedRings),
+    features: geometry.features,
+    contextRings: geometry.contextRings,
+    selectedRings: geometry.selectedRings,
+    contextPath: geometry.contextPath,
+    selectedPath: geometry.selectedPath,
     raw: rawLayer,
-    harmonized: harmonizedLayer,
+    harmonized: points.harmonized,
   };
+}
+
+export function buildScene(
+  datasetOrFeatures: GeoDataset | readonly GeoFeature[] | null | undefined,
+  regionId: string,
+  points: ScenePointInput | null | undefined,
+  projection: RegionProjection | null | undefined,
+  selectedFeatures?: ReadonlySet<number> | null,
+): MapScene {
+  return composeScene(
+    regionId,
+    buildSceneGeometry(datasetOrFeatures, regionId, projection, selectedFeatures),
+    buildScenePoints(points, projection),
+  );
 }
 
 function isPaletteObject(val: MapPalette | Theme | undefined): val is MapPalette {
@@ -592,6 +668,52 @@ function drawHighlightedPoint(
   ctx.strokeStyle = isSelected ? palette.focus : palette.ink;
   ctx.lineWidth = isSelected ? 2.2 : 1.75;
   ctx.stroke();
+}
+
+export interface HighlightView {
+  readonly transform: ViewTransform;
+  readonly width: number;
+  readonly height: number;
+  readonly dpr: number;
+}
+
+const HIGHLIGHT_FILL_ALPHA = 0.55;
+
+/**
+ * Draws one country highlight on its own overlay canvas so hover changes never repaint the base
+ * map and its points. The fill is translucent because the overlay sits above the points.
+ */
+export function drawFeatureHighlight(
+  ctx: CanvasRenderingContext2D,
+  feature: SceneFeature | null | undefined,
+  view: HighlightView,
+  palette: MapPalette,
+): void {
+  const dpr = clamp(view.dpr, 1, 3);
+  const { width, height } = view;
+  if (width <= 0 || height <= 0) return;
+  const targetW = Math.round(width * dpr);
+  const targetH = Math.round(height * dpr);
+  if (ctx.canvas.width !== targetW) ctx.canvas.width = targetW;
+  if (ctx.canvas.height !== targetH) ctx.canvas.height = targetH;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  const { k, tx, ty } = view.transform;
+  if (!feature?.path || !(k > 0) || !Number.isFinite(tx) || !Number.isFinite(ty)) return;
+
+  ctx.save();
+  ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * tx, dpr * ty);
+  ctx.lineJoin = "round";
+  ctx.globalAlpha = HIGHLIGHT_FILL_ALPHA;
+  ctx.fillStyle = palette.land;
+  ctx.fill(feature.path, "evenodd");
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = palette.borderSelected;
+  ctx.lineWidth = 1.2 / k;
+  ctx.stroke(feature.path);
+  ctx.restore();
 }
 
 export function drawMap(

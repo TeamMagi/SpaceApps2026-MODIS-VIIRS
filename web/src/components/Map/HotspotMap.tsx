@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -10,9 +11,12 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { formatRegionName, TR_REGION_NAMES } from "../../content/copy";
+import { MAP_CONTEXT_NAMES_TR } from "../../content/copyMap";
 import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
-import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
+import { useMapPoints, useRegionData, useRegions } from "../../hooks/useRegionData";
+import { formatYearSpan } from "../../lib/format";
 import {
   createProjection,
   padBBox,
@@ -21,11 +25,19 @@ import {
   type GeoBBox,
   type PlaneBounds,
 } from "../../lib/geo/projection";
-import { featuresForRegion, isMappedRegion } from "../../lib/geo/regionCodes";
+import { matchRegionsToFeatures, type RegionRef } from "../../lib/geo/regionMatch";
 import { useAppStore } from "../../store/useAppStore";
-import type { HarmonizedPoint, MapState, RawPoint } from "../../types";
+import type { HarmonizedPoint, MapState, RawPoint, RegionSummary } from "../../types";
+import { hitTestFeatures } from "./engine/featureHit";
 import { HIT_TOLERANCE_PX, nearest, orderedForKeyboard } from "./engine/pointIndex";
-import { buildScene, drawMap, readPalette } from "./engine/renderer";
+import {
+  buildScenePoints,
+  buildSceneGeometry,
+  composeScene,
+  drawFeatureHighlight,
+  drawMap,
+  readPalette,
+} from "./engine/renderer";
 import {
   PointFlag,
   type DrawStats,
@@ -36,6 +48,7 @@ import {
 import { useMapViewport } from "./engine/useMapViewport";
 import { planeToScreen, screenToPlane } from "./engine/viewport";
 import MapControls from "./MapControls";
+import MapCountryTooltip from "./MapCountryTooltip";
 import MapLabels from "./MapLabels";
 import MapLegend from "./MapLegend";
 import MapStateOverlay from "./MapStateOverlay";
@@ -49,6 +62,10 @@ const IN_VIEW_MARGIN_PX = 12;
 const TAP_MOVE_THRESHOLD_PX = 6;
 const DOUBLE_TAP_MS = 300;
 const DOUBLE_TAP_PX = 24;
+const COUNTRY_CLICK_MAX_MOVE_PX = 4;
+const TOOLTIP_OFFSET_X_PX = 14;
+const TOOLTIP_OFFSET_Y_PX = 16;
+const TOOLTIP_EDGE_PX = 8;
 
 function readDpr(): number {
   return typeof window !== "undefined" &&
@@ -66,6 +83,8 @@ function HotspotMap() {
   const copy = useCopy();
   const { t, fmt } = copy;
   const { region } = useRegionData();
+  const { regions } = useRegions();
+  const setRegion = useAppStore((state) => state.setRegion);
   const points = useMapPoints();
   const geo = useGeoDataset();
   const { geometryHarmonized, showDuplicateRings, revealAnswer } = useHarmonizeTransition((v) => ({
@@ -79,8 +98,10 @@ function HotspotMap() {
   const lang = useAppStore((state) => state.lang);
 
   const summaryId = useId();
+  const pickHintId = useId();
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const highlightCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [canvasSize, setCanvasSize] = useState<ViewportSize>({ width: 0, height: 0 });
   const [dpr, setDpr] = useState<number>(readDpr);
@@ -136,13 +157,33 @@ function HotspotMap() {
     return () => observer.disconnect();
   }, []);
 
-  const mapped = isMappedRegion(region.id);
-  const regionFeatures = useMemo(
-    () => (geo.dataset && mapped ? featuresForRegion(geo.dataset, region.id) : []),
-    [geo.dataset, mapped, region.id],
+  const regionById = useMemo(() => {
+    const map = new Map<string, RegionSummary>();
+    for (const summary of regions) map.set(summary.id, summary);
+    return map;
+  }, [regions]);
+
+  const matchRefs = useMemo<readonly RegionRef[]>(() => {
+    const refs: RegionRef[] = regions.map((summary) => ({ id: summary.id, name: summary.name }));
+    if (!regionById.has(region.id)) refs.push({ id: region.id, name: region.name });
+    return refs;
+  }, [regions, regionById, region.id, region.name]);
+
+  const regionMatch = useMemo(
+    () => (geo.dataset ? matchRegionsToFeatures(geo.dataset.features, matchRefs) : null),
+    [geo.dataset, matchRefs],
   );
-  const hasRegionGeo = mapped && regionFeatures.length > 0;
-  const isUnmappedRegion = !mapped || (geo.status === "ready" && regionFeatures.length === 0);
+
+  const selectedFeatureSet = useMemo<ReadonlySet<number>>(
+    () => new Set(regionMatch?.featuresByRegion.get(region.id) ?? []),
+    [regionMatch, region.id],
+  );
+  const regionFeatures = useMemo(() => {
+    const dataset = geo.dataset;
+    return dataset ? [...selectedFeatureSet].map((idx) => dataset.features[idx]) : [];
+  }, [geo.dataset, selectedFeatureSet]);
+  const hasRegionGeo = regionFeatures.length > 0;
+  const isUnmappedRegion = geo.status === "ready" && !hasRegionGeo;
 
   const fallbackGeoBBox = useMemo<GeoBBox | null>(() => {
     if (!points.bbox) return null;
@@ -174,9 +215,17 @@ function HotspotMap() {
     [points.raw, points.harmonized],
   );
 
+  const sceneGeometry = useMemo(
+    () => buildSceneGeometry(geo.dataset, region.id, projection, selectedFeatureSet),
+    [geo.dataset, region.id, projection, selectedFeatureSet],
+  );
+  const scenePoints = useMemo(
+    () => buildScenePoints(pointInput, projection),
+    [pointInput, projection],
+  );
   const scene = useMemo<MapScene>(
-    () => buildScene(hasRegionGeo ? geo.dataset : null, region.id, pointInput, projection),
-    [geo.dataset, hasRegionGeo, region.id, pointInput, projection],
+    () => composeScene(region.id, sceneGeometry, scenePoints),
+    [region.id, sceneGeometry, scenePoints],
   );
 
   const viewportBounds = useMemo<PlaneBounds | null>(() => {
@@ -208,6 +257,73 @@ function HotspotMap() {
   const selectedIndex = selectedState.scope === selectionScope ? selectedState.index : null;
 
   const activeLayer = geometryHarmonized ? scene.harmonized : scene.raw;
+
+  const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+
+  /** Archive region a click on this feature would switch to, or null when it is not selectable. */
+  const selectableRegionFor = useCallback(
+    (featureIndex: number): string | null => {
+      const regionId = regionMatch?.regionByFeature[featureIndex] ?? null;
+      if (regionId === null || regionId === region.id) return null;
+      const summary = regionById.get(regionId);
+      return summary && !summary.tooLarge ? regionId : null;
+    },
+    [regionMatch, region.id, regionById],
+  );
+
+  const countryAt = useCallback(
+    (planeX: number, planeY: number): number =>
+      hitTestFeatures(
+        scene.features,
+        planeX,
+        planeY,
+        (idx) => (regionMatch?.regionByFeature[idx] ?? null) !== region.id,
+      ),
+    [scene.features, regionMatch, region.id],
+  );
+
+  const hoveredCountry = useMemo(() => {
+    const dataset = geo.dataset;
+    if (hoveredFeature === null || !dataset) return null;
+    const feature = dataset.features[hoveredFeature];
+    if (!feature) return null;
+    const regionId = regionMatch?.regionByFeature[hoveredFeature] ?? null;
+    if (regionId === region.id) return null;
+    const summary = regionId ? regionById.get(regionId) : undefined;
+    const contextName =
+      lang === "tr" ? (MAP_CONTEXT_NAMES_TR[feature.code] ?? feature.name) : feature.name;
+    if (!summary) {
+      return { name: contextName, detail: t("mapCountryNoData"), hint: null, available: false };
+    }
+    const name =
+      lang === "tr"
+        ? (TR_REGION_NAMES[summary.id] ?? MAP_CONTEXT_NAMES_TR[feature.code] ?? formatRegionName(summary, lang))
+        : formatRegionName(summary, lang);
+    if (summary.tooLarge) {
+      const detail =
+        summary.sizeMb !== null
+          ? t("regionTooLarge", {
+              size: fmt.number(summary.sizeMb, Number.isInteger(summary.sizeMb) ? 0 : 1),
+            })
+          : t("regionTooLargeNoSize");
+      return { name, detail, hint: null, available: false };
+    }
+    const coverage: string[] = [];
+    if (summary.modisYears) {
+      coverage.push(t("regionCoverageModis", { span: formatYearSpan(summary.modisYears) }));
+    }
+    if (summary.viirsYears) {
+      coverage.push(t("regionCoverageViirs", { span: formatYearSpan(summary.viirsYears) }));
+    }
+    return {
+      name,
+      detail: coverage.length > 0 ? coverage.join(" · ") : null,
+      hint: t("mapCountrySelectHint"),
+      available: true,
+    };
+  }, [geo.dataset, hoveredFeature, regionMatch, region.id, regionById, lang, t, fmt]);
+
+  const highlightedFeature = hoveredCountry?.available ? hoveredFeature : null;
 
   const [drawStats, setDrawStats] = useState<DrawStats>({
     drawn: 0,
@@ -259,6 +375,22 @@ function HotspotMap() {
     theme,
     paletteVersion,
   ]);
+
+  useEffect(() => {
+    if (typeof requestAnimationFrame === "undefined") return;
+    const rafId = requestAnimationFrame(() => {
+      const canvas = highlightCanvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!canvas || !ctx) return;
+      drawFeatureHighlight(
+        ctx,
+        highlightedFeature !== null ? scene.features[highlightedFeature] : null,
+        { transform: viewport.transform, width: canvasSize.width, height: canvasSize.height, dpr },
+        readPalette(viewportRef.current ?? canvas, theme),
+      );
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [highlightedFeature, scene.features, viewport.transform, canvasSize, dpr, theme, paletteVersion]);
 
   const harmById = useMemo(() => {
     const map = new Map<string, HarmonizedPoint>();
@@ -361,6 +493,101 @@ function HotspotMap() {
   });
   const hoverRafRef = useRef<number | null>(null);
   const hoverPosRef = useRef<{ x: number; y: number } | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const pendingCountryTapRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canvasSizeRef = useRef(canvasSize);
+  const tooltipSizeRef = useRef({ width: 0, height: 0 });
+
+  useLayoutEffect(() => {
+    canvasSizeRef.current = canvasSize;
+  }, [canvasSize]);
+
+  /** Writes only; the tooltip size is measured once per content change, never per pointer move. */
+  const positionTooltip = useCallback(() => {
+    const node = tooltipRef.current;
+    const pos = hoverPosRef.current;
+    if (!node || !pos) return;
+    const { width, height } = canvasSizeRef.current;
+    const { width: w, height: h } = tooltipSizeRef.current;
+    // Prefer below-right of the pointer, flip when that overflows, then clamp inside the viewport.
+    let x = pos.x + TOOLTIP_OFFSET_X_PX;
+    if (x + w > width - TOOLTIP_EDGE_PX) x = pos.x - TOOLTIP_OFFSET_X_PX - w;
+    let y = pos.y + TOOLTIP_OFFSET_Y_PX;
+    if (y + h > height - TOOLTIP_EDGE_PX) y = pos.y - TOOLTIP_OFFSET_Y_PX - h;
+    x = Math.max(TOOLTIP_EDGE_PX, Math.min(x, width - w - TOOLTIP_EDGE_PX));
+    y = Math.max(TOOLTIP_EDGE_PX, Math.min(y, height - h - TOOLTIP_EDGE_PX));
+    node.style.setProperty("--x", `${Math.round(x)}px`);
+    node.style.setProperty("--y", `${Math.round(y)}px`);
+  }, []);
+
+  const clearHoveredFeature = useCallback(() => {
+    setHoveredFeature((prev) => (prev === null ? prev : null));
+  }, []);
+
+  const cancelPendingCountryTap = useCallback(() => {
+    if (pendingCountryTapRef.current !== null) {
+      clearTimeout(pendingCountryTapRef.current);
+      pendingCountryTapRef.current = null;
+    }
+  }, []);
+
+  // A region picked elsewhere (header, URL) must not be overwritten by a tap still in its double-tap wait.
+  useEffect(() => cancelPendingCountryTap, [region.id, cancelPendingCountryTap]);
+
+  const runHover = useCallback(() => {
+    const pos = hoverPosRef.current;
+    if (!pos || viewport.transform.k <= 0) {
+      setHoverState((prev) =>
+        prev.scope === selectionScope && prev.index === null
+          ? prev
+          : { scope: selectionScope, index: null },
+      );
+      clearHoveredFeature();
+      return;
+    }
+    const [planeX, planeY] = screenToPlane(viewport.transform, pos.x, pos.y);
+    let resolved: number | null = null;
+    if (activeLayer.count > 0) {
+      const maxDistPlane = Math.max(HIT_TOLERANCE_PX, 12) / viewport.transform.k;
+      const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane);
+      resolved = idx >= 0 ? idx : null;
+    }
+    setHoverState((prev) =>
+      prev.scope === selectionScope && prev.index === resolved
+        ? prev
+        : { scope: selectionScope, index: resolved },
+    );
+    // A hotspot under the pointer wins over the country beneath it.
+    const feature = resolved === null ? countryAt(planeX, planeY) : -1;
+    const nextFeature = feature >= 0 ? feature : null;
+    setHoveredFeature((prev) => (prev === nextFeature ? prev : nextFeature));
+    positionTooltip();
+  }, [viewport.transform, activeLayer, selectionScope, countryAt, clearHoveredFeature, positionTooltip]);
+
+  const runHoverRef = useRef(runHover);
+  useLayoutEffect(() => {
+    runHoverRef.current = runHover;
+  }, [runHover]);
+
+  const scheduleHover = useCallback(() => {
+    if (hoverRafRef.current !== null || typeof requestAnimationFrame === "undefined") return;
+    hoverRafRef.current = requestAnimationFrame(() => {
+      hoverRafRef.current = null;
+      runHoverRef.current();
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    const node = tooltipRef.current;
+    if (!hoveredCountry || !node) return;
+    tooltipSizeRef.current = { width: node.offsetWidth, height: node.offsetHeight };
+    positionTooltip();
+  }, [hoveredCountry, positionTooltip]);
+
+  // Zoom (wheel, keys, buttons) moves countries under a resting pointer.
+  useEffect(() => {
+    if (hoverPosRef.current && pointerDownRef.current === null) scheduleHover();
+  }, [viewport.transform, scene, scheduleHover]);
 
   const setViewportEl = useCallback(
     (el: HTMLDivElement | null) => {
@@ -375,6 +602,9 @@ function HotspotMap() {
       if (hoverRafRef.current !== null && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(hoverRafRef.current);
       }
+      if (pendingCountryTapRef.current !== null) {
+        clearTimeout(pendingCountryTapRef.current);
+      }
     };
   }, []);
 
@@ -386,6 +616,7 @@ function HotspotMap() {
 
   const handlePointerDown = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
+      cancelPendingCountryTap();
       if (isUiTarget(e.target)) return;
       if (e.button !== 0) return;
 
@@ -418,7 +649,7 @@ function HotspotMap() {
 
       viewport.bind.onPointerDown(e);
     },
-    [viewport.bind],
+    [viewport.bind, cancelPendingCountryTap],
   );
 
   const handlePointerMove = useCallback(
@@ -430,9 +661,11 @@ function HotspotMap() {
 
       const down = pointerDownRef.current;
       if (down && down.id === e.pointerId) {
-        if (Math.hypot(x - down.x, y - down.y) > TAP_MOVE_THRESHOLD_PX) {
+        if (!down.moved && Math.hypot(x - down.x, y - down.y) > TAP_MOVE_THRESHOLD_PX) {
           down.moved = true;
           lastTouchTapRef.current = { time: 0, x: 0, y: 0 };
+          hoverPosRef.current = null;
+          clearHoveredFeature();
         }
         return;
       }
@@ -446,35 +679,14 @@ function HotspotMap() {
             ? prev
             : { scope: selectionScope, index: null },
         );
+        clearHoveredFeature();
         return;
       }
 
       hoverPosRef.current = { x, y };
-      if (hoverRafRef.current === null && typeof requestAnimationFrame !== "undefined") {
-        hoverRafRef.current = requestAnimationFrame(() => {
-          hoverRafRef.current = null;
-          const pos = hoverPosRef.current;
-          if (!pos || activeLayer.count === 0 || viewport.transform.k <= 0) {
-            setHoverState((prev) =>
-              prev.scope === selectionScope && prev.index === null
-                ? prev
-                : { scope: selectionScope, index: null },
-            );
-            return;
-          }
-          const [planeX, planeY] = screenToPlane(viewport.transform, pos.x, pos.y);
-          const maxDistPlane = Math.max(HIT_TOLERANCE_PX, 12) / viewport.transform.k;
-          const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane);
-          const resolved = idx >= 0 ? idx : null;
-          setHoverState((prev) =>
-            prev.scope === selectionScope && prev.index === resolved
-              ? prev
-              : { scope: selectionScope, index: resolved },
-          );
-        });
-      }
+      scheduleHover();
     },
-    [viewport.bind, viewport.transform, activeLayer, selectionScope],
+    [viewport.bind, selectionScope, clearHoveredFeature, scheduleHover],
   );
 
   const clearPointerTracking = useCallback((pointerId: number) => {
@@ -500,24 +712,57 @@ function HotspotMap() {
       if (!down || down.id !== e.pointerId) return;
       pointerDownRef.current = null;
 
-      if (e.button !== 0 || wasSuppressed || down.moved || isUiTarget(e.target)) {
-        return;
-      }
-      if (activeLayer.count === 0 || viewport.transform.k <= 0) return;
-
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const [planeX, planeY] = screenToPlane(viewport.transform, x, y);
-      const maxDistPlane = Math.max(HIT_TOLERANCE_PX, 14) / viewport.transform.k;
-      const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane);
-      const nextIdx = idx >= 0 ? idx : null;
-      setSelectedState({ scope: selectionScope, index: nextIdx });
-      if (nextIdx !== null) {
-        viewportRef.current?.focus({ preventScroll: true });
+      // Hover tracking pauses while a button is held; resume it where the pointer was released.
+      if (e.pointerType === "mouse" && !isUiTarget(e.target)) {
+        hoverPosRef.current = { x, y };
+        scheduleHover();
       }
+
+      if (e.button !== 0 || wasSuppressed || down.moved || isUiTarget(e.target)) {
+        return;
+      }
+      if (viewport.transform.k <= 0) return;
+
+      const [planeX, planeY] = screenToPlane(viewport.transform, x, y);
+
+      if (activeLayer.count > 0) {
+        const maxDistPlane = Math.max(HIT_TOLERANCE_PX, 14) / viewport.transform.k;
+        const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane);
+        const nextIdx = idx >= 0 ? idx : null;
+        setSelectedState({ scope: selectionScope, index: nextIdx });
+        if (nextIdx !== null) {
+          viewportRef.current?.focus({ preventScroll: true });
+          return;
+        }
+      }
+
+      if (Math.hypot(x - down.x, y - down.y) >= COUNTRY_CLICK_MAX_MOVE_PX) return;
+      const feature = countryAt(planeX, planeY);
+      const targetRegion = feature >= 0 ? selectableRegionFor(feature) : null;
+      if (targetRegion === null) return;
+
+      // Wait out the double-tap/double-click window so a zoom gesture never switches region first;
+      // the next pointerdown or dblclick cancels it.
+      pendingCountryTapRef.current = setTimeout(() => {
+        pendingCountryTapRef.current = null;
+        clearHoveredFeature();
+        setRegion(targetRegion);
+      }, DOUBLE_TAP_MS);
     },
-    [viewport.bind, viewport.transform, activeLayer, selectionScope],
+    [
+      viewport.bind,
+      viewport.transform,
+      activeLayer,
+      selectionScope,
+      countryAt,
+      selectableRegionFor,
+      setRegion,
+      clearHoveredFeature,
+      scheduleHover,
+    ],
   );
 
   const handlePointerCancel = useCallback(
@@ -543,14 +788,16 @@ function HotspotMap() {
         ? prev
         : { scope: selectionScope, index: null },
     );
-  }, [selectionScope]);
+    clearHoveredFeature();
+  }, [selectionScope, clearHoveredFeature]);
 
   const handleDoubleClick = useCallback(
     (e: ReactMouseEvent<HTMLElement>) => {
+      cancelPendingCountryTap();
       if (isUiTarget(e.target)) return;
       viewport.bind.onDoubleClick(e);
     },
-    [viewport.bind],
+    [viewport.bind, cancelPendingCountryTap],
   );
 
   const handleKeyDown = useCallback(
@@ -707,6 +954,9 @@ function HotspotMap() {
       <p id={summaryId} className={styles.srOnly}>
         {ariaSummaryText}
       </p>
+      <p id={pickHintId} className={styles.srOnly}>
+        {t("mapCountryPickHint")}
+      </p>
       <div className={styles.srOnly} aria-live="polite" aria-atomic="true">
         {liveAnnouncement}
       </div>
@@ -733,7 +983,8 @@ function HotspotMap() {
         className={styles.viewport}
         role="group"
         aria-label={t("mapLabel")}
-        aria-describedby={summaryId}
+        aria-describedby={`${summaryId} ${pickHintId}`}
+        data-country-hover={highlightedFeature !== null ? "available" : undefined}
         tabIndex={0}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -745,11 +996,13 @@ function HotspotMap() {
         onKeyDown={handleKeyDown}
       >
         <canvas ref={canvasRef} className={styles.canvas} />
+        <canvas ref={highlightCanvasRef} className={styles.canvas} aria-hidden="true" />
 
         {hasRegionGeo && (
           <MapLabels
             dataset={geo.dataset}
             regionId={region.id}
+            featureRegionIds={regionMatch?.regionByFeature}
             selectedDisplayName={region.displayName}
             projection={projection}
             transform={viewport.transform}
@@ -766,6 +1019,16 @@ function HotspotMap() {
           onZoomOut={viewport.zoomOut}
           onReset={viewport.reset}
         />
+
+        {hoveredCountry && !activeDetail.rawPoint && !activeDetail.harmPoint && (
+          <MapCountryTooltip
+            ref={tooltipRef}
+            name={hoveredCountry.name}
+            detail={hoveredCountry.detail}
+            hint={hoveredCountry.hint}
+            available={hoveredCountry.available}
+          />
+        )}
 
         {(activeDetail.rawPoint || activeDetail.harmPoint) && (
           <PointDetail

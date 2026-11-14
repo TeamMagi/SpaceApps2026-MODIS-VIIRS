@@ -22,6 +22,10 @@
   outline: none;
 }
 
+.viewport[data-country-hover="available"] {
+  cursor: pointer;
+}
+
 .viewport:active {
   cursor: grabbing;
 }

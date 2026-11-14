@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { formatRegionName } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
+import { formatYearSpan } from "../../lib/format";
 import { useRegions } from "../../hooks/useRegionData";
 import { useAppStore } from "../../store/useAppStore";
 import type { RegionId, RegionSummary } from "../../types";
@@ -29,10 +30,6 @@ function normalizeSearchText(text: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-}
-
-function formatYearSpan(span: readonly [number, number]): string {
-  return span[0] === span[1] ? String(span[0]) : `${span[0]}–${span[1]}`;
 }
 
 function optionDomId(listboxId: string, regionId: RegionId): string {

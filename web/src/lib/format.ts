@@ -102,6 +102,11 @@ export function formatUtcDateTime(lang: Lang, input: string | Date): string {
   return `${day} ${monthName(lang, date.getUTCMonth() + 1)} ${date.getUTCFullYear()} ${hour}:${minute} UTC`;
 }
 
+/** "2012–2025", or a single year when the span is one year long. */
+export function formatYearSpan(span: readonly [number, number]): string {
+  return span[0] === span[1] ? String(span[0]) : `${span[0]}–${span[1]}`;
+}
+
 /** "2020-07" — used in URLs and file names. */
 export function monthKey(ref: MonthRef): string {
   return `${ref.year}-${String(ref.month).padStart(2, "0")}`;

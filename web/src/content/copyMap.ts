@@ -37,6 +37,9 @@ export const mapCopyEn = {
   mapAriaSummaryLoading: "{region}, loading detections",
   mapAriaSummaryEmpty: "{region}, {period}, 0 detections",
   mapAriaSummaryError: "{region}, error loading detections",
+  mapCountryPickHint: "Click a country with archive data to switch to it. The Region menu lists every region.",
+  mapCountrySelectHint: "Click to view",
+  mapCountryNoData: "No data yet",
 } as const;
 
 export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
@@ -76,6 +79,9 @@ export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
   mapAriaSummaryLoading: "{region}, tespitler yükleniyor",
   mapAriaSummaryEmpty: "{region}, {period}, 0 tespit",
   mapAriaSummaryError: "{region}, tespitler yüklenirken hata oluştu",
+  mapCountryPickHint: "Arşiv verisi olan bir ülkeye tıklayarak o bölgeye geçin. Tüm bölgeler Bölge menüsünde listelenir.",
+  mapCountrySelectHint: "Görüntülemek için tıklayın",
+  mapCountryNoData: "Henüz veri yok",
 };
 
 export const MAP_CONTEXT_NAMES_TR: Readonly<Record<string, string>> = {
