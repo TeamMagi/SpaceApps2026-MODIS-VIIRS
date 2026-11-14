@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -11,7 +12,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
@@ -20,19 +21,33 @@ use pyrosync_core::effort::EffortFactor;
 use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
+use pyrosync_firms::archive::{ArchiveClient, archive_years, filter_bbox};
 use pyrosync_firms::{DayRange, FirmsClient, FirmsSource};
 
 const DEFAULT_CACHE_BUDGET_MB: usize = 128;
 const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 300;
+const DEFAULT_ARCHIVE_CACHE_DIR: &str = ".cache/firms-archive";
+const ARCHIVE_FETCH_CONCURRENCY: usize = 4;
 // NRT (`days`) responses update continuously as new satellite passes arrive, so keep their TTL short.
 const CACHE_TTL_NRT_SECS: u64 = 600;
-// Archive (`start`/`end`) responses cover finalized science-quality data that no longer changes.
+// Archive (`start`/`end` and `/api/calendar`) responses cover finalized science-quality data that no longer changes.
 const CACHE_TTL_ARCHIVE_SECS: u64 = 21_600;
 const X_CACHE_HEADER: HeaderName = HeaderName::from_static("x-cache");
+
+// MODIS Terra and Aqua share the same `modis` archive CSVs (tagged per-row by `satellite`).
+const ARCHIVE_FETCH_SENSORS: [Sensor; 2] = [Sensor::ModisTerra, Sensor::ViirsSNPP];
+const ARCHIVE_AVAILABLE_SENSORS: [Sensor; 3] = [
+    Sensor::ModisTerra,
+    Sensor::ModisAqua,
+    Sensor::ViirsSNPP,
+];
+const ARCHIVE_UNAVAILABLE_SENSORS: [Sensor; 2] = [Sensor::ViirsNOAA20, Sensor::ViirsNOAA21];
+const ARCHIVE_COVERAGE_NOTE: &str = "The FIRMS country archive packages MODIS and VIIRS SNPP only; NOAA-20 and NOAA-21 are not included, so this calendar covers a smaller fleet than the near-real-time endpoints.";
 
 #[derive(Clone)]
 struct AppState {
     firms: Option<Arc<FirmsClient>>,
+    archive: Option<Arc<ArchiveClient>>,
     cache: Arc<RwLock<ResponseCache>>,
     request_timeout: Option<Duration>,
 }
@@ -151,6 +166,80 @@ struct HarmonizeParams {
     start: Option<String>,
     end: Option<String>,
     include_raw: Option<bool>,
+}
+
+#[derive(Deserialize)]
+struct CalendarParams {
+    country: String,
+    from: Option<i32>,
+    to: Option<i32>,
+    west: Option<f64>,
+    south: Option<f64>,
+    east: Option<f64>,
+    north: Option<f64>,
+}
+
+#[derive(Serialize)]
+struct CalendarYears {
+    requested_from: i32,
+    requested_to: i32,
+    effective_from: i32,
+    effective_to: i32,
+}
+
+#[derive(Serialize)]
+struct ArchiveCoverage {
+    sensors_available: Vec<Sensor>,
+    sensors_unavailable: Vec<Sensor>,
+    note: &'static str,
+}
+
+#[derive(Serialize)]
+struct CalendarCounts {
+    raw_detections: usize,
+    harmonized_records: usize,
+}
+
+#[derive(Serialize)]
+struct SensorYearFetch {
+    sensor: Sensor,
+    year: i32,
+    detections: usize,
+}
+
+#[derive(Serialize)]
+struct SensorYearFailure {
+    sensor: Sensor,
+    year: i32,
+    error: String,
+}
+
+#[derive(Serialize)]
+struct ArchiveFetchSummary {
+    per_sensor_year: Vec<SensorYearFetch>,
+    failures: Vec<SensorYearFailure>,
+}
+
+#[derive(Serialize)]
+struct CalendarResponse {
+    country: String,
+    years: CalendarYears,
+    bbox: Option<BBox>,
+    coverage: ArchiveCoverage,
+    counts: CalendarCounts,
+    calendar: Vec<CalendarCell>,
+    effort: EffortResponse,
+    fetch: ArchiveFetchSummary,
+    warnings: Vec<String>,
+}
+
+struct ValidatedCalendarQuery {
+    country: String,
+    years: CalendarYears,
+    clamped: bool,
+    archive_min_year: i32,
+    archive_max_year: i32,
+    bbox: Option<BBox>,
 }
 
 #[derive(Serialize)]
@@ -496,6 +585,7 @@ fn build_router(state: AppState, static_dir: &str, cors: CorsLayer) -> Router {
         .route("/availability", get(availability))
         .route("/compare", get(compare))
         .route("/stats", get(stats))
+        .route("/calendar", get(calendar))
         .fallback(api_not_found)
         .with_state(state);
 
@@ -526,12 +616,29 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
+    let archive_cache_dir = std::env::var("ARCHIVE_CACHE_DIR")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(DEFAULT_ARCHIVE_CACHE_DIR));
+    let archive = match ArchiveClient::new(archive_cache_dir.clone()) {
+        Ok(client) => Some(Arc::new(client)),
+        Err(err) => {
+            tracing::error!(
+                "Failed to initialize FIRMS archive client at {}: {err}",
+                archive_cache_dir.display()
+            );
+            None
+        }
+    };
+
     let cache_budget_bytes = parse_cache_budget_bytes(std::env::var("CACHE_BUDGET_MB").ok().as_deref());
     let request_timeout = parse_request_timeout(std::env::var("REQUEST_TIMEOUT_SECS").ok().as_deref());
     let cors_layer = build_cors_layer(std::env::var("CORS_ALLOWED_ORIGINS").ok().as_deref());
 
     let state = AppState {
         firms,
+        archive,
         cache: Arc::new(RwLock::new(ResponseCache::new(cache_budget_bytes))),
         request_timeout,
     };
@@ -649,16 +756,16 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
     })
 }
 
-fn build_warnings(report: &ReportResponse) -> (Option<String>, Vec<String>) {
+fn build_warnings_from_counts(
+    failure_count: usize,
+    singular: &str,
+    plural: &str,
+    uncovered: &[(String, String)],
+) -> (Option<String>, Vec<String>) {
     // Effort normalization infers each month's active fleet from retrieved detections, so upstream
-    // FIRMS failures can drop a satellite and silently apply the wrong Ω factor.
-    let failure_count = report.failures.len();
+    // fetch failures can drop a satellite and silently apply the wrong Ω factor.
     let reason = (failure_count > 0).then(|| {
-        let noun = if failure_count == 1 {
-            "FIRMS request"
-        } else {
-            "FIRMS requests"
-        };
+        let noun = if failure_count == 1 { singular } else { plural };
         format!(
             "{failure_count} {noun} failed; missing source data may undercount monthly platform configurations and produce inaccurate effort_omega values."
         )
@@ -668,9 +775,8 @@ fn build_warnings(report: &ReportResponse) -> (Option<String>, Vec<String>) {
     if let Some(msg) = &reason {
         warnings.push(msg.clone());
     }
-    if !report.uncovered.is_empty() {
-        let ranges = report
-            .uncovered
+    if !uncovered.is_empty() {
+        let ranges = uncovered
             .iter()
             .map(|(start, end)| format!("{start}..{end}"))
             .collect::<Vec<_>>()
@@ -683,11 +789,24 @@ fn build_warnings(report: &ReportResponse) -> (Option<String>, Vec<String>) {
     (reason, warnings)
 }
 
-fn build_effort_and_warnings(
+fn build_warnings(report: &ReportResponse) -> (Option<String>, Vec<String>) {
+    build_warnings_from_counts(
+        report.failures.len(),
+        "FIRMS request",
+        "FIRMS requests",
+        &report.uncovered,
+    )
+}
+
+fn build_effort_and_warnings_from_counts(
     harmonized: &[HarmonizedHotspot],
-    report: &ReportResponse,
+    failure_count: usize,
+    singular: &str,
+    plural: &str,
+    uncovered: &[(String, String)],
 ) -> (EffortResponse, Vec<String>) {
-    let (reason, warnings) = build_warnings(report);
+    let (reason, warnings) =
+        build_warnings_from_counts(failure_count, singular, plural, uncovered);
     let effort = EffortResponse {
         reliable: reason.is_none(),
         reason,
@@ -695,6 +814,19 @@ fn build_effort_and_warnings(
     };
 
     (effort, warnings)
+}
+
+fn build_effort_and_warnings(
+    harmonized: &[HarmonizedHotspot],
+    report: &ReportResponse,
+) -> (EffortResponse, Vec<String>) {
+    build_effort_and_warnings_from_counts(
+        harmonized,
+        report.failures.len(),
+        "FIRMS request",
+        "FIRMS requests",
+        &report.uncovered,
+    )
 }
 
 fn normalize_zero(v: f64) -> f64 {
@@ -713,6 +845,25 @@ fn build_cache_key(route: &str, bbox: &BBox, window: &TimeWindow, include_raw: b
         normalize_zero(bbox.east),
         normalize_zero(bbox.north),
     )
+}
+
+fn build_calendar_cache_key(
+    country: &str,
+    from: i32,
+    to: i32,
+    bbox: Option<&BBox>,
+) -> String {
+    let bbox_part = match bbox {
+        Some(b) => format!(
+            "{},{},{},{}",
+            normalize_zero(b.west),
+            normalize_zero(b.south),
+            normalize_zero(b.east),
+            normalize_zero(b.north),
+        ),
+        None => "none".to_string(),
+    };
+    format!("calendar|{country}|from={from}&to={to}|{bbox_part}")
 }
 
 fn cache_ttl_for_window(window: &TimeWindow) -> Duration {
@@ -1109,6 +1260,272 @@ async fn stats(
     .await
 }
 
+fn archive_year_bounds() -> (i32, i32) {
+    let mut min_year = i32::MAX;
+    let mut max_year = i32::MIN;
+    for sensor in ARCHIVE_AVAILABLE_SENSORS {
+        if let Some(range) = archive_years(sensor) {
+            min_year = min_year.min(*range.start());
+            max_year = max_year.max(*range.end());
+        }
+    }
+    (min_year, max_year)
+}
+
+fn archive_coverage() -> ArchiveCoverage {
+    ArchiveCoverage {
+        sensors_available: ARCHIVE_AVAILABLE_SENSORS.to_vec(),
+        sensors_unavailable: ARCHIVE_UNAVAILABLE_SENSORS.to_vec(),
+        note: ARCHIVE_COVERAGE_NOTE,
+    }
+}
+
+fn parse_calendar_params(params: &CalendarParams) -> Result<ValidatedCalendarQuery, ApiError> {
+    if params.country.is_empty() {
+        return Err(ApiError::bad_request(
+            "Parameter 'country' must not be empty",
+        ));
+    }
+    // Reject path separators and shell metacharacters because `country` is interpolated into archive URLs and cache paths.
+    if !params
+        .country
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
+        return Err(ApiError::bad_request(
+            "Parameter 'country' may contain only ASCII letters, digits, '_' and '-'",
+        ));
+    }
+
+    let (archive_min_year, archive_max_year) = archive_year_bounds();
+    let requested_from = params.from.unwrap_or(archive_min_year);
+    let requested_to = params.to.unwrap_or(archive_max_year);
+    if requested_from > requested_to {
+        return Err(ApiError::bad_request(format!(
+            "'from' year ({requested_from}) must not be greater than 'to' year ({requested_to})"
+        )));
+    }
+
+    let effective_from = requested_from.max(archive_min_year);
+    let effective_to = requested_to.min(archive_max_year);
+    let clamped = effective_from != requested_from || effective_to != requested_to;
+    let bbox = parse_optional_bbox(params)?;
+
+    Ok(ValidatedCalendarQuery {
+        country: params.country.clone(),
+        years: CalendarYears {
+            requested_from,
+            requested_to,
+            effective_from,
+            effective_to,
+        },
+        clamped,
+        archive_min_year,
+        archive_max_year,
+        bbox,
+    })
+}
+
+fn build_calendar_response(
+    query: &ValidatedCalendarQuery,
+    raw_detections: usize,
+    harmonized: &[HarmonizedHotspot],
+    calendar: Vec<CalendarCell>,
+    per_sensor_year: Vec<SensorYearFetch>,
+    failures: Vec<SensorYearFailure>,
+) -> CalendarResponse {
+    let (effort, mut warnings) = build_effort_and_warnings_from_counts(
+        harmonized,
+        failures.len(),
+        "FIRMS archive download",
+        "FIRMS archive downloads",
+        &[],
+    );
+
+    if query.clamped {
+        if query.years.effective_from > query.years.effective_to {
+            warnings.push(format!(
+                "Requested years {}..={} fall outside FIRMS country archive coverage ({}..={}); no archive data is available for this range.",
+                query.years.requested_from,
+                query.years.requested_to,
+                query.archive_min_year,
+                query.archive_max_year,
+            ));
+        } else {
+            warnings.push(format!(
+                "Requested years {}..={} were clamped to FIRMS country archive coverage ({}..={}).",
+                query.years.requested_from,
+                query.years.requested_to,
+                query.years.effective_from,
+                query.years.effective_to,
+            ));
+        }
+    }
+
+    let coverage = archive_coverage();
+    warnings.push(coverage.note.to_string());
+
+    CalendarResponse {
+        country: query.country.clone(),
+        years: CalendarYears {
+            requested_from: query.years.requested_from,
+            requested_to: query.years.requested_to,
+            effective_from: query.years.effective_from,
+            effective_to: query.years.effective_to,
+        },
+        bbox: query.bbox.clone(),
+        coverage,
+        counts: CalendarCounts {
+            raw_detections,
+            harmonized_records: harmonized.len(),
+        },
+        calendar,
+        effort,
+        fetch: ArchiveFetchSummary {
+            per_sensor_year,
+            failures,
+        },
+        warnings,
+    }
+}
+
+async fn run_calendar_pipeline(
+    archive: &Arc<ArchiveClient>,
+    query: &ValidatedCalendarQuery,
+) -> Result<CalendarResponse, ApiError> {
+    let mut modis = Vec::new();
+    let mut viirs = Vec::new();
+    let mut per_sensor_year = Vec::new();
+    let mut failures = Vec::new();
+
+    if query.years.effective_from <= query.years.effective_to {
+        let semaphore = Arc::new(Semaphore::new(ARCHIVE_FETCH_CONCURRENCY));
+        let mut handles = Vec::new();
+
+        for year in query.years.effective_from..=query.years.effective_to {
+            for sensor in ARCHIVE_FETCH_SENSORS {
+                if !archive.covers(sensor, year) {
+                    continue;
+                }
+                let permit = Arc::clone(&semaphore)
+                    .acquire_owned()
+                    .await
+                    .map_err(|e| ApiError::internal(format!("Archive worker semaphore closed: {e}")))?;
+                let archive = Arc::clone(archive);
+                let country = query.country.clone();
+                let bbox = query.bbox.clone();
+
+                let handle = tokio::spawn(async move {
+                    let _permit = permit;
+                    let mut hotspots = archive
+                        .fetch_country_year(sensor, &country, year)
+                        .await
+                        .map_err(|err| err.to_string())?;
+                    // Filter per country-year before merging decades of detections to bound peak memory.
+                    pyrosync_firms::parse::retain_wildfires(&mut hotspots);
+                    if let Some(ref bbox) = bbox {
+                        hotspots = filter_bbox(hotspots, bbox);
+                    }
+                    Ok::<Vec<Hotspot>, String>(hotspots)
+                });
+                handles.push((sensor, year, handle));
+            }
+        }
+
+        for (sensor, year, handle) in handles {
+            match handle.await {
+                Ok(Ok(mut hotspots)) => {
+                    per_sensor_year.push(SensorYearFetch {
+                        sensor,
+                        year,
+                        detections: hotspots.len(),
+                    });
+                    if sensor.is_modis() {
+                        modis.append(&mut hotspots);
+                    } else {
+                        viirs.append(&mut hotspots);
+                    }
+                }
+                Ok(Err(error)) => {
+                    failures.push(SensorYearFailure {
+                        sensor,
+                        year,
+                        error,
+                    });
+                }
+                Err(join_err) => {
+                    failures.push(SensorYearFailure {
+                        sensor,
+                        year,
+                        error: join_err.to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    let raw_detections = modis.len() + viirs.len();
+    let harmonized = pyrosync_core::harmonize::harmonize(modis, viirs);
+    let calendar_cells = pyrosync_core::calendar::build_calendar(&harmonized);
+
+    Ok(build_calendar_response(
+        query,
+        raw_detections,
+        &harmonized,
+        calendar_cells,
+        per_sensor_year,
+        failures,
+    ))
+}
+
+async fn run_calendar_with_timeout(
+    state: &AppState,
+    query: &ValidatedCalendarQuery,
+) -> Result<CalendarResponse, ApiError> {
+    let archive = require_archive_client(state)?;
+    match state.request_timeout {
+        Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, query)).await {
+            Ok(result) => result,
+            Err(_) => Err(ApiError::gateway_timeout(format!(
+                "Request timed out after {}s; cold-cache FIRMS country archive downloads can take several minutes for large countries or multi-year ranges. Increase REQUEST_TIMEOUT_SECS or narrow the year range.",
+                timeout.as_secs()
+            ))),
+        },
+        None => run_calendar_pipeline(archive, query).await,
+    }
+}
+
+async fn calendar(
+    State(state): State<AppState>,
+    Query(params): Query<CalendarParams>,
+) -> Result<Response, ApiError> {
+    let query = parse_calendar_params(&params)?;
+    let key = build_calendar_cache_key(
+        &query.country,
+        query.years.requested_from,
+        query.years.requested_to,
+        query.bbox.as_ref(),
+    );
+
+    if let Some(cached_body) = get_cached(&state.cache, &key).await {
+        return Ok(json_bytes_response(cached_body, "HIT"));
+    }
+
+    // Archive downloads do not use a FIRMS API key, so this endpoint works without `require_firms_client`.
+    let response = run_calendar_with_timeout(&state, &query).await?;
+    let body = serde_json::to_vec(&response)
+        .map_err(|e| ApiError::internal(format!("Failed to serialize response: {e}")))?;
+
+    put_cached(
+        &state.cache,
+        key,
+        &body,
+        Duration::from_secs(CACHE_TTL_ARCHIVE_SECS),
+    )
+    .await;
+    Ok(json_bytes_response(body, "MISS"))
+}
+
 fn require_firms_client(state: &AppState) -> Result<&FirmsClient, ApiError> {
     state
         .firms
@@ -1116,34 +1533,57 @@ fn require_firms_client(state: &AppState) -> Result<&FirmsClient, ApiError> {
         .ok_or_else(|| ApiError::internal("FIRMS_API_KEY is not configured"))
 }
 
-fn parse_bbox(params: &HarmonizeParams) -> Result<BBox, ApiError> {
-    if !(-180.0..=180.0).contains(&params.west) || !(-180.0..=180.0).contains(&params.east) {
+fn require_archive_client(state: &AppState) -> Result<&Arc<ArchiveClient>, ApiError> {
+    state
+        .archive
+        .as_ref()
+        .ok_or_else(|| ApiError::internal("FIRMS archive cache directory is unavailable"))
+}
+
+fn validate_bbox(west: f64, south: f64, east: f64, north: f64) -> Result<BBox, ApiError> {
+    if !(-180.0..=180.0).contains(&west) || !(-180.0..=180.0).contains(&east) {
         return Err(ApiError::bad_request(
             "Longitude coordinates ('west', 'east') must be within [-180, 180]",
         ));
     }
-    if !(-90.0..=90.0).contains(&params.south) || !(-90.0..=90.0).contains(&params.north) {
+    if !(-90.0..=90.0).contains(&south) || !(-90.0..=90.0).contains(&north) {
         return Err(ApiError::bad_request(
             "Latitude coordinates ('south', 'north') must be within [-90, 90]",
         ));
     }
-    if params.west > params.east {
+    if west > east {
         return Err(ApiError::bad_request(
             "'west' must be less than or equal to 'east'",
         ));
     }
-    if params.south > params.north {
+    if south > north {
         return Err(ApiError::bad_request(
             "'south' must be less than or equal to 'north'",
         ));
     }
 
     Ok(BBox {
-        west: params.west,
-        south: params.south,
-        east: params.east,
-        north: params.north,
+        west,
+        south,
+        east,
+        north,
     })
+}
+
+fn parse_bbox(params: &HarmonizeParams) -> Result<BBox, ApiError> {
+    validate_bbox(params.west, params.south, params.east, params.north)
+}
+
+fn parse_optional_bbox(params: &CalendarParams) -> Result<Option<BBox>, ApiError> {
+    match (params.west, params.south, params.east, params.north) {
+        (None, None, None, None) => Ok(None),
+        (Some(west), Some(south), Some(east), Some(north)) => {
+            validate_bbox(west, south, east, north).map(Some)
+        }
+        _ => Err(ApiError::bad_request(
+            "Invalid bounding box: all four of west, south, east, north are required together",
+        )),
+    }
 }
 
 fn parse_time_window(params: &HarmonizeParams) -> Result<TimeWindow, ApiError> {
@@ -1552,6 +1992,7 @@ mod tests {
     fn test_state(budget_bytes: usize, request_timeout: Option<Duration>) -> AppState {
         AppState {
             firms: None,
+            archive: None,
             cache: Arc::new(RwLock::new(ResponseCache::new(budget_bytes))),
             request_timeout,
         }
@@ -1875,5 +2316,215 @@ mod tests {
         let _ = build_cors_layer(None);
         let _ = build_cors_layer(Some(""));
         let _ = build_cors_layer(Some(" , invalid\norigin , not-a-url "));
+    }
+
+    fn calendar_params(
+        country: &str,
+        from: Option<i32>,
+        to: Option<i32>,
+        bbox: Option<[Option<f64>; 4]>,
+    ) -> CalendarParams {
+        let [west, south, east, north] = bbox.unwrap_or([None, None, None, None]);
+        CalendarParams {
+            country: country.to_string(),
+            from,
+            to,
+            west,
+            south,
+            east,
+            north,
+        }
+    }
+
+    #[test]
+    fn calendar_rejects_invalid_country_characters() {
+        for bad in ["", "../etc", "Turkey Greece", "Turkey;ls", "Turkey/2020", "Türkiye"] {
+            let err = parse_calendar_params(&calendar_params(bad, None, None, None))
+                .err()
+                .expect("invalid country must return bad_request");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST, "country={bad:?}");
+        }
+
+        for ok in ["Turkey", "Russian_Federation", "Bosnia-Herzegovina", "Country1"] {
+            let parsed = parse_calendar_params(&calendar_params(ok, None, None, None))
+                .expect("valid country should pass");
+            assert_eq!(parsed.country, ok);
+        }
+    }
+
+    #[test]
+    fn calendar_rejects_from_greater_than_to() {
+        let err = parse_calendar_params(&calendar_params("Turkey", Some(2020), Some(2015), None))
+            .err()
+            .expect("from > to must return bad_request");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+
+        let err = parse_calendar_params(&calendar_params("Turkey", Some(2026), None, None))
+            .err()
+            .expect("from > default to must return bad_request");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn calendar_requires_all_four_bbox_params_together_or_none() {
+        let none_bbox = parse_calendar_params(&calendar_params("Turkey", None, None, None))
+            .expect("omitting all bbox params should succeed");
+        assert!(none_bbox.bbox.is_none());
+
+        for partial in [
+            [Some(26.0), None, None, None],
+            [Some(26.0), Some(36.0), Some(45.0), None],
+            [None, Some(36.0), Some(45.0), Some(42.0)],
+        ] {
+            let err = parse_calendar_params(&calendar_params("Turkey", None, None, Some(partial)))
+                .err()
+                .expect("partial bbox must return bad_request");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+            assert!(err.message.contains("all four of west, south, east, north are required together"));
+        }
+
+        let inverted = parse_calendar_params(&calendar_params(
+            "Turkey",
+            None,
+            None,
+            Some([Some(45.0), Some(36.0), Some(26.0), Some(42.0)]),
+        ))
+        .err()
+        .expect("west > east must return bad_request");
+        assert_eq!(inverted.status, StatusCode::BAD_REQUEST);
+
+        let valid = parse_calendar_params(&calendar_params(
+            "Turkey",
+            None,
+            None,
+            Some([Some(26.0), Some(36.0), Some(45.0), Some(42.0)]),
+        ))
+        .expect("complete valid bbox should pass");
+        assert!(valid.bbox.is_some());
+    }
+
+    #[test]
+    fn calendar_clamps_out_of_range_years_to_archive_coverage() {
+        let query = parse_calendar_params(&calendar_params("Turkey", Some(1995), Some(2030), None))
+            .expect("out-of-range years should clamp, not fail");
+        assert_eq!(query.years.requested_from, 1995);
+        assert_eq!(query.years.requested_to, 2030);
+        assert_eq!(query.years.effective_from, 2000);
+        assert_eq!(query.years.effective_to, 2025);
+        assert!(query.clamped);
+
+        let resp = build_calendar_response(&query, 0, &[], Vec::new(), Vec::new(), Vec::new());
+        assert!(resp.warnings.iter().any(|w| w.contains("clamped")));
+
+        let upper_only = parse_calendar_params(&calendar_params("Turkey", Some(2015), Some(2030), None))
+            .expect("upper out-of-range year should clamp");
+        assert_eq!(upper_only.years.effective_from, 2015);
+        assert_eq!(upper_only.years.effective_to, 2025);
+        assert!(upper_only.clamped);
+
+        let non_overlapping =
+            parse_calendar_params(&calendar_params("Turkey", Some(1990), Some(1995), None))
+                .expect("completely pre-archive range should not fail");
+        assert!(non_overlapping.clamped);
+        assert!(non_overlapping.years.effective_from > non_overlapping.years.effective_to);
+        let empty_resp = build_calendar_response(
+            &non_overlapping,
+            0,
+            &[],
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        );
+        assert!(empty_resp.calendar.is_empty());
+        assert!(empty_resp.warnings.iter().any(|w| w.contains("outside")));
+    }
+
+    #[test]
+    fn calendar_coverage_marks_noaa20_and_noaa21_unavailable_and_warns_on_failures() {
+        let query = parse_calendar_params(&calendar_params("Turkey", Some(2015), Some(2020), None))
+            .expect("valid query");
+
+        let ok_resp = build_calendar_response(&query, 0, &[], Vec::new(), Vec::new(), Vec::new());
+        assert_eq!(
+            ok_resp.coverage.sensors_available,
+            vec![Sensor::ModisTerra, Sensor::ModisAqua, Sensor::ViirsSNPP]
+        );
+        assert!(ok_resp.coverage.sensors_unavailable.contains(&Sensor::ViirsNOAA20));
+        assert!(ok_resp.coverage.sensors_unavailable.contains(&Sensor::ViirsNOAA21));
+        assert!(ok_resp.warnings.iter().any(|w| w == ok_resp.coverage.note));
+        assert!(ok_resp.effort.reliable);
+
+        let failed_resp = build_calendar_response(
+            &query,
+            0,
+            &[],
+            Vec::new(),
+            Vec::new(),
+            vec![SensorYearFailure {
+                sensor: Sensor::ModisTerra,
+                year: 2017,
+                error: "http 503".to_string(),
+            }],
+        );
+        assert!(!failed_resp.effort.reliable);
+        assert!(failed_resp.effort.reason.is_some());
+        assert_eq!(failed_resp.fetch.failures.len(), 1);
+        assert!(failed_resp.warnings.len() >= 2);
+    }
+
+    #[test]
+    fn calendar_cache_key_distinguishes_country_years_and_bbox() {
+        let bbox_a = sample_bbox();
+        let bbox_b = BBox {
+            west: 27.0,
+            south: 36.0,
+            east: 45.0,
+            north: 42.0,
+        };
+
+        let k_tr_full = build_calendar_cache_key("Turkey", 2000, 2025, None);
+        let k_gr_full = build_calendar_cache_key("Greece", 2000, 2025, None);
+        let k_tr_sub = build_calendar_cache_key("Turkey", 2015, 2020, None);
+        let k_tr_bbox_a = build_calendar_cache_key("Turkey", 2000, 2025, Some(&bbox_a));
+        let k_tr_bbox_b = build_calendar_cache_key("Turkey", 2000, 2025, Some(&bbox_b));
+
+        let keys = [
+            &k_tr_full,
+            &k_gr_full,
+            &k_tr_sub,
+            &k_tr_bbox_a,
+            &k_tr_bbox_b,
+        ];
+        let unique: BTreeSet<&String> = keys.into_iter().collect();
+        assert_eq!(unique.len(), 5);
+    }
+
+    #[tokio::test]
+    async fn calendar_handler_serves_cached_hit_without_firms_key() {
+        let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
+        assert!(state.firms.is_none());
+
+        let key = build_calendar_cache_key("Turkey", 2000, 2025, None);
+        put_cached(
+            &state.cache,
+            key,
+            br#"{"country":"Turkey","calendar":[]}"#,
+            Duration::from_secs(CACHE_TTL_ARCHIVE_SECS),
+        )
+        .await;
+
+        let resp = calendar(
+            State(state),
+            Query(calendar_params("Turkey", None, None, None)),
+        )
+        .await
+        .expect("cached calendar hit should succeed without FIRMS_API_KEY");
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.headers()
+                .get(X_CACHE_HEADER)
+                .and_then(|v| v.to_str().ok()),
+            Some("HIT")
+        );
     }
 }
