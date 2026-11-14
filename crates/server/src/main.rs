@@ -1,16 +1,18 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use axum::{
     Router,
-    extract::{Query, State},
-    http::StatusCode,
+    extract::{OriginalUri, Query, State},
+    http::{HeaderName, HeaderValue, Method, StatusCode, Uri, header},
     response::{IntoResponse, Json, Response},
     routing::get,
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use tower_http::cors::CorsLayer;
+use tokio::sync::RwLock;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
 
@@ -20,9 +22,123 @@ use pyrosync_core::models::{
 };
 use pyrosync_firms::{DayRange, FirmsClient, FirmsSource};
 
+const DEFAULT_CACHE_BUDGET_MB: usize = 128;
+const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 300;
+// NRT (`days`) responses update continuously as new satellite passes arrive, so keep their TTL short.
+const CACHE_TTL_NRT_SECS: u64 = 600;
+// Archive (`start`/`end`) responses cover finalized science-quality data that no longer changes.
+const CACHE_TTL_ARCHIVE_SECS: u64 = 21_600;
+const X_CACHE_HEADER: HeaderName = HeaderName::from_static("x-cache");
+
 #[derive(Clone)]
 struct AppState {
     firms: Option<Arc<FirmsClient>>,
+    cache: Arc<RwLock<ResponseCache>>,
+    request_timeout: Option<Duration>,
+}
+
+struct CacheEntry {
+    body: Vec<u8>,
+    inserted_at: Instant,
+    ttl: Duration,
+    seq: u64,
+}
+
+enum CacheLookup {
+    Hit(Vec<u8>),
+    Expired,
+    Miss,
+}
+
+struct ResponseCache {
+    budget_bytes: usize,
+    total_bytes: usize,
+    next_seq: u64,
+    entries: HashMap<String, CacheEntry>,
+    // Track (inserted_at, seq) in a BTreeMap so eviction drops the oldest entry in O(log N)
+    // even when tests inject explicit timestamps.
+    order: BTreeMap<(Instant, u64), String>,
+}
+
+impl ResponseCache {
+    fn new(budget_bytes: usize) -> Self {
+        Self {
+            budget_bytes,
+            total_bytes: 0,
+            next_seq: 0,
+            entries: HashMap::new(),
+            order: BTreeMap::new(),
+        }
+    }
+
+    fn can_fit(&self, size: usize) -> bool {
+        self.budget_bytes > 0 && size <= self.budget_bytes
+    }
+
+    fn peek_at(&self, key: &str, now: Instant) -> CacheLookup {
+        if self.budget_bytes == 0 {
+            return CacheLookup::Miss;
+        }
+        let Some(entry) = self.entries.get(key) else {
+            return CacheLookup::Miss;
+        };
+        if now.saturating_duration_since(entry.inserted_at) >= entry.ttl {
+            CacheLookup::Expired
+        } else {
+            CacheLookup::Hit(entry.body.clone())
+        }
+    }
+
+    fn remove_entry(&mut self, key: &str) {
+        if let Some(removed) = self.entries.remove(key) {
+            self.total_bytes = self.total_bytes.saturating_sub(removed.body.len());
+            self.order.remove(&(removed.inserted_at, removed.seq));
+        }
+    }
+
+    fn get_at(&mut self, key: &str, now: Instant) -> Option<Vec<u8>> {
+        match self.peek_at(key, now) {
+            CacheLookup::Hit(body) => Some(body),
+            CacheLookup::Expired => {
+                self.remove_entry(key);
+                None
+            }
+            CacheLookup::Miss => None,
+        }
+    }
+
+    fn insert_at(&mut self, key: String, body: Vec<u8>, ttl: Duration, now: Instant) {
+        if !self.can_fit(body.len()) {
+            return;
+        }
+
+        // Remove any prior entry for this key before enforcing the budget.
+        self.remove_entry(&key);
+
+        let entry_len = body.len();
+        while self.total_bytes.saturating_add(entry_len) > self.budget_bytes {
+            let Some((_, oldest_key)) = self.order.pop_first() else {
+                break;
+            };
+            if let Some(removed) = self.entries.remove(&oldest_key) {
+                self.total_bytes = self.total_bytes.saturating_sub(removed.body.len());
+            }
+        }
+
+        let seq = self.next_seq;
+        self.next_seq += 1;
+        self.total_bytes += entry_len;
+        self.order.insert((now, seq), key.clone());
+        self.entries.insert(
+            key,
+            CacheEntry {
+                body,
+                inserted_at: now,
+                ttl,
+                seq,
+            },
+        );
+    }
 }
 
 #[derive(Deserialize)]
@@ -232,6 +348,7 @@ struct PipelineRun {
     report: ReportResponse,
 }
 
+#[derive(Debug)]
 struct ApiError {
     status: StatusCode,
     message: String,
@@ -258,6 +375,20 @@ impl ApiError {
             message: message.into(),
         }
     }
+
+    fn not_found(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::NOT_FOUND,
+            message: message.into(),
+        }
+    }
+
+    fn gateway_timeout(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::GATEWAY_TIMEOUT,
+            message: message.into(),
+        }
+    }
 }
 
 impl IntoResponse for ApiError {
@@ -273,6 +404,105 @@ impl IntoResponse for ApiError {
 enum TimeWindow {
     Days(DayRange),
     Range { start: NaiveDate, end: NaiveDate },
+}
+
+fn parse_cache_budget_bytes(raw: Option<&str>) -> usize {
+    let default_bytes = DEFAULT_CACHE_BUDGET_MB * 1024 * 1024;
+    let Some(raw) = raw else {
+        return default_bytes;
+    };
+    let trimmed = raw.trim();
+    match trimmed.parse::<usize>() {
+        Ok(0) => 0,
+        Ok(mb) => mb.checked_mul(1024 * 1024).unwrap_or_else(|| {
+            tracing::warn!(
+                "CACHE_BUDGET_MB value '{trimmed}' overflows usize; falling back to {DEFAULT_CACHE_BUDGET_MB} MB"
+            );
+            default_bytes
+        }),
+        Err(_) => {
+            tracing::warn!(
+                "Invalid CACHE_BUDGET_MB value '{trimmed}'; falling back to {DEFAULT_CACHE_BUDGET_MB} MB"
+            );
+            default_bytes
+        }
+    }
+}
+
+fn parse_request_timeout(raw: Option<&str>) -> Option<Duration> {
+    let Some(raw) = raw else {
+        return Some(Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECS));
+    };
+    let trimmed = raw.trim();
+    match trimmed.parse::<u64>() {
+        Ok(0) => None,
+        Ok(secs) => Some(Duration::from_secs(secs)),
+        Err(_) => {
+            tracing::warn!(
+                "Invalid REQUEST_TIMEOUT_SECS value '{trimmed}'; falling back to {DEFAULT_REQUEST_TIMEOUT_SECS}s"
+            );
+            Some(Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECS))
+        }
+    }
+}
+
+fn parse_cors_origin(raw: &str) -> Option<HeaderValue> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let header_value = match HeaderValue::from_str(trimmed) {
+        Ok(val) => val,
+        Err(err) => {
+            tracing::error!("Ignoring invalid CORS origin '{trimmed}': {err}");
+            return None;
+        }
+    };
+    let uri = match trimmed.parse::<Uri>() {
+        Ok(uri) => uri,
+        Err(err) => {
+            tracing::error!("Ignoring invalid CORS origin '{trimmed}': {err}");
+            return None;
+        }
+    };
+    if uri.scheme_str().is_none() || uri.authority().is_none() {
+        tracing::error!("Ignoring invalid CORS origin '{trimmed}': missing scheme or host");
+        return None;
+    }
+    Some(header_value)
+}
+
+fn build_cors_layer(raw: Option<&str>) -> CorsLayer {
+    let Some(raw) = raw else {
+        tracing::warn!("CORS is permissive; set CORS_ALLOWED_ORIGINS in production");
+        return CorsLayer::permissive();
+    };
+
+    let origins: Vec<HeaderValue> = raw.split(',').filter_map(parse_cors_origin).collect();
+    CorsLayer::new()
+        .allow_origin(AllowOrigin::list(origins))
+        .allow_methods([Method::GET])
+        .allow_headers([header::CONTENT_TYPE])
+}
+
+async fn api_not_found(OriginalUri(uri): OriginalUri) -> ApiError {
+    ApiError::not_found(format!("Unknown API endpoint: {}", uri.path()))
+}
+
+fn build_router(state: AppState, static_dir: &str, cors: CorsLayer) -> Router {
+    let api_router = Router::new()
+        .route("/health", get(health))
+        .route("/harmonize", get(harmonize))
+        .route("/availability", get(availability))
+        .route("/compare", get(compare))
+        .route("/stats", get(stats))
+        .fallback(api_not_found)
+        .with_state(state);
+
+    Router::new()
+        .nest("/api", api_router)
+        .fallback_service(ServeDir::new(static_dir))
+        .layer(cors)
 }
 
 #[tokio::main]
@@ -296,17 +526,17 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    let state = AppState { firms };
+    let cache_budget_bytes = parse_cache_budget_bytes(std::env::var("CACHE_BUDGET_MB").ok().as_deref());
+    let request_timeout = parse_request_timeout(std::env::var("REQUEST_TIMEOUT_SECS").ok().as_deref());
+    let cors_layer = build_cors_layer(std::env::var("CORS_ALLOWED_ORIGINS").ok().as_deref());
+
+    let state = AppState {
+        firms,
+        cache: Arc::new(RwLock::new(ResponseCache::new(cache_budget_bytes))),
+        request_timeout,
+    };
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "web/dist".to_string());
-    let app = Router::new()
-        .route("/api/health", get(health))
-        .route("/api/harmonize", get(harmonize))
-        .route("/api/availability", get(availability))
-        .route("/api/compare", get(compare))
-        .route("/api/stats", get(stats))
-        .with_state(state)
-        .fallback_service(ServeDir::new(&static_dir))
-        .layer(CorsLayer::permissive());
+    let app = build_router(state, &static_dir, cors_layer);
 
     let port = std::env::var("PORT").unwrap_or_else(|_| "3001".to_string());
     let addr = format!("0.0.0.0:{port}");
@@ -467,32 +697,143 @@ fn build_effort_and_warnings(
     (effort, warnings)
 }
 
+fn normalize_zero(v: f64) -> f64 {
+    if v == 0.0 { 0.0 } else { v }
+}
+
+fn build_cache_key(route: &str, bbox: &BBox, window: &TimeWindow, include_raw: bool) -> String {
+    let window_part = match window {
+        TimeWindow::Days(days) => format!("days={}", days.get()),
+        TimeWindow::Range { start, end } => format!("start={start}&end={end}"),
+    };
+    format!(
+        "{route}|{},{},{},{}|{window_part}|raw={include_raw}",
+        normalize_zero(bbox.west),
+        normalize_zero(bbox.south),
+        normalize_zero(bbox.east),
+        normalize_zero(bbox.north),
+    )
+}
+
+fn cache_ttl_for_window(window: &TimeWindow) -> Duration {
+    match window {
+        TimeWindow::Days(_) => Duration::from_secs(CACHE_TTL_NRT_SECS),
+        TimeWindow::Range { .. } => Duration::from_secs(CACHE_TTL_ARCHIVE_SECS),
+    }
+}
+
+fn json_bytes_response(body: Vec<u8>, cache_status: &'static str) -> Response {
+    (
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, "application/json"),
+            (X_CACHE_HEADER, cache_status),
+        ],
+        body,
+    )
+        .into_response()
+}
+
+async fn get_cached(cache: &RwLock<ResponseCache>, key: &str) -> Option<Vec<u8>> {
+    let now = Instant::now();
+    let lookup = {
+        let guard = cache.read().await;
+        guard.peek_at(key, now)
+    };
+    match lookup {
+        CacheLookup::Hit(body) => Some(body),
+        CacheLookup::Miss => None,
+        CacheLookup::Expired => {
+            let mut guard = cache.write().await;
+            // Re-check under the write lock in case another task refreshed the entry.
+            guard.get_at(key, now)
+        }
+    }
+}
+
+async fn put_cached(cache: &RwLock<ResponseCache>, key: String, body: &[u8], ttl: Duration) {
+    // Check budget under read lock first so disabled or oversized payloads avoid cloning.
+    {
+        let guard = cache.read().await;
+        if !guard.can_fit(body.len()) {
+            return;
+        }
+    }
+    let mut guard = cache.write().await;
+    guard.insert_at(key, body.to_vec(), ttl, Instant::now());
+}
+
+async fn run_pipeline_with_timeout(
+    state: &AppState,
+    params: &HarmonizeParams,
+) -> Result<PipelineRun, ApiError> {
+    match state.request_timeout {
+        Some(timeout) => match tokio::time::timeout(timeout, run_pipeline(state, params)).await {
+            Ok(result) => result,
+            Err(_) => Err(ApiError::gateway_timeout(format!(
+                "Request timed out after {}s; long date ranges can require hundreds of FIRMS requests. Increase REQUEST_TIMEOUT_SECS or narrow the date range.",
+                timeout.as_secs()
+            ))),
+        },
+        None => run_pipeline(state, params).await,
+    }
+}
+
+async fn execute_cached_pipeline<T, F>(
+    state: &AppState,
+    route: &str,
+    params: &HarmonizeParams,
+    build_payload: F,
+) -> Result<Response, ApiError>
+where
+    T: Serialize,
+    F: FnOnce(PipelineRun, bool) -> T,
+{
+    // Validate parameters before consulting the cache so invalid requests never probe cache entries.
+    let bbox = parse_bbox(params)?;
+    let window = parse_time_window(params)?;
+    let include_raw = params.include_raw.unwrap_or(false);
+    let key = build_cache_key(route, &bbox, &window, include_raw);
+
+    if let Some(cached_body) = get_cached(&state.cache, &key).await {
+        return Ok(json_bytes_response(cached_body, "HIT"));
+    }
+
+    let run = run_pipeline_with_timeout(state, params).await?;
+    let payload = build_payload(run, include_raw);
+    let body = serde_json::to_vec(&payload)
+        .map_err(|e| ApiError::internal(format!("Failed to serialize response: {e}")))?;
+
+    put_cached(&state.cache, key, &body, cache_ttl_for_window(&window)).await;
+    Ok(json_bytes_response(body, "MISS"))
+}
+
 async fn harmonize(
     State(state): State<AppState>,
     Query(params): Query<HarmonizeParams>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let include_raw = params.include_raw.unwrap_or(false);
-    let run = run_pipeline(&state, &params).await?;
-    let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report);
+) -> Result<Response, ApiError> {
+    execute_cached_pipeline(&state, "harmonize", &params, |run, include_raw| {
+        let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report);
+        let raw = RawResponse {
+            modis_count: run.modis_count,
+            viirs_count: run.viirs_count,
+            total_raw: run.modis_count + run.viirs_count,
+            hotspots: include_raw.then(|| run.raw.iter().map(RawHotspot::from).collect()),
+        };
 
-    let raw = RawResponse {
-        modis_count: run.modis_count,
-        viirs_count: run.viirs_count,
-        total_raw: run.modis_count + run.viirs_count,
-        hotspots: include_raw.then(|| run.raw.iter().map(RawHotspot::from).collect()),
-    };
-
-    Ok(Json(serde_json::json!({
-        "raw": raw,
-        "harmonized": {
-            "count": run.harmonized.len(),
-            "hotspots": run.harmonized,
-        },
-        "calendar": run.calendar,
-        "effort": effort,
-        "warnings": warnings,
-        "report": run.report,
-    })))
+        serde_json::json!({
+            "raw": raw,
+            "harmonized": {
+                "count": run.harmonized.len(),
+                "hotspots": run.harmonized,
+            },
+            "calendar": run.calendar,
+            "effort": effort,
+            "warnings": warnings,
+            "report": run.report,
+        })
+    })
+    .await
 }
 
 fn build_compare_response(run: PipelineRun) -> CompareResponse {
@@ -623,9 +964,11 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
 async fn compare(
     State(state): State<AppState>,
     Query(params): Query<HarmonizeParams>,
-) -> Result<Json<CompareResponse>, ApiError> {
-    let run = run_pipeline(&state, &params).await?;
-    Ok(Json(build_compare_response(run)))
+) -> Result<Response, ApiError> {
+    execute_cached_pipeline(&state, "compare", &params, |run, _| {
+        build_compare_response(run)
+    })
+    .await
 }
 
 fn build_stats_response(run: PipelineRun) -> StatsResponse {
@@ -759,9 +1102,11 @@ fn build_stats_response(run: PipelineRun) -> StatsResponse {
 async fn stats(
     State(state): State<AppState>,
     Query(params): Query<HarmonizeParams>,
-) -> Result<Json<StatsResponse>, ApiError> {
-    let run = run_pipeline(&state, &params).await?;
-    Ok(Json(build_stats_response(run)))
+) -> Result<Response, ApiError> {
+    execute_cached_pipeline(&state, "stats", &params, |run, _| {
+        build_stats_response(run)
+    })
+    .await
 }
 
 fn require_firms_client(state: &AppState) -> Result<&FirmsClient, ApiError> {
@@ -1204,9 +1549,35 @@ mod tests {
         assert_eq!(resp.warnings.len(), 2);
     }
 
+    fn test_state(budget_bytes: usize, request_timeout: Option<Duration>) -> AppState {
+        AppState {
+            firms: None,
+            cache: Arc::new(RwLock::new(ResponseCache::new(budget_bytes))),
+            request_timeout,
+        }
+    }
+
+    async fn send_http_request(addr: std::net::SocketAddr, request: &str) -> String {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let mut stream = tokio::net::TcpStream::connect(addr)
+            .await
+            .expect("connect test server");
+        stream
+            .write_all(request.as_bytes())
+            .await
+            .expect("write test request");
+        let mut response = Vec::new();
+        stream
+            .read_to_end(&mut response)
+            .await
+            .expect("read test response");
+        String::from_utf8(response).expect("utf8 response")
+    }
+
     #[tokio::test]
     async fn handlers_enforce_validation_before_firms_client() {
-        let state = AppState { firms: None };
+        let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
         let bad_bbox = HarmonizeParams {
             west: 50.0,
             south: 36.0,
@@ -1219,8 +1590,7 @@ mod tests {
         };
         let err = compare(State(state.clone()), Query(bad_bbox))
             .await
-            .err()
-            .expect("invalid bbox should fail");
+            .expect_err("invalid bbox should fail");
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
 
         let missing_key = HarmonizeParams {
@@ -1235,8 +1605,275 @@ mod tests {
         };
         let err = stats(State(state), Query(missing_key))
             .await
-            .err()
-            .expect("missing FIRMS key should return 500");
+            .expect_err("missing FIRMS key should return 500");
         assert_eq!(err.status, StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[test]
+    fn cache_key_distinguishes_include_raw() {
+        let bbox = sample_bbox();
+        let window = TimeWindow::Days(DayRange::new(2).unwrap());
+
+        let key_false = build_cache_key("harmonize", &bbox, &window, false);
+        let key_true = build_cache_key("harmonize", &bbox, &window, true);
+
+        assert_ne!(key_false, key_true);
+    }
+
+    #[test]
+    fn cache_key_distinguishes_days_and_date_range() {
+        let bbox = sample_bbox();
+        let days_window = TimeWindow::Days(DayRange::new(3).unwrap());
+        let range_window = TimeWindow::Range {
+            start: NaiveDate::from_ymd_opt(2026, 7, 1).unwrap(),
+            end: NaiveDate::from_ymd_opt(2026, 7, 3).unwrap(),
+        };
+
+        let key_days = build_cache_key("harmonize", &bbox, &days_window, false);
+        let key_range = build_cache_key("harmonize", &bbox, &range_window, false);
+
+        assert_ne!(key_days, key_range);
+        assert!(key_days.contains("days=3"));
+        assert!(key_range.contains("start=2026-07-01&end=2026-07-03"));
+    }
+
+    #[test]
+    fn cache_evicts_oldest_entries_when_budget_exceeded() {
+        let mut cache = ResponseCache::new(10);
+        let t0 = Instant::now();
+        let ttl = Duration::from_secs(600);
+
+        cache.insert_at("k1".to_string(), vec![1; 4], ttl, t0);
+        cache.insert_at(
+            "k2".to_string(),
+            vec![2; 4],
+            ttl,
+            t0 + Duration::from_secs(1),
+        );
+        assert_eq!(cache.total_bytes, 8);
+
+        // Adding 5 bytes requires dropping k1 (4 bytes) so total stays 9 <= 10.
+        cache.insert_at(
+            "k3".to_string(),
+            vec![3; 5],
+            ttl,
+            t0 + Duration::from_secs(2),
+        );
+
+        assert!(cache.total_bytes <= 10);
+        assert_eq!(cache.total_bytes, 9);
+        assert!(
+            cache
+                .get_at("k1", t0 + Duration::from_secs(3))
+                .is_none()
+        );
+        assert_eq!(
+            cache.get_at("k2", t0 + Duration::from_secs(3)),
+            Some(vec![2; 4])
+        );
+        assert_eq!(
+            cache.get_at("k3", t0 + Duration::from_secs(3)),
+            Some(vec![3; 5])
+        );
+    }
+
+    #[test]
+    fn cache_skips_entry_larger_than_budget() {
+        let mut cache = ResponseCache::new(8);
+        let t0 = Instant::now();
+        let ttl = Duration::from_secs(600);
+
+        cache.insert_at("small".to_string(), vec![1; 5], ttl, t0);
+        cache.insert_at("huge".to_string(), vec![9; 9], ttl, t0 + Duration::from_secs(1));
+
+        assert_eq!(cache.total_bytes, 5);
+        assert_eq!(cache.get_at("small", t0 + Duration::from_secs(2)), Some(vec![1; 5]));
+        assert!(cache.get_at("huge", t0 + Duration::from_secs(2)).is_none());
+    }
+
+    #[test]
+    fn cache_expires_entries_on_read_and_evicts_them() {
+        let mut cache = ResponseCache::new(1024);
+        let t0 = Instant::now();
+        let ttl = Duration::from_secs(600);
+
+        cache.insert_at("k1".to_string(), vec![7; 16], ttl, t0);
+        assert_eq!(cache.total_bytes, 16);
+        assert_eq!(
+            cache.get_at("k1", t0 + Duration::from_secs(599)),
+            Some(vec![7; 16])
+        );
+
+        // Once TTL elapses, reading invalidates and removes the entry, reclaiming its bytes.
+        assert!(cache.get_at("k1", t0 + Duration::from_secs(600)).is_none());
+        assert_eq!(cache.total_bytes, 0);
+        assert!(cache.entries.is_empty());
+    }
+
+    #[test]
+    fn cache_disabled_when_budget_is_zero() {
+        let mut cache = ResponseCache::new(0);
+        let t0 = Instant::now();
+        let ttl = Duration::from_secs(600);
+
+        cache.insert_at("k1".to_string(), vec![1; 4], ttl, t0);
+        assert_eq!(cache.total_bytes, 0);
+        assert!(cache.entries.is_empty());
+        assert!(cache.get_at("k1", t0).is_none());
+    }
+
+    #[tokio::test]
+    async fn handler_serves_cached_hit_with_x_cache_and_does_not_cache_errors() {
+        let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
+        let params = HarmonizeParams {
+            west: 26.0,
+            south: 36.0,
+            east: 45.0,
+            north: 42.0,
+            days: Some(2),
+            start: None,
+            end: None,
+            include_raw: Some(false),
+        };
+
+        // First call fails because FIRMS_API_KEY is missing; errors must never be cached.
+        let err = harmonize(State(state.clone()), Query(params))
+            .await
+            .expect_err("missing key returns 500");
+        assert_eq!(err.status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(state.cache.read().await.entries.len(), 0);
+
+        let bbox = BBox {
+            west: 26.0,
+            south: 36.0,
+            east: 45.0,
+            north: 42.0,
+        };
+        let window = TimeWindow::Days(DayRange::new(2).unwrap());
+        let key = build_cache_key("harmonize", &bbox, &window, false);
+        put_cached(
+            &state.cache,
+            key,
+            br#"{"cached_payload":true}"#,
+            Duration::from_secs(600),
+        )
+        .await;
+
+        let params = HarmonizeParams {
+            west: 26.0,
+            south: 36.0,
+            east: 45.0,
+            north: 42.0,
+            days: Some(2),
+            start: None,
+            end: None,
+            include_raw: Some(false),
+        };
+        let resp = harmonize(State(state), Query(params))
+            .await
+            .expect("cache hit should succeed without FIRMS client");
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.headers()
+                .get(header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok()),
+            Some("application/json")
+        );
+        assert_eq!(
+            resp.headers()
+                .get(X_CACHE_HEADER)
+                .and_then(|v| v.to_str().ok()),
+            Some("HIT")
+        );
+    }
+
+    #[tokio::test]
+    async fn router_returns_json_404_for_unknown_api_and_serves_cors_headers() {
+        let state = test_state(1024, None);
+        let cors = build_cors_layer(Some("https://allowed.example, invalid origin, http://localhost:5173"));
+        let app = build_router(state, "nonexistent-static-dir-for-test", cors);
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind ephemeral port");
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let api_404 = send_http_request(
+            addr,
+            "GET /api/foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(api_404.starts_with("HTTP/1.1 404 Not Found\r\n"));
+        assert!(api_404.to_ascii_lowercase().contains("content-type: application/json"));
+        assert!(api_404.contains(r#"{"error":"Unknown API endpoint: /api/foo"}"#));
+
+        let non_api = send_http_request(
+            addr,
+            "GET /unknown-spa-route HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(non_api.starts_with("HTTP/1.1 404 Not Found\r\n"));
+        assert!(!non_api.contains("Unknown API endpoint"));
+
+        let cors_allowed = send_http_request(
+            addr,
+            "GET /api/health HTTP/1.1\r\nHost: localhost\r\nOrigin: https://allowed.example\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(cors_allowed.starts_with("HTTP/1.1 200 OK\r\n"));
+        assert!(
+            cors_allowed
+                .to_ascii_lowercase()
+                .contains("access-control-allow-origin: https://allowed.example")
+        );
+
+        let cors_denied = send_http_request(
+            addr,
+            "GET /api/health HTTP/1.1\r\nHost: localhost\r\nOrigin: https://evil.example\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(
+            !cors_denied
+                .to_ascii_lowercase()
+                .contains("access-control-allow-origin:")
+        );
+
+        server.abort();
+    }
+
+    #[test]
+    fn env_parsers_and_empty_cors_do_not_panic() {
+        assert_eq!(parse_cache_budget_bytes(None), 128 * 1024 * 1024);
+        assert_eq!(parse_cache_budget_bytes(Some("0")), 0);
+        assert_eq!(parse_cache_budget_bytes(Some("64")), 64 * 1024 * 1024);
+        assert_eq!(parse_cache_budget_bytes(Some("abc")), 128 * 1024 * 1024);
+
+        assert_eq!(parse_request_timeout(None), Some(Duration::from_secs(300)));
+        assert_eq!(parse_request_timeout(Some("0")), None);
+        assert_eq!(parse_request_timeout(Some("45")), Some(Duration::from_secs(45)));
+        assert_eq!(
+            parse_request_timeout(Some("-5")),
+            Some(Duration::from_secs(300))
+        );
+
+        assert_eq!(
+            cache_ttl_for_window(&TimeWindow::Days(DayRange::new(1).unwrap())),
+            Duration::from_secs(CACHE_TTL_NRT_SECS)
+        );
+        assert_eq!(
+            cache_ttl_for_window(&TimeWindow::Range {
+                start: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+                end: NaiveDate::from_ymd_opt(2025, 1, 5).unwrap(),
+            }),
+            Duration::from_secs(CACHE_TTL_ARCHIVE_SECS)
+        );
+
+        // Empty or entirely invalid origin lists must construct safely without panicking.
+        let _ = build_cors_layer(None);
+        let _ = build_cors_layer(Some(""));
+        let _ = build_cors_layer(Some(" , invalid\norigin , not-a-url "));
     }
 }

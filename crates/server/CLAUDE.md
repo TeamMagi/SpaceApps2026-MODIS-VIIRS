@@ -23,10 +23,15 @@
 | `PORT` | `3001` | Sunucu portu |
 | `STATIC_DIR` | `web/dist` | Frontend build çıktı dizini |
 | `RUST_LOG` | `pyrosync=info` | Log seviyesi |
+| `CACHE_BUDGET_MB` | `128` | Response cache bellek bütçesi (MB). `0` cache'i devre dışı bırakır |
+| `REQUEST_TIMEOUT_SECS` | `300` | İstek zaman aşımı (saniye). `0` zaman aşımını devre dışı bırakır |
+| `CORS_ALLOWED_ORIGINS` | — | Virgülle ayrılmış izinli origin listesi. Tanımsızsa CORS permissive olur |
 
 ## Teknik Notlar
 
-- `tower_http::services::ServeDir` ile SPA fallback sağlanır.
-- `CorsLayer::permissive()` sadece geliştirme için; production'da kısıtlanmalıdır.
+- `tower_http::services::ServeDir` ile SPA fallback sağlanır; `/api/*` altındaki bilinmeyen yollar ise JSON `404` döner.
+- `CORS_ALLOWED_ORIGINS` tanımlıysa yalnızca belirtilen origin'lere (`GET`, `content-type`) izin verilir; tanımsızsa `CorsLayer::permissive()` kullanılır ve başlangıçta uyarı loglanır.
+- `/api/harmonize`, `/api/compare` ve `/api/stats` yanıtları bellek bütçeli response cache kullanır ve `X-Cache: HIT` / `MISS` header'ı döner.
+- Response cache iki seviyeli TTL uygular: `days` (NRT) istekleri 600 sn, `start`/`end` (arşiv) istekleri 21600 sn (6 saat).
 - Docker'da `STATIC_DIR=/app/static` olarak ayarlanır.
 - Port 3001 üzerinde `0.0.0.0` dinler (container erişimi için).
