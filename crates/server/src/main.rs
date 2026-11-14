@@ -2108,6 +2108,7 @@ mod tests {
             source: args.source,
             acquired: args.acquired,
             daynight: args.daynight,
+            calibration_ratio: None,
         }
     }
 
