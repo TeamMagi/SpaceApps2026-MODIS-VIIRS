@@ -191,7 +191,7 @@ struct CalendarParams {
     north: Option<f64>,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 struct CalendarYears {
     requested_from: i32,
     requested_to: i32,
@@ -245,6 +245,7 @@ struct CalendarResponse {
     warnings: Vec<String>,
 }
 
+#[derive(Clone)]
 struct ValidatedCalendarQuery {
     country: String,
     years: CalendarYears,
@@ -1697,18 +1698,24 @@ async fn run_calendar_pipeline(
         )));
     }
 
-    let raw_detections = modis.len() + viirs.len();
-    let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, config);
-    let calendar_cells = pyrosync_core::calendar::build_calendar(&harmonized);
+    let config = config.clone();
+    let query = query.clone();
+    tokio::task::spawn_blocking(move || {
+        let raw_detections = modis.len() + viirs.len();
+        let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &config);
+        let calendar_cells = pyrosync_core::calendar::build_calendar(&harmonized);
 
-    Ok(build_calendar_response(
-        query,
-        raw_detections,
-        &harmonized,
-        calendar_cells,
-        per_sensor_year,
-        failures,
-    ))
+        build_calendar_response(
+            &query,
+            raw_detections,
+            &harmonized,
+            calendar_cells,
+            per_sensor_year,
+            failures,
+        )
+    })
+    .await
+    .map_err(|e| ApiError::internal(format!("Calendar worker failed: {e}")))
 }
 
 async fn run_calendar_with_timeout(
@@ -1719,6 +1726,8 @@ async fn run_calendar_with_timeout(
     match state.request_timeout {
         Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, &state.config, query)).await {
             Ok(result) => result,
+            // Dropping the timed-out future cannot cancel a `spawn_blocking` task already in flight;
+            // the blocking CPU work continues running in the background until it finishes.
             Err(_) => Err(ApiError::gateway_timeout(format!(
                 "Request timed out after {}s; reading and harmonizing large multi-year archives can take several minutes. Increase REQUEST_TIMEOUT_SECS or narrow the year range.",
                 timeout.as_secs()
