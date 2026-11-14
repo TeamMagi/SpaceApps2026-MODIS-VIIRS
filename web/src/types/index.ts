@@ -15,6 +15,14 @@ export enum HotspotSource {
   Matched = "Matched",
 }
 
+export enum Sensor {
+  ModisTerra = "ModisTerra",
+  ModisAqua = "ModisAqua",
+  ViirsSNPP = "ViirsSNPP",
+  ViirsNOAA20 = "ViirsNOAA20",
+  ViirsNOAA21 = "ViirsNOAA21",
+}
+
 export type ViewMode = "raw" | "harmonized";
 
 export type Lang = "en" | "tr";
@@ -112,6 +120,9 @@ export interface HarmonizedPoint {
   confidence: Confidence;
   acquired: string;
   daynight: DayNight;
+  vzaFactor: number | null;
+  nObs: number;
+  platforms: string[];
 }
 
 export interface PointStages {
@@ -167,6 +178,10 @@ export interface YearlyPoint {
   lastDate: string | null;
   /** True when a sensor's data for that year starts after Jan 15 or ends before Dec 15. */
   partial: boolean;
+  modisFirstDate: string | null;
+  modisLastDate: string | null;
+  viirsFirstDate: string | null;
+  viirsLastDate: string | null;
 }
 
 export type YearlySeries = readonly YearlyPoint[];
@@ -201,15 +216,15 @@ export interface CliffSummary {
   rawFrom: number;
   rawTo: number;
   /** Percentage points (e.g. 180.4 means +180.4%). */
-  rawChangePct: number;
+  rawChangePct: number | null;
   /** Ratio for Intl percent formatting (e.g. 1.804 means +180.4%). */
-  rawChangeRatio: number;
+  rawChangeRatio: number | null;
   harmonizedFrom: number;
   harmonizedTo: number;
   /** Percentage points (e.g. 42.1 means +42.1%). */
-  harmonizedChangePct: number;
+  harmonizedChangePct: number | null;
   /** Ratio for Intl percent formatting (e.g. 0.421 means +42.1%). */
-  harmonizedChangeRatio: number;
+  harmonizedChangeRatio: number | null;
 }
 
 export interface BriefingMetrics {
@@ -242,4 +257,247 @@ export interface RegionData {
   firstYear: number | null;
   lastYear: number | null;
   defaultMapMonth: MonthRef | null;
+}
+
+// --- NRT endpoint types (R4 hazırlık) ---
+
+export interface CalendarCell {
+  year: number;
+  month: number;
+  count: number;
+  countNormalized: number | null;
+  effortOmega: number | null;
+  meanFrp: number;
+  meanFrpRaw: number;
+  anomaly: number | null;
+}
+
+export interface EffortFactor {
+  hasModis: boolean;
+  viirsPlatforms: Sensor[];
+  platforms: Sensor[];
+  months: number;
+  total: number;
+  modisObservable: number;
+  omega: number | null;
+}
+
+export interface EffortInfo {
+  reliable: boolean;
+  reason: string | null;
+  factors: EffortFactor[];
+}
+
+export interface ReportInfo {
+  perSource: [string, number][];
+  failures: [string, string][];
+  transactionsSpent: number;
+  uncovered: [string, string][];
+}
+
+export interface RawHotspot {
+  lat: number;
+  lon: number;
+  frp: number;
+  sensor: Sensor;
+  acquired: string;
+  daynight: DayNight;
+}
+
+export interface HarmonizedHotspot {
+  lat: number;
+  lon: number;
+  frp: number;
+  frpCorrected: number;
+  vzaFactor: number | null;
+  nObs: number;
+  platforms: Sensor[];
+  confidence: Confidence;
+  source: HotspotSource;
+  acquired: string;
+  daynight: DayNight;
+}
+
+export interface HarmonizeRawSummary {
+  modisCount: number;
+  viirsCount: number;
+  totalRaw: number;
+  hotspots: RawHotspot[] | null;
+}
+
+export interface HarmonizeResponse {
+  raw: HarmonizeRawSummary;
+  harmonized: {
+    count: number;
+    hotspots: HarmonizedHotspot[];
+  };
+  calendar: CalendarCell[];
+  effort: EffortInfo;
+  warnings: string[];
+  report: ReportInfo;
+}
+
+export interface CompareCountsBySource {
+  modisOnly: number;
+  viirsOnly: number;
+  matched: number;
+}
+
+export interface CompareCounts {
+  rawTotal: number;
+  rawModis: number;
+  rawViirs: number;
+  harmonizedTotal: number;
+  removedTotal: number;
+  removedPct: number;
+  bySource: CompareCountsBySource;
+}
+
+export interface CompareFrp {
+  rawSum: number;
+  harmonizedRawSum: number;
+  harmonizedCorrectedSum: number;
+  reductionPct: number;
+}
+
+export interface PlatformCombination {
+  platforms: Sensor[];
+  records: number;
+}
+
+export interface CompareMerging {
+  recordsWithMultipleObservations: number;
+  observationsMerged: number;
+  maxObservationsInOneRecord: number;
+  platformCombinations: PlatformCombination[];
+}
+
+export interface CompareVza {
+  recordsWithCorrection: number;
+  meanFactor: number | null;
+  maxFactor: number | null;
+  meanFrpReductionPct: number | null;
+}
+
+export interface CompareResponse {
+  counts: CompareCounts;
+  frp: CompareFrp;
+  merging: CompareMerging;
+  vza: CompareVza;
+  warnings: string[];
+  report: ReportInfo;
+}
+
+export interface StatsTotals {
+  rawDetections: number;
+  harmonizedRecords: number;
+  calendarMonths: number;
+  distinctPlatforms: number;
+}
+
+export interface SensorBreakdownEntry {
+  sensor: Sensor;
+  firmsSource: string;
+  rawDetections: number;
+  sharePct: number;
+}
+
+export interface ConfidenceBreakdown {
+  low: number;
+  nominal: number;
+  high: number;
+}
+
+export interface DayNightBreakdown {
+  day: number;
+  night: number;
+}
+
+export interface StatsFrp {
+  harmonizedSum: number;
+  harmonizedMean: number;
+  harmonizedMax: number;
+  harmonizedMedian: number;
+}
+
+export interface StatsTemporal {
+  firstDetection: string | null;
+  lastDetection: string | null;
+  monthsCovered: number;
+}
+
+export interface StatsPipeline {
+  transactionsSpent: number;
+  sourcesQueried: number;
+  sourcesFailed: number;
+}
+
+export interface StatsResponse {
+  totals: StatsTotals;
+  sensorBreakdown: SensorBreakdownEntry[];
+  confidenceBreakdown: ConfidenceBreakdown;
+  daynightBreakdown: DayNightBreakdown;
+  frp: StatsFrp;
+  temporal: StatsTemporal;
+  pipeline: StatsPipeline;
+  warnings: string[];
+  report: ReportInfo;
+}
+
+export interface CalendarYears {
+  requestedFrom: number;
+  requestedTo: number;
+  effectiveFrom: number;
+  effectiveTo: number;
+}
+
+export interface ArchiveCoverage {
+  sensorsAvailable: Sensor[];
+  sensorsUnavailable: Sensor[];
+  note: string;
+}
+
+export interface CalendarCounts {
+  rawDetections: number;
+  harmonizedRecords: number;
+}
+
+export interface SensorYearFetch {
+  sensor: Sensor;
+  year: number;
+  detections: number;
+}
+
+export interface SensorYearFailure {
+  sensor: Sensor;
+  year: number;
+  error: string;
+}
+
+export interface ArchiveFetchSummary {
+  perSensorYear: SensorYearFetch[];
+  failures: SensorYearFailure[];
+}
+
+export interface CalendarApiResponse {
+  country: string;
+  years: CalendarYears;
+  bbox: BBox | null;
+  coverage: ArchiveCoverage;
+  counts: CalendarCounts;
+  calendar: CalendarCell[];
+  effort: EffortInfo;
+  fetch: ArchiveFetchSummary;
+  warnings: string[];
+}
+
+export interface HealthResponse {
+  status: string;
+  version: string;
+}
+
+export interface AvailabilityEntry {
+  source: string;
+  minDate: string;
+  maxDate: string;
 }

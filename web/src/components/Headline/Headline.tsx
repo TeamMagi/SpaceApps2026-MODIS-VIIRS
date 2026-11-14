@@ -73,13 +73,13 @@ export default function Headline() {
   }
 
   const yearStr = String(cliff.toYear);
-  const rawAbsPct = Math.round(Math.abs(cliff.rawChangePct));
+  const rawAbsPct = Math.round(Math.abs(cliff.rawChangePct ?? 0));
   const rawText =
-    cliff.rawChangePct < 0
+    (cliff.rawChangePct ?? 0) < 0
       ? t("headlineRawDropped", { x: rawAbsPct, year: yearStr })
       : t("headlineRaw", { x: rawAbsPct, year: yearStr });
   const harmonizedText = t("headlineHarmonized", {
-    pct: fmt.signedPercent(cliff.harmonizedChangeRatio),
+    pct: fmt.signedPercent(cliff.harmonizedChangeRatio ?? 0),
     from: String(cliff.fromYear),
     to: yearStr,
   });

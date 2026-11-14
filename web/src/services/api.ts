@@ -86,6 +86,10 @@ interface WireSeriesYear {
   first_date: string | null;
   last_date: string | null;
   partial: boolean;
+  modis_first_date?: string | null;
+  modis_last_date?: string | null;
+  viirs_first_date?: string | null;
+  viirs_last_date?: string | null;
 }
 
 interface WireSeriesMonth {
@@ -104,15 +108,15 @@ interface WireSeriesCliff {
   to_year: number;
   raw_from: number;
   raw_to: number;
-  raw_change_pct: number;
+  raw_change_pct: number | null;
   harmonized_from: number;
   harmonized_to: number;
-  harmonized_change_pct: number;
+  harmonized_change_pct: number | null;
 }
 
 interface WireYearSpan {
-  first: number;
-  last: number;
+  first: string | number;
+  last: string | number;
 }
 
 interface WireSeriesCoverage {
@@ -151,6 +155,9 @@ interface WireHarmonizedPoint {
   source: string;
   acquired: string;
   daynight: string;
+  vza_factor?: number | null;
+  n_obs?: number;
+  platforms?: string[];
 }
 
 interface WirePointStages {
@@ -287,8 +294,8 @@ function adaptCliff(wire: WireSeriesCliff | null): CliffSummary | null {
   if (!wire) {
     return null;
   }
-  const rawChangePct = Number.isFinite(wire.raw_change_pct) ? wire.raw_change_pct : 0;
-  const harmonizedChangePct = Number.isFinite(wire.harmonized_change_pct) ? wire.harmonized_change_pct : 0;
+  const rawChangePct = wire.raw_change_pct != null && Number.isFinite(wire.raw_change_pct) ? wire.raw_change_pct : null;
+  const harmonizedChangePct = wire.harmonized_change_pct != null && Number.isFinite(wire.harmonized_change_pct) ? wire.harmonized_change_pct : null;
   return {
     fromYear: wire.from_year,
     toYear: wire.to_year,
@@ -296,19 +303,20 @@ function adaptCliff(wire: WireSeriesCliff | null): CliffSummary | null {
     rawFrom: wire.raw_from,
     rawTo: wire.raw_to,
     rawChangePct,
-    rawChangeRatio: rawChangePct / 100,
+    rawChangeRatio: rawChangePct != null ? rawChangePct / 100 : null,
     harmonizedFrom: wire.harmonized_from,
     harmonizedTo: wire.harmonized_to,
     harmonizedChangePct,
-    harmonizedChangeRatio: harmonizedChangePct / 100,
+    harmonizedChangeRatio: harmonizedChangePct != null ? harmonizedChangePct / 100 : null,
   };
 }
 
 function adaptYearSpan(span: WireYearSpan | null | undefined): YearSpan | null {
-  if (!span || typeof span.first !== "number" || typeof span.last !== "number") {
-    return null;
-  }
-  return { first: span.first, last: span.last };
+  if (!span) return null;
+  const first = typeof span.first === "string" ? parseInt(span.first, 10) : span.first;
+  const last = typeof span.last === "string" ? parseInt(span.last, 10) : span.last;
+  if (!Number.isFinite(first) || !Number.isFinite(last)) return null;
+  return { first, last };
 }
 
 function adaptConfidence(value: string): Confidence {
@@ -384,6 +392,10 @@ export async function fetchSeries(region: string, signal?: AbortSignal): Promise
       firstDate: y.first_date ?? null,
       lastDate: y.last_date ?? null,
       partial: y.partial,
+      modisFirstDate: y.modis_first_date ?? null,
+      modisLastDate: y.modis_last_date ?? null,
+      viirsFirstDate: y.viirs_first_date ?? null,
+      viirsLastDate: y.viirs_last_date ?? null,
     })),
     months: wire.months.map((m) => ({
       year: m.year,
@@ -456,6 +468,9 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       source: adaptSource(h.source),
       acquired: h.acquired,
       daynight: adaptDayNight(h.daynight),
+      vzaFactor: h.vza_factor ?? null,
+      nObs: h.n_obs ?? 1,
+      platforms: h.platforms ?? [],
     })),
     stages: {
       rawModis: wire.stages.raw_modis,
