@@ -21,3 +21,4 @@ thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+h3o = "0.11"

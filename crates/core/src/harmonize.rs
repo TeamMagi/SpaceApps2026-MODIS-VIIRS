@@ -1,11 +1,11 @@
 use crate::dedup::{haversine_km, remove_interscan_duplicates};
 use crate::fleet::{self, FleetObservation};
+use crate::h3index::H3Index;
 use crate::models::*;
 use crate::vza;
 
 const MATCH_RADIUS_KM: f64 = 2.0;
 const MATCH_WINDOW_SECS: i64 = 300; // 5 minutes
-const EARTH_RADIUS_KM: f64 = 6371.0;
 
 /// Full harmonization pipeline:
 /// 1. Deduplicate interscan overlaps
@@ -21,53 +21,22 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
     // VIIRS detections to leak into the output as ViirsOnly.
     let viirs = fleet::consolidate_fleet(&viirs);
 
-    // Step 2 & 3: Match and fuse using a monotonic sliding time window over sorted VIIRS
+    // Step 2 & 3: Match and fuse using H3 spatial index candidate lookup
+    let index = H3Index::build(viirs.iter().map(|v| (v.hotspot.lat, v.hotspot.lon)));
     let mut result = Vec::with_capacity(modis.len() + viirs.len());
     let mut viirs_matched = vec![false; viirs.len()];
-    let mut lo = 0usize;
-
-    // Conservative angular bound (+0.1% margin for FP rounding) so the pre-filter never drops valid matches.
-    let max_dlat_deg = (MATCH_RADIUS_KM / EARTH_RADIUS_KM).to_degrees() * 1.001;
 
     for m in &modis {
-        // Advance `lo` purely by time, never skipping already-matched points, so a later MODIS
-        // detection still sees the full contiguous [m.acquired - 300s, m.acquired + 300s] range.
-        while lo < viirs.len()
-            && (m.acquired - viirs[lo].hotspot.acquired).num_seconds() > MATCH_WINDOW_SECS
-        {
-            lo += 1;
-        }
-
-        let cos_lat = m.lat.to_radians().cos();
-        // Guard against cos(lat) near zero at the poles, where longitudes converge.
-        let max_dlon_deg = if cos_lat > 0.01 {
-            max_dlat_deg / cos_lat * 1.01
-        } else {
-            180.0
-        };
-
         let mut best_match: Option<(usize, f64)> = None;
 
-        for (j, v) in viirs.iter().enumerate().skip(lo) {
-            let vh = &v.hotspot;
-            let signed_dt = (vh.acquired - m.acquired).num_seconds();
-            if signed_dt > MATCH_WINDOW_SECS {
-                break;
-            }
-
+        for j in index.candidates(m.lat, m.lon) {
             if viirs_matched[j] {
                 continue;
             }
 
-            if (m.lat - vh.lat).abs() > max_dlat_deg {
-                continue;
-            }
-
-            let mut dlon = (m.lon - vh.lon).abs();
-            if dlon > 180.0 {
-                dlon = 360.0 - dlon;
-            }
-            if dlon > max_dlon_deg {
+            let vh = &viirs[j].hotspot;
+            let dt = (vh.acquired - m.acquired).num_seconds().abs();
+            if dt > MATCH_WINDOW_SECS {
                 continue;
             }
 
@@ -76,7 +45,7 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
                 continue;
             }
 
-            let score = match_score(dist, signed_dt.abs());
+            let score = match_score(dist, dt);
             if best_match.is_none_or(|(_, best)| score > best) {
                 best_match = Some((j, score));
             }
@@ -525,6 +494,49 @@ mod tests {
             ));
         }
 
+        // Dense clusters within ~2 km radius and a shared 300s window to stress H3 cell boundaries.
+        let dense_centers = [
+            (12.0, 15.0),
+            (38.5, 31.2),
+            (70.0, 24.5),
+            (-15.3, -47.8),
+        ];
+        for i in 0..600 {
+            let (clat, clon) = dense_centers[(next_u64() as usize) % dense_centers.len()];
+            let r1 = (next_u64() >> 32) as f64 / u32::MAX as f64;
+            let r2 = (next_u64() >> 32) as f64 / u32::MAX as f64;
+            let lat = clat + (r1 - 0.5) * 0.018;
+            let lon = clon + (r2 - 0.5) * (0.018 / clat.to_radians().cos());
+            let t = 5_000 + (next_u64() % 280) as i64;
+            let conf = confs[(next_u64() % 3) as usize];
+            modis.push(make_hotspot(
+                Sensor::ModisTerra,
+                lat,
+                lon,
+                t,
+                15.0 + (i % 40) as f64,
+                conf,
+            ));
+        }
+
+        for i in 0..1_400 {
+            let (clat, clon) = dense_centers[(next_u64() as usize) % dense_centers.len()];
+            let r1 = (next_u64() >> 32) as f64 / u32::MAX as f64;
+            let r2 = (next_u64() >> 32) as f64 / u32::MAX as f64;
+            let lat = clat + (r1 - 0.5) * 0.018;
+            let lon = clon + (r2 - 0.5) * (0.018 / clat.to_radians().cos());
+            let t = 5_000 + (next_u64() % 280) as i64;
+            let conf = confs[(next_u64() % 3) as usize];
+            viirs.push(make_hotspot(
+                Sensor::ViirsSNPP,
+                lat,
+                lon,
+                t,
+                18.0 + (i % 40) as f64,
+                conf,
+            ));
+        }
+
         // Include edge cases near the antimeridian and high latitudes
         modis.push(make_hotspot(
             Sensor::ModisTerra,
@@ -562,6 +574,16 @@ mod tests {
         let expected = harmonize_brute_force(modis.clone(), viirs.clone());
         let actual = harmonize(modis, viirs);
         assert_harmonized_eq(&actual, &expected);
+        let matched_count = actual
+            .iter()
+            .filter(|h| h.source == HotspotSource::Matched)
+            .count();
+        let expected_matched_count = expected
+            .iter()
+            .filter(|h| h.source == HotspotSource::Matched)
+            .count();
+        assert_eq!(matched_count, expected_matched_count);
+        assert!(matched_count > 400);
     }
 
     #[test]
