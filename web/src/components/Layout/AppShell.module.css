@@ -167,7 +167,7 @@
     grid-area: content;
     display: grid;
     grid-template-columns: 40fr 18fr 42fr;
-    grid-template-rows: minmax(var(--h-command), auto) minmax(var(--h-pipeline), auto) var(--h-chart) minmax(0, 1fr);
+    grid-template-rows: minmax(var(--h-command), auto) minmax(var(--h-pipeline), auto) minmax(168px, 34%) minmax(0, 1fr);
     grid-template-areas:
       "headline toggle count"
       "pipeline pipeline pipeline"

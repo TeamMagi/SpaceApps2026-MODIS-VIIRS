@@ -2,18 +2,24 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: var(--space-half);
   height: 100%;
-  min-height: 0;
+  min-height: 420px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
 }
 
-.calendar[data-loading="true"] .grid {
+.calendar[data-loading="true"] .wheelWrap,
+.calendar[data-loading="true"] .histogramWrap {
   opacity: 0.72;
 }
 
 .header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-1);
   flex-wrap: wrap;
@@ -21,46 +27,16 @@
 }
 
 .title {
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
 }
 
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-half);
+.clockSub {
   color: var(--color-text-muted);
   font-size: var(--font-size-2xs);
-  line-height: var(--line-height-tight);
-}
-
-.legendSwatches {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-}
-
-.swatch {
-  width: 8px;
-  height: 8px;
-  border-radius: 1px;
-}
-
-.subbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-1);
-  min-height: 16px;
-  flex-shrink: 0;
-}
-
-.hint {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-2xs);
+  font-variant-numeric: tabular-nums;
   line-height: var(--line-height-tight);
 }
 
@@ -74,7 +50,7 @@
   padding: var(--space-2);
   border: var(--border-width) solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--color-bg);
   text-align: center;
 }
 
@@ -98,167 +74,523 @@
   background: var(--color-hover);
 }
 
+/* --- Layout Body: stacked on mobile, side-by-side on tablet & desktop ----- */
+
+.body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-half);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* --- Radial Year Clock SVG ------------------------------------------------ */
+
+.wheelWrap {
+  flex: 1 1 0;
+  min-height: 150px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transition: opacity var(--dur-ui) var(--ease-standard);
+}
+
+.wheelSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 310px;
+  max-height: 290px;
+  overflow: visible;
+  user-select: none;
+}
+
+.outerGuideRing {
+  fill: none;
+  stroke: var(--color-border-subtle);
+  stroke-width: 1;
+  stroke-opacity: 0.45;
+}
+
+.innerHubRing {
+  fill: var(--color-surface);
+  stroke: var(--color-border-subtle);
+  stroke-width: 1.25;
+}
+
+.sliceGroup {
+  cursor: pointer;
+  outline: none;
+}
+
+.sliceGroup[data-empty="true"] {
+  cursor: default;
+}
+
+.sliceTrack {
+  fill: var(--color-border-subtle);
+  fill-opacity: 0.38;
+  transition: fill-opacity var(--dur-ui) var(--ease-standard);
+}
+
+.sliceGroup:hover .sliceTrack,
+.sliceGroup:focus-visible .sliceTrack {
+  fill-opacity: 0.72;
+}
+
+.sliceWedge {
+  fill: var(--slice-raw);
+  stroke: var(--color-surface);
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+  transition:
+    fill var(--run-merge, var(--dur-merge)) var(--ease-standard),
+    stroke var(--dur-ui) var(--ease-standard),
+    stroke-width var(--dur-ui) var(--ease-standard);
+}
+
+.calendar[data-harmonized="true"] .sliceWedge {
+  fill: var(--slice-harm, var(--slice-raw));
+}
+
+.sliceGroup[data-empty="true"] .sliceWedge {
+  stroke: var(--color-border-subtle);
+  stroke-dasharray: 2 2;
+}
+
+.sliceGroup[data-highlighted="true"] .sliceWedge {
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: none;
+}
+
+.sliceGroup[data-selected="true"] .sliceWedge {
+  stroke: var(--color-text);
+  stroke-width: 2.25;
+  stroke-dasharray: none;
+}
+
+.sliceGroup:focus-visible .sliceWedge {
+  stroke: var(--color-focus);
+  stroke-width: 2.25;
+  stroke-dasharray: none;
+}
+
+.normalArc {
+  fill: none;
+  stroke: var(--color-text-secondary);
+  stroke-width: 1.6;
+  stroke-dasharray: 3.5 2.5;
+  stroke-linecap: round;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.monthLabel {
+  fill: var(--color-text-muted);
+  font-size: 12.25px;
+  font-weight: var(--font-weight-regular);
+  pointer-events: none;
+  transition: fill var(--dur-ui) var(--ease-standard);
+}
+
+.sliceGroup[data-highlighted="true"] .monthLabel,
+.sliceGroup[data-selected="true"] .monthLabel,
+.sliceGroup:hover .monthLabel,
+.sliceGroup:focus-visible .monthLabel {
+  fill: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.centerYear {
+  fill: var(--color-text);
+  font-size: 23px;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.centerCount {
+  fill: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* --- Year Stepper & Play Pill --------------------------------------------- */
+
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.yearStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.stepBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1;
+  transition:
+    background-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard),
+    border-color var(--dur-ui) var(--ease-standard);
+}
+
+.stepBtn:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.stepBtn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.stepBtn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.activeYearReadout {
+  min-width: 44px;
+  text-align: center;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.playPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-dim);
+  border: var(--border-width) solid var(--color-accent);
+  color: var(--color-accent);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+.playPill:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.playPill[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.playPill:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.playPill:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- Selected / Active Slice Detail Line ---------------------------------- */
+
+.detailLine {
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2xs);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Compact Multi-Year Histogram ----------------------------------------- */
+
+.histogramWrap {
+  flex-shrink: 0;
+  width: 100%;
+  padding-top: 2px;
+  transition: opacity var(--dur-ui) var(--ease-standard);
+}
+
+.histogramBars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 2px;
+  width: 100%;
+}
+
+.histCol {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.histCliffLine {
+  position: absolute;
+  top: -2px;
+  bottom: 13px;
+  left: -1px;
+  width: 0;
+  border-left: 1.5px dashed var(--color-accent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.histBarBtn {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 26px;
+  padding: 0;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.histBarFill {
+  display: block;
+  width: 100%;
+  height: var(--bar-h, 12%);
+  min-height: 3px;
+  border-radius: 2px;
+  background-color: var(--bar-raw);
+  transition:
+    height var(--run-merge, var(--dur-merge)) var(--ease-standard),
+    background-color var(--run-merge, var(--dur-merge)) var(--ease-standard);
+}
+
+.calendar[data-harmonized="true"] .histBarFill {
+  background-color: var(--bar-harm, var(--bar-raw));
+}
+
+.histBarBtn[data-partial="true"] .histBarFill {
+  opacity: 0.78;
+}
+
+.histBarBtn:hover .histBarFill {
+  outline: 1px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.histBarBtn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.histBarBtn[data-active="true"] .histBarFill {
+  outline: 1.5px solid var(--color-text);
+  outline-offset: 0;
+  z-index: 1;
+}
+
+.histTick {
+  display: block;
+  height: 12px;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 9.5px;
+  line-height: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.histTick[data-cliff="true"] {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.histTick[data-active="true"] {
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.histCol:first-child .histTick {
+  align-self: flex-start;
+}
+
+.histCol:last-child .histTick {
+  align-self: flex-end;
+}
+
+/* --- Footer Legend & Hint ------------------------------------------------- */
+
+.footerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-half) var(--space-1);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  padding-top: 2px;
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-text-muted);
+  font-size: 10.5px;
+  line-height: var(--line-height-tight);
+}
+
+.legendGroup {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.legendDash {
+  display: inline-block;
+  width: 12px;
+  height: 0;
+  border-top: 1.5px dashed var(--color-text-secondary);
+}
+
+.legendDotBelow,
+.legendDotAbove {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+
+.legendDotBelow {
+  background: var(--anom-neg-2);
+}
+
+.legendDotAbove {
+  background: var(--anom-pos-2);
+}
+
+.sliceHint {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 @media (pointer: coarse) {
   .retry {
     min-width: 44px;
     min-height: 44px;
   }
-}
 
-.grid {
-  display: grid;
-  width: 100%;
-  grid-template-columns: 42px repeat(12, minmax(0, 1fr));
-  grid-template-rows: 18px repeat(var(--years, 26), var(--calendar-cell-mobile));
-  gap: 1px;
-  align-content: start;
-  transition: opacity var(--dur-ui) var(--ease-standard);
-}
+  .stepBtn {
+    width: 34px;
+    height: 34px;
+  }
 
-@media (min-width: 480px) {
-  .grid {
-    grid-template-columns: 44px repeat(12, minmax(0, 1fr));
-    gap: 2px;
+  .playPill {
+    min-height: 34px;
+    padding: 4px 12px;
   }
 }
 
-.rowContents {
-  display: contents;
-}
+@media (min-width: 640px) {
+  .calendar {
+    min-height: 300px;
+  }
 
-.monthHeader,
-.yearHeader {
-  display: flex;
-  align-items: center;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-2xs);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  user-select: none;
-}
+  .body {
+    display: grid;
+    grid-template-columns: minmax(190px, 46%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-2);
+  }
 
-.monthHeader {
-  grid-column: calc(var(--m) + 2);
-  grid-row: 1;
-  justify-content: center;
-  letter-spacing: -0.03em;
-}
+  .wheelWrap {
+    height: 100%;
+    min-height: 0;
+  }
 
-.yearHeader {
-  grid-column: 1;
-  grid-row: calc(var(--y) + 2);
-  justify-content: flex-end;
-  padding-right: 6px;
-}
+  .wheelSvg {
+    max-width: 300px;
+    max-height: 100%;
+  }
 
-.yearHeader[data-cliff="true"] {
-  color: var(--color-text);
-  font-weight: var(--font-weight-semibold);
-}
+  .side {
+    justify-content: center;
+    gap: var(--space-1);
+  }
 
-.yearHeader[data-partial="true"] {
-  font-style: italic;
-}
+  .detailLine {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    text-wrap: balance;
+    line-height: var(--line-height-snug);
+  }
 
-.corner {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.yearTickDesktopHidden {
-  display: inline;
-}
-
-.cell {
-  grid-column: calc(var(--m) + 2);
-  grid-row: calc(var(--y) + 2);
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  border-radius: 2px;
-  position: relative;
-  background-color: var(--bg-raw);
-  transition: background-color var(--run-merge, var(--dur-merge)) var(--ease-standard);
-  transition-delay: calc(var(--y) * 4ms);
-}
-
-.grid[data-harmonized="true"] .cell {
-  background-color: var(--bg-harm);
-}
-
-.cell[data-empty="true"] {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent 0 3px,
-    var(--color-border-subtle) 3px 4px
-  );
-  cursor: default;
-}
-
-.cell:hover {
-  z-index: 2;
-  outline: 1px solid var(--color-focus);
-  outline-offset: -1px;
-}
-
-.cell:focus-visible {
-  z-index: 3;
-  outline: 2px solid var(--color-focus);
-  outline-offset: -1px;
-}
-
-.cell[data-selected="true"] {
-  z-index: 2;
-  outline: 2px solid var(--color-text);
-  outline-offset: -2px;
+  .histBarBtn {
+    height: 34px;
+  }
 }
 
 @media (min-width: 1024px) {
-  .grid {
-    flex: 1;
+  .calendar {
     min-height: 0;
-    padding-right: 8px;
-    grid-template-columns: 46px repeat(var(--years, 26), minmax(0, 1fr));
-    grid-template-rows: 18px repeat(12, minmax(0, 1fr));
-    align-content: stretch;
+    gap: var(--space-half);
+    padding: var(--space-1) 12px;
   }
 
-  .monthHeader {
-    grid-column: 1;
-    grid-row: calc(var(--m) + 2);
-    justify-content: flex-end;
-    padding-right: 6px;
-    letter-spacing: normal;
+  .body {
+    grid-template-columns: minmax(175px, 46%) minmax(0, 1fr);
+    gap: var(--space-1);
   }
 
-  .yearHeader {
-    grid-column: calc(var(--y) + 2);
-    grid-row: 1;
-    justify-content: center;
-    padding-right: 0;
+  .wheelSvg {
+    max-width: 310px;
+    max-height: 100%;
   }
 
-  .yearTickDesktopHidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .cell {
-    grid-column: calc(var(--y) + 2);
-    grid-row: calc(var(--m) + 2);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cell {
-    transition-delay: 0ms;
+  .histBarBtn {
+    height: 32px;
   }
 }
