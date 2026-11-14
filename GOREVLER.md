@@ -123,11 +123,11 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ⏸ |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ⏸ |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ⏸ |
-| S1 | Core crate unit testleri | Samet | G2 | S5 | ⬜ |
+| S1 | Core crate unit testleri | Samet | G2 | S5 | ✅ |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ⬜ |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⬜ |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⬜ |
-| S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⏸ |
+| S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⬜ |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | ⏸ |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | ⏸ |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5 | — | ⏸ |
@@ -137,7 +137,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 **Şu an başlanabilecekler:**
 - **Görkem:** G5 — Sunum materyali + demo senaryosu (R5 ve Y1 de bekliyor). G4 bitti.
 - **Can:** C2, C3, C4 — C1 bitti, kararlar `docs/UI-UX-KONSEPT.md`'de sabitlendi.
-- **Samet:** S4 (G1 bitti), S1 — core crate testleri (G2 bitti), S2 — integration testleri ve S3 — OpenAPI dokümantasyonu (G4 bitti).
+- **Samet:** S5 — CI/CD (S1 bitti), S2 — integration testleri ve S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil.
 
 **Birbirini bekleyen kritik yollar:**
@@ -404,15 +404,24 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 ## Samet'in görevleri
 
-### S1 — Core crate unit testleri ⏸
+### S1 — Core crate unit testleri ✅
 - **Bekler:** G2 · **Açar:** S5
 - `pyrosync-core` crate'indeki harmonizasyon pipeline'ı için kapsamlı testler:
-  - **dedup:** bilinen duplikat seti verin → %18.3 FRP azalması beklenen
-  - **VZA:** nadir'de correction = 1.0, 60° VZA'da > 1.0; symemetrik
-  - **matching:** 2 km ve 5 dk içindeki MODIS/VIIRS çiftleri eşleşmeli, dışındakiler eşleşmemeli
-  - **calendar:** 24 aylık veri → 24 hücre; anomaly hesabı en az 3 yıl verisi gerektirir
-  - Edge case'ler: boş veri, tek sensör, tüm deteksiyonlar eşleşen, hiçbiri eşleşmeyen
+  - ✅ **dedup:** bilinen duplikat seti verin → FRP azalması beklenen (revize, bkz. aşağıda); ayrıca haversine (sıfır mesafe, 1° enlem, simetri, antimeridyen), %30 örtüşme eşiği ve 8 sn penceresi
+  - ✅ **VZA:** nadir'de correction = 1.0, 60° VZA'da > 1.0; simetri yerine negatif VZA üretmeme ve kenara doğru azalmama (revize, bkz. aşağıda)
+  - ✅ **matching:** 2 km ve **180 dk** içindeki MODIS/VIIRS çiftleri eşleşmeli, dışındakiler eşleşmemeli (revize: G2'de pencere 5 dk'dan 180 dk'ya çıktı)
+  - ✅ **calendar:** 24 aylık veri → 24 hücre; anomaly hesabı en az 3 yıl verisi gerektirir; std = 0'da anomali yok; z-skoru formülü; UTC ay sınırı
+  - ✅ Edge case'ler: boş veri, tek sensör, tüm deteksiyonlar eşleşen, hiçbiri eşleşmeyen
+  - ✅ Ek: önceden testsiz public yardımcılar (`Sensor::is_modis/is_viirs/firms_source`, `BBox::to_firms_string`, `Confidence` sıralaması)
 - **Bitti sayılır:** `cargo test -p pyrosync-core` en az 20 test geçiyor; her modül (dedup, vza, harmonize, calendar) için en az 3 test var.
+- **Revizyon gerekçesi (2026-11-14):** Üç madde koda göre eskimişti.
+  - "%18.3" gerçek veriden gelen bir literatür ortalaması, algoritmanın sabit bir özelliği değil; G2 de aynı bandı bıraktı. Yerine sonucu elle hesaplanan bir küme kullanıldı: 4 tespit → 3, toplam FRP 200 → 160 MW, azalma tam %20.
+  - Eşleştirme penceresi G2'de 180 dk'ya çıkarıldı; testler bu değere göre yazıldı.
+  - Düzeltme polinomunda doğrusal terim var (B = 0,12), bu yüzden R(−θ) ≠ R(θ) ve "simetrik" testi yazılsa kırılırdı. VZA bir açı büyüklüğü ve `vza_from_scan` negatif değer üretmiyor; anlamlı olan bu özellik test edildi.
+- **Doğrulama (2026-11-14):** `cargo test -p pyrosync-core` 101 test geçiyor, 22'si bu görevden. Modül başına: calendar 11, dedup 14, harmonize 17, vza 20, models 7, fleet 13, effort 11, h3index 8. `cargo clippy --workspace --all-targets -- -D warnings` temiz; eklenen kod rustfmt'ye uygun.
+- **Yan bulgular (Görkem için):**
+  - `calendar.rs`: tespit olmayan aylar hücre olarak üretilmiyor, bu yüzden anomali baseline'ı yalnız tespit olan yıllardan hesaplanıyor. Ortalama olduğundan yüksek çıkar ve yangınsız yıllar takvimde hiç görünmez.
+  - `dedup.rs`: yorum "|Δt| < 8 s" diyor ama kod 8 sn'yi de duplikat sayıyor (`dt > 8` ise kesiyor). Hangisinin doğru olduğu karar istiyor; sınır bu yüzden testle sabitlenmedi.
 
 ### S2 — Server + FIRMS client integration testleri ⏸
 - **Bekler:** G4 · **Açar:** —
@@ -444,7 +453,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Frontend ve grafik component'leri bu veriyle çalışabilir
 - **Bitti sayılır:** `data/sample/` altında en az 3 bölge var; her bölgede MODIS, VIIRS ve harmonized veri mevcut; Yusuf bu veriyle grafik yapabilir.
 
-### S5 — GitHub Actions CI/CD kurulumu ⏸
+### S5 — GitHub Actions CI/CD kurulumu ⬜
 - **Bekler:** S1 · **Açar:** —
 - Her push'ta otomatik kontrol:
   - `cargo check` — derleme hatası yok
