@@ -7,13 +7,14 @@ use axum::{
     response::{IntoResponse, Json, Response},
     routing::get,
 };
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
 
-use pyrosync_core::models::{BBox, Sensor};
+use pyrosync_core::effort::EffortFactor;
+use pyrosync_core::models::{BBox, CalendarCell, DayNight, HarmonizedHotspot, Hotspot, Sensor};
 use pyrosync_firms::{DayRange, FirmsClient, FirmsSource};
 
 #[derive(Clone)]
@@ -30,6 +31,7 @@ struct HarmonizeParams {
     days: Option<u32>,
     start: Option<String>,
     end: Option<String>,
+    include_raw: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -51,6 +53,58 @@ struct ReportResponse {
     failures: Vec<(String, String)>,
     transactions_spent: u32,
     uncovered: Vec<(String, String)>,
+}
+
+#[derive(Serialize)]
+struct RawHotspot {
+    lat: f64,
+    lon: f64,
+    frp: f64,
+    sensor: Sensor,
+    acquired: DateTime<Utc>,
+    daynight: DayNight,
+}
+
+impl From<&Hotspot> for RawHotspot {
+    fn from(h: &Hotspot) -> Self {
+        Self {
+            lat: h.lat,
+            lon: h.lon,
+            frp: h.frp,
+            sensor: h.sensor,
+            acquired: h.acquired,
+            daynight: h.daynight,
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct RawResponse {
+    modis_count: usize,
+    viirs_count: usize,
+    total_raw: usize,
+    // Omit raw points unless requested because serializing them roughly doubles large multi-month payloads.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    hotspots: Option<Vec<RawHotspot>>,
+}
+
+#[derive(Serialize)]
+struct EffortResponse {
+    reliable: bool,
+    reason: Option<String>,
+    factors: Vec<EffortFactor>,
+}
+
+struct PipelineRun {
+    #[allow(dead_code)] // Retained for upcoming /api/compare and /api/stats endpoints.
+    bbox: BBox,
+    modis_count: usize,
+    viirs_count: usize,
+    // Keep filtered raw detections even when include_raw=false so /api/compare and /api/stats can reuse this helper.
+    raw: Vec<Hotspot>,
+    harmonized: Vec<HarmonizedHotspot>,
+    calendar: Vec<CalendarCell>,
+    report: ReportResponse,
 }
 
 struct ApiError {
@@ -176,13 +230,10 @@ async fn availability(
     Ok(Json(entries))
 }
 
-async fn harmonize(
-    State(state): State<AppState>,
-    Query(params): Query<HarmonizeParams>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    let bbox = parse_bbox(&params)?;
-    let window = parse_time_window(&params)?;
-    let client = require_firms_client(&state)?;
+async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<PipelineRun, ApiError> {
+    let bbox = parse_bbox(params)?;
+    let window = parse_time_window(params)?;
+    let client = require_firms_client(state)?;
 
     let (mut modis, mut viirs, report) = match window {
         TimeWindow::Days(days) => client.fetch_all(&bbox, days).await,
@@ -206,6 +257,11 @@ async fn harmonize(
 
     let modis_count = modis.len();
     let viirs_count = viirs.len();
+
+    let mut raw = Vec::with_capacity(modis_count + viirs_count);
+    raw.extend(modis.iter().cloned());
+    raw.extend(viirs.iter().cloned());
+
     let harmonized = pyrosync_core::harmonize::harmonize(modis, viirs);
     let calendar = pyrosync_core::calendar::build_calendar(&harmonized);
 
@@ -225,18 +281,86 @@ async fn harmonize(
             .collect(),
     };
 
+    Ok(PipelineRun {
+        bbox,
+        modis_count,
+        viirs_count,
+        raw,
+        harmonized,
+        calendar,
+        report: report_json,
+    })
+}
+
+fn build_effort_and_warnings(
+    harmonized: &[HarmonizedHotspot],
+    report: &ReportResponse,
+) -> (EffortResponse, Vec<String>) {
+    // Effort normalization infers each month's active fleet from retrieved detections, so upstream
+    // FIRMS failures can drop a satellite and silently apply the wrong Ω factor.
+    let failure_count = report.failures.len();
+    let reliable = failure_count == 0;
+    let reason = (!reliable).then(|| {
+        let noun = if failure_count == 1 {
+            "FIRMS request"
+        } else {
+            "FIRMS requests"
+        };
+        format!(
+            "{failure_count} {noun} failed; missing source data may undercount monthly platform configurations and produce inaccurate effort_omega values."
+        )
+    });
+
+    let mut warnings = Vec::new();
+    if let Some(msg) = &reason {
+        warnings.push(msg.clone());
+    }
+    if !report.uncovered.is_empty() {
+        let ranges = report
+            .uncovered
+            .iter()
+            .map(|(start, end)| format!("{start}..{end}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        warnings.push(format!(
+            "Requested time range has intervals not covered by any FIRMS source: {ranges}."
+        ));
+    }
+
+    let effort = EffortResponse {
+        reliable,
+        reason,
+        factors: pyrosync_core::effort::estimate_effort(harmonized),
+    };
+
+    (effort, warnings)
+}
+
+async fn harmonize(
+    State(state): State<AppState>,
+    Query(params): Query<HarmonizeParams>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let include_raw = params.include_raw.unwrap_or(false);
+    let run = run_pipeline(&state, &params).await?;
+    let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report);
+
+    let raw = RawResponse {
+        modis_count: run.modis_count,
+        viirs_count: run.viirs_count,
+        total_raw: run.modis_count + run.viirs_count,
+        hotspots: include_raw.then(|| run.raw.iter().map(RawHotspot::from).collect()),
+    };
+
     Ok(Json(serde_json::json!({
-        "raw": {
-            "modis_count": modis_count,
-            "viirs_count": viirs_count,
-            "total_raw": modis_count + viirs_count,
-        },
+        "raw": raw,
         "harmonized": {
-            "count": harmonized.len(),
-            "hotspots": harmonized,
+            "count": run.harmonized.len(),
+            "hotspots": run.harmonized,
         },
-        "calendar": calendar,
-        "report": report_json,
+        "calendar": run.calendar,
+        "effort": effort,
+        "warnings": warnings,
+        "report": run.report,
     })))
 }
 
