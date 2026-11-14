@@ -146,7 +146,7 @@ pub struct CalendarCell {
 
 #[cfg(test)]
 mod tests {
-    use super::FireType;
+    use super::{BBox, Confidence, FireType, Sensor};
 
     #[test]
     fn fire_type_code_round_trips_for_known_codes() {
@@ -170,5 +170,61 @@ mod tests {
         assert!(!FireType::OtherStaticLand.is_wildfire());
         assert!(!FireType::Offshore.is_wildfire());
         assert!(!FireType::Unknown.is_wildfire());
+    }
+
+    #[test]
+    fn sensor_family_helpers_split_modis_and_viirs() {
+        let cases = [
+            (Sensor::ModisTerra, true),
+            (Sensor::ModisAqua, true),
+            (Sensor::ViirsSNPP, false),
+            (Sensor::ViirsNOAA20, false),
+            (Sensor::ViirsNOAA21, false),
+        ];
+
+        for (sensor, expected_modis) in cases {
+            assert_eq!(sensor.is_modis(), expected_modis);
+            assert_eq!(sensor.is_viirs(), !expected_modis);
+        }
+    }
+
+    #[test]
+    fn firms_source_ids_match_nrt_feeds() {
+        assert_eq!(Sensor::ModisTerra.firms_source(), "MODIS_NRT");
+        assert_eq!(Sensor::ModisAqua.firms_source(), "MODIS_NRT");
+        assert_eq!(Sensor::ViirsSNPP.firms_source(), "VIIRS_SNPP_NRT");
+        assert_eq!(Sensor::ViirsNOAA20.firms_source(), "VIIRS_NOAA20_NRT");
+        assert_eq!(Sensor::ViirsNOAA21.firms_source(), "VIIRS_NOAA21_NRT");
+    }
+
+    #[test]
+    fn bbox_to_firms_string_is_west_south_east_north() {
+        let integer_edges = BBox {
+            west: 26.0,
+            south: 36.0,
+            east: 45.0,
+            north: 42.0,
+        };
+        assert_eq!(integer_edges.to_firms_string(), "26,36,45,42");
+
+        let fractional_edges = BBox {
+            west: 26.5,
+            south: 36.25,
+            east: 45.0,
+            north: 42.75,
+        };
+        assert_eq!(fractional_edges.to_firms_string(), "26.5,36.25,45,42.75");
+    }
+
+    #[test]
+    fn confidence_orders_low_nominal_high() {
+        assert!(Confidence::Low < Confidence::Nominal);
+        assert!(Confidence::Nominal < Confidence::High);
+
+        let highest = [Confidence::Low, Confidence::Nominal, Confidence::High]
+            .into_iter()
+            .max()
+            .unwrap();
+        assert_eq!(highest, Confidence::High);
     }
 }
