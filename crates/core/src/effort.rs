@@ -9,6 +9,8 @@ const MIN_MONTHS_PER_CONFIG: usize = 3;
 /// Observation effort for one platform configuration, measured against the MODIS channel.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EffortFactor {
+    pub has_modis: bool,
+    pub viirs_platforms: Vec<Sensor>,
     pub platforms: Vec<Sensor>,
     pub months: usize,
     pub total: u64,
@@ -16,10 +18,28 @@ pub struct EffortFactor {
     pub omega: Option<f64>,
 }
 
+type PoolingKey = (bool, Vec<Sensor>);
+
+struct PoolAccumulator {
+    platforms: BTreeSet<Sensor>,
+    months: usize,
+    total: u64,
+    modis_observable: u64,
+}
+
 struct MonthBucket {
     platforms: BTreeSet<Sensor>,
     total: u64,
     modis_observable: u64,
+}
+
+// Pool by (has_modis, viirs_platforms) rather than exact sensor set: Ω is a VIIRS/MODIS ratio,
+// so losing detections from one MODIS satellite in a low-activity month reflects fire activity
+// rather than a fleet change and must not split the pool into a sub-threshold bucket.
+fn pooling_key(platforms: &BTreeSet<Sensor>) -> PoolingKey {
+    let has_modis = platforms.iter().any(|s| s.is_modis());
+    let viirs_platforms = platforms.iter().copied().filter(|s| s.is_viirs()).collect();
+    (has_modis, viirs_platforms)
 }
 
 fn aggregate_months(hotspots: &[HarmonizedHotspot]) -> HashMap<(i32, u32), MonthBucket> {
@@ -48,35 +68,46 @@ fn aggregate_months(hotspots: &[HarmonizedHotspot]) -> HashMap<(i32, u32), Month
 // efficiency ratio varies more than 2x across regions (e.g. ~3.3 in Bulgaria vs ~7.3 in Syria).
 // MODIS serves as the invariant reference channel because Terra/Aqua run across the full
 // 2000–present archive with stable annual detection rates while the VIIRS fleet grows around them.
+// Never inherit Ω from a superset configuration when a pool falls below MIN_MONTHS_PER_CONFIG:
+// if a query starts shortly before a fleet transition (e.g. 2018-02 before NOAA-20), borrowing
+// the post-transition Ω would over-divide pre-transition counts and create a reverse artificial jump.
 fn factors_from_months(
     months: &HashMap<(i32, u32), MonthBucket>,
-) -> (Vec<EffortFactor>, BTreeMap<Vec<Sensor>, Option<f64>>) {
-    let mut pooled: BTreeMap<Vec<Sensor>, (usize, u64, u64)> = BTreeMap::new();
+) -> (Vec<EffortFactor>, BTreeMap<PoolingKey, Option<f64>>) {
+    let mut pooled: BTreeMap<PoolingKey, PoolAccumulator> = BTreeMap::new();
 
     for bucket in months.values() {
-        let key: Vec<Sensor> = bucket.platforms.iter().copied().collect();
-        let entry = pooled.entry(key).or_insert((0, 0, 0));
-        entry.0 += 1;
-        entry.1 += bucket.total;
-        entry.2 += bucket.modis_observable;
+        let key = pooling_key(&bucket.platforms);
+        let entry = pooled.entry(key).or_insert_with(|| PoolAccumulator {
+            platforms: BTreeSet::new(),
+            months: 0,
+            total: 0,
+            modis_observable: 0,
+        });
+        entry.platforms.extend(bucket.platforms.iter().copied());
+        entry.months += 1;
+        entry.total += bucket.total;
+        entry.modis_observable += bucket.modis_observable;
     }
 
     let mut factors = Vec::with_capacity(pooled.len());
     let mut omega_by_config = BTreeMap::new();
 
-    for (platforms, (month_count, total, modis_observable)) in pooled {
-        let omega = if month_count >= MIN_MONTHS_PER_CONFIG && modis_observable > 0 {
-            let ratio = total as f64 / modis_observable as f64;
+    for ((has_modis, viirs_platforms), acc) in pooled {
+        let omega = if acc.months >= MIN_MONTHS_PER_CONFIG && acc.modis_observable > 0 {
+            let ratio = acc.total as f64 / acc.modis_observable as f64;
             ratio.is_finite().then_some(ratio)
         } else {
             None
         };
-        omega_by_config.insert(platforms.clone(), omega);
+        omega_by_config.insert((has_modis, viirs_platforms.clone()), omega);
         factors.push(EffortFactor {
-            platforms,
-            months: month_count,
-            total,
-            modis_observable,
+            has_modis,
+            viirs_platforms,
+            platforms: acc.platforms.into_iter().collect(),
+            months: acc.months,
+            total: acc.total,
+            modis_observable: acc.modis_observable,
             omega,
         });
     }
@@ -112,10 +143,10 @@ pub fn omega_for_month(
         return None;
     }
 
-    let config: Vec<Sensor> = sensors.into_iter().collect();
+    let (has_modis, viirs_platforms) = pooling_key(&sensors);
     factors
         .iter()
-        .find(|f| f.platforms == config)
+        .find(|f| f.has_modis == has_modis && f.viirs_platforms == viirs_platforms)
         .and_then(|f| f.omega)
 }
 
@@ -126,7 +157,7 @@ pub(crate) fn monthly_omegas(hotspots: &[HarmonizedHotspot]) -> HashMap<(i32, u3
     months
         .into_iter()
         .map(|(ym, bucket)| {
-            let key: Vec<Sensor> = bucket.platforms.into_iter().collect();
+            let key = pooling_key(&bucket.platforms);
             let omega = omega_by_config.get(&key).copied().flatten();
             (ym, omega)
         })
@@ -276,18 +307,155 @@ mod tests {
         let mut hotspots = Vec::new();
         for month in 1..=3 {
             hotspots.push(make_hotspot(2023, month, vec![Sensor::ViirsNOAA21]));
+            hotspots.push(make_hotspot(
+                2021,
+                month,
+                vec![Sensor::ModisAqua, Sensor::ViirsSNPP, Sensor::ViirsNOAA20],
+            ));
             hotspots.push(make_hotspot(2020, month, vec![Sensor::ModisTerra, Sensor::ViirsSNPP]));
             hotspots.push(make_hotspot(2010, month, vec![Sensor::ModisTerra]));
+            hotspots.push(make_hotspot(2024, month, vec![Sensor::ViirsSNPP]));
         }
 
         let factors = estimate_effort(&hotspots);
-        assert_eq!(factors.len(), 3);
-        assert_eq!(factors[0].platforms, vec![Sensor::ModisTerra]);
+        assert_eq!(factors.len(), 5);
+        assert!(!factors[0].has_modis);
+        assert_eq!(factors[0].viirs_platforms, vec![Sensor::ViirsSNPP]);
+        assert!(!factors[1].has_modis);
+        assert_eq!(factors[1].viirs_platforms, vec![Sensor::ViirsNOAA21]);
+        assert!(factors[2].has_modis);
+        assert!(factors[2].viirs_platforms.is_empty());
+        assert!(factors[3].has_modis);
+        assert_eq!(factors[3].viirs_platforms, vec![Sensor::ViirsSNPP]);
+        assert!(factors[4].has_modis);
         assert_eq!(
-            factors[1].platforms,
-            vec![Sensor::ModisTerra, Sensor::ViirsSNPP]
+            factors[4].viirs_platforms,
+            vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20]
         );
-        assert_eq!(factors[2].platforms, vec![Sensor::ViirsNOAA21]);
-        assert!(factors.windows(2).all(|w| w[0].platforms < w[1].platforms));
+        assert!(factors
+            .windows(2)
+            .all(|w| (w[0].has_modis, &w[0].viirs_platforms) < (w[1].has_modis, &w[1].viirs_platforms)));
+    }
+
+    #[test]
+    fn missing_one_modis_satellite_in_low_activity_month_shares_pool_and_omega() {
+        // 2018-10 and 2018-11 have Terra + Aqua + SNPP + NOAA20; 2018-12 drops Terra.
+        let mut hotspots = Vec::new();
+        for month in [10, 11] {
+            hotspots.push(make_hotspot(2018, month, vec![Sensor::ModisTerra]));
+            hotspots.push(make_hotspot(2018, month, vec![Sensor::ModisAqua]));
+            for _ in 0..5 {
+                hotspots.push(make_hotspot(2018, month, vec![Sensor::ViirsSNPP]));
+                hotspots.push(make_hotspot(2018, month, vec![Sensor::ViirsNOAA20]));
+            }
+        }
+        // 2018-12: only Aqua on MODIS, plus both VIIRS platforms.
+        hotspots.push(make_hotspot(2018, 12, vec![Sensor::ModisAqua]));
+        for _ in 0..5 {
+            hotspots.push(make_hotspot(2018, 12, vec![Sensor::ViirsSNPP]));
+        }
+        for _ in 0..6 {
+            hotspots.push(make_hotspot(2018, 12, vec![Sensor::ViirsNOAA20]));
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert!(factors[0].has_modis);
+        assert_eq!(
+            factors[0].viirs_platforms,
+            vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20]
+        );
+        assert_eq!(factors[0].months, 3);
+        assert_eq!(factors[0].total, 36);
+        assert_eq!(factors[0].modis_observable, 5);
+
+        let expected_omega = 36.0 / 5.0;
+        assert_eq!(factors[0].omega, Some(expected_omega));
+        assert_eq!(omega_for_month(&factors, &hotspots, 2018, 10), Some(expected_omega));
+        assert_eq!(omega_for_month(&factors, &hotspots, 2018, 11), Some(expected_omega));
+        assert_eq!(omega_for_month(&factors, &hotspots, 2018, 12), Some(expected_omega));
+    }
+
+    #[test]
+    fn adding_noaa20_preserves_separate_pool_and_distinct_omega() {
+        let mut hotspots = Vec::new();
+        // Period 1: (true, [ViirsSNPP]), total=3 per month, modis=1 -> omega = 3.0
+        for month in 1..=3 {
+            hotspots.push(make_hotspot(2018, month, vec![Sensor::ModisTerra]));
+            hotspots.push(make_hotspot(2018, month, vec![Sensor::ViirsSNPP]));
+            hotspots.push(make_hotspot(2018, month, vec![Sensor::ViirsSNPP]));
+        }
+        // Period 2: (true, [ViirsSNPP, ViirsNOAA20]), total=6 per month, modis=1 -> omega = 6.0
+        for month in 5..=7 {
+            hotspots.push(make_hotspot(2018, month, vec![Sensor::ModisAqua]));
+            for _ in 0..3 {
+                hotspots.push(make_hotspot(2018, month, vec![Sensor::ViirsSNPP]));
+            }
+            for _ in 0..2 {
+                hotspots.push(make_hotspot(2018, month, vec![Sensor::ViirsNOAA20]));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 2);
+        assert_eq!(factors[0].viirs_platforms, vec![Sensor::ViirsSNPP]);
+        assert_eq!(factors[0].omega, Some(3.0));
+        assert_eq!(
+            factors[1].viirs_platforms,
+            vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20]
+        );
+        assert_eq!(factors[1].omega, Some(6.0));
+        assert_ne!(factors[0].omega, factors[1].omega);
+        assert_eq!(omega_for_month(&factors, &hotspots, 2018, 2), Some(3.0));
+        assert_eq!(omega_for_month(&factors, &hotspots, 2018, 6), Some(6.0));
+    }
+
+    #[test]
+    fn pool_without_modis_detections_returns_none_without_panic() {
+        let hotspots = vec![
+            make_hotspot(2022, 1, vec![Sensor::ViirsSNPP]),
+            make_hotspot(2022, 1, vec![Sensor::ViirsNOAA20]),
+            make_hotspot(2022, 2, vec![Sensor::ViirsSNPP]),
+            make_hotspot(2022, 2, vec![Sensor::ViirsNOAA20]),
+            make_hotspot(2022, 3, vec![Sensor::ViirsSNPP]),
+            make_hotspot(2022, 3, vec![Sensor::ViirsNOAA20]),
+        ];
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert!(!factors[0].has_modis);
+        assert_eq!(
+            factors[0].viirs_platforms,
+            vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20]
+        );
+        assert_eq!(factors[0].months, 3);
+        assert_eq!(factors[0].total, 6);
+        assert_eq!(factors[0].modis_observable, 0);
+        assert_eq!(factors[0].omega, None);
+        assert_eq!(omega_for_month(&factors, &hotspots, 2022, 2), None);
+        let omegas = monthly_omegas(&hotspots);
+        assert_eq!(omegas.get(&(2022, 1)), Some(&None));
+    }
+
+    #[test]
+    fn platforms_field_is_union_of_all_sensors_seen_in_pool() {
+        let hotspots = vec![
+            make_hotspot(2019, 1, vec![Sensor::ModisTerra]),
+            make_hotspot(2019, 1, vec![Sensor::ModisAqua]),
+            make_hotspot(2019, 1, vec![Sensor::ViirsSNPP]),
+            make_hotspot(2019, 2, vec![Sensor::ModisAqua]),
+            make_hotspot(2019, 2, vec![Sensor::ViirsSNPP]),
+            make_hotspot(2019, 3, vec![Sensor::ModisAqua]),
+            make_hotspot(2019, 3, vec![Sensor::ViirsSNPP]),
+        ];
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert!(factors[0].has_modis);
+        assert_eq!(factors[0].viirs_platforms, vec![Sensor::ViirsSNPP]);
+        assert_eq!(
+            factors[0].platforms,
+            vec![Sensor::ModisTerra, Sensor::ModisAqua, Sensor::ViirsSNPP]
+        );
     }
 }
