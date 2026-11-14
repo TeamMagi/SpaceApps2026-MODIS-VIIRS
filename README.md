@@ -8,22 +8,26 @@ PyroSync transforms fragmented satellite fire data into a single, scientifically
 
 Fire researchers and land managers face a "sensor cliff" at 2012: detection counts jump sharply when VIIRS came online, not because fires increased, but because VIIRS sees more. Naively combining the two sensors produces misleading trends, inflated counts, and incomparable time series. Existing tools either ignore one sensor or merge them without correcting for:
 
-- **Interscan duplicates** — overlapping MODIS scans inflate FRP by ~18.3%
+- **Interscan & fleet duplicates** — overlapping scans remove 4.8–13.8% of MODIS and 12–16% of VIIRS detections, while VIIRS fleet consolidation removes another 21–22% (16–38% total reduction depending on fire density)
 - **Viewing zenith angle (VZA) bias** — MODIS FRP grows up to 300% from nadir to scan edge
 - **Spatial resolution mismatch** — 1 km vs 375 m pixels cannot be directly compared
-- **Multi-satellite fleet effects** — three VIIRS satellites require averaging, not summing
+- **Multi-satellite fleet effects** — VIIRS platforms (43–59 min apart) and MODIS Terra/Aqua (≥97 min apart, zero pairs within 60 min) require separate consolidation windows rather than summing raw detections
 
 ## Our Solution
 
-PyroSync implements a rigorous seven-stage harmonization pipeline built entirely in **Rust** for performance and correctness:
+PyroSync implements a seven-stage harmonization pipeline built in **Rust** for performance and determinism:
 
-1. **Ingest** — Fetch active fire data from NASA FIRMS API (MODIS + all VIIRS sources)
-2. **Deduplicate** — Remove interscan overlaps using temporal (|Δt| < 8s) and spatial (overlap > 30%) criteria
-3. **VZA Correction** — Normalize MODIS FRP to nadir-equivalent using polynomial correction (R² ≥ 98.18%)
-4. **Spatial Harmonization** — Aggregate detections onto a common grid for cross-sensor comparison
-5. **Cross-Sensor Matching** — Link MODIS/VIIRS detections within 2 km and 5 minutes using Haversine distance
-6. **Quality-Priority Fusion** — Prefer VIIRS (higher resolution) where both sensors detect, keep unmatched from each
-7. **Calendar Output** — Generate unified monthly burning activity with anomaly detection across the full 2000–present timeline
+1. **Ingest** — Fetch active fire data from the NASA FIRMS API (live NRT/SP) or the local country archive
+2. **Intra-Sensor Interscan Deduplication** — Remove overlapping adjacent scans per sensor using temporal and spatial overlap criteria
+3. **MODIS Fleet Consolidation** — Merge Terra/Aqua observations of the same fire within a **180-minute** window
+4. **VIIRS Fleet Consolidation** — Merge SNPP/NOAA-20/NOAA-21 observations within a **60-minute** window
+5. **H3-Indexed Cross-Sensor Matching** — Index detections onto **H3 resolution 8** hexagons and match MODIS/VIIRS pairs within 2 km (k-ring 3 lookup) and **180 minutes** (across 26,505 co-located live pairs, zero fell below 30 min; min 34 min, median ~158 min). `Matched` means dual-sensor observation of the same fire event, not simultaneous overpass
+6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events, retain unmatched detections from both sensors, and apply per-record VZA normalization to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA); polynomial coefficients remain uncalibrated placeholders (no simultaneous MODIS/VIIRS calibration pairs exist in FIRMS), so correction magnitude is **indicative**
+7. **Monthly Calendar & Effort Normalization (Ω)** — Aggregate detections into a monthly activity calendar and normalize counts against the MODIS reference channel using an empirically measured effort factor **Ω**
+
+### Effort Normalization (Ω)
+
+As the satellite fleet expands (SNPP in 2012, NOAA-20 in 2018, NOAA-21 in 2023), raw detection counts increase artificially. Rather than hardcoding a constant, PyroSync measures **Ω** per time series relative to the MODIS reference channel (observed VIIRS/MODIS yield ratio ranges from **3.3 to 7.4** across regions). On the 2000–2025 country archive, effort normalization reduces the artificial upward trend from Spearman ρ **+0.788 to +0.080** and brings the 2012 sensor-cliff step jump from **×3.35 to ×0.85**.
 
 ### Raw ↔ Harmonized Toggle
 
@@ -31,61 +35,108 @@ The key demo feature: users can switch between raw multi-sensor data (showing th
 
 ## Architecture
 
-```
+```text
 crates/
-  core/           Harmonization engine — models, dedup, VZA correction, fusion, calendar
-  firms-client/   NASA FIRMS API client with CSV parsing
-  server/         Axum web API serving harmonized data + static files
+  core/             Harmonization engine — models, dedup, fleet, H3 index, VZA, effort, calendar
+  firms-client/     NASA FIRMS API client, CSV parser, and country archive downloader
+    src/bin/        archive_seed CLI for idempotent archive seeding
+  server/           Axum web API serving harmonized data + static files
+data/
+  archive-set.json        Country & sensor matrix (11 countries, 440 files)
+  archive-manifest.sha256 Checksum manifest for bit-identical cache verification
+  sample/                 Offline CSV fixtures for testing
 web/
   src/
-    components/   React UI components (Layout, Toggle, Stats)
-    hooks/        Custom React hooks (useApi)
-    services/     API client layer
-    types/        TypeScript type definitions
-    mocks/        Sample data for development
-docs/             Project documentation (architecture, etc.)
-tools/            Utility scripts (env check, data fetching)
+    components/     React UI components (Layout, Toggle, Stats)
+    hooks/          Custom React hooks (useApi)
+    services/       API client layer
+    types/          TypeScript type definitions
+    mocks/          Sample data for development
+docs/               Project documentation (architecture, UI/UX)
+tools/              Utility scripts (archive verification, data fetching)
 ```
 
 ## Tech Stack
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| Backend | **Rust** (Axum, Tokio) | Memory-safe, fast, no competitor uses it |
-| Harmonization | **Rust** (pyrosync-core) | Correct numeric processing without GC pauses |
-| Data Source | **NASA FIRMS API** | Official active fire data endpoint |
+| Backend | **Rust** (Axum, Tokio) | Memory-safe, fast async API server |
+| Harmonization | **Rust** (`pyrosync-core`) | Deterministic numeric processing without GC pauses |
+| Spatial Index | **H3** (`h3o`, resolution 8) | Uniform hexagonal indexing with k-ring 3 neighbor search |
+| Data Source | **NASA FIRMS API & Archive** | Official active fire NRT/SP endpoints and country CSVs |
 | Frontend | **React + TypeScript** | Interactive visualization |
 | TS Compiler | **SWC** (Rust-based) | Consistent Rust toolchain throughout |
 
+## API
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/health` | Health check and version |
+| `GET /api/availability` | Date coverage per FIRMS source |
+| `GET /api/harmonize` | Harmonized hotspots, calendar and effort factors (`west`, `south`, `east`, `north`, and either `days` or `start`+`end`; optional `include_raw=true`) |
+| `GET /api/compare` | Raw versus harmonized statistics for the same query |
+| `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
+| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox) |
+
+- Responses include an `X-Cache: HIT|MISS` header.
+- Responses include a `warnings` array and an `effort.reliable` flag; if a FIRMS source fails to fetch, effort normalization is marked unreliable and surfaced in the response.
+- `/api/calendar` reads from the local archive and requires **no API key**, though it covers a smaller satellite fleet than live endpoints because the country archive does not include NOAA-20/21.
+
 ## Quick Start
 
-### Docker ile (30 saniyede kurulum)
+### With Docker
+
+First-time setup downloads ~2.4 GB of historical FIRMS country archives:
 
 ```bash
 cp .env.example .env
-# .env dosyasına FIRMS_API_KEY değerini girin
+# Set FIRMS_API_KEY in .env
 
-docker compose up -d
+make docker-seed     # one time, ~2.4 GB, no API key required
+make verify-data     # confirm all 440 files match the checksum manifest
+make docker-up       # start the server
 ```
 
-Open http://localhost:3001 — ready.
+Open `http://localhost:3001`.
+
+- `make docker-seed` downloads the FIRMS country archive into the shared Docker named volume (`firms-archive`). **No API key is required and no FIRMS transactions are consumed**, so every team member can download a local copy without exhausting shared quota.
+- Downloads are idempotent and resumable; if interrupted, re-run the command. No partial files are left behind.
+- The dataset is defined in `data/archive-set.json`: 11 countries, MODIS 2000–2025 and VIIRS SNPP 2012–2025 (**440 files** total).
+- `make verify-data` checks the local cache against `data/archive-manifest.sha256`, proving in one command that all team members have bit-identical data.
+- Skipping the seed step still lets the server and live NRT endpoints run, but `/api/calendar` will have no historical data.
 
 ### Development (manual)
 
-**Prerequisites:** [Rust](https://rustup.rs/) 1.85+, [Node.js](https://nodejs.org/) 20+, [NASA FIRMS API key](https://firms.modaps.eosdis.nasa.gov/api/area/)
+**Prerequisites:** `make`, [Docker](https://docs.docker.com/get-docker/), [Rust](https://rustup.rs/) **1.85+** (required by `edition = "2024"`; the Docker build uses Rust 1.100), [Node.js](https://nodejs.org/) 20+, and a [NASA FIRMS API key](https://firms.modaps.eosdis.nasa.gov/api/area/)
 
 ```bash
 cp .env.example .env
-# .env dosyasına FIRMS_API_KEY değerini girin
+# Set FIRMS_API_KEY in .env
+
+# Seed the local archive cache (default: .cache/firms-archive; override with ARCHIVE_CACHE_DIR)
+cargo run --release -p pyrosync-firms --bin archive_seed
 
 # Backend
 make dev-backend
 
-# Frontend (ayrı terminal)
+# Frontend (separate terminal)
 make dev-frontend
 ```
 
-Open http://localhost:5173 — the frontend proxies API calls to the Rust backend on port 3001.
+Open `http://localhost:5173` — the frontend proxies API calls to the Rust backend on port 3001.
+
+### Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `FIRMS_API_KEY` | — | NASA FIRMS key. Without it the server still boots, but live FIRMS endpoints return 500 |
+| `PORT` | `3001` | Server port |
+| `STATIC_DIR` | `web/dist` | Frontend build directory (`/app/static` in Docker) |
+| `RUST_LOG` | `pyrosync=info` | Log level |
+| `ARCHIVE_CACHE_DIR` | `.cache/firms-archive` | FIRMS country archive cache (`/app/.cache/firms-archive` in Docker) |
+| `CACHE_BUDGET_MB` | `128` | Response cache memory budget; `0` disables caching |
+| `REQUEST_TIMEOUT_SECS` | `300` | Request timeout; `0` disables it |
+| `CORS_ALLOWED_ORIGINS` | — | Comma-separated allowed origins; unset means permissive CORS |
 
 ### Useful Commands
 
@@ -93,8 +144,14 @@ Open http://localhost:5173 — the frontend proxies API calls to the Rust backen
 make help          # Show all available commands
 make build         # Build backend + frontend
 make test          # Run all tests
-make docker-up     # Start with Docker
+make docker-seed   # Download ~2.4 GB FIRMS country archive into Docker volume (no API key)
+make verify-data   # Verify local archive cache against data/archive-manifest.sha256
+make manifest      # Regenerate data/archive-manifest.sha256 from local cache
+make docker-up     # Start containers with Docker
 make docker-down   # Stop containers
+make docker-logs   # Tail container logs
+make docker-shell  # Open a shell inside the running container
+make clean-cache   # Remove local FIRMS archive cache (.cache/)
 ```
 
 ## Team
