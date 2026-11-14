@@ -83,6 +83,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 | G12 | 2023 (NOAA-21) efor geçişini ölçme | Görkem | G11 | — | ⬜ |
 | G13 | Tam filo 2000-present trend serisi | Görkem | G11 | — | ⬜ |
 | G14 | MODIS içi efor geçişi (2002 Aqua) | Görkem | — | — | ⬜ |
+| G15 | SPA fallback gerçekten çalışmıyor | Görkem | — | v1:R1 | ⬜ |
 | C5 | Methods sayfası + disclaimer tasarımı | Can | v1:C1 | R6, S8 | ⏸ |
 | C6 | Export UI + brifingi tasarımı | Can | v1:C1 | R7 | ⏸ |
 | C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | v1:C1 | K3, K4 | ⏸ |
@@ -195,6 +196,25 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   2. 2000-11 … 2002-06 arası 20 ayı `count_normalized: None` ile "kıyaslanabilir değil" işaretlemek. Veri kaybı 26 yılın küçük bir kısmı ve o dönem MODIS misyonunun en az güvenilir evresi. Daha dürüst ve risksiz.
 - **Not:** v1:G3'ün bitiş şartı yalnızca 2012 ve 2017 geçişlerini istediği için bu madde şartı ihlal etmiyor; 2000-2002 taban döneminin sonrasıyla tam kıyaslanabilir olmaması bilinen ve kayıtlı bir sınır.
 - **Bitti sayılır:** 2000-2002 dönemi ya düzeltiliyor ya da açıkça kıyaslanamaz işaretleniyor; methods sayfasında (C5/R6) hangisinin seçildiği belirtiliyor.
+
+### G15 — SPA fallback gerçekten çalışmıyor ⬜
+- **Bekler:** — · **Açar:** v1:R1 (routing eklenince kritik olur)
+- **Neden:** `crates/server/CLAUDE.md` "Teknik Notlar" bölümünde *"`tower_http::services::ServeDir` ile SPA fallback sağlanır"* yazıyor, ama bu DOĞRU DEĞİL. Düz `ServeDir` bilinmeyen bir yolda `index.html` döndürmez, 404 döner.
+- **Ölçüm (2026-11-14, `web/dist` build edilmiş durumda, backend :3001):**
+
+  | İstek | Dönen |
+  |-------|-------|
+  | `/` | HTTP 200, `text/html` (doğru) |
+  | `/harita` | **HTTP 404, boş gövde** (yanlış, `index.html` dönmeliydi) |
+  | `/api/olmayanbirsey` | HTTP 404, `{"error":"Unknown API endpoint: ..."}` (doğru, v1:G4'te düzeltildi) |
+
+- **Neden şu an gizli:** `web/src/App.tsx` içinde henüz router yok, uygulama tek sayfa. R1 (React component mimarisi + layout) routing eklediğinde derin linkler ve sayfa yenileme (F5) kırılacak. Jüri demo sırasında bir alt sayfada yenileme yaparsa boş 404 görür.
+- Yapılacak:
+  - `ServeDir::new(&static_dir)` yerine `index.html`'e düşen bir fallback kur: `ServeDir::new(&static_dir).fallback(ServeFile::new(format!("{static_dir}/index.html")))` veya `.not_found_service(...)`. `tower-http`'nin `fs` feature'ı zaten bağlı, yeni dependency gerekmez.
+  - `/api/*` yollarının JSON 404 davranışı KORUNMALI; SPA fallback yalnız `/api` dışı yolları yakalamalı. v1:G4'te `/api` ayrı bir router'a alındı, o yapı bozulmamalı.
+  - `STATIC_DIR` dizini veya `index.html` yoksa sunucu panik etmemeli; fallback kurulamazsa mevcut davranışa düşüp uyarı loglanmalı (Docker'da `STATIC_DIR=/app/static`, geliştirmede `web/dist` ve build edilmemiş olabilir).
+  - `crates/server/CLAUDE.md`'deki yanlış iddia düzeltilmeli.
+- **Bitti sayılır:** `web/dist` build edilmiş haldeyken `/harita` isteği HTTP 200 ve `index.html` dönüyor; `/api/olmayanbirsey` hâlâ JSON 404 dönüyor; `STATIC_DIR` boşken sunucu ayağa kalkmaya devam ediyor.
 
 ---
 

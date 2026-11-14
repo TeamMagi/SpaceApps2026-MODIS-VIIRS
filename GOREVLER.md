@@ -111,7 +111,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | ✅ |
 | G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ✅ |
 | G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ✅ |
-| G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ⬜ |
+| G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ✅ |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | 🔄 |
@@ -124,8 +124,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ⏸ |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ⏸ |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | ⬜ |
-| S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ⏸ |
-| S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⏸ |
+| S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ⬜ |
+| S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⬜ |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⬜ |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⏸ |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | ⏸ |
@@ -135,9 +135,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | ⬜ |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G4 — Server API endpoint'leri, G2 ve G3 bitti.
+- **Görkem:** G5 — Sunum materyali + demo senaryosu (R5 ve Y1 de bekliyor). G4 bitti.
 - **Can:** C2, C3, C4 — C1 bitti, kararlar `docs/UI-UX-KONSEPT.md`'de sabitlendi.
-- **Samet:** S4 — Sample/demo veri pipeline'ı (G1 bitti) ve S1 — core crate testleri (G2 bitti).
+- **Samet:** S4 (G1 bitti), S1 — core crate testleri (G2 bitti), S2 — integration testleri ve S3 — OpenAPI dokümantasyonu (G4 bitti).
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil.
 
 **Birbirini bekleyen kritik yollar:**
@@ -248,15 +248,35 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Ω, MODIS referans kanalının kendi içindeki geçişi düzeltemez.** 2002-07'de Aqua eklenmesi tespitleri artırdı (arşivde 2001 Terra 5162 → 2002 Terra 4474 + Aqua 2412), ama Aqua `modis_observable`'ın parçası olduğu için Ω 1,000 kalıyor ve bu sıçrama düzeltilmiyor. Havuzlama anahtarı MODIS alt bileşimine duyarsız olduğundan Terra-only ve Terra+Aqua dönemleri tek havuzda birleşiyor (134 ay, Ω 1,000). Bitiş şartı yalnızca 2012 ve 2017'yi istediği için şart ihlal edilmiyor, ama 2000-2002 taban dönemi efor açısından sonrasıyla tam kıyaslanabilir DEĞİL. Çözüm gerekirse MODIS içi normalizasyon ayrı bir referans (örn. Terra-only alt kanalı) gerektirir.
 - **Açık risk: fetch hatası Ω'yı sessizce bozuyor.** Ara bir doğrulama koşusunda 36 istek başarısız oldu ve NOAA-20 verisi eksik geldiği için 2018-08..12 ayları "NOAA-20 yok" konfigürasyonuna düşüp yanlış Ω (6,810 yerine 4,724) aldı. Yani bir kaynağın çekimi başarısız olursa efor normalizasyonu sessizce yanlış düzeltme uygular. **G4'te ele alınmalı:** `report.failures` boş değilse Ω güvenilmez sayılmalı ve API bunu açıkça bildirmeli.
 
-### G4 — Server API endpoint'leri tamamlama ⬜
+### G4 — Server API endpoint'leri tamamlama ✅
 - **Bekler:** G2, G3 · **Açar:** G5, R4, S2, S3
 - Mevcut: `/api/health`, `/api/harmonize` (bbox + days). Yapılacaklar:
-  - `/api/calendar` — belirli bölge için aylık burning activity calendar (2000–present)
-  - `/api/compare` — aynı bölge ve zaman dilimi için raw vs harmonized karşılaştırma istatistikleri
-  - `/api/stats` — genel istatistikler (toplam detection, sensor breakdown, pipeline metrics)
-  - Response caching (aynı bbox+days tekrar sorulduğunda API'ye gitmeme)
-  - CORS ve error handling son hali
+  - ✅ `/api/calendar` — arşivden tarihsel aylık takvim (`country`, `from`, `to`, opsiyonel bbox)
+  - ✅ `/api/compare` — raw vs harmonized karşılaştırma istatistikleri
+  - ✅ `/api/stats` — genel istatistikler, sensör kırılımı, pipeline metrikleri
+  - ✅ Response caching — bellek bütçeli, iki seviyeli TTL, `X-Cache: HIT|MISS` header'ı
+  - ✅ CORS ve error handling son hali — `CORS_ALLOWED_ORIGINS`, `/api/*` için JSON 404, `REQUEST_TIMEOUT_SECS`
 - **Bitti sayılır:** tüm endpoint'ler Postman/curl ile test edildi; frontend proxy üzerinden veri alıyor; 10 saniyelik timeout dahilinde yanıt geliyor.
+- **Doğrulama (2026-11-14):** 21 server testi geçiyor (önceden hiç test yoktu), toplam 144 test, clippy temiz.
+
+  **Yanıt süreleri — Vite dev proxy (5173) üzerinden, backend :3001:**
+
+  | Endpoint | İlk istek | Cache'li | Boyut |
+  |----------|-----------|----------|-------|
+  | `/api/health` | 3 ms | 3 ms | 33 B |
+  | `/api/availability` | 4 ms | 3 ms | 603 B |
+  | `/api/harmonize` | 1,36 s | 4 ms | 290 KB |
+  | `/api/harmonize?include_raw=true` | 0,69 s | 5 ms | 481 KB |
+  | `/api/compare` | 0,63 s | 6 ms | 1,1 KB |
+  | `/api/stats` | 0,66 s | 3 ms | 1,2 KB |
+  | `/api/calendar` | 24 ms | 4 ms | 9,1 KB |
+
+  Frontend proxy doğrulandı: `npm install` + `npm run dev` ile Vite 5173 ayağa kaldırıldı, `/api/health` ve `/api/harmonize` istekleri backend'e düştü ve doğru payload döndü. `npm run build` ve `npx tsc --noEmit` temiz geçiyor.
+- **Şartın "10 saniye" maddesine dair sınır:** `days` tipi istekler için fazlasıyla sağlanıyor (en yavaş 1,36 s). Ancak `start`/`end` ile verilen uzun tarih aralıkları doğası gereği dakikalar sürüyor — 18 aylık bir aralık 1373 FIRMS isteği demek. Sabit 10 saniyelik timeout bu istekleri kullanılamaz yapardı, bu yüzden `REQUEST_TIMEOUT_SECS` yapılandırılabilir (varsayılan 300 s) ve zaman aşımı mesajı sebebini açıklıyor. Uzun aralıkların 10 saniyeye inmesi asenkron iş semantiği gerektirir, G4 kapsamı dışıdır.
+- **`/api/calendar` kapsam sınırı:** area API ile 2000-present imkansız (26 yıl on binlerce transaction), bu yüzden endpoint FIRMS ülke arşivini kullanıyor — transaction harcamıyor ve `FIRMS_API_KEY` gerektirmiyor. Bedeli: arşiv NOAA-20/21 taşımıyor, dolayısıyla tarihsel takvim MODIS + SNPP kapsıyor ve NRT endpoint'lerinden FARKLI bir filo gösteriyor. Yanıt bunu `coverage` bölümünde ve `warnings` dizisinde açıkça bildiriyor. Tam filo serisi için bkz. GOREVLER2 G13.
+- **G3'ten devralınan risk kapatıldı:** `report.failures` boş değilse yanıt `effort.reliable: false` ve sebebini taşıyor, ayrıca üst seviye `warnings` dizisi var. Ω değerleri null'lanmıyor — veri kaybı frontend'i kırar, uyarıyla işaretlemek yeterli.
+- **Açık bulgu:** SPA fallback dokümante edildiği gibi çalışmıyor (`/harita` → 404). G4'ün bitiş şartının parçası değil, GOREVLER2 G15 olarak kuyruğa alındı.
+- **R4 için not:** `web/src/services/api.ts` ve `web/src/types/index.ts` yeni endpoint'leri (`/api/compare`, `/api/stats`, `/api/calendar`) ve yeni alanları (`count_normalized`, `effort_omega`, `vza_factor`, `n_obs`, `platforms`, `mean_frp_raw`, `effort`, `warnings`) henüz kapsamıyor. Tip kontrolü hata vermiyor çünkü fazladan JSON alanları çelişki yaratmıyor; eksiklik R4 kapsamında giderilmeli.
 
 ### G5 — Sunum materyali + demo senaryosu ⏸
 - **Bekler:** G4, R5, Y1 · **Açar:** G6
