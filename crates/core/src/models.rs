@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Sensor {
     ModisTerra,
     ModisAqua,
@@ -102,6 +102,9 @@ pub struct HarmonizedHotspot {
     pub lon: f64,
     pub frp: f64,
     pub frp_corrected: f64,
+    pub vza_factor: Option<f64>,
+    pub n_obs: u16,
+    pub platforms: Vec<Sensor>,
     pub confidence: Confidence,
     pub source: HotspotSource,
     pub acquired: DateTime<Utc>,
@@ -135,6 +138,7 @@ pub struct CalendarCell {
     pub month: u32,
     pub count: u64,
     pub mean_frp: f64,
+    pub mean_frp_raw: f64,
     pub anomaly: Option<f64>,
 }
 

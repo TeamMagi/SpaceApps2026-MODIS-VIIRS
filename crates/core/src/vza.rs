@@ -1,34 +1,29 @@
 use crate::models::Hotspot;
 
-/// Correct MODIS FRP for viewing zenith angle (VZA) dependency.
+/// Compute the MODIS viewing zenith angle (VZA) correction factor R(θ).
 ///
 /// MODIS FRP increases up to 300% from nadir to scan edge due to pixel
 /// expansion. This correction uses a quadratic polynomial model:
 ///   R(θ) = a·θ² + b·θ + c
 /// where θ is VZA in radians (Zheng et al. 2026, R² ≥ 98.18%).
 ///
-/// VIIRS FRP is stable across the swath and needs no correction.
-pub fn correct_modis_frp(hotspot: &mut Hotspot) {
+/// VIIRS FRP is stable across the swath and needs no correction (`None`),
+/// and MODIS detections without a recorded VZA also return `None`.
+pub fn vza_factor(hotspot: &Hotspot) -> Option<f64> {
     if hotspot.sensor.is_viirs() {
-        return;
+        return None;
     }
 
-    let Some(vza_deg) = hotspot.vza else {
-        return;
-    };
-
-    let theta = vza_deg.to_radians();
-    let ratio = correction_ratio(theta);
-
-    if ratio > 0.0 {
-        hotspot.frp /= ratio;
-    }
+    let vza_deg = hotspot.vza?;
+    Some(correction_ratio(vza_deg.to_radians()))
 }
 
-/// Apply VZA correction to a batch of MODIS hotspots.
-pub fn correct_batch(hotspots: &mut [Hotspot]) {
-    for h in hotspots.iter_mut() {
-        correct_modis_frp(h);
+/// Apply a precomputed VZA correction factor to a raw FRP value without
+/// mutating the source hotspot.
+pub fn apply_vza_correction(raw_frp: f64, factor: Option<f64>) -> f64 {
+    match factor {
+        Some(ratio) if ratio > 0.0 => raw_frp / ratio,
+        _ => raw_frp,
     }
 }
 
@@ -49,6 +44,26 @@ fn correction_ratio(theta_rad: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::{Confidence, DayNight, FireType, Sensor};
+    use chrono::Utc;
+
+    fn sample_hotspot(sensor: Sensor, frp: f64, vza: Option<f64>) -> Hotspot {
+        Hotspot {
+            lat: 39.0,
+            lon: 32.0,
+            brightness: 330.0,
+            frp,
+            confidence: Confidence::Nominal,
+            sensor,
+            acquired: Utc::now(),
+            scan: 1.0,
+            track: 1.0,
+            satellite: String::new(),
+            daynight: DayNight::Day,
+            vza,
+            fire_type: FireType::VegetationFire,
+        }
+    }
 
     #[test]
     fn nadir_has_no_correction() {
@@ -61,5 +76,25 @@ mod tests {
         let nadir = correction_ratio(0.0);
         let edge = correction_ratio(60.0_f64.to_radians());
         assert!(edge > nadir);
+    }
+
+    #[test]
+    fn vza_factor_only_applies_to_modis_with_vza() {
+        let modis_with_vza = sample_hotspot(Sensor::ModisTerra, 100.0, Some(45.0));
+        let factor = vza_factor(&modis_with_vza);
+        assert!(factor.is_some_and(|r| r > 1.0));
+
+        let modis_without_vza = sample_hotspot(Sensor::ModisAqua, 100.0, None);
+        assert_eq!(vza_factor(&modis_without_vza), None);
+
+        let viirs_with_vza = sample_hotspot(Sensor::ViirsSNPP, 100.0, Some(45.0));
+        assert_eq!(vza_factor(&viirs_with_vza), None);
+    }
+
+    #[test]
+    fn apply_vza_correction_divides_when_factor_present() {
+        let corrected = apply_vza_correction(100.0, Some(2.0));
+        assert!((corrected - 50.0).abs() < f64::EPSILON);
+        assert!((apply_vza_correction(100.0, None) - 100.0).abs() < f64::EPSILON);
     }
 }
