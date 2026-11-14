@@ -75,10 +75,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 
 | Kimlik | Görev | Sahip | Bekler | Açar | Durum |
 |--------|-------|-------|--------|------|-------|
-| G7 | Config-driven pipeline | Görkem | v1:G2 | G8, R8, K2, S6 | ⏸ |
+| G7 | Config-driven pipeline | Görkem | v1:G2 | G8, R8, K2, S6 | ✅ |
 | G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | ⏸ |
 | G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | ⏸ |
-| G10 | Export engine + /api/export | Görkem | v1:G4 | R7, S6 | ⏸ |
+| G10 | Export engine + /api/export | Görkem | v1:G4 | R7, S6 | ✅ |
 | C5 | Methods sayfası + disclaimer tasarımı | Can | v1:C1 | R6, S8 | ⏸ |
 | C6 | Export UI + brifingi tasarımı | Can | v1:C1 | R7 | ⏸ |
 | C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | v1:C1 | K3, K4 | ⏸ |
@@ -107,7 +107,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 
 ## Görkem'in görevleri
 
-### G7 — Config-driven pipeline ⏸
+### G7 — Config-driven pipeline ✅
 - **Bekler:** v1:G2 · **Açar:** G8, R8, K2, S6
 - Pipeline'daki tüm sabit eşikleri yapılandırılabilir hale getirmek (EG FireTrack'ten ilham):
   - `config.rs` modülü: `PipelineConfig` struct'ı ile tüm parametreler
@@ -118,6 +118,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Varsayılan config ile mevcut davranış aynı kalmalı (backward compatible)
 - **Kaynak:** EG FireTrack — "Config-driven tasarım: tüm eşikler yapılandırılabilir, bilimsel şeffaflık"
 - **Bitti sayılır:** `PipelineConfig::default()` ile mevcut testler hâlâ geçiyor; TOML'dan farklı config yüklenince pipeline davranışı değişiyor; `pyrosync.example.toml` depoda.
+- **Durum (2026-11-15):** Sadık tarafından tamamlandı (`4f3e23d`). `PipelineConfig`, `pyrosync.toml` yükleme ve `pyrosync.example.toml` depoda.
 
 ### G8 — Bölgesel/biyom kalibrasyon modülü ⏸
 - **Bekler:** G7 · **Açar:** G9
@@ -143,7 +144,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 - **Kaynak:** fire-harmony — belirsizlik aralıkları; tüm akademik makaleler — model sınırları
 - **Bitti sayılır:** her harmonize değerin lower/upper aralığı var; aralık VZA arttıkça genişliyor (beklenen); API response'unda uncertainty alanları mevcut.
 
-### G10 — Export engine + /api/export endpoint ⏸
+### G10 — Export engine + /api/export endpoint ✅
 - **Bekler:** v1:G4 · **Açar:** R7, S6
 - Harmonize veriyi indirilebilir formatlara dönüştürme:
   - `export.rs` modülü: `to_csv()`, `to_geojson()` fonksiyonları
@@ -155,6 +156,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Content-Disposition header ile doğrudan dosya indirme
 - **Kaynak:** Strateji 1.4 (Relevance) — "CSV export ile gerçek iş akışlarına entegrasyon"
 - **Bitti sayılır:** curl ile `/api/export?format=csv` → geçerli CSV dosyası iniyor; GeoJSON QGIS'te açılıyor; 10,000+ satır sorunsuz.
+- **Durum (2026-11-15):** Sadık tarafından tamamlandı (`cae9664`). CSV ve GeoJSON export, `/api/export`. Belirsizlik (uncertainty) sütunları G9 ile eklenecek.
 
 ---
 
