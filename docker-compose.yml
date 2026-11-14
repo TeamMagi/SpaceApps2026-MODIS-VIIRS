@@ -2,6 +2,9 @@ services:
   pyrosync:
     build: .
     container_name: pyrosync
+    # Match the image's non-root pyrosync user (999:999) by default so Docker Desktop works out of the box;
+    # Linux users can override DOCKER_USER=$(id -u):$(id -g) in .env to write to the bind-mounted cache.
+    user: "${DOCKER_USER:-999:999}"
     ports:
       - "${PORT:-3001}:${PORT:-3001}"
     environment:
@@ -17,8 +20,8 @@ services:
     volumes:
       # Read-only because the server only reads offline fixtures and never writes to ./data
       - ./data:/app/data:ro
-      # Persist ~2.4 GB of downloaded FIRMS country archives across container restarts
-      - firms-archive:/app/.cache/firms-archive
+      # Must stay writable: /api/calendar downloads and caches missing countries on demand via ArchiveClient
+      - ${ARCHIVE_CACHE_HOST_DIR:-./.cache/firms-archive}:/app/.cache/firms-archive
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:$${PORT:-3001}/api/health || exit 1"]
       interval: 30s
@@ -31,22 +34,21 @@ services:
   seed:
     profiles: ["seed"]
     build: .
+    # Match host user on Linux via DOCKER_USER so seeded files remain writable by both host and pyrosync
+    user: "${DOCKER_USER:-999:999}"
     entrypoint: ["./archive-seed"]
     environment:
       - ARCHIVE_CACHE_DIR=${ARCHIVE_CACHE_DIR:-/app/.cache/firms-archive}
       - ARCHIVE_SET_FILE=${ARCHIVE_SET_FILE:-/app/data/archive-set.json}
       - RUST_LOG=${RUST_LOG:-pyrosync=info}
     volumes:
-      # Write into the same named volume mounted by the pyrosync service
-      - firms-archive:/app/.cache/firms-archive
+      # Bind-mount the same host directory used locally so a single ~2.4 GB copy serves host and container
+      - ${ARCHIVE_CACHE_HOST_DIR:-./.cache/firms-archive}:/app/.cache/firms-archive
     # Country archive downloads use static unauthenticated CSVs and never need FIRMS_API_KEY;
     # keep the API key out of the seed container to avoid unnecessary secret exposure.
     restart: "no"
     networks:
       - pyrosync
-
-volumes:
-  firms-archive:
 
 networks:
   pyrosync:

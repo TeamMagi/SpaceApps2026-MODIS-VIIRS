@@ -1,4 +1,7 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell docker-seed fetch-sample verify-data manifest clean clean-cache help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell docker-seed seed fetch-sample verify-data manifest clean clean-cache help
+
+# Shared host directory for the FIRMS country archive (override via environment or make args)
+ARCHIVE_CACHE_HOST_DIR ?= .cache/firms-archive
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
@@ -54,7 +57,10 @@ check: ## Quick compilation check (no tests)
 
 # ---- Docker ----
 
+# Pre-create the bind-mount directory as the host user; otherwise Docker creates it owned by
+# root on Linux, preventing the non-root container user from writing to it.
 docker: ## Build Docker image
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	docker compose build
 
 docker-up: ## Start containers (requires .env)
@@ -62,6 +68,7 @@ docker-up: ## Start containers (requires .env)
 		echo "Error: .env file not found. Copy .env.example to .env and set FIRMS_API_KEY."; \
 		exit 1; \
 	fi
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	docker compose up -d
 
 docker-down: ## Stop containers
@@ -73,10 +80,16 @@ docker-logs: ## Show container logs
 docker-shell: ## Open a shell inside the running container
 	docker compose exec pyrosync /bin/sh
 
-docker-seed: ## Download the full FIRMS country archive into the shared volume (~2.4 GB, first run is slow, no API key required)
+docker-seed: ## Download the full FIRMS country archive into the host cache directory (~2.4 GB, first run is slow, no API key required)
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	docker compose --profile seed run --rm seed
 
 # ---- Data ----
+
+# Fastest path for developers with a Rust toolchain — seeds the host cache without building the Docker image.
+seed: ## Download the FIRMS country archive locally (no Docker, no API key)
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
+	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) cargo run --release -p pyrosync-firms --bin archive_seed
 
 fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
 	@if [ -z "$$FIRMS_API_KEY" ]; then \
@@ -86,10 +99,10 @@ fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
 	cargo run -p pyrosync-firms --example nrt_check -- --save-samples
 
 verify-data: ## Verify the local archive cache against data/archive-manifest.sha256
-	sh tools/verify-archive.sh verify
+	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) sh tools/verify-archive.sh verify
 
 manifest: ## Regenerate data/archive-manifest.sha256 from the local cache
-	sh tools/verify-archive.sh generate
+	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) sh tools/verify-archive.sh generate
 
 # ---- Clean ----
 
@@ -98,8 +111,8 @@ clean: ## Clean build artifacts (preserves .cache/)
 	cargo clean
 	rm -rf web/node_modules web/dist
 
-clean-cache: ## Remove local FIRMS archive cache (.cache/)
-	rm -rf .cache
+clean-cache: ## Remove local FIRMS archive cache ($(ARCHIVE_CACHE_HOST_DIR))
+	rm -rf $(ARCHIVE_CACHE_HOST_DIR)
 
 # ---- Help ----
 

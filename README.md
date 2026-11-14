@@ -86,20 +86,22 @@ tools/              Utility scripts (archive verification, data fetching)
 
 ### With Docker
 
-First-time setup downloads ~2.4 GB of historical FIRMS country archives:
+First-time setup downloads ~2.4 GB of historical FIRMS country archives into a single host directory (`.cache/firms-archive` by default) that Docker bind-mounts into the container:
 
 ```bash
 cp .env.example .env
 # Set FIRMS_API_KEY in .env
 
-make docker-seed     # one time, ~2.4 GB, no API key required
+make seed            # one time, ~2.4 GB, no API key required
 make verify-data     # confirm all 440 files match the checksum manifest
 make docker-up       # start the server
 ```
 
 Open `http://localhost:3001`.
 
-- `make docker-seed` downloads the FIRMS country archive into the shared Docker named volume (`firms-archive`). **No API key is required and no FIRMS transactions are consumed**, so every team member can download a local copy without exhausting shared quota.
+- `make seed` downloads the archive directly on the host (requires a Rust toolchain). If you don't want to install Rust locally, run `make docker-seed` instead — it writes to the exact same host directory via Docker. **No API key is required and no FIRMS transactions are consumed**, so every team member can download a local copy without exhausting shared quota.
+- Because the container bind-mounts `.cache/firms-archive`, the files verified by `make verify-data` are the exact same files the container reads — no duplicate copy is stored on disk, and local development (`make dev-backend`) shares the same cache.
+- **Linux users:** set `DOCKER_USER=$(id -u):$(id -g)` in `.env` so the container has write permission to the bind-mounted host directory (needed when `/api/calendar` caches unseeded countries on demand). Docker Desktop on Windows/macOS handles bind-mount permissions with the default `999:999`.
 - Downloads are idempotent and resumable; if interrupted, re-run the command. No partial files are left behind.
 - The dataset is defined in `data/archive-set.json`: 11 countries, MODIS 2000–2025 and VIIRS SNPP 2012–2025 (**440 files** total).
 - `make verify-data` checks the local cache against `data/archive-manifest.sha256`, proving in one command that all team members have bit-identical data.
@@ -134,6 +136,8 @@ Open `http://localhost:5173` — the frontend proxies API calls to the Rust back
 | `STATIC_DIR` | `web/dist` | Frontend build directory (`/app/static` in Docker) |
 | `RUST_LOG` | `pyrosync=info` | Log level |
 | `ARCHIVE_CACHE_DIR` | `.cache/firms-archive` | FIRMS country archive cache (`/app/.cache/firms-archive` in Docker) |
+| `ARCHIVE_CACHE_HOST_DIR` | `./.cache/firms-archive` | Host directory bind-mounted into the Docker container at `/app/.cache/firms-archive` |
+| `DOCKER_USER` | `999:999` | Container `uid:gid` for Docker; set to `$(id -u):$(id -g)` on Linux for bind-mount write access |
 | `CACHE_BUDGET_MB` | `128` | Response cache memory budget; `0` disables caching |
 | `REQUEST_TIMEOUT_SECS` | `300` | Request timeout; `0` disables it |
 | `CORS_ALLOWED_ORIGINS` | — | Comma-separated allowed origins; unset means permissive CORS |
@@ -144,7 +148,8 @@ Open `http://localhost:5173` — the frontend proxies API calls to the Rust back
 make help          # Show all available commands
 make build         # Build backend + frontend
 make test          # Run all tests
-make docker-seed   # Download ~2.4 GB FIRMS country archive into Docker volume (no API key)
+make seed          # Download ~2.4 GB FIRMS country archive locally (no Docker, no API key)
+make docker-seed   # Download ~2.4 GB FIRMS country archive into the host cache via Docker (no API key)
 make verify-data   # Verify local archive cache against data/archive-manifest.sha256
 make manifest      # Regenerate data/archive-manifest.sha256 from local cache
 make docker-up     # Start containers with Docker
