@@ -36,6 +36,41 @@ pub enum Confidence {
     High,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FireType {
+    VegetationFire,
+    ActiveVolcano,
+    OtherStaticLand,
+    Offshore,
+    Unknown,
+}
+
+impl FireType {
+    pub fn from_code(code: u8) -> Self {
+        match code {
+            0 => Self::VegetationFire,
+            1 => Self::ActiveVolcano,
+            2 => Self::OtherStaticLand,
+            3 => Self::Offshore,
+            _ => Self::Unknown,
+        }
+    }
+
+    pub fn code(self) -> Option<u8> {
+        match self {
+            Self::VegetationFire => Some(0),
+            Self::ActiveVolcano => Some(1),
+            Self::OtherStaticLand => Some(2),
+            Self::Offshore => Some(3),
+            Self::Unknown => None,
+        }
+    }
+
+    pub fn is_wildfire(self) -> bool {
+        matches!(self, Self::VegetationFire)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hotspot {
     pub lat: f64,
@@ -50,6 +85,9 @@ pub struct Hotspot {
     pub satellite: String,
     pub daynight: DayNight,
     pub vza: Option<f64>,
+    // NRT feeds carry no `type` column, so callers default to VegetationFire rather than
+    // Unknown; otherwise is_wildfire() filtering would silently discard every NRT detection.
+    pub fire_type: FireType,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -98,4 +136,33 @@ pub struct CalendarCell {
     pub count: u64,
     pub mean_frp: f64,
     pub anomaly: Option<f64>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FireType;
+
+    #[test]
+    fn fire_type_code_round_trips_for_known_codes() {
+        for code in 0..=3u8 {
+            let fire_type = FireType::from_code(code);
+            assert_eq!(fire_type.code(), Some(code));
+        }
+    }
+
+    #[test]
+    fn out_of_range_code_maps_to_unknown() {
+        assert_eq!(FireType::from_code(4), FireType::Unknown);
+        assert_eq!(FireType::from_code(255), FireType::Unknown);
+        assert_eq!(FireType::Unknown.code(), None);
+    }
+
+    #[test]
+    fn only_vegetation_fire_is_wildfire() {
+        assert!(FireType::VegetationFire.is_wildfire());
+        assert!(!FireType::ActiveVolcano.is_wildfire());
+        assert!(!FireType::OtherStaticLand.is_wildfire());
+        assert!(!FireType::Offshore.is_wildfire());
+        assert!(!FireType::Unknown.is_wildfire());
+    }
 }

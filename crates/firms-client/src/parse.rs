@@ -27,6 +27,7 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
     let track_idx = col("track");
     let sat_idx = col("satellite");
     let dn_idx = col("daynight");
+    let type_idx = col("type");
 
     let mut hotspots = Vec::new();
 
@@ -90,6 +91,12 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
             _ => Sensor::ViirsSNPP,
         };
 
+        let fire_type = type_idx
+            .and_then(|i| record.get(i))
+            .and_then(|s| s.trim().parse::<u8>().ok())
+            .map(FireType::from_code)
+            .unwrap_or(FireType::VegetationFire);
+
         hotspots.push(Hotspot {
             lat,
             lon,
@@ -103,10 +110,22 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
             satellite,
             daynight,
             vza: None,
+            fire_type,
         });
     }
 
     Ok(hotspots)
+}
+
+/// Drops non-vegetation detections so volcanoes, flares and offshore sources do not pollute
+/// the burn calendar.
+pub fn retain_wildfires(hotspots: &mut Vec<Hotspot>) {
+    let before = hotspots.len();
+    hotspots.retain(|h| h.fire_type.is_wildfire());
+    tracing::debug!(
+        dropped = before - hotspots.len(),
+        "filtered non-wildfire FIRMS detections"
+    );
 }
 
 fn parse_confidence(s: &str) -> Confidence {
@@ -140,5 +159,82 @@ fn parse_hhmm(s: &str) -> Option<NaiveTime> {
         NaiveTime::parse_from_str(s, "%H:%M").ok()
     } else {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const MODIS_SP: &str = concat!(
+        "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n",
+        "-20.1,57.5,330.5,1.0,1.0,2024-01-15,1015,Terra,MODIS,75,6.1NRT,290.1,12.5,D,0\n",
+        "-20.2,57.6,340.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,80,6.1NRT,290.1,20.0,D,1\n",
+        "-20.3,57.7,320.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,60,6.1NRT,290.1,8.0,N,2\n",
+    );
+
+    #[test]
+    fn modis_type_column_maps_to_fire_type() {
+        let hotspots = parse_csv(MODIS_SP, "MODIS_NRT").unwrap();
+        assert_eq!(hotspots.len(), 3);
+        assert_eq!(hotspots[0].fire_type, FireType::VegetationFire);
+        assert_eq!(hotspots[1].fire_type, FireType::ActiveVolcano);
+        assert_eq!(hotspots[2].fire_type, FireType::OtherStaticLand);
+        assert_eq!(hotspots[0].confidence, Confidence::Nominal);
+    }
+
+    #[test]
+    fn retain_wildfires_drops_volcanoes_and_static_sources() {
+        let mut hotspots = parse_csv(MODIS_SP, "MODIS_NRT").unwrap();
+        retain_wildfires(&mut hotspots);
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(hotspots[0].lat, -20.1);
+        assert_eq!(hotspots[0].fire_type, FireType::VegetationFire);
+    }
+
+    #[test]
+    fn viirs_thermal_band_headers_are_read() {
+        let csv = concat!(
+            "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight,type\n",
+            "-5.0,105.0,320.5,0.5,0.5,2024-02-01,0130,N,VIIRS,h,2.0NRT,300.2,15.5,N,0\n",
+        );
+        let hotspots = parse_csv(csv, "VIIRS_SNPP_NRT").unwrap();
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(hotspots[0].brightness, 320.5);
+        assert_eq!(hotspots[0].sensor, Sensor::ViirsSNPP);
+        assert_eq!(hotspots[0].confidence, Confidence::High);
+        assert_eq!(hotspots[0].fire_type, FireType::VegetationFire);
+    }
+
+    #[test]
+    fn nrt_rows_without_type_default_to_vegetation_fire() {
+        let csv = concat!(
+            "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight\n",
+            "-20.1,57.5,330.5,1.0,1.0,2024-01-15,1015,Terra,MODIS,75,6.1NRT,290.1,12.5,D\n",
+            "-20.2,57.6,340.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,80,6.1NRT,290.1,20.0,D\n",
+        );
+        let mut hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        assert!(hotspots.iter().all(|h| h.fire_type == FireType::VegetationFire));
+        retain_wildfires(&mut hotspots);
+        assert_eq!(hotspots.len(), 2);
+    }
+
+    #[test]
+    fn empty_or_unparseable_type_defaults_to_vegetation_fire() {
+        let csv = concat!(
+            "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n",
+            "-20.1,57.5,330.5,1.0,1.0,2024-01-15,1015,Terra,MODIS,75,6.1NRT,290.1,12.5,D,\n",
+            "-20.2,57.6,340.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,80,6.1NRT,290.1,20.0,D,x\n",
+            "-20.3,57.7,320.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,60,6.1NRT,290.1,8.0,N,3\n",
+            "-20.4,57.8,320.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,60,6.1NRT,290.1,8.0,N,9\n",
+        );
+        let mut hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        assert_eq!(hotspots[0].fire_type, FireType::VegetationFire);
+        assert_eq!(hotspots[1].fire_type, FireType::VegetationFire);
+        assert_eq!(hotspots[2].fire_type, FireType::Offshore);
+        assert_eq!(hotspots[3].fire_type, FireType::Unknown);
+
+        retain_wildfires(&mut hotspots);
+        assert_eq!(hotspots.len(), 2);
     }
 }
