@@ -311,6 +311,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Referans:** `STRATEGY.md`'deki "Raw ↔ Harmonised toggle" ve "Sensor Cliff" kavramları tasarımın merkezinde olmalı.
 - **Bitti sayılır:** wireframe tüm ekiplere paylaşıldı ve onaylandı; ana sayfa, harita görünümü, takvim görünümü, karşılaştırma paneli var.
 - **Çıktı (2026-11-14):** `docs/UI-UX-KONSEPT.md` — tasarım ilkeleri, desktop layout, kullanıcı akışı + loading/empty/error state'leri, 4 ekran wireframe'i (dashboard, harita + hotspot popover, yıl×ay takvim ısı matrisi, Raw↔Harmonised karşılaştırma + Sensor Cliff grafiği), mobil wireframe + breakpoint'ler, bileşen ağacı + state sahipliği tablosu, C2/C3/C4 devir notları.
+- **Çıktı (Can, 2026-11-14):** `web/src` içinde interaktif React prototipi (+ offline arşiv API `/api/regions`, `/api/series`, `/api/points`) + `docs/TASARIM_KONSEPT.md`, `docs/UX_YAZIM.md`, `docs/FRONTEND_STACK_ONERISI.md`.
 - **Kalan:** ekibe paylaşım ve onay. Onay gelince ✅ olur.
 - **Bulgu:** `HarmonizeResponse.raw` yalnızca sayaç döndürüyor (`modis_count`, `viirs_count`, `total_raw`), ham hotspot koordinatları yok. Raw modda haritada gerçek ham noktalar gösterilecekse G4'te bu alanın eklenmesi gerekiyor — aksi halde Raw harita görünümü `HarmonizedHotspot.source` üzerinden türetilmek zorunda.
 
