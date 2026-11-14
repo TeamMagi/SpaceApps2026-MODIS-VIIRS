@@ -298,4 +298,33 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn correction_ratio_never_decreases_from_nadir_to_swath_edge() {
+        for d in 0..=65 {
+            let prev = correction_ratio(f64::from(d).to_radians());
+            let next = correction_ratio(f64::from(d + 1).to_radians());
+            assert!(
+                next >= prev,
+                "ratio decreased from {d} to {} deg: prev={prev}, next={next}",
+                d + 1
+            );
+        }
+    }
+
+    #[test]
+    fn apply_vza_correction_ignores_non_positive_factor() {
+        assert!((apply_vza_correction(100.0, Some(0.0)) - 100.0).abs() < 1e-9);
+        assert!((apply_vza_correction(100.0, Some(-2.0)) - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn vza_from_scan_is_never_negative() {
+        for i in 0..=55 {
+            let scan = 0.5 + 0.1 * f64::from(i);
+            let vza =
+                vza_from_scan(scan).unwrap_or_else(|| panic!("expected Some for scan {scan}"));
+            assert!(vza >= 0.0, "negative VZA {vza} for scan {scan}");
+        }
+    }
 }
