@@ -54,6 +54,7 @@ const ARCHIVE_AVAILABLE_SENSORS: [Sensor; 4] = [
 // NOAA-21 is omitted because FIRMS has no `viirs-jpss2` country archive.
 const ARCHIVE_UNAVAILABLE_SENSORS: [Sensor; 1] = [Sensor::ViirsNOAA21];
 const ARCHIVE_COVERAGE_NOTE: &str = "The FIRMS country archive packages MODIS, VIIRS SNPP and VIIRS NOAA-20; NOAA-21 is not included, so this calendar covers a smaller fleet than the near-real-time endpoints from 2023 onward.";
+const UNCERTAINTY_NOTE: &str = "Harmonized values are model estimates, not ground truth. Bounds combine sensor noise, viewing-angle correction and MODIS-to-VIIRS calibration uncertainty; default sensor-noise and VZA parameters are assumptions, not published values.";
 
 #[derive(Clone)]
 struct AppState {
@@ -234,6 +235,19 @@ struct ArchiveFetchSummary {
 }
 
 #[derive(Serialize)]
+struct UncertaintyMetadata {
+    confidence: f64,
+    note: String,
+}
+
+fn uncertainty_metadata(params: &pyrosync_core::uncertainty::UncertaintyParams) -> UncertaintyMetadata {
+    UncertaintyMetadata {
+        confidence: pyrosync_core::uncertainty::confidence_from_z(params.z),
+        note: UNCERTAINTY_NOTE.to_string(),
+    }
+}
+
+#[derive(Serialize)]
 struct CalendarResponse {
     country: String,
     years: CalendarYears,
@@ -242,6 +256,7 @@ struct CalendarResponse {
     counts: CalendarCounts,
     calendar: Vec<CalendarCell>,
     effort: EffortResponse,
+    uncertainty: UncertaintyMetadata,
     fetch: ArchiveFetchSummary,
     warnings: Vec<String>,
 }
@@ -992,7 +1007,11 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
     raw.extend(viirs.iter().cloned());
 
     let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &state.config);
-    let calendar = pyrosync_core::calendar::build_calendar(&harmonized);
+    let calendar = pyrosync_core::calendar::build_calendar_with(
+        &harmonized,
+        &state.config.uncertainty,
+        &state.config.calibration,
+    );
 
     let report_json = ReportResponse {
         per_source: report.per_source,
@@ -1238,6 +1257,7 @@ async fn harmonize(
     State(state): State<AppState>,
     Query(params): Query<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
+    let uncertainty = uncertainty_metadata(&state.config.uncertainty);
     execute_cached_pipeline(&state, "harmonize", &params, |run, include_raw| {
         let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report);
         let raw = RawResponse {
@@ -1255,6 +1275,7 @@ async fn harmonize(
             },
             "calendar": run.calendar,
             "effort": effort,
+            "uncertainty": uncertainty,
             "warnings": warnings,
             "report": run.report,
         })
@@ -1701,6 +1722,7 @@ fn build_calendar_response(
     calendar: Vec<CalendarCell>,
     per_sensor_year: Vec<SensorYearFetch>,
     failures: Vec<SensorYearFailure>,
+    uncertainty_params: &pyrosync_core::uncertainty::UncertaintyParams,
 ) -> CalendarResponse {
     let (effort, mut warnings) = build_effort_and_warnings_from_counts(
         harmonized,
@@ -1760,6 +1782,7 @@ fn build_calendar_response(
         },
         calendar,
         effort,
+        uncertainty: uncertainty_metadata(uncertainty_params),
         fetch: ArchiveFetchSummary {
             per_sensor_year,
             failures,
@@ -1866,7 +1889,11 @@ async fn run_calendar_pipeline(
     tokio::task::spawn_blocking(move || {
         let raw_detections = modis.len() + viirs.len();
         let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &config);
-        let calendar_cells = pyrosync_core::calendar::build_calendar(&harmonized);
+        let calendar_cells = pyrosync_core::calendar::build_calendar_with(
+            &harmonized,
+            &config.uncertainty,
+            &config.calibration,
+        );
 
         build_calendar_response(
             &query,
@@ -1875,6 +1902,7 @@ async fn run_calendar_pipeline(
             calendar_cells,
             per_sensor_year,
             failures,
+            &config.uncertainty,
         )
     })
     .await
@@ -2101,6 +2129,8 @@ mod tests {
             lon: 32.0,
             frp: args.frp,
             frp_corrected: args.frp_corrected,
+            frp_lower: args.frp_corrected,
+            frp_upper: args.frp_corrected,
             vza_factor: args.vza_factor,
             n_obs: args.n_obs,
             platforms: args.platforms,
@@ -3048,7 +3078,16 @@ mod tests {
         assert_eq!(query.years.effective_to, 2025);
         assert!(query.clamped);
 
-        let resp = build_calendar_response(&query, 0, &[], Vec::new(), Vec::new(), Vec::new());
+        let default_uncertainty = pyrosync_core::uncertainty::UncertaintyParams::default();
+        let resp = build_calendar_response(
+            &query,
+            0,
+            &[],
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            &default_uncertainty,
+        );
         assert!(resp.warnings.iter().any(|w| w.contains("clamped")));
 
         let upper_only = parse_calendar_params(&calendar_params("Turkey", Some(2015), Some(2030), None))
@@ -3069,6 +3108,7 @@ mod tests {
             Vec::new(),
             Vec::new(),
             Vec::new(),
+            &default_uncertainty,
         );
         assert!(empty_resp.calendar.is_empty());
         assert!(empty_resp.warnings.iter().any(|w| w.contains("outside")));
@@ -3078,8 +3118,17 @@ mod tests {
     fn calendar_coverage_includes_noaa20_marks_noaa21_unavailable_and_warns_on_failures() {
         let query = parse_calendar_params(&calendar_params("Turkey", Some(2015), Some(2020), None))
             .expect("valid query");
+        let default_uncertainty = pyrosync_core::uncertainty::UncertaintyParams::default();
 
-        let ok_resp = build_calendar_response(&query, 0, &[], Vec::new(), Vec::new(), Vec::new());
+        let ok_resp = build_calendar_response(
+            &query,
+            0,
+            &[],
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            &default_uncertainty,
+        );
         assert_eq!(
             ok_resp.coverage.sensors_available,
             vec![
@@ -3104,6 +3153,7 @@ mod tests {
                 year: 2017,
                 error: "missing locally: archive file modis_2017_Turkey.csv is not in the local archive (read-only client, no download)".to_string(),
             }],
+            &default_uncertainty,
         );
         assert!(!failed_resp.effort.reliable);
         assert!(failed_resp.effort.reason.is_some());
@@ -3199,6 +3249,63 @@ mod tests {
         assert!(
             std::fs::read_dir(dir.path()).unwrap().next().is_none(),
             "offline calendar must not create or download files"
+        );
+    }
+
+    #[tokio::test]
+    async fn calendar_offline_archive_includes_uncertainty_note_and_cell_bounds() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let year_dir = dir.path().join("modis").join("2020");
+        std::fs::create_dir_all(&year_dir).expect("create archive year dir");
+        let csv = "\
+latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type
+39.0000,32.0000,330.0,1.5,1.0,2020-07-01,1000,Terra,MODIS,80,6.1,290.0,50.0,D,0
+39.1000,32.1000,328.0,2.0,1.0,2020-07-02,1000,Aqua,MODIS,75,6.1,289.0,60.0,D,0
+";
+        std::fs::write(year_dir.join("modis_2020_Testland.csv"), csv).expect("write archive csv");
+
+        let archive = Arc::new(ArchiveClient::offline(dir.path().to_path_buf()));
+        let state = AppState {
+            firms: None,
+            archive: Some(archive),
+            cache: Arc::new(RwLock::new(ResponseCache::new(1024 * 1024))),
+            request_timeout: Some(Duration::from_secs(30)),
+            config: Arc::new(PipelineConfig::default()),
+        };
+
+        let resp = calendar(
+            State(state),
+            Query(calendar_params("Testland", Some(2020), Some(2020), None)),
+        )
+        .await
+        .expect("offline calendar should succeed");
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("read body");
+        let json: serde_json::Value = serde_json::from_slice(&body).expect("valid json");
+
+        assert_eq!(json["uncertainty"]["note"], UNCERTAINTY_NOTE);
+        let conf = json["uncertainty"]["confidence"]
+            .as_f64()
+            .expect("confidence");
+        assert!((conf - 0.682689).abs() < 1e-4, "confidence={conf}");
+
+        let cells = json["calendar"].as_array().expect("calendar cells");
+        assert_eq!(cells.len(), 1);
+        let cell = &cells[0];
+        let mean_frp = cell["mean_frp"].as_f64().expect("mean_frp");
+        let lower = cell["mean_frp_lower"]
+            .as_f64()
+            .expect("mean_frp_lower should be present");
+        let upper = cell["mean_frp_upper"]
+            .as_f64()
+            .expect("mean_frp_upper should be present");
+        assert!(lower < mean_frp && mean_frp < upper, "{lower} < {mean_frp} < {upper}");
+        println!(
+            "sample /api/calendar cell: {}",
+            serde_json::to_string_pretty(cell).expect("pretty json")
         );
     }
 

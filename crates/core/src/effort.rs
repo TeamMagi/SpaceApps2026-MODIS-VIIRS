@@ -214,6 +214,8 @@ mod tests {
             lon: 32.0,
             frp: 30.0,
             frp_corrected: 30.0,
+            frp_lower: 27.6,
+            frp_upper: 32.4,
             vza_factor: None,
             calibration_ratio: None,
             n_obs: platforms.len() as u16,

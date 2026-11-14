@@ -173,6 +173,36 @@ pub fn frp_uncertainty(
     calibration: Option<(f64, f64)>,
     params: &UncertaintyParams,
 ) -> UncertaintyEstimate {
+    frp_uncertainty_for_obs(frp, vza_factor, sensor_family, calibration, 1, params)
+}
+
+/// Çoklu gözlem (`n_obs`) ortalamasından gelen kayıt için göreli belirsizliği ölçekler.
+///
+/// Bağımsız rastgele sensör ve VZA hataları ortalamada `1/√n_obs` oranında azalırken,
+/// bölgesel MODIS→VIIRS kalibrasyon belirsizliği aynı yönde etki eden sistematik bir
+/// bileşen olduğundan örnek sayısıyla küçülmez.
+pub fn relative_uncertainty_for_obs(
+    vza_factor: Option<f64>,
+    sensor_family: SensorFamily,
+    calibration: Option<(f64, f64)>,
+    n_obs: u16,
+    params: &UncertaintyParams,
+) -> RelativeUncertainty {
+    let mut rel = relative_uncertainty(vza_factor, sensor_family, calibration, params);
+    let n = f64::from(n_obs.max(1));
+    rel.random /= n.sqrt();
+    rel
+}
+
+/// Çoklu gözlem (`n_obs`) ortalaması olan bir harmonize FRP kaydı için güven aralığı üretir.
+pub fn frp_uncertainty_for_obs(
+    frp: f64,
+    vza_factor: Option<f64>,
+    sensor_family: SensorFamily,
+    calibration: Option<(f64, f64)>,
+    n_obs: u16,
+    params: &UncertaintyParams,
+) -> UncertaintyEstimate {
     let confidence = confidence_from_z(params.z);
     if !frp.is_finite() || frp <= 0.0 {
         return UncertaintyEstimate {
@@ -182,7 +212,7 @@ pub fn frp_uncertainty(
         };
     }
 
-    let rel = relative_uncertainty(vza_factor, sensor_family, calibration, params);
+    let rel = relative_uncertainty_for_obs(vza_factor, sensor_family, calibration, n_obs, params);
     let z = sanitized_non_neg(params.z);
     let half_rel = z * rel.total();
 
@@ -416,5 +446,20 @@ mod tests {
         assert_eq!(SensorFamily::from(HotspotSource::ModisOnly), SensorFamily::Modis);
         assert_eq!(SensorFamily::from(HotspotSource::ViirsOnly), SensorFamily::Viirs);
         assert_eq!(SensorFamily::from(HotspotSource::Matched), SensorFamily::Viirs);
+    }
+
+    #[test]
+    fn obs_scaling_shrinks_random_by_sqrt_n_obs_and_keeps_systematic() {
+        let params = UncertaintyParams::default();
+        let cal = Some((1.0, 0.15));
+        let rel1 = relative_uncertainty_for_obs(Some(2.0), SensorFamily::Modis, cal, 1, &params);
+        let rel4 = relative_uncertainty_for_obs(Some(2.0), SensorFamily::Modis, cal, 4, &params);
+
+        assert!((rel4.random - rel1.random / 2.0).abs() < 1e-12);
+        assert!((rel4.systematic - rel1.systematic).abs() < 1e-12);
+
+        let e1 = frp_uncertainty_for_obs(100.0, Some(2.0), SensorFamily::Modis, cal, 1, &params);
+        let e4 = frp_uncertainty_for_obs(100.0, Some(2.0), SensorFamily::Modis, cal, 4, &params);
+        assert!((e4.upper - e4.lower) < (e1.upper - e1.lower));
     }
 }

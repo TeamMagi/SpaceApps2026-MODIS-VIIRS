@@ -948,6 +948,8 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             effort_omega: None,
             mean_frp: 0.0,
             mean_frp_raw: 0.0,
+            mean_frp_lower: None,
+            mean_frp_upper: None,
             anomaly: None,
         })
         .collect();

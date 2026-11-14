@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 
 use crate::models::HarmonizedHotspot;
 
-pub const CSV_HEADER: &str = "lat,lon,frp_mw,frp_corrected_mw,vza_factor,n_obs,platforms,source,confidence,daynight,acquired_utc,calibration_ratio";
+pub const CSV_HEADER: &str = "lat,lon,frp_mw,frp_corrected_mw,vza_factor,n_obs,platforms,source,confidence,daynight,acquired_utc,calibration_ratio,frp_lower_mw,frp_upper_mw";
 
 const CSV_ROW_CAPACITY: usize = 128;
 
@@ -38,6 +38,7 @@ pub fn to_csv(hotspots: &[HarmonizedHotspot]) -> String {
         if let Some(ratio) = h.calibration_ratio {
             let _ = write!(out, "{ratio}");
         }
+        let _ = write!(out, ",{},{}", h.frp_lower, h.frp_upper);
         out.push_str("\r\n");
     }
 
@@ -62,6 +63,8 @@ pub fn to_geojson(hotspots: &[HarmonizedHotspot]) -> String {
                     "daynight": format!("{:?}", h.daynight),
                     "acquired_utc": h.acquired.to_rfc3339_opts(SecondsFormat::Secs, true),
                     "calibration_ratio": h.calibration_ratio,
+                    "frp_lower_mw": h.frp_lower,
+                    "frp_upper_mw": h.frp_upper,
                 },
             })
         })
@@ -82,6 +85,8 @@ mod tests {
             lon: 27.25,
             frp: 12.5,
             frp_corrected: 10.0,
+            frp_lower: 9.2,
+            frp_upper: 10.8,
             vza_factor,
             calibration_ratio: None,
             n_obs: platforms.len() as u16,
@@ -170,6 +175,13 @@ mod tests {
         );
         assert_eq!(feature["properties"]["vza_factor"], json!(0.5));
         assert_eq!(feature["properties"]["source"], "Matched");
+        assert_eq!(feature["properties"]["frp_lower_mw"], json!(9.2));
+        assert_eq!(feature["properties"]["frp_upper_mw"], json!(10.8));
+
+        let csv = to_csv(&hotspots);
+        let row = csv.lines().nth(1).unwrap();
+        assert_eq!(row.split(',').nth(12), Some("9.2"));
+        assert_eq!(row.split(',').nth(13), Some("10.8"));
     }
 
     #[test]

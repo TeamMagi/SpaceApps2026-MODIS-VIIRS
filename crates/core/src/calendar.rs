@@ -1,9 +1,21 @@
+use crate::calibration::calibration_for;
+use crate::config::CalibrationConfig;
 use crate::effort::monthly_omegas;
-use crate::models::{CalendarCell, HarmonizedHotspot};
+use crate::models::{CalendarCell, HarmonizedHotspot, HotspotSource};
+use crate::uncertainty::{
+    SensorFamily, UncertaintyParams, mean_frp_uncertainty, relative_uncertainty_for_obs,
+};
 use chrono::Datelike;
 use std::collections::HashMap;
 
-/// Build a burning activity calendar from harmonized hotspot data.
+struct MonthBucket {
+    count: u64,
+    sum_corrected: f64,
+    sum_raw: f64,
+    uncertainty_items: Vec<(f64, f64, f64)>,
+}
+
+/// Build a burning activity calendar from harmonized hotspot data using default uncertainty and calibration configs.
 ///
 /// Groups hotspots by (year, month) and computes:
 /// - count: raw number of detections
@@ -11,37 +23,74 @@ use std::collections::HashMap;
 /// - count_normalized: MODIS-equivalent detections (`count / effort_omega`)
 /// - mean_frp: average harmonized fire radiative power (`frp_corrected`)
 /// - mean_frp_raw: average raw fire radiative power (`frp`)
+/// - mean_frp_lower / mean_frp_upper: combined analytical confidence bounds for `mean_frp`
 /// - anomaly: deviation from multi-year normalized monthly mean (if enough data)
 pub fn build_calendar(hotspots: &[HarmonizedHotspot]) -> Vec<CalendarCell> {
+    build_calendar_with(
+        hotspots,
+        &UncertaintyParams::default(),
+        &CalibrationConfig::default(),
+    )
+}
+
+/// Same as [`build_calendar`] using explicit uncertainty and calibration parameters.
+pub fn build_calendar_with(
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+    calibration: &CalibrationConfig,
+) -> Vec<CalendarCell> {
     let omegas = monthly_omegas(hotspots);
-    let mut buckets: HashMap<(i32, u32), (u64, f64, f64)> = HashMap::new();
+    let mut buckets: HashMap<(i32, u32), MonthBucket> = HashMap::new();
 
     for h in hotspots {
         let date = h.acquired.date_naive();
         let entry = buckets
             .entry((date.year(), date.month()))
-            .or_insert((0, 0.0, 0.0));
-        entry.0 += 1;
-        entry.1 += h.frp_corrected;
-        entry.2 += h.frp;
+            .or_insert_with(|| MonthBucket {
+                count: 0,
+                sum_corrected: 0.0,
+                sum_raw: 0.0,
+                uncertainty_items: Vec::new(),
+            });
+        entry.count += 1;
+        entry.sum_corrected += h.frp_corrected;
+        entry.sum_raw += h.frp;
+
+        let cal = (h.source == HotspotSource::ModisOnly && calibration.enabled).then(|| {
+            let c = calibration_for(h.lat, calibration);
+            (c.ratio, c.ratio_sigma)
+        });
+        let rel = relative_uncertainty_for_obs(
+            h.vza_factor,
+            SensorFamily::from(h.source),
+            cal,
+            h.n_obs,
+            uncertainty,
+        );
+        entry
+            .uncertainty_items
+            .push((h.frp_corrected, rel.random, rel.systematic));
     }
 
     let mut cells: Vec<CalendarCell> = buckets
         .into_iter()
-        .map(|((year, month), (count, sum_corrected, sum_raw))| {
+        .map(|((year, month), bucket)| {
             let effort_omega = omegas.get(&(year, month)).copied().flatten();
             let count_normalized = effort_omega.and_then(|omega| {
-                (omega > 0.0 && omega.is_finite()).then_some(count as f64 / omega)
+                (omega > 0.0 && omega.is_finite()).then_some(bucket.count as f64 / omega)
             });
+            let estimate = mean_frp_uncertainty(&bucket.uncertainty_items, uncertainty);
 
             CalendarCell {
                 year,
                 month,
-                count,
+                count: bucket.count,
                 count_normalized,
                 effort_omega,
-                mean_frp: sum_corrected / count as f64,
-                mean_frp_raw: sum_raw / count as f64,
+                mean_frp: bucket.sum_corrected / bucket.count as f64,
+                mean_frp_raw: bucket.sum_raw / bucket.count as f64,
+                mean_frp_lower: estimate.map(|e| e.lower),
+                mean_frp_upper: estimate.map(|e| e.upper),
                 anomaly: None,
             }
         })
@@ -102,6 +151,8 @@ mod tests {
             lon: 32.0,
             frp,
             frp_corrected,
+            frp_lower: frp_corrected,
+            frp_upper: frp_corrected,
             vza_factor: if (frp - frp_corrected).abs() > f64::EPSILON {
                 Some(frp / frp_corrected)
             } else {
@@ -437,5 +488,49 @@ mod tests {
         assert!((anomalies[1].unwrap() - (-1.224744871391589)).abs() < 1e-9);
         assert!(anomalies[2].unwrap().abs() < 1e-9);
         assert!((anomalies[3].unwrap() - 1.224744871391589).abs() < 1e-9);
+    }
+
+    #[test]
+    fn cell_uncertainty_bounds_bracket_mean_frp_and_widen_in_high_sigma_band() {
+        let mut mid_lat = make_harmonized(2025, 7, 1, 50.0, 50.0);
+        mid_lat.lat = 40.0; // Mid-latitudes: ratio_sigma = 0.03
+        mid_lat.vza_factor = Some(1.0);
+
+        let mut high_lat = make_harmonized(2025, 8, 1, 50.0, 50.0);
+        high_lat.lat = 60.0; // Boreal: ratio_sigma = 0.18
+        high_lat.vza_factor = Some(1.0);
+
+        let cells = build_calendar(&[mid_lat, high_lat]);
+        assert_eq!(cells.len(), 2);
+
+        for cell in &cells {
+            let lower = cell.mean_frp_lower.expect("non-empty cell has lower bound");
+            let upper = cell.mean_frp_upper.expect("non-empty cell has upper bound");
+            assert!(
+                lower <= cell.mean_frp && cell.mean_frp <= upper,
+                "expected {lower} <= {} <= {upper}",
+                cell.mean_frp
+            );
+        }
+
+        let mid_width = cells[0].mean_frp_upper.unwrap() - cells[0].mean_frp_lower.unwrap();
+        let high_width = cells[1].mean_frp_upper.unwrap() - cells[1].mean_frp_lower.unwrap();
+        assert!(
+            high_width > mid_width,
+            "expected higher calibration sigma band width ({high_width}) > mid-lat width ({mid_width})"
+        );
+
+        let widened_z = UncertaintyParams {
+            z: 2.0,
+            ..UncertaintyParams::default()
+        };
+        let cells_z2 = build_calendar_with(
+            &[make_harmonized(2025, 7, 1, 50.0, 50.0)],
+            &widened_z,
+            &CalibrationConfig::default(),
+        );
+        let z1_w = mid_width;
+        let z2_w = cells_z2[0].mean_frp_upper.unwrap() - cells_z2[0].mean_frp_lower.unwrap();
+        assert!(z2_w > z1_w);
     }
 }

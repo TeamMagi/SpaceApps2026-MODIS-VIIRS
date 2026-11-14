@@ -4,6 +4,7 @@ use crate::dedup::{haversine_km, remove_interscan_duplicates_indexed_with};
 use crate::fleet::{self, FleetObservation};
 use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
 use crate::models::*;
+use crate::uncertainty::{self, SensorFamily, UncertaintyParams};
 use crate::vza;
 
 pub(crate) const MATCH_RADIUS_KM: f64 = 2.0;
@@ -147,9 +148,14 @@ pub fn harmonize_with_links_config(
         if let Some((j, _)) = best_match {
             viirs_fleet_out[j] = Some(result.len());
             matched_pairs += 1;
-            result.push(fuse_matched(m, &viirs_fleet[j]));
+            result.push(fuse_matched(m, &viirs_fleet[j], &config.uncertainty));
         } else {
-            result.push(from_modis_only_with(m, &config.vza, &config.calibration));
+            result.push(from_modis_only_with(
+                m,
+                &config.vza,
+                &config.calibration,
+                &config.uncertainty,
+            ));
         }
     }
 
@@ -157,7 +163,7 @@ pub fn harmonize_with_links_config(
     for (j, v) in viirs_fleet.iter().enumerate() {
         if viirs_fleet_out[j].is_none() {
             viirs_fleet_out[j] = Some(result.len());
-            result.push(from_viirs_only(v));
+            result.push(from_viirs_only(v, &config.uncertainty));
         }
     }
 
@@ -201,7 +207,11 @@ pub fn harmonize_with_links_config(
     }
 }
 
-fn fuse_matched(m: &FleetObservation, v: &FleetObservation) -> HarmonizedHotspot {
+fn fuse_matched(
+    m: &FleetObservation,
+    v: &FleetObservation,
+    uncertainty_params: &UncertaintyParams,
+) -> HarmonizedHotspot {
     let mh = &m.hotspot;
     let vh = &v.hotspot;
     let mut platforms = Vec::with_capacity(m.platforms.len() + v.platforms.len());
@@ -210,15 +220,29 @@ fn fuse_matched(m: &FleetObservation, v: &FleetObservation) -> HarmonizedHotspot
     platforms.sort();
     platforms.dedup();
 
+    let n_obs = m.n_obs.saturating_add(v.n_obs);
+    // The record averages `n_obs` independent member observations, so random noise shrinks by
+    // 1/√n_obs; no MODIS→VIIRS calibration systematic term applies because Matched uses VIIRS FRP.
+    let est = uncertainty::frp_uncertainty_for_obs(
+        v.frp_corrected_mean,
+        None,
+        SensorFamily::from(HotspotSource::Matched),
+        None,
+        n_obs,
+        uncertainty_params,
+    );
+
     // Quality-priority: prefer VIIRS FRP (Zheng et al. 2026)
     HarmonizedHotspot {
         lat: vh.lat,
         lon: vh.lon,
         frp: vh.frp,
         frp_corrected: v.frp_corrected_mean,
+        frp_lower: est.lower,
+        frp_upper: est.upper,
         vza_factor: None,
         calibration_ratio: None,
-        n_obs: m.n_obs.saturating_add(v.n_obs),
+        n_obs,
         platforms,
         confidence: higher_confidence(mh.confidence, vh.confidence),
         source: HotspotSource::Matched,
@@ -231,23 +255,41 @@ fn from_modis_only_with(
     m: &FleetObservation,
     vza_config: &VzaConfig,
     calibration_config: &CalibrationConfig,
+    uncertainty_params: &UncertaintyParams,
 ) -> HarmonizedHotspot {
     let mh = &m.hotspot;
     let factor = vza::vza_factor_with(mh, vza_config);
     // Harmonized FRP lives on the VIIRS scale, so only MODIS-only observations are shifted
     // using the latitude-band ratio (Matched and ViirsOnly already use VIIRS FRP).
-    let (frp_corrected, calibration_ratio) = if calibration_config.enabled {
+    let (frp_corrected, calibration_ratio, calibration_uncertainty) = if calibration_config.enabled {
         let cal = calibration::calibration_for(mh.lat, calibration_config);
-        (m.frp_corrected_mean * cal.ratio, Some(cal.ratio))
+        (
+            m.frp_corrected_mean * cal.ratio,
+            Some(cal.ratio),
+            Some((cal.ratio, cal.ratio_sigma)),
+        )
     } else {
-        (m.frp_corrected_mean, None)
+        (m.frp_corrected_mean, None, None)
     };
+
+    // Random sensor/VZA errors shrink by 1/√n_obs across fleet members, whereas regional
+    // MODIS→VIIRS calibration uncertainty is shared across members and stays unscaled.
+    let est = uncertainty::frp_uncertainty_for_obs(
+        frp_corrected,
+        factor,
+        SensorFamily::from(HotspotSource::ModisOnly),
+        calibration_uncertainty,
+        m.n_obs,
+        uncertainty_params,
+    );
 
     HarmonizedHotspot {
         lat: mh.lat,
         lon: mh.lon,
         frp: mh.frp,
         frp_corrected,
+        frp_lower: est.lower,
+        frp_upper: est.upper,
         vza_factor: factor,
         calibration_ratio,
         n_obs: m.n_obs,
@@ -261,16 +303,36 @@ fn from_modis_only_with(
 
 #[cfg(test)]
 fn from_modis_only(m: &FleetObservation) -> HarmonizedHotspot {
-    from_modis_only_with(m, &VzaConfig::default(), &CalibrationConfig::default())
+    from_modis_only_with(
+        m,
+        &VzaConfig::default(),
+        &CalibrationConfig::default(),
+        &UncertaintyParams::default(),
+    )
 }
 
-fn from_viirs_only(v: &FleetObservation) -> HarmonizedHotspot {
+fn from_viirs_only(
+    v: &FleetObservation,
+    uncertainty_params: &UncertaintyParams,
+) -> HarmonizedHotspot {
     let vh = &v.hotspot;
+    // Random sensor noise shrinks by 1/√n_obs across merged VIIRS passes; no VZA or calibration term.
+    let est = uncertainty::frp_uncertainty_for_obs(
+        v.frp_corrected_mean,
+        None,
+        SensorFamily::from(HotspotSource::ViirsOnly),
+        None,
+        v.n_obs,
+        uncertainty_params,
+    );
+
     HarmonizedHotspot {
         lat: vh.lat,
         lon: vh.lon,
         frp: vh.frp,
         frp_corrected: v.frp_corrected_mean,
+        frp_lower: est.lower,
+        frp_upper: est.upper,
         vza_factor: None,
         calibration_ratio: None,
         n_obs: v.n_obs,
@@ -379,7 +441,7 @@ mod tests {
 
             if let Some((j, _)) = best_match {
                 viirs_matched[j] = true;
-                result.push(fuse_matched(m, &viirs[j]));
+                result.push(fuse_matched(m, &viirs[j], &UncertaintyParams::default()));
             } else {
                 result.push(from_modis_only(m));
             }
@@ -387,7 +449,7 @@ mod tests {
 
         for (j, v) in viirs.iter().enumerate() {
             if !viirs_matched[j] {
-                result.push(from_viirs_only(v));
+                result.push(from_viirs_only(v, &UncertaintyParams::default()));
             }
         }
 
@@ -404,6 +466,14 @@ mod tests {
             assert_eq!(
                 a.frp_corrected, e.frp_corrected,
                 "frp_corrected mismatch at index {i}"
+            );
+            assert_eq!(
+                a.frp_lower, e.frp_lower,
+                "frp_lower mismatch at index {i}"
+            );
+            assert_eq!(
+                a.frp_upper, e.frp_upper,
+                "frp_upper mismatch at index {i}"
             );
             assert_eq!(
                 a.vza_factor, e.vza_factor,
@@ -1323,16 +1393,21 @@ mod tests {
             if let Some((j, _)) = best_match {
                 viirs_fleet_out[j] = Some(result.len());
                 matched_pairs += 1;
-                result.push(fuse_matched(m, &viirs_fleet[j]));
+                result.push(fuse_matched(m, &viirs_fleet[j], &config.uncertainty));
             } else {
-                result.push(from_modis_only_with(m, &config.vza, &config.calibration));
+                result.push(from_modis_only_with(
+                    m,
+                    &config.vza,
+                    &config.calibration,
+                    &config.uncertainty,
+                ));
             }
         }
 
         for (j, v) in viirs_fleet.iter().enumerate() {
             if viirs_fleet_out[j].is_none() {
                 viirs_fleet_out[j] = Some(result.len());
-                result.push(from_viirs_only(v));
+                result.push(from_viirs_only(v, &config.uncertainty));
             }
         }
 
@@ -1399,6 +1474,16 @@ mod tests {
                 a.frp_corrected.to_bits(),
                 e.frp_corrected.to_bits(),
                 "{ctx} [{i}]: frp_corrected"
+            );
+            assert_eq!(
+                a.frp_lower.to_bits(),
+                e.frp_lower.to_bits(),
+                "{ctx} [{i}]: frp_lower"
+            );
+            assert_eq!(
+                a.frp_upper.to_bits(),
+                e.frp_upper.to_bits(),
+                "{ctx} [{i}]: frp_upper"
             );
             assert_eq!(
                 a.vza_factor.map(f64::to_bits),
@@ -1642,5 +1727,126 @@ mod tests {
         assert_eq!(out[1].calibration_ratio, None);
         assert_eq!(out[0].frp_corrected.to_bits(), expected_trop.to_bits());
         assert_eq!(out[1].frp_corrected.to_bits(), expected_boreal.to_bits());
+    }
+
+    #[test]
+    fn modis_only_interval_widens_strictly_with_scan_vza() {
+        let scans = [1.0, 1.5, 2.5, 4.0];
+        let mut widths_equal_corrected = Vec::new();
+        let mut rel_widths_fixed_raw = Vec::new();
+        let mut prev_factor = 0.0;
+
+        for scan in scans {
+            let mut m_raw = make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 100.0, Confidence::High);
+            m_raw.scan = scan;
+            let out_raw = harmonize(vec![m_raw], vec![]);
+            assert_eq!(out_raw.len(), 1);
+            let h = &out_raw[0];
+            assert!(h.frp_lower <= h.frp_corrected && h.frp_corrected <= h.frp_upper);
+            let factor = h.vza_factor.expect("scan > 0 yields vza_factor");
+            assert!(factor > prev_factor);
+            prev_factor = factor;
+            rel_widths_fixed_raw.push((h.frp_upper - h.frp_lower) / h.frp_corrected);
+
+            // Same nadir-equivalent fire (frp_corrected held equal across scan angles):
+            let mut m_same_fire =
+                make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 100.0 * factor, Confidence::High);
+            m_same_fire.scan = scan;
+            let out_same = harmonize(vec![m_same_fire], vec![]);
+            let hs = &out_same[0];
+            assert!(hs.frp_lower <= hs.frp_corrected && hs.frp_corrected <= hs.frp_upper);
+            widths_equal_corrected.push(hs.frp_upper - hs.frp_lower);
+        }
+
+        for pair in widths_equal_corrected.windows(2) {
+            assert!(
+                pair[1] > pair[0],
+                "expected strictly increasing interval width with scan VZA, got {widths_equal_corrected:?}"
+            );
+        }
+        for pair in rel_widths_fixed_raw.windows(2) {
+            assert!(
+                pair[1] > pair[0],
+                "expected strictly increasing relative width with scan VZA, got {rel_widths_fixed_raw:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn matched_and_viirs_only_have_intervals_unaffected_by_vza() {
+        let mut m_nadir = make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 100.0, Confidence::High);
+        m_nadir.scan = 1.0;
+        let v_for_nadir = make_hotspot(Sensor::ViirsSNPP, 39.001, 32.001, 60, 50.0, Confidence::High);
+
+        let mut m_edge = make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 100.0, Confidence::High);
+        m_edge.scan = 4.0;
+        let v_for_edge = make_hotspot(Sensor::ViirsSNPP, 39.001, 32.001, 60, 50.0, Confidence::High);
+
+        let out_nadir = harmonize(vec![m_nadir], vec![v_for_nadir]);
+        let out_edge = harmonize(vec![m_edge], vec![v_for_edge]);
+        assert_eq!(out_nadir[0].source, HotspotSource::Matched);
+        assert_eq!(out_edge[0].source, HotspotSource::Matched);
+        assert!(out_nadir[0].frp_lower < out_nadir[0].frp_corrected);
+        assert!(out_nadir[0].frp_corrected < out_nadir[0].frp_upper);
+        assert_eq!(out_nadir[0].frp_lower.to_bits(), out_edge[0].frp_lower.to_bits());
+        assert_eq!(out_nadir[0].frp_upper.to_bits(), out_edge[0].frp_upper.to_bits());
+
+        let mut v_nadir = make_hotspot(Sensor::ViirsNOAA20, 39.0, 32.0, 0, 40.0, Confidence::Nominal);
+        v_nadir.scan = 0.4;
+        let mut v_edge = make_hotspot(Sensor::ViirsNOAA20, 39.0, 32.0, 0, 40.0, Confidence::Nominal);
+        v_edge.scan = 1.6;
+        v_edge.vza = Some(50.0);
+
+        let vo_nadir = harmonize(vec![], vec![v_nadir]);
+        let vo_edge = harmonize(vec![], vec![v_edge]);
+        assert_eq!(vo_nadir[0].source, HotspotSource::ViirsOnly);
+        assert!(vo_nadir[0].frp_lower < vo_nadir[0].frp_corrected);
+        assert!(vo_nadir[0].frp_corrected < vo_nadir[0].frp_upper);
+        assert_eq!(vo_nadir[0].frp_lower.to_bits(), vo_edge[0].frp_lower.to_bits());
+        assert_eq!(vo_nadir[0].frp_upper.to_bits(), vo_edge[0].frp_upper.to_bits());
+    }
+
+    #[test]
+    fn higher_n_obs_narrows_random_uncertainty_but_preserves_systematic() {
+        // ViirsOnly (n_obs=1) vs Matched with 3 VIIRS + 1 MODIS (n_obs=4) at identical frp_corrected=50:
+        let single_viirs = harmonize(
+            vec![],
+            vec![make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 0, 50.0, Confidence::High)],
+        );
+        let four_obs_matched = harmonize(
+            vec![make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 80.0, Confidence::High)],
+            vec![
+                make_hotspot(Sensor::ViirsSNPP, 39.001, 32.0, 10, 50.0, Confidence::High),
+                make_hotspot(Sensor::ViirsNOAA20, 39.001, 32.0, 20, 50.0, Confidence::High),
+                make_hotspot(Sensor::ViirsNOAA21, 39.001, 32.0, 30, 50.0, Confidence::High),
+            ],
+        );
+        assert_eq!(single_viirs[0].n_obs, 1);
+        assert_eq!(four_obs_matched[0].n_obs, 4);
+        let w1 = single_viirs[0].frp_upper - single_viirs[0].frp_lower;
+        let w4 = four_obs_matched[0].frp_upper - four_obs_matched[0].frp_lower;
+        assert!(w4 < w1, "expected n_obs=4 width ({w4}) < n_obs=1 width ({w1})");
+        assert!((w4 - w1 / 2.0).abs() < 1e-12);
+
+        // ModisOnly: with zero random sensor/VZA sigma, systematic calibration sigma stays unscaled by n_obs.
+        let obs1 = FleetObservation {
+            hotspot: make_hotspot(Sensor::ModisTerra, 60.0, 20.0, 0, 100.0, Confidence::High),
+            frp_mean: 100.0,
+            frp_corrected_mean: 100.0,
+            n_obs: 1,
+            platforms: vec![Sensor::ModisTerra],
+        };
+        let mut obs4 = obs1.clone();
+        obs4.n_obs = 4;
+        let sys_only = UncertaintyParams {
+            modis_sensor_sigma: 0.0,
+            viirs_sensor_sigma: 0.0,
+            vza_error_coeff: 0.0,
+            z: 1.0,
+        };
+        let h1 = from_modis_only_with(&obs1, &VzaConfig::default(), &CalibrationConfig::default(), &sys_only);
+        let h4 = from_modis_only_with(&obs4, &VzaConfig::default(), &CalibrationConfig::default(), &sys_only);
+        assert!((h1.frp_lower - h4.frp_lower).abs() < 1e-12);
+        assert!((h1.frp_upper - h4.frp_upper).abs() < 1e-12);
     }
 }

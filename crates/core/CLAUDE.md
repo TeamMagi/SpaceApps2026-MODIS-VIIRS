@@ -9,13 +9,14 @@
 
 | Modül | Görev |
 |-------|-------|
-| `config.rs` | `PipelineConfig`: dedup, filo, eşleştirme ve VZA eşikleri; varsayılanlar önceki sabit değerlerle birebir aynı, `validate()` ile doğrulanır |
+| `config.rs` | `PipelineConfig`: dedup, filo, eşleştirme, VZA, kalibrasyon ve belirsizlik eşikleri; `validate()` ile doğrulanır |
 | `models.rs` | Veri modelleri: Hotspot, HarmonizedHotspot, Sensor, Confidence, BBox, CalendarCell |
 | `dedup.rs` | İnterscan duplikat temizleme (varsayılan Δt<8s, overlap>30%), haversine mesafe hesabı |
 | `fleet.rs` | Aynı sensör ailesinin (MODIS Terra/Aqua, VIIRS SNPP/NOAA-20/21) eşzamanlı tespitlerini tek gözleme birleştirme |
 | `h3index.rs` | H3 (çözünürlük 8) uzamsal indeks; `k_ring_for_radius` arama halkasını eşleştirme yarıçapına göre ölçekler |
 | `vza.rs` | MODIS FRP görüş açısı düzeltmesi (kuadratik polinom, katsayılar `VzaConfig`'ten) |
 | `calibration.rs` | Enlem bandına dayalı MODIS→VIIRS FRP kalibrasyonu (Li et al. 2018 oranları, geçiş boşluklarında doğrusal interpolasyon) |
+| `uncertainty.rs` | Analitik FRP güven aralığı (`frp_lower`/`frp_upper` ve takvim hücresi `mean_frp_lower`/`mean_frp_upper`) yayılımı |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
 | `effort.rs` | Gözlem eforu (EffortFactor) tahmini |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
@@ -30,6 +31,8 @@
 - Fusion: VIIRS tercih edilir (yüksek çözünürlük), eşleşmeyenler her iki sensörden alınır.
 - Enlem bandı FRP kalibrasyonu (Li et al. 2018): harmonize ölçek VIIRS olduğu için kalibrasyon (`frp_corrected = vza_mean * ratio`) yalnız `ModisOnly` kayıtlara uygulanır (`Matched` ve `ViirsOnly` değişmez); bantlar `|lat|` simetrisiyle uygulanır (30°: 1.16, 30–50°: 0.97, 55–70°: 0.82; 50–55° doğrusal interpolasyon, >70° sabitlenir).
 - Büyük boreal küme sınırlaması: Li et al. (2018) >1000 MW boreal kümelerde yoğun duman etkisiyle MODIS FRP'nin VIIRS'tan %47'ye kadar büyük olduğunu bildirir; tespit başına küme FRP'si bilinmediğinden bu ek düzeltme uygulanmaz.
+- FRP belirsizlik modeli (`uncertainty.rs`): her kaydın `frp_lower`/`frp_upper` ve aylık hücrelerin `mean_frp_lower`/`mean_frp_upper` sınırları sensör gürültüsü, VZA düzeltme hatası (`vza_error_coeff × (factor - 1)`) ve `ModisOnly` kalibrasyon belirsizliğini (`ratio_sigma / ratio`) karesel olarak birleştirir.
+- Çoklu gözlem ve hücre birleştirmesinde bağımsız rastgele hatalar `1/√n` ölçeklenirken bölgesel kalibrasyon belirsizliği sistematik kabul edilip ölçeklenmez; varsayılan `modis_sensor_sigma` (0.12), `viirs_sensor_sigma` (0.08) ve `vza_error_coeff` (0.05) değerleri yayımlanmış ölçümler değil başlangıç varsayımlarıdır.
 - FRP birimi: MW (megawatt). Negatif FRP olamaz.
 
 ## Bağımlılıklar

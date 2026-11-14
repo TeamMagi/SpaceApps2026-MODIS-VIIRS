@@ -5,6 +5,7 @@ use crate::calibration::default_bands;
 use crate::dedup::{MAX_TIME_DIFF_SECS, MIN_OVERLAP_RATIO};
 use crate::fleet::{FLEET_RADIUS_KM, MODIS_FLEET_WINDOW_SECS, VIIRS_FLEET_WINDOW_SECS};
 use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS};
+use crate::uncertainty::UncertaintyParams;
 use crate::vza::{CORRECTION_A, CORRECTION_B, CORRECTION_C};
 
 /// Upper bound on the cross-sensor match radius; it bounds the H3 candidate search cost.
@@ -19,6 +20,8 @@ pub struct PipelineConfig {
     pub matching: MatchingConfig,
     pub vza: VzaConfig,
     pub calibration: CalibrationConfig,
+    #[serde(default)]
+    pub uncertainty: UncertaintyParams,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -136,6 +139,7 @@ impl PipelineConfig {
             }
         }
         validate_calibration(&self.calibration)?;
+        self.uncertainty.validate()?;
         Ok(())
     }
 }
@@ -226,6 +230,7 @@ mod tests {
         assert_eq!(c.calibration.bands[0].ratio, 1.16);
         assert_eq!(c.calibration.bands[1].ratio, 0.97);
         assert_eq!(c.calibration.bands[2].ratio, 0.82);
+        assert_eq!(c.uncertainty, UncertaintyParams::default());
         assert_eq!(c.validate(), Ok(()));
     }
 
@@ -278,6 +283,11 @@ mod tests {
         rejected(
             |c| c.calibration.bands.clear(),
             "calibration.bands",
+        );
+        rejected(|c| c.uncertainty.z = 0.0, "uncertainty.z");
+        rejected(
+            |c| c.uncertainty.modis_sensor_sigma = -0.1,
+            "uncertainty.modis_sensor_sigma",
         );
     }
 

@@ -56,3 +56,13 @@ min_abs_lat = 55.0
 max_abs_lat = 70.0
 ratio = 0.82
 ratio_sigma = 0.18
+
+[uncertainty]
+# Analytical FRP confidence bounds combining sensor noise, VZA correction error, and
+# MODIS->VIIRS calibration uncertainty. Default sensor-noise and VZA error parameters
+# below are initial assumptions, not published values.
+modis_sensor_sigma = 0.12
+viirs_sensor_sigma = 0.08
+vza_error_coeff = 0.05
+# Gaussian z-multiplier (z = 1.0 gives ~68.27% two-sided confidence).
+z = 1.0

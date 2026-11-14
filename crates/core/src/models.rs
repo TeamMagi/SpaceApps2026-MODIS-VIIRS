@@ -102,6 +102,10 @@ pub struct HarmonizedHotspot {
     pub lon: f64,
     pub frp: f64,
     pub frp_corrected: f64,
+    #[serde(default)]
+    pub frp_lower: f64,
+    #[serde(default)]
+    pub frp_upper: f64,
     pub vza_factor: Option<f64>,
     #[serde(default)]
     pub calibration_ratio: Option<f64>,
@@ -143,6 +147,10 @@ pub struct CalendarCell {
     pub effort_omega: Option<f64>,
     pub mean_frp: f64,
     pub mean_frp_raw: f64,
+    #[serde(default)]
+    pub mean_frp_lower: Option<f64>,
+    #[serde(default)]
+    pub mean_frp_upper: Option<f64>,
     pub anomaly: Option<f64>,
 }
 
