@@ -11,6 +11,9 @@
 |----------|-------|----------|
 | `/api/health` | GET | Sağlık kontrolü, versiyon bilgisi |
 | `/api/harmonize` | GET | Harmonize edilmiş veri (query params: west, south, east, north, days) |
+| `/api/availability` | GET | FIRMS kaynaklarının erişilebilir tarih aralıkları |
+| `/api/compare` | GET | Ham ve harmonize veri karşılaştırma istatistikleri (query params: /api/harmonize ile aynı) |
+| `/api/stats` | GET | Genel istatistikler, sensör kırılımı, pipeline metrikleri (query params: /api/harmonize ile aynı) |
 
 ## Konfigürasyon (Env Vars)
 
