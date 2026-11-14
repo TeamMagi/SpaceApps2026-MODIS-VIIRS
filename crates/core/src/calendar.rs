@@ -33,7 +33,7 @@ pub fn build_calendar(hotspots: &[HarmonizedHotspot]) -> Vec<CalendarCell> {
         .collect();
 
     compute_anomalies(&mut cells);
-    cells.sort_by(|a, b| (a.year, a.month).cmp(&(b.year, b.month)));
+    cells.sort_by_key(|a| (a.year, a.month));
     cells
 }
 
@@ -59,10 +59,8 @@ fn compute_anomalies(cells: &mut [CalendarCell]) {
         .collect();
 
     for cell in cells.iter_mut() {
-        if let Some(&(mean, std)) = baselines.get(&cell.month) {
-            if std > 0.0 {
-                cell.anomaly = Some((cell.count as f64 - mean) / std);
-            }
+        if let Some(&(mean, std)) = baselines.get(&cell.month) && std > 0.0 {
+            cell.anomaly = Some((cell.count as f64 - mean) / std);
         }
     }
 }

@@ -90,7 +90,7 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
         }
     }
 
-    result.sort_by(|a, b| a.acquired.cmp(&b.acquired));
+    result.sort_by_key(|a| a.acquired);
     result
 }
 

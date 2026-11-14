@@ -13,7 +13,7 @@ pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
         return;
     }
 
-    hotspots.sort_by(|a, b| a.acquired.cmp(&b.acquired));
+    hotspots.sort_by_key(|a| a.acquired);
 
     let mut to_remove = vec![false; hotspots.len()];
 
