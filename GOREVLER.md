@@ -119,10 +119,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | 🔄 |
 | C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | 🔄 |
 | C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | 🔄 |
-| R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ⬜ |
+| R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ✅ |
 | R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ⏸ |
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ⏸ |
-| R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ⏸ |
+| R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ✅ |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ⏸ |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | ✅ |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ⬜ |
@@ -143,9 +143,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 **Şu an başlanabilecekler:**
 - **Görkem:** G5 — Sunum materyali + demo senaryosu (R5 ve Y1 de bekliyor). G4 bitti.
 - **Can:** C1–C4 tasarımları + çalışan React prototipi (`web/src`) hazır (`🔄`); ekip onayı ve kalan uyumlaştırma maddeleri sonrası kapanacak.
-- **Serhat:** R1 (ve G4 bittiği için R1 netleşince R2–R4) — `web/src/styles/tokens.css`, `AppShell` yerleşimi ve C1–C4 bileşen prototipleri üzerinden hemen başlanabilir / devralınabilir.
+- **Serhat:** R1 ✅, R4 ✅. Sıradaki: R2 ve R3 (C3'ün bitmesini bekliyor). R5 ise R2+R3+C4 bekliyor.
 - **Samet:** S5 — CI/CD (S1 bitti), S2 — integration testleri ve S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
-- **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil.
+- **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil. R1 bitti, Y5 bitince Y1–Y4 açılır.
 
 **Birbirini bekleyen kritik yollar:**
 1. **G1 → G2 → G4 → R4 → R5:** Backend pipeline'ı tamamlanmadan frontend gerçek veriyle çalışamaz. Bu sürede Serhat, Can'ın tasarımlarıyla mock veri üzerinde çalışır.
@@ -360,7 +360,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 ## Serhat'ın görevleri
 
-### R1 — React component mimarisi + layout ⬜
+### R1 — React component mimarisi + layout ✅
 - **Bekler:** C2 · **Açar:** R2, R3, R4, Y1–Y4
 - Frontend'in iskeletini kurmak (mevcut `web/` dizini üzerinde):
   - Can'ın tasarım sistemini CSS variables olarak implement etme
@@ -371,6 +371,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - `npm install` çalışıyor, `npm run dev` ile development server ayağa kalkıyor
 - **Teknik not:** TypeScript derlemesi SWC ile yapılıyor (`@vitejs/plugin-react-swc` zaten kurulu).
 - **Bitti sayılır:** `npm run dev` hatasız çalışıyor; layout Can'ın wireframe'ine uyuyor; boş paneller doğru yerde; mobile'da düzgün görünüyor.
+- **Doğrulama (2026-11-14):** Can'ın C1 prototipi R1 kapsamının ~%90'ını karşılıyordu. Kalan: `types/index.ts` NRT tip tanımları, `api.ts` wire type hizalaması (`WireYearSpan` string/number parse, `WireSeriesCliff` nullable alanlar, `WireHarmonizedPoint` yeni alanlar), `Headline.tsx` null guard'ları. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
 ### R2 — İnteraktif harita entegrasyonu ⏸
 - **Bekler:** C3, R1 · **Açar:** R5
@@ -392,7 +393,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Tıklama: haritayı o ay/yıla filtreler
 - **Bitti sayılır:** mock veriyle takvim render oluyor; 2000–2026 arası tüm aylar görünüyor; renk skalası anlamlı; hover tooltip çalışıyor.
 
-### R4 — Backend API bağlantısı + state management ⏸
+### R4 — Backend API bağlantısı + state management ✅
 - **Bekler:** G4, R1 · **Açar:** R5
 - Frontend'i gerçek backend'e bağlayan katman:
   - API client modülü (`api.ts`): `/api/harmonize`, `/api/calendar`, `/api/compare`, `/api/stats`
@@ -401,6 +402,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - API yanıtını component state'ine dönüştürme
 - **Not:** Vite proxy zaten ayarlı (`/api` → `localhost:3001`).
 - **Bitti sayılır:** gerçek backend çalışırken frontend veri çekip gösteriyor; loading spinner var; API hatası kullanıcıya mesaj olarak dönüyor.
+- **Doğrulama (2026-11-14):** `api.ts`'e 4 NRT fetch fonksiyonu (fetchHarmonize, fetchCompare, fetchStats, fetchCalendar) + wire types + adapters eklendi (~477 satır). `useNrtData(bbox)` hook'u useSyncExternalStore pattern ile 3 paralel NRT fetch yönetiyor. Store'a `nrtDays` (1-5, varsayılan 2) eklendi. CountDelta ve PipelineStrip'e NRT veri gösterimi entegre edildi. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
 ### R5 — Raw ↔ Harmonized toggle implementasyonu ⏸
 - **Bekler:** R2, R3, R4, C4 · **Açar:** G5
