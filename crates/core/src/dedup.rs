@@ -274,4 +274,75 @@ mod tests {
         let d = haversine_km(0.0, 179.5, 0.0, -179.5);
         assert!((d - 111.19492664455873).abs() < 1e-6);
     }
+
+    #[test]
+    fn known_duplicate_set_reduces_total_frp_by_exactly_twenty_percent() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 30.0, Confidence::Nominal, Sensor::ModisTerra, 0),
+            make_hotspot(37.001, 29.0, 50.0, Confidence::High, Sensor::ModisTerra, 4),
+            make_hotspot(37.5, 29.0, 60.0, Confidence::High, Sensor::ModisTerra, 0),
+            make_hotspot(38.0, 29.0, 60.0, Confidence::High, Sensor::ModisTerra, 0),
+        ];
+        let frp_before: f64 = hotspots.iter().map(|h| h.frp).sum();
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 3);
+        let frp_after: f64 = hotspots.iter().map(|h| h.frp).sum();
+        assert_eq!(frp_before, 200.0);
+        assert!((frp_after - 160.0).abs() < 1e-9);
+        assert!(((frp_before - frp_after) / frp_before - 0.2).abs() < 1e-12);
+
+        let survivor = hotspots
+            .iter()
+            .find(|h| (h.lat - 37.0).abs() < 0.01)
+            .expect("duplicate survivor should remain");
+        assert_eq!(survivor.confidence, Confidence::High);
+        assert!((survivor.frp - 40.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn overlap_threshold_is_thirty_percent() {
+        let deg_per_km = 1.0 / 111.19492664455873;
+
+        let mut near = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(
+                37.0 + 0.65 * deg_per_km,
+                29.0,
+                25.0,
+                Confidence::High,
+                Sensor::ModisTerra,
+                2,
+            ),
+        ];
+        remove_interscan_duplicates(&mut near);
+        assert_eq!(near.len(), 1);
+
+        let mut far = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(
+                37.0 + 0.75 * deg_per_km,
+                29.0,
+                25.0,
+                Confidence::High,
+                Sensor::ModisTerra,
+                2,
+            ),
+        ];
+        remove_interscan_duplicates(&mut far);
+        assert_eq!(far.len(), 2);
+    }
+
+    #[test]
+    fn seven_seconds_apart_is_inside_time_window() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 25.0, Confidence::High, Sensor::ModisTerra, 7),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+    }
 }
