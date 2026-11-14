@@ -857,6 +857,14 @@ fn build_warnings(report: &ReportResponse) -> (Option<String>, Vec<String>) {
     )
 }
 
+fn pre_aqua_warning(excluded: usize) -> Option<String> {
+    (excluded > 0).then(|| {
+        format!(
+            "{excluded} months before 2002-07 (Terra-only era) are not effort-comparable with later months and have no normalized count or anomaly."
+        )
+    })
+}
+
 fn build_effort_and_warnings_from_counts(
     harmonized: &[HarmonizedHotspot],
     failure_count: usize,
@@ -864,8 +872,10 @@ fn build_effort_and_warnings_from_counts(
     plural: &str,
     uncovered: &[(String, String)],
 ) -> (EffortResponse, Vec<String>) {
-    let (reason, warnings) =
+    let (reason, mut warnings) =
         build_warnings_from_counts(failure_count, singular, plural, uncovered);
+    let excluded = pyrosync_core::effort::pre_aqua_excluded_months(harmonized).len();
+    warnings.extend(pre_aqua_warning(excluded));
     let effort = EffortResponse {
         reliable: reason.is_none(),
         reason,
@@ -1811,6 +1821,15 @@ fn parse_time_window(params: &HarmonizeParams) -> Result<TimeWindow, ApiError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pre_aqua_warning_names_count_and_is_absent_when_nothing_excluded() {
+        assert_eq!(pre_aqua_warning(0), None);
+        assert_eq!(
+            pre_aqua_warning(18).as_deref(),
+            Some("18 months before 2002-07 (Terra-only era) are not effort-comparable with later months and have no normalized count or anomaly.")
+        );
+    }
     use chrono::TimeZone;
     use pyrosync_core::models::FireType;
 

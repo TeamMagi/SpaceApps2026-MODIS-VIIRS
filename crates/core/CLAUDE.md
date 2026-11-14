@@ -22,6 +22,7 @@
 
 ## Teknik Kısıtlar
 
+- Terra-only dönem (2002-07 öncesi, Aqua yok): seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır (`count_normalized`, `effort_omega`, `anomaly` = `None`; Ω havuzlarına ve anomali tabanına girmez, `count`/FRP ham kalır). Seri tamamen 2002-07 öncesindeyse değişiklik yok. Gerekçe: Ω, MODIS referans kanalının kendi içindeki filo değişimini ölçemez (`effort::FIRST_TERRA_AQUA_MONTH`).
 - `Confidence` enum'u `PartialOrd, Ord` derive eder: `Low < Nominal < High`.
 - `calendar.rs` içinde `use chrono::Datelike;` import'u gereklidir (`.year()` ve `.month()` için).
 - Cross-sensor matching: varsayılan 2 km mesafe, 180 dakika zaman penceresi (aynı yangının MODIS/VIIRS geçişleri FIRMS verisinde en az 34 dk arayla gelir). Tüm eşikler `PipelineConfig`'ten gelir; eski `harmonize`/`harmonize_with_links` fonksiyonları varsayılan konfigürasyonla çalışır, `*_config` varyantları konfigürasyon alır.

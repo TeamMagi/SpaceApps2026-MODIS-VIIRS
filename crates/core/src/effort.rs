@@ -6,6 +6,11 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 /// Minimum months sharing a platform configuration before its Ω is trusted.
 const MIN_MONTHS_PER_CONFIG: usize = 3;
 
+/// First month with Terra and Aqua both flying (year, month). Aqua's first FIRMS detections are
+/// in 2002-07; before that the MODIS reference channel itself had half the platforms, a change
+/// in effort that Ω cannot measure by construction because Ω is defined relative to that channel.
+pub const FIRST_TERRA_AQUA_MONTH: (i32, u32) = (2002, 7);
+
 /// Observation effort for one platform configuration, measured against the MODIS channel.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EffortFactor {
@@ -115,9 +120,34 @@ fn factors_from_months(
     (factors, omega_by_config)
 }
 
+// Terra-only months are only excluded when the series also reaches the Terra+Aqua era; a series
+// that lies wholly before it is internally comparable and stays untouched.
+fn take_pre_aqua_months(months: &mut HashMap<(i32, u32), MonthBucket>) -> Vec<(i32, u32)> {
+    if !months.keys().any(|&ym| ym >= FIRST_TERRA_AQUA_MONTH) {
+        return Vec::new();
+    }
+    let mut excluded: Vec<(i32, u32)> = months
+        .keys()
+        .copied()
+        .filter(|&ym| ym < FIRST_TERRA_AQUA_MONTH)
+        .collect();
+    for ym in &excluded {
+        months.remove(ym);
+    }
+    excluded.sort_unstable();
+    excluded
+}
+
+/// Months (year, month, ascending) that are not effort-comparable because they precede
+/// Aqua (2002-07) while the series also contains later months.
+pub fn pre_aqua_excluded_months(hotspots: &[HarmonizedHotspot]) -> Vec<(i32, u32)> {
+    take_pre_aqua_months(&mut aggregate_months(hotspots))
+}
+
 /// Estimate Ω per platform configuration from the harmonized series itself.
 pub fn estimate_effort(hotspots: &[HarmonizedHotspot]) -> Vec<EffortFactor> {
-    let months = aggregate_months(hotspots);
+    let mut months = aggregate_months(hotspots);
+    take_pre_aqua_months(&mut months);
     factors_from_months(&months).0
 }
 
@@ -139,7 +169,7 @@ pub fn omega_for_month(
         }
     }
 
-    if !found {
+    if !found || pre_aqua_excluded_months(hotspots).contains(&(year, month)) {
         return None;
     }
 
@@ -151,7 +181,8 @@ pub fn omega_for_month(
 }
 
 pub(crate) fn monthly_omegas(hotspots: &[HarmonizedHotspot]) -> HashMap<(i32, u32), Option<f64>> {
-    let months = aggregate_months(hotspots);
+    let mut months = aggregate_months(hotspots);
+    take_pre_aqua_months(&mut months);
     let (_, omega_by_config) = factors_from_months(&months);
 
     months
@@ -457,5 +488,37 @@ mod tests {
             factors[0].platforms,
             vec![Sensor::ModisTerra, Sensor::ModisAqua, Sensor::ViirsSNPP]
         );
+    }
+
+    #[test]
+    fn pre_aqua_months_are_excluded_when_series_crosses_boundary() {
+        let mut hotspots = Vec::new();
+        for year in 2001..=2003 {
+            for month in 1..=12 {
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ModisTerra]));
+            }
+        }
+        let excluded = pre_aqua_excluded_months(&hotspots);
+        assert_eq!(excluded.len(), 18);
+        assert_eq!(excluded.first(), Some(&(2001, 1)));
+        assert_eq!(excluded.last(), Some(&(2002, 6)));
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert_eq!(factors[0].months, 18);
+        assert_eq!(omega_for_month(&factors, &hotspots, 2002, 6), None);
+        assert_eq!(omega_for_month(&factors, &hotspots, 2002, 7), Some(1.0));
+        assert_eq!(monthly_omegas(&hotspots).get(&(2001, 5)), None);
+    }
+
+    #[test]
+    fn series_entirely_before_aqua_is_unchanged() {
+        let hotspots: Vec<_> = (1..=4)
+            .map(|m| make_hotspot(2001, m, vec![Sensor::ModisTerra]))
+            .collect();
+        assert!(pre_aqua_excluded_months(&hotspots).is_empty());
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors[0].months, 4);
+        assert_eq!(omega_for_month(&factors, &hotspots, 2001, 2), Some(1.0));
     }
 }

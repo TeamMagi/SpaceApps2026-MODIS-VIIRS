@@ -379,4 +379,62 @@ mod tests {
             (2025, 8, 1)
         );
     }
+
+    fn terra(year: i32, month: u32, n: u32) -> Vec<HarmonizedHotspot> {
+        (1..=n)
+            .map(|d| make_with_platforms(year, month, d, vec![Sensor::ModisTerra]))
+            .collect()
+    }
+
+    #[test]
+    fn pre_aqua_months_have_no_normalized_count_or_anomaly() {
+        let mut hotspots = Vec::new();
+        for year in 2001..=2003 {
+            for month in 1..=12 {
+                hotspots.extend(terra(year, month, 2));
+            }
+        }
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 36);
+        for c in &cells {
+            if (c.year, c.month) < (2002, 7) {
+                assert_eq!(c.count, 2);
+                assert_eq!(c.count_normalized, None);
+                assert_eq!(c.effort_omega, None);
+                assert_eq!(c.anomaly, None);
+            } else {
+                assert_eq!(c.count_normalized, Some(c.count as f64));
+            }
+        }
+    }
+
+    #[test]
+    fn series_inside_2001_is_unchanged() {
+        let mut hotspots = Vec::new();
+        for month in 1..=4 {
+            hotspots.extend(terra(2001, month, 2));
+        }
+        let cells = build_calendar(&hotspots);
+        assert!(cells.iter().all(|c| c.effort_omega == Some(1.0)));
+        assert!(cells.iter().all(|c| c.count_normalized == Some(2.0)));
+    }
+
+    #[test]
+    fn pre_aqua_months_do_not_shift_anomaly_baseline() {
+        // July counts: 2001 -> 50 (Terra-only, excluded), 2002..=2004 -> 1, 2, 3.
+        let mut hotspots = terra(2001, 7, 28);
+        hotspots.extend(terra(2001, 7, 28).into_iter().map(|mut h| {
+            h.acquired = Utc.with_ymd_and_hms(2001, 7, 29, 12, 0, 0).unwrap();
+            h
+        }));
+        for (year, n) in [(2002, 1), (2003, 2), (2004, 3)] {
+            hotspots.extend(terra(year, 7, n));
+        }
+        let cells = build_calendar(&hotspots);
+        let anomalies: Vec<Option<f64>> = cells.iter().map(|c| c.anomaly).collect();
+        assert_eq!(anomalies[0], None);
+        assert!((anomalies[1].unwrap() - (-1.224744871391589)).abs() < 1e-9);
+        assert!(anomalies[2].unwrap().abs() < 1e-9);
+        assert!((anomalies[3].unwrap() - 1.224744871391589).abs() < 1e-9);
+    }
 }

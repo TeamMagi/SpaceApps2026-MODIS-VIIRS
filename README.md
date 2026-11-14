@@ -29,6 +29,8 @@ PyroSync implements a seven-stage harmonization pipeline built in **Rust** for p
 
 As the satellite fleet expands (SNPP in 2012, NOAA-20 in 2018, NOAA-21 in 2023), raw detection counts increase artificially. Rather than hardcoding a constant, PyroSync measures **Ω** per time series relative to the MODIS reference channel (observed VIIRS/MODIS yield ratio ranges from **3.3 to 7.4** across regions). On the 2000–2025 country archive, effort normalization reduces the artificial upward trend from Spearman ρ **+0.788 to +0.080** and brings the 2012 sensor-cliff step jump from **×3.35 to ×0.85**.
 
+Ω cannot see an effort change inside the MODIS reference channel itself, so the Terra-only era (2000-11..2002-06, before Aqua) is flagged as not comparable (no normalized count or anomaly) rather than corrected; raw counts stay visible.
+
 ### Raw ↔ Harmonized Toggle
 
 The key demo feature: users can switch between raw multi-sensor data (showing the sensor cliff and biases) and the harmonized view (showing a consistent timeline) — making the problem and solution visible in a single action.
