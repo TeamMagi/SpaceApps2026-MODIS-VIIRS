@@ -1,0 +1,131 @@
+.header {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-right: auto;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.logo {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--color-text);
+}
+
+.logo::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+.regions {
+  order: 4;
+  flex: 1 1 130px;
+  min-width: 0;
+}
+
+.tools {
+  display: contents;
+}
+
+.tools > :first-child {
+  order: 5;
+}
+
+.tools > :last-child {
+  order: 3;
+}
+
+.methods {
+  order: 2;
+  min-height: 32px;
+  padding: var(--space-half) var(--space-1);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+.methods:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.methods[aria-expanded="true"] {
+  background: var(--color-active);
+  color: var(--color-text);
+}
+
+@media (pointer: coarse) {
+  .methods {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (min-width: 640px) {
+  .header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "brand tools"
+      "regions regions";
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .wordmark {
+    grid-area: brand;
+    margin-right: 0;
+  }
+
+  .regions {
+    grid-area: regions;
+    order: 0;
+    flex: initial;
+  }
+
+  .tools {
+    grid-area: tools;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .tools > :first-child,
+  .tools > :last-child,
+  .methods {
+    order: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "brand regions tools";
+    min-height: var(--h-header);
+    padding: var(--space-half) var(--space-3);
+  }
+}

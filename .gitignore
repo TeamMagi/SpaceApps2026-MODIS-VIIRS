@@ -45,3 +45,6 @@ data/sample/*
 nasa.pdf
 # FIRMS pre-packaged archive cache (archive_ingest example default)
 .cache/
+
+# Frontend test output
+.test-out/

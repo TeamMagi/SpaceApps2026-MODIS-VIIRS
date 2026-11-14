@@ -1,0 +1,84 @@
+.controls {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  z-index: calc(var(--z-map-overlay) + 1);
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+  max-width: calc(100% - 2 * var(--space-1));
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 var(--space-1);
+  background: transparent;
+  border: none;
+  border-right: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--dur-ui) var(--ease-standard);
+}
+
+@media (pointer: coarse) {
+  .button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+.button:first-child {
+  border-top-left-radius: calc(var(--radius-md) - 1px);
+  border-bottom-left-radius: calc(var(--radius-md) - 1px);
+}
+
+.button:last-child {
+  border-right: none;
+  border-top-right-radius: calc(var(--radius-md) - 1px);
+  border-bottom-right-radius: calc(var(--radius-md) - 1px);
+}
+
+.fitButton {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: 0 var(--space-1);
+  white-space: nowrap;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.button:active:not(:disabled) {
+  background: var(--color-active);
+}
+
+.button:disabled {
+  color: var(--color-text-muted);
+  opacity: 0.65;
+  cursor: default;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--map-focus, var(--color-focus));
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}

@@ -1,0 +1,262 @@
+/*
+ * PyroSync design tokens.
+ * Dark is the default theme (projector-first); light is opt-in via [data-theme="light"].
+ * Saturation budget: --color-accent is the ONLY saturated hue in the chrome and is reserved
+ * for the Raw/Harmonized toggle and the 2012 marker. The accent is cyan because the FRP
+ * scale already owns the warm hues; an amber accent would blend into the data.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-bg: #0d0f13;
+  --color-bg-outer: #07080a;
+  --color-surface: #14171d;
+  --color-surface-raised: #1b1f27;
+  --color-surface-sunken: #0a0c0f;
+  --color-hover: #232833;
+  --color-active: #2c3240;
+  --color-scrim: rgb(5 6 8 / 0.62);
+
+  /* Lines */
+  --color-border-subtle: #222731;
+  --color-border: #313846;
+  --color-border-strong: #495266;
+  --color-focus: #d0d6e2;
+
+  /* Text (all >= 4.5:1 on --color-bg except --color-text-disabled) */
+  --color-text: #f1f3f7;
+  --color-text-secondary: #a9b1c0;
+  --color-text-muted: #858d9c;
+  --color-text-disabled: #4f5665;
+  --color-text-inverse: #0d0f13;
+
+  /* The one accent */
+  --color-accent: #3cc8f0;
+  --color-accent-strong: #7ad9f5;
+  --color-accent-dim: rgb(60 200 240 / 0.16);
+  --color-accent-contrast: #061218;
+
+  /* Sensors in Raw mode: neutral greys, told apart by shape (MODIS hollow circle, VIIRS filled square) */
+  --color-sensor-modis: #d4d9e2;
+  --color-sensor-viirs: #8d96a6;
+  --color-duplicate-ring: #f1f3f7;
+
+  /* Map canvas & geography palette */
+  --map-water: #070a0f;
+  --map-land: #151922;
+  --map-land-selected: #202736;
+  --map-land-dim: #10141c;
+  --map-border: #283040;
+  --map-border-selected: #7b88a1;
+  --map-ink: #f1f3f7;
+  --map-halo-light: #0a0d12;
+  --map-modis: #e2e7f0;
+  --map-viirs: #96a1b5;
+  --map-duplicate-ring: #f1f3f7;
+  --map-focus: #d0d6e2;
+
+  /* Status (badge dot only, always paired with text) */
+  --color-status-live: #9fd8b0;
+  --color-status-demo: #c9b98f;
+  --color-status-error: #e3a99b;
+
+  /* Sequential FRP scale, low -> high (inferno-derived, colour-blind safe, bright = hot on dark) */
+  --frp-1: #3d0f5e;
+  --frp-2: #6a176e;
+  --frp-3: #932667;
+  --frp-4: #bc3754;
+  --frp-5: #dd513a;
+  --frp-6: #f37819;
+  --frp-7: #fcb519;
+  --frp-8: #f6e27a;
+
+  /* Diverging anomaly scale (PuOr): purple = below normal, orange = above normal */
+  --anom-neg-3: #6a51a3;
+  --anom-neg-2: #8c7cc0;
+  --anom-neg-1: #b8afd8;
+  --anom-0: #2a2f3a;
+  --anom-pos-1: #f6c27a;
+  --anom-pos-2: #e68a2a;
+  --anom-pos-3: #b85a0d;
+  --anom-none: #15181e;
+
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-drawer: -12px 0 40px rgb(0 0 0 / 0.5);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #f6f7f9;
+  --color-bg-outer: #eceef2;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #eef0f3;
+  --color-hover: #eceef2;
+  --color-active: #e1e4ea;
+  --color-scrim: rgb(20 24 31 / 0.38);
+
+  --color-border-subtle: #e3e6eb;
+  --color-border: #cfd4dc;
+  --color-border-strong: #9aa2b1;
+  --color-focus: #1b2230;
+
+  --color-text: #12161d;
+  --color-text-secondary: #424b5a;
+  --color-text-muted: #5d6676;
+  --color-text-disabled: #a6adba;
+  --color-text-inverse: #ffffff;
+
+  --color-accent: #0a6f99;
+  --color-accent-strong: #075679;
+  --color-accent-dim: rgb(10 111 153 / 0.12);
+  --color-accent-contrast: #ffffff;
+
+  --color-sensor-modis: #3a4252;
+  --color-sensor-viirs: #8a93a3;
+  --color-duplicate-ring: #12161d;
+
+  --map-water: #dfe5ee;
+  --map-land: #f3f5f8;
+  --map-land-selected: #ffffff;
+  --map-land-dim: #eaedf2;
+  --map-border: #c5cdd8;
+  --map-border-selected: #4a5568;
+  --map-ink: #12161d;
+  --map-halo-light: #ffffff;
+  --map-modis: #2d3545;
+  --map-viirs: #687385;
+  --map-duplicate-ring: #12161d;
+  --map-focus: #1b2230;
+
+  --color-status-live: #2f7d4a;
+  --color-status-demo: #8a6d1f;
+  --color-status-error: #a9452f;
+
+  /* On light backgrounds the scale runs light -> dark so hot fires stay prominent */
+  --frp-1: #fbe7a1;
+  --frp-2: #fcc85a;
+  --frp-3: #f89b2c;
+  --frp-4: #e8682a;
+  --frp-5: #c8413f;
+  --frp-6: #9c2a5c;
+  --frp-7: #6e1c6c;
+  --frp-8: #3d0f5e;
+
+  --anom-neg-3: #542788;
+  --anom-neg-2: #8073ac;
+  --anom-neg-1: #c7c2e0;
+  --anom-0: #eceef2;
+  --anom-pos-1: #fdc983;
+  --anom-pos-2: #e08214;
+  --anom-pos-3: #a14e05;
+  --anom-none: #f9fafb;
+
+  --shadow-raised: 0 1px 2px rgb(18 22 29 / 0.08), 0 8px 24px rgb(18 22 29 / 0.1);
+  --shadow-drawer: -12px 0 40px rgb(18 22 29 / 0.16);
+}
+
+:root {
+  /* Spacing: 8px grid, with a half step for tight UI */
+  --space-0: 0;
+  --space-half: 4px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+
+  /* Type */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --font-size-2xs: 0.75rem; /* 12 */
+  --font-size-xs: 0.78125rem; /* 12.5 */
+  --font-size-sm: 0.8125rem; /* 13 */
+  --font-size-md: 0.875rem; /* 14 */
+  --font-size-base: 1rem; /* 16 */
+  --font-size-lg: 1.125rem; /* 18 */
+  --font-size-xl: 1.375rem; /* 22 */
+  --font-size-2xl: 1.75rem; /* 28 */
+  --font-size-display: 2.25rem; /* 36 */
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-body: 1.5;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --letter-spacing-caps: 0.06em;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  /* Layout (desktop reference 1366x768) */
+  --h-header: 48px;
+  --h-command: 100px;
+  --h-pipeline: 42px;
+  --h-chart: 220px;
+  --h-calendar: 260px;
+  --h-bottom: 48px;
+  --w-map: 58%;
+  --w-drawer: 420px;
+  --toggle-w: 260px;
+  --toggle-h: 48px;
+  --h-map-mobile: clamp(360px, 60dvh, 640px);
+  --calendar-cell-mobile: 26px;
+  --border-width: 1px;
+
+  /* Motion: choreography beats (first harmonize = 1400 ms) */
+  --dur-detect: 400ms;
+  --dur-merge: 600ms;
+  --dur-settle: 400ms;
+  --dur-full: 1400ms;
+  --dur-short: 500ms;
+  --dur-reduced: 150ms;
+  --dur-ui: 150ms;
+  --dur-drawer: 240ms;
+
+  /*
+   * The transition clock writes the current run's beats here (ms), so CSS Modules can follow
+   * the same clock: transition-duration: var(--run-merge, var(--dur-merge)).
+   */
+  --run-detect: var(--dur-detect);
+  --run-merge: var(--dur-merge);
+  --run-settle: var(--dur-settle);
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+  /* Stacking */
+  --z-map-overlay: 10;
+  --z-sticky: 20;
+  --z-toggle-dock: 30;
+  --z-popover: 40;
+  --z-drawer: 50;
+  --z-tooltip: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-detect: 0ms;
+    --dur-merge: var(--dur-reduced);
+    --dur-settle: 0ms;
+    --dur-full: var(--dur-reduced);
+    --dur-short: var(--dur-reduced);
+    --dur-ui: var(--dur-reduced);
+    --dur-drawer: var(--dur-reduced);
+  }
+}

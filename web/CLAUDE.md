@@ -11,12 +11,26 @@
 src/
 ├── components/     → UI bileşenleri (her bileşen kendi klasöründe)
 │   ├── Layout/     → Sayfa düzeni (AppShell)
-│   ├── Toggle/     → Raw ↔ Harmonized geçiş butonu
-│   └── Stats/      → İstatistik kartları
-├── hooks/          → Custom React hooks (useApi vb.)
+│   ├── Header/     → Üst çubuk, bölge seçici, dil ve mod rozeti
+│   ├── Headline/   → Soru / cevap başlığı
+│   ├── Toggle/     → Raw ↔ Harmonized geçiş düğmesi
+│   ├── Stats/      → Sayı farkı ve düzeltme fişi
+│   ├── Pipeline/   → 7 aşamalı harmonizasyon şeridi
+│   ├── Map/        → İnteraktif hotspot haritası
+│   ├── Charts/     → Uçurum grafiği (elle yazılmış SVG)
+│   ├── Calendar/   → Aylık yanma takvimi
+│   ├── BottomBar/  → Alt şerit (model uyarısı, CSV, brifing)
+│   └── Drawers/    → Sağdan açılan çekmeceler (Methods, Briefing)
+├── content/
+│   └── copy.ts     → Tüm kullanıcı metinleri ve aria-label'lar (EN + TR, tipli)
+├── hooks/          → Custom React hooks (useHarmonizeTransition, useCopy, vb.)
+├── lib/            → Yardımcı modüller (urlState, formatlama vb.)
+├── mocks/
+│   └── prototype-data.ts → Deterministik prototip verisi (ve sample-data.ts)
 ├── services/       → API çağrı katmanı
+├── store/          → zustand uygulama durumu (useAppStore)
+├── styles/         → Tasarım token'ları (tokens.css) ve temel stiller
 ├── types/          → TypeScript tip tanımları (backend ile senkron)
-├── mocks/          → Geliştirme için örnek veri setleri
 ├── App.tsx         → Ana uygulama bileşeni
 └── main.tsx        → React root
 ```
@@ -28,6 +42,9 @@ src/
 - Shared tipler `types/index.ts`'te tutulur.
 - API çağrıları doğrudan bileşende yapılmaz, `services/` katmanı kullanılır.
 - State yönetimi için custom hook'lar `hooks/` dizininde oluşturulur.
+- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir (EN + TR, tipli).
+- Tüm animasyon zamanlaması `useHarmonizeTransition` (tek saat) üzerinden okunur; bileşenler kendi geçiş zamanlayıcısı kurmaz.
+- Raw modu, `revealAnswer` true olmadan harmonize cevabı (sayı, başlık veya fiş) asla sızdırmaz.
 
 ## Geliştirme
 
@@ -37,11 +54,10 @@ src/
 
 ## Stil
 
-- Şimdilik inline style kullanılıyor, ileride CSS Modules veya Tailwind'e geçilebilir.
+- CSS Modules (`*.module.css`) ve `styles/tokens.css` içindeki CSS custom properties (tasarım token'ları) kullanılır; inline style kullanılmaz.
 - CSS custom properties (variables) ile tema desteği sağlanır.
 - Responsive tasarım: mobile-first yaklaşım.
 
 ## Grafik Kütüphanesi
 
-- Veri görselleştirme için **Recharts** kullanılacaktır.
-- Chart bileşenleri `components/Charts/` altında oluşturulur.
+- Grafikler `components/Charts/` altında elle yazılmış SVG olarak çizilir; yeni bir grafik kütüphanesi eklemek için ekip kararı gerekir.

@@ -1,0 +1,89 @@
+.findingCard {
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.finding {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  text-wrap: balance;
+}
+
+.metrics {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-3);
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  font-size: var(--font-size-sm);
+}
+
+.metric dt {
+  color: var(--color-text-secondary);
+}
+
+.metric dd {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.action,
+.primaryAction {
+  min-height: 32px;
+  padding: var(--space-half) var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  transition: background-color var(--dur-ui) var(--ease-standard), color var(--dur-ui) var(--ease-standard);
+}
+
+.primaryAction {
+  background: var(--color-active);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.action:hover,
+.primaryAction:hover {
+  background: var(--color-hover);
+}
+
+.status {
+  align-self: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+@media print {
+  .findingCard {
+    background: #fff !important;
+    border: 1pt solid #000 !important;
+    color: #000 !important;
+  }
+
+  .finding {
+    color: #000 !important;
+  }
+
+  .metric {
+    border-top-color: #ccc !important;
+  }
+
+  .metric dt {
+    color: #333 !important;
+  }
+
+  .metric dd {
+    color: #000 !important;
+  }
+}

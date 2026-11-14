@@ -1,0 +1,130 @@
+.statusBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-half) var(--space-2);
+  padding: var(--space-half) var(--space-2);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-secondary);
+  z-index: calc(var(--z-map-overlay) + 1);
+}
+
+.primaryGroup,
+.countsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-half) var(--space-1);
+  min-width: 0;
+}
+
+.regionName {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+}
+
+.period {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.modeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.modeBadge[data-harmonized="true"] {
+  border-color: var(--color-accent);
+}
+
+.countValue {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.subsetNote,
+.statusText {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.errorGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.errorText {
+  color: var(--color-text);
+}
+
+.filterChip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-half);
+  padding-left: var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+}
+
+.filterText {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--dur-ui) var(--ease-standard);
+}
+
+@media (pointer: coarse) {
+  .actionButton {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+.actionButton:hover {
+  background: var(--color-hover);
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--map-focus, var(--color-focus));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actionButton {
+    transition: none;
+  }
+}

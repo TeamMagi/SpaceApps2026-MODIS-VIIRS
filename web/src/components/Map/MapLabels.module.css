@@ -1,0 +1,43 @@
+.labelsLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.labelSelected,
+.labelNeighbour {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate3d(var(--x, -9999px), var(--y, -9999px), 0) translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  line-height: 1.2;
+}
+
+.labelSelected {
+  padding: 2px var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border-strong);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.labelNeighbour {
+  padding: 1px 6px;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}

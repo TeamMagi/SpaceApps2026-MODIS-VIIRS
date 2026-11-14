@@ -1,0 +1,55 @@
+.tooltip {
+  position: absolute;
+  z-index: var(--z-tooltip);
+  max-width: min(280px, calc(100vw - 2 * var(--space-2)));
+  padding: var(--space-half) var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - var(--space-1)));
+  animation: tooltipFadeIn var(--dur-ui) var(--ease-standard) both;
+}
+
+.tooltip[data-placement="bottom"] {
+  transform: translate(-50%, var(--space-1));
+}
+
+.arrow {
+  position: absolute;
+  bottom: -4px;
+  width: 7px;
+  height: 7px;
+  background: var(--color-surface-raised);
+  border-right: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.tooltip[data-placement="bottom"] .arrow {
+  top: -4px;
+  bottom: auto;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    animation: none;
+  }
+}
