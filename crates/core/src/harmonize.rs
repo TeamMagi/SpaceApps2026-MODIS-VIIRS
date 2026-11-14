@@ -5,13 +5,23 @@ use crate::models::*;
 use crate::vza;
 
 const MATCH_RADIUS_KM: f64 = 2.0;
-const MATCH_WINDOW_SECS: i64 = 300; // 5 minutes
+// 180 minutes: orbital geometry separates MODIS and VIIRS overpasses of the same fire
+// (min 34 min, median ~158 min in live FIRMS data), so a narrow window yields zero matches.
+const MATCH_WINDOW_SECS: i64 = 10_800;
 
 /// Full harmonization pipeline:
 /// 1. Deduplicate interscan overlaps
 /// 2. Consolidate multi-platform VIIRS fleet detections
 /// 3. Cross-sensor spatial-temporal matching
 /// 4. Quality-priority fusion (VIIRS preferred) and non-mutating MODIS VZA correction
+///
+/// Cross-sensor semantics: `HotspotSource::Matched` represents observations of the same
+/// fire event by both sensors rather than simultaneous observations. In live FIRMS data,
+/// co-located MODIS/VIIRS pairs arrive at least 34 minutes apart with a median of ~158 minutes;
+/// the previous 5-minute window produced zero matches. The 180-minute window exists to
+/// prevent double-counting the same fire event, not for simultaneous radiometric comparison.
+/// VZA coefficient calibration requires simultaneous pairs and cannot be performed from FIRMS
+/// NRT data alone—it requires granule- or archive-level imagery.
 pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<HarmonizedHotspot> {
     // Step 1: Remove interscan duplicates (also sorts both vectors by `acquired` ascending)
     remove_interscan_duplicates(&mut modis);
@@ -306,7 +316,7 @@ mod tests {
     }
 
     #[test]
-    fn pair_10_minutes_apart_does_not_match() {
+    fn pair_190_minutes_apart_does_not_match() {
         let modis = vec![make_hotspot(
             Sensor::ModisTerra,
             39.0,
@@ -319,7 +329,7 @@ mod tests {
             Sensor::ViirsSNPP,
             39.0,
             32.0,
-            600,
+            MATCH_WINDOW_SECS + 600,
             40.0,
             Confidence::High,
         )];
@@ -360,7 +370,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_300s_boundary_matches_and_301s_does_not() {
+    fn exact_window_boundary_matches_and_one_second_past_does_not() {
         let modis_before = vec![make_hotspot(
             Sensor::ModisTerra,
             39.0,
@@ -369,15 +379,15 @@ mod tests {
             10.0,
             Confidence::Low,
         )];
-        let viirs_plus_300 = vec![make_hotspot(
+        let viirs_at_boundary = vec![make_hotspot(
             Sensor::ViirsSNPP,
             39.0,
             32.0,
-            300,
+            MATCH_WINDOW_SECS,
             20.0,
             Confidence::Nominal,
         )];
-        let out_plus = harmonize(modis_before, viirs_plus_300);
+        let out_plus = harmonize(modis_before, viirs_at_boundary);
         assert_eq!(out_plus.len(), 1);
         assert_eq!(out_plus[0].source, HotspotSource::Matched);
 
@@ -385,7 +395,7 @@ mod tests {
             Sensor::ModisTerra,
             39.0,
             32.0,
-            300,
+            MATCH_WINDOW_SECS,
             10.0,
             Confidence::Low,
         )];
@@ -409,15 +419,15 @@ mod tests {
             10.0,
             Confidence::Low,
         )];
-        let viirs_plus_301 = vec![make_hotspot(
+        let viirs_past_boundary = vec![make_hotspot(
             Sensor::ViirsSNPP,
             39.0,
             32.0,
-            301,
+            MATCH_WINDOW_SECS + 1,
             20.0,
             Confidence::Nominal,
         )];
-        let out_outside = harmonize(modis_outside, viirs_plus_301);
+        let out_outside = harmonize(modis_outside, viirs_past_boundary);
         assert_eq!(out_outside.len(), 2);
         assert!(out_outside.iter().all(|h| h.source != HotspotSource::Matched));
     }
@@ -694,5 +704,36 @@ mod tests {
             out[0].platforms,
             vec![Sensor::ModisTerra, Sensor::ViirsNOAA20, Sensor::ViirsNOAA21]
         );
+    }
+
+    #[test]
+    fn modis_and_viirs_two_hours_apart_match_as_one_fire_event() {
+        // 120 minutes is a realistic separation close to the live FIRMS median (~158 min).
+        let modis = vec![make_hotspot(
+            Sensor::ModisAqua,
+            39.0,
+            32.0,
+            0,
+            65.0,
+            Confidence::Nominal,
+        )];
+        let viirs = vec![make_hotspot(
+            Sensor::ViirsNOAA20,
+            39.003,
+            32.002,
+            120 * 60,
+            48.0,
+            Confidence::High,
+        )];
+        debug_assert!(haversine_km(39.0, 32.0, 39.003, 32.002) < 0.5);
+
+        let out = harmonize(modis, viirs);
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].source, HotspotSource::Matched);
+        assert_eq!(out[0].n_obs, 2);
+        assert!(out[0].platforms.contains(&Sensor::ModisAqua));
+        assert!(out[0].platforms.contains(&Sensor::ViirsNOAA20));
+        assert!(!out.iter().any(|h| h.source == HotspotSource::ModisOnly));
+        assert!(!out.iter().any(|h| h.source == HotspotSource::ViirsOnly));
     }
 }
