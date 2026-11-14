@@ -1,4 +1,7 @@
+use std::ops::ControlFlow;
+
 use crate::config::DedupConfig;
+use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
 use crate::models::Hotspot;
 
 pub(crate) const MAX_TIME_DIFF_SECS: i64 = 8;
@@ -42,29 +45,88 @@ pub fn remove_interscan_duplicates_indexed_with(
 
     let mut to_remove = vec![false; hotspots.len()];
 
+    let mut max_pixel_km = 0.0_f64;
+    for h in hotspots.iter() {
+        let size = h.scan.max(h.track);
+        if size > max_pixel_km {
+            max_pixel_km = size;
+        }
+    }
+
+    // Negative min_overlap_ratio makes `0.0 > ratio` true at any distance (even dist >= max_extent),
+    // so spatial pruning would drop distant matches; fall back to the full time-window scan.
+    let use_spatial = config.min_overlap_ratio >= 0.0
+        && config.min_overlap_ratio.is_finite()
+        && max_pixel_km.is_finite();
+    let index = use_spatial.then(|| {
+        TimedH3Index::build(hotspots.iter().map(|h| (h.lat, h.lon, h.acquired)))
+    });
+    let mut candidates = Vec::new();
+
     for i in 0..hotspots.len() {
         if to_remove[i] {
             continue;
         }
+        let a_size = hotspots[i].scan.max(hotspots[i].track);
+        if index.is_some() && (a_size <= 0.0 || a_size.is_nan()) {
+            continue;
+        }
+        let search_k = if index.is_some() {
+            let max_extent = (a_size + max_pixel_km) * 0.5;
+            let overlap_scale = (1.0 - config.min_overlap_ratio + 1e-12).clamp(0.0, 1.0);
+            // +1 ring accounts for cell-edge queries and smaller icosahedron face-center cells.
+            k_ring_for_radius(max_extent * overlap_scale) + 1
+        } else {
+            0
+        };
+
         let mut group = vec![i];
+        {
+            let mut try_candidate = |j: usize| -> ControlFlow<()> {
+                if to_remove[j] {
+                    return ControlFlow::Continue(());
+                }
+                let dt = (hotspots[j].acquired - hotspots[i].acquired)
+                    .num_seconds()
+                    .abs();
+                if dt > config.max_time_diff_secs {
+                    return ControlFlow::Break(());
+                }
+                if hotspots[i].sensor != hotspots[j].sensor {
+                    return ControlFlow::Continue(());
+                }
+                if pixel_overlap(&hotspots[i], &hotspots[j]) > config.min_overlap_ratio {
+                    group.push(j);
+                }
+                ControlFlow::Continue(())
+            };
 
-        for j in (i + 1)..hotspots.len() {
-            if to_remove[j] {
-                continue;
-            }
-            let dt = (hotspots[j].acquired - hotspots[i].acquired)
-                .num_seconds()
-                .abs();
-            if dt > config.max_time_diff_secs {
-                break;
-            }
+            let t_min = shift_time_clamped(hotspots[i].acquired, -1);
+            let t_max = shift_time_clamped(
+                hotspots[i].acquired,
+                config.max_time_diff_secs.saturating_add(1),
+            );
+            let used_index = index.as_ref().is_some_and(|idx| {
+                idx.candidates_for_pos_within_into(i, search_k, t_min, t_max, &mut candidates)
+            });
 
-            if hotspots[i].sensor != hotspots[j].sensor {
-                continue;
-            }
-
-            if pixel_overlap(&hotspots[i], &hotspots[j]) > config.min_overlap_ratio {
-                group.push(j);
+            if used_index {
+                // Process candidates in ascending index order: group order breaks confidence ties,
+                // fixes f64 summation order for mean_frp, and mutates hotspots[best].frp in place.
+                for &j in &candidates {
+                    if j <= i {
+                        continue;
+                    }
+                    if try_candidate(j).is_break() {
+                        break;
+                    }
+                }
+            } else {
+                for j in (i + 1)..hotspots.len() {
+                    if try_candidate(j).is_break() {
+                        break;
+                    }
+                }
             }
         }
 
@@ -399,6 +461,252 @@ mod tests {
             assert_eq!(a.frp, b.frp);
             assert_eq!(a.lat, input[i].lat);
             assert_eq!(a.lon, input[i].lon);
+        }
+    }
+
+    fn xorshift64(state: &mut u64) -> u64 {
+        let mut x = *state;
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        *state = x;
+        x
+    }
+
+    fn reference_dedup(hotspots: &mut Vec<Hotspot>, config: &DedupConfig) -> Vec<usize> {
+        if hotspots.len() < 2 {
+            return (0..hotspots.len()).collect();
+        }
+
+        let mut origin: Vec<usize> = (0..hotspots.len()).collect();
+        origin.sort_by_key(|&i| hotspots[i].acquired);
+        let mut slots: Vec<Option<Hotspot>> =
+            std::mem::take(hotspots).into_iter().map(Some).collect();
+        hotspots.extend(origin.iter().map(|&i| slots[i].take().expect("each index taken once")));
+
+        let mut to_remove = vec![false; hotspots.len()];
+
+        for i in 0..hotspots.len() {
+            if to_remove[i] {
+                continue;
+            }
+            let mut group = vec![i];
+
+            for j in (i + 1)..hotspots.len() {
+                if to_remove[j] {
+                    continue;
+                }
+                let dt = (hotspots[j].acquired - hotspots[i].acquired)
+                    .num_seconds()
+                    .abs();
+                if dt > config.max_time_diff_secs {
+                    break;
+                }
+
+                if hotspots[i].sensor != hotspots[j].sensor {
+                    continue;
+                }
+
+                if pixel_overlap(&hotspots[i], &hotspots[j]) > config.min_overlap_ratio {
+                    group.push(j);
+                }
+            }
+
+            if group.len() > 1 {
+                let mut best = group[0];
+                for &idx in &group[1..] {
+                    if hotspots[idx].confidence > hotspots[best].confidence {
+                        best = idx;
+                    }
+                }
+
+                let mean_frp: f64 =
+                    group.iter().map(|&idx| hotspots[idx].frp).sum::<f64>() / group.len() as f64;
+                hotspots[best].frp = mean_frp;
+
+                for &idx in &group {
+                    if idx != best {
+                        to_remove[idx] = true;
+                    }
+                }
+            }
+        }
+
+        let mut idx = 0;
+        hotspots.retain(|_| {
+            let keep = !to_remove[idx];
+            idx += 1;
+            keep
+        });
+
+        origin
+            .into_iter()
+            .zip(to_remove)
+            .filter_map(|(i, removed)| (!removed).then_some(i))
+            .collect()
+    }
+
+    fn assert_hotspot_bits_eq(a: &Hotspot, b: &Hotspot, ctx: &str) {
+        assert_eq!(a.lat.to_bits(), b.lat.to_bits(), "{ctx}: lat");
+        assert_eq!(a.lon.to_bits(), b.lon.to_bits(), "{ctx}: lon");
+        assert_eq!(a.brightness.to_bits(), b.brightness.to_bits(), "{ctx}: brightness");
+        assert_eq!(a.frp.to_bits(), b.frp.to_bits(), "{ctx}: frp");
+        assert_eq!(a.confidence, b.confidence, "{ctx}: confidence");
+        assert_eq!(a.sensor, b.sensor, "{ctx}: sensor");
+        assert_eq!(a.acquired, b.acquired, "{ctx}: acquired");
+        assert_eq!(a.scan.to_bits(), b.scan.to_bits(), "{ctx}: scan");
+        assert_eq!(a.track.to_bits(), b.track.to_bits(), "{ctx}: track");
+        assert_eq!(a.satellite, b.satellite, "{ctx}: satellite");
+        assert_eq!(a.daynight, b.daynight, "{ctx}: daynight");
+        assert_eq!(
+            a.vza.map(f64::to_bits),
+            b.vza.map(f64::to_bits),
+            "{ctx}: vza"
+        );
+        assert_eq!(a.fire_type, b.fire_type, "{ctx}: fire_type");
+    }
+
+    fn synthetic_dedup_dataset(seed: u64, count: usize) -> Vec<Hotspot> {
+        let mut rng = seed;
+        let base = DateTime::from_timestamp(1_700_000_000, 0).expect("valid timestamp");
+        let sensors = [
+            Sensor::ModisTerra,
+            Sensor::ModisAqua,
+            Sensor::ViirsSNPP,
+            Sensor::ViirsNOAA20,
+            Sensor::ViirsNOAA21,
+        ];
+        let confs = [Confidence::Low, Confidence::Nominal, Confidence::High];
+        let centers = [
+            (39.0, 32.0),
+            (-14.2, -52.8),
+            (0.0, 179.995),
+            (0.0, -179.995),
+            (85.0, 10.0),
+            (-85.0, -120.0),
+        ];
+
+        let mut out = Vec::with_capacity(count + 16);
+        for i in 0..count {
+            let (clat, clon) = centers[(xorshift64(&mut rng) as usize) % centers.len()];
+            let r1 = (xorshift64(&mut rng) % 10_000) as f64 / 10_000.0;
+            let r2 = (xorshift64(&mut rng) % 10_000) as f64 / 10_000.0;
+            let lat = (clat + (r1 - 0.5) * 0.03).clamp(-89.9, 89.9);
+            let mut lon = clon + (r2 - 0.5) * 0.03;
+            if lon > 180.0 {
+                lon -= 360.0;
+            } else if lon < -180.0 {
+                lon += 360.0;
+            }
+
+            // Mix same-minute bursts, equal timestamps, sub-second offsets, and hours-apart passes.
+            let pass_offset = ((xorshift64(&mut rng) % 6) as i64) * 3_600;
+            let burst_offset = ((xorshift64(&mut rng) % 4) as i64) * 4;
+            let millis = ((xorshift64(&mut rng) % 5) as i64) * 250;
+            let acquired = base + TimeDelta::seconds(pass_offset + burst_offset) + TimeDelta::milliseconds(millis);
+
+            let sensor = sensors[(xorshift64(&mut rng) as usize) % sensors.len()];
+            let conf = confs[(xorshift64(&mut rng) as usize) % confs.len()];
+            let daynight = if xorshift64(&mut rng).is_multiple_of(2) {
+                DayNight::Day
+            } else {
+                DayNight::Night
+            };
+            let scan = match xorshift64(&mut rng) % 5 {
+                0 => 0.0,
+                1 => 0.4,
+                2 => 1.0,
+                3 => 2.2,
+                _ => 4.5,
+            };
+            let track = 0.5 + (xorshift64(&mut rng) % 4) as f64 * 0.6;
+            let frp = 1.5 + (xorshift64(&mut rng) % 500) as f64 * 0.37;
+
+            out.push(Hotspot {
+                lat,
+                lon,
+                brightness: 310.0 + (i % 50) as f64,
+                frp,
+                confidence: conf,
+                sensor,
+                acquired,
+                scan,
+                track,
+                satellite: format!("S{}", i % 3),
+                daynight,
+                vza: Some((xorshift64(&mut rng) % 60) as f64),
+                fire_type: FireType::VegetationFire,
+            });
+        }
+
+        // Inject invalid coordinates (lat = 95.0) at shared timestamps and near valid points.
+        for k in 0..8 {
+            let mut h = make_hotspot(
+                95.0,
+                20.0 + (k % 2) as f64 * 0.001,
+                15.0 + k as f64,
+                confs[k % 3],
+                Sensor::ViirsSNPP,
+                (k % 2) as i64 * 2,
+            );
+            h.scan = 1.5;
+            h.track = 1.5;
+            out.push(h);
+        }
+
+        out
+    }
+
+    #[test]
+    fn timed_dedup_is_bit_identical_to_reference_across_seeds_and_configs() {
+        let configs = [
+            ("default", DedupConfig::default()),
+            (
+                "zero_window",
+                DedupConfig {
+                    max_time_diff_secs: 0,
+                    min_overlap_ratio: 0.30,
+                },
+            ),
+            (
+                "negative_ratio_fallback",
+                DedupConfig {
+                    max_time_diff_secs: 8,
+                    min_overlap_ratio: -0.1,
+                },
+            ),
+            (
+                "zero_ratio_large_window",
+                DedupConfig {
+                    max_time_diff_secs: 60,
+                    min_overlap_ratio: 0.0,
+                },
+            ),
+        ];
+
+        for seed in [0xA1B2_C3D4_E5F6_0718_u64, 0xDEAD_BEEF_CAFE_BABE_u64] {
+            // Keep negative-ratio fallback dataset slightly smaller since fallback is O(N^2) in window.
+            let full_data = synthetic_dedup_dataset(seed, 2_400);
+            let fallback_data = synthetic_dedup_dataset(seed ^ 0x55AA, 400);
+
+            for (label, cfg) in &configs {
+                let data = if cfg.min_overlap_ratio < 0.0 {
+                    &fallback_data
+                } else {
+                    &full_data
+                };
+                let mut actual = data.clone();
+                let mut expected = data.clone();
+
+                let actual_origin = remove_interscan_duplicates_indexed_with(&mut actual, cfg);
+                let expected_origin = reference_dedup(&mut expected, cfg);
+
+                assert_eq!(actual_origin, expected_origin, "origin {label} seed={seed}");
+                assert_eq!(actual.len(), expected.len(), "len {label} seed={seed}");
+                for (i, (a, e)) in actual.iter().zip(expected.iter()).enumerate() {
+                    assert_hotspot_bits_eq(a, e, &format!("{label} seed={seed} idx={i}"));
+                }
+            }
         }
     }
 }

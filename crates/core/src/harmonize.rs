@@ -1,7 +1,7 @@
 use crate::config::{MatchingConfig, PipelineConfig, VzaConfig};
 use crate::dedup::{haversine_km, remove_interscan_duplicates_indexed_with};
 use crate::fleet::{self, FleetObservation};
-use crate::h3index::{H3Index, k_ring_for_radius};
+use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
 use crate::models::*;
 use crate::vza;
 
@@ -78,37 +78,67 @@ pub fn harmonize_with_links_config(
     let fleet_merged =
         (modis.len() - modis_fleet.len()) + (viirs.len() - viirs_fleet.len());
 
-    // Step 3 & 4: Match and fuse using H3 spatial index candidate lookup
-    let index = H3Index::build(viirs_fleet.iter().map(|v| (v.hotspot.lat, v.hotspot.lon)));
+    // Step 3 & 4: Match and fuse using time-sliced H3 spatial index candidate lookup
+    let use_spatial = config.matching.radius_km.is_finite();
+    let index = use_spatial.then(|| {
+        TimedH3Index::build(
+            viirs_fleet
+                .iter()
+                .map(|v| (v.hotspot.lat, v.hotspot.lon, v.hotspot.acquired)),
+        )
+    });
     let mut result = Vec::with_capacity(modis_fleet.len() + viirs_fleet.len());
     let mut modis_fleet_out = vec![0usize; modis_fleet.len()];
     let mut viirs_fleet_out: Vec<Option<usize>> = vec![None; viirs_fleet.len()];
     let mut matched_pairs = 0usize;
-    let search_k = k_ring_for_radius(config.matching.radius_km);
+    let search_k = if use_spatial {
+        k_ring_for_radius(config.matching.radius_km)
+    } else {
+        0
+    };
+    let pad = config.matching.window_secs.saturating_add(1);
+    let mut candidates = Vec::new();
 
     for (mi, m) in modis_fleet.iter().enumerate() {
         let mh = &m.hotspot;
         let mut best_match: Option<(usize, f64)> = None;
 
-        for j in index.candidates_within(mh.lat, mh.lon, search_k) {
+        let t_min = shift_time_clamped(mh.acquired, pad.saturating_neg());
+        let t_max = shift_time_clamped(mh.acquired, pad);
+        let used_index = index.as_ref().is_some_and(|idx| {
+            idx.candidates_within_into(mh.lat, mh.lon, search_k, t_min, t_max, &mut candidates)
+        });
+
+        let mut consider = |j: usize| {
             if viirs_fleet_out[j].is_some() {
-                continue;
+                return;
             }
 
             let vh = &viirs_fleet[j].hotspot;
             let dt = (vh.acquired - mh.acquired).num_seconds().abs();
             if dt > config.matching.window_secs {
-                continue;
+                return;
             }
 
             let dist = haversine_km(mh.lat, mh.lon, vh.lat, vh.lon);
             if dist > config.matching.radius_km {
-                continue;
+                return;
             }
 
             let score = match_score_with(dist, dt, &config.matching);
             if best_match.is_none_or(|(_, best)| score > best) {
                 best_match = Some((j, score));
+            }
+        };
+
+        if used_index {
+            // Iterate candidates in ascending index order: `score > best` keeps the first on ties.
+            for &j in &candidates {
+                consider(j);
+            }
+        } else {
+            for j in 0..viirs_fleet.len() {
+                consider(j);
             }
         }
 
@@ -1204,5 +1234,307 @@ mod tests {
         config.vza = crate::config::VzaConfig { a: 0.0, b: 0.0, c: 1.0 };
         let out = harmonize_with_config(vec![modis], vec![], &config);
         assert_eq!(out[0].frp_corrected, out[0].frp);
+    }
+
+    fn xorshift64(state: &mut u64) -> u64 {
+        let mut x = *state;
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        *state = x;
+        x
+    }
+
+    fn reference_harmonize_with_links_config(
+        mut modis: Vec<Hotspot>,
+        mut viirs: Vec<Hotspot>,
+        config: &PipelineConfig,
+    ) -> HarmonizeLinks {
+        let modis_input_len = modis.len();
+        let viirs_input_len = viirs.len();
+
+        let modis_origin = remove_interscan_duplicates_indexed_with(&mut modis, &config.dedup);
+        let viirs_origin = remove_interscan_duplicates_indexed_with(&mut viirs, &config.dedup);
+        let interscan_removed =
+            (modis_input_len - modis.len()) + (viirs_input_len - viirs.len());
+
+        let (modis_fleet, modis_groups) =
+            fleet::consolidate_modis_fleet_indexed_with(&modis, &config.fleet, &config.vza);
+        let (viirs_fleet, viirs_groups) =
+            fleet::consolidate_viirs_fleet_indexed_with(&viirs, &config.fleet, &config.vza);
+        let fleet_merged =
+            (modis.len() - modis_fleet.len()) + (viirs.len() - viirs_fleet.len());
+
+        let mut result = Vec::with_capacity(modis_fleet.len() + viirs_fleet.len());
+        let mut modis_fleet_out = vec![0usize; modis_fleet.len()];
+        let mut viirs_fleet_out: Vec<Option<usize>> = vec![None; viirs_fleet.len()];
+        let mut matched_pairs = 0usize;
+
+        for (mi, m) in modis_fleet.iter().enumerate() {
+            let mh = &m.hotspot;
+            let mut best_match: Option<(usize, f64)> = None;
+
+            for (j, v) in viirs_fleet.iter().enumerate() {
+                if viirs_fleet_out[j].is_some() {
+                    continue;
+                }
+
+                let vh = &v.hotspot;
+                let dt = (vh.acquired - mh.acquired).num_seconds().abs();
+                if dt > config.matching.window_secs {
+                    continue;
+                }
+
+                let dist = haversine_km(mh.lat, mh.lon, vh.lat, vh.lon);
+                if dist > config.matching.radius_km {
+                    continue;
+                }
+
+                let score = match_score_with(dist, dt, &config.matching);
+                if best_match.is_none_or(|(_, best)| score > best) {
+                    best_match = Some((j, score));
+                }
+            }
+
+            modis_fleet_out[mi] = result.len();
+            if let Some((j, _)) = best_match {
+                viirs_fleet_out[j] = Some(result.len());
+                matched_pairs += 1;
+                result.push(fuse_matched(m, &viirs_fleet[j]));
+            } else {
+                result.push(from_modis_only_with(m, &config.vza));
+            }
+        }
+
+        for (j, v) in viirs_fleet.iter().enumerate() {
+            if viirs_fleet_out[j].is_none() {
+                viirs_fleet_out[j] = Some(result.len());
+                result.push(from_viirs_only(v));
+            }
+        }
+
+        let mut order: Vec<usize> = (0..result.len()).collect();
+        order.sort_by_key(|&k| result[k].acquired);
+        let mut final_pos = vec![0usize; result.len()];
+        for (new_pos, &old_pos) in order.iter().enumerate() {
+            final_pos[old_pos] = new_pos;
+        }
+        let mut slots: Vec<Option<HarmonizedHotspot>> = result.into_iter().map(Some).collect();
+        let hotspots: Vec<HarmonizedHotspot> = order
+            .iter()
+            .map(|&k| slots[k].take().expect("each output taken once"))
+            .collect();
+
+        let mut modis_links = vec![None; modis_input_len];
+        for (mi, members) in modis_groups.iter().enumerate() {
+            let out = final_pos[modis_fleet_out[mi]];
+            for &dedup_idx in members {
+                modis_links[modis_origin[dedup_idx]] = Some(out);
+            }
+        }
+
+        let mut viirs_links = vec![None; viirs_input_len];
+        for (vj, members) in viirs_groups.iter().enumerate() {
+            let out =
+                final_pos[viirs_fleet_out[vj].expect("every VIIRS fleet group produces or joins an output")];
+            for &dedup_idx in members {
+                viirs_links[viirs_origin[dedup_idx]] = Some(out);
+            }
+        }
+
+        HarmonizeLinks {
+            hotspots,
+            modis_links,
+            viirs_links,
+            interscan_removed,
+            fleet_merged,
+            matched_pairs,
+        }
+    }
+
+    fn assert_links_bits_eq(actual: &HarmonizeLinks, expected: &HarmonizeLinks, ctx: &str) {
+        assert_eq!(
+            actual.interscan_removed, expected.interscan_removed,
+            "{ctx}: interscan_removed"
+        );
+        assert_eq!(actual.fleet_merged, expected.fleet_merged, "{ctx}: fleet_merged");
+        assert_eq!(actual.matched_pairs, expected.matched_pairs, "{ctx}: matched_pairs");
+        assert_eq!(actual.modis_links, expected.modis_links, "{ctx}: modis_links");
+        assert_eq!(actual.viirs_links, expected.viirs_links, "{ctx}: viirs_links");
+        assert_eq!(actual.hotspots.len(), expected.hotspots.len(), "{ctx}: len");
+
+        for (i, (a, e)) in actual
+            .hotspots
+            .iter()
+            .zip(expected.hotspots.iter())
+            .enumerate()
+        {
+            assert_eq!(a.lat.to_bits(), e.lat.to_bits(), "{ctx} [{i}]: lat");
+            assert_eq!(a.lon.to_bits(), e.lon.to_bits(), "{ctx} [{i}]: lon");
+            assert_eq!(a.frp.to_bits(), e.frp.to_bits(), "{ctx} [{i}]: frp");
+            assert_eq!(
+                a.frp_corrected.to_bits(),
+                e.frp_corrected.to_bits(),
+                "{ctx} [{i}]: frp_corrected"
+            );
+            assert_eq!(
+                a.vza_factor.map(f64::to_bits),
+                e.vza_factor.map(f64::to_bits),
+                "{ctx} [{i}]: vza_factor"
+            );
+            assert_eq!(a.n_obs, e.n_obs, "{ctx} [{i}]: n_obs");
+            assert_eq!(a.platforms, e.platforms, "{ctx} [{i}]: platforms");
+            assert_eq!(a.confidence, e.confidence, "{ctx} [{i}]: confidence");
+            assert_eq!(a.source, e.source, "{ctx} [{i}]: source");
+            assert_eq!(a.acquired, e.acquired, "{ctx} [{i}]: acquired");
+            assert_eq!(a.daynight, e.daynight, "{ctx} [{i}]: daynight");
+        }
+    }
+
+    fn synthetic_pipeline_dataset(
+        seed: u64,
+        n_modis: usize,
+        n_viirs: usize,
+    ) -> (Vec<Hotspot>, Vec<Hotspot>) {
+        let mut rng = seed;
+        let base = Utc.with_ymd_and_hms(2025, 7, 15, 12, 0, 0).unwrap();
+        let confs = [Confidence::Low, Confidence::Nominal, Confidence::High];
+        let modis_sensors = [Sensor::ModisTerra, Sensor::ModisAqua];
+        let viirs_sensors = [Sensor::ViirsSNPP, Sensor::ViirsNOAA20, Sensor::ViirsNOAA21];
+        let centers = [
+            (39.0, 32.0),
+            (-14.2, -52.8),
+            (0.0, 179.995),
+            (0.0, -179.995),
+            (85.0, 10.0),
+            (-85.0, -120.0),
+        ];
+
+        let mut make_row = |sensor: Sensor| {
+            let (clat, clon) = centers[(xorshift64(&mut rng) as usize) % centers.len()];
+            let exact = xorshift64(&mut rng).is_multiple_of(8);
+            let lat = if exact {
+                clat
+            } else {
+                let r1 = (xorshift64(&mut rng) % 10_000) as f64 / 10_000.0;
+                (clat + (r1 - 0.5) * 0.04).clamp(-89.9, 89.9)
+            };
+            let mut lon = if exact {
+                clon
+            } else {
+                let r2 = (xorshift64(&mut rng) % 10_000) as f64 / 10_000.0;
+                clon + (r2 - 0.5) * 0.04
+            };
+            if lon > 180.0 {
+                lon -= 360.0;
+            } else if lon < -180.0 {
+                lon += 360.0;
+            }
+
+            let minute = (xorshift64(&mut rng) % 360) as i64;
+            let burst_sec = ((xorshift64(&mut rng) % 4) as i64) * 3;
+            let millis = ((xorshift64(&mut rng) % 4) as i64) * 250;
+            let acquired = base + Duration::minutes(minute) + Duration::seconds(burst_sec) + Duration::milliseconds(millis);
+
+            let mut h = make_hotspot(
+                sensor,
+                lat,
+                lon,
+                0,
+                5.0 + (xorshift64(&mut rng) % 400) as f64 * 0.25,
+                confs[(xorshift64(&mut rng) % 3) as usize],
+            );
+            h.acquired = acquired;
+            h.daynight = if xorshift64(&mut rng).is_multiple_of(2) {
+                DayNight::Day
+            } else {
+                DayNight::Night
+            };
+            h.scan = 0.5 + (xorshift64(&mut rng) % 4) as f64 * 0.6;
+            h.track = 0.5 + (xorshift64(&mut rng) % 4) as f64 * 0.6;
+            h.vza = Some((xorshift64(&mut rng) % 60) as f64);
+            h
+        };
+
+        let mut modis: Vec<Hotspot> = (0..n_modis)
+            .map(|i| make_row(modis_sensors[i % modis_sensors.len()]))
+            .collect();
+        let mut viirs: Vec<Hotspot> = (0..n_viirs)
+            .map(|i| make_row(viirs_sensors[i % viirs_sensors.len()]))
+            .collect();
+
+        // Inject invalid coordinates (lat = 95.0) in both streams.
+        for k in 0..6 {
+            let mut m = make_hotspot(
+                modis_sensors[k % 2],
+                95.0,
+                20.0 + (k % 2) as f64 * 0.001,
+                (k % 3) as i64 * 600,
+                20.0 + k as f64,
+                confs[k % 3],
+            );
+            m.scan = 1.5;
+            m.track = 1.5;
+            modis.push(m);
+
+            let mut v = make_hotspot(
+                viirs_sensors[k % 3],
+                95.0,
+                20.0 + (k % 2) as f64 * 0.001,
+                (k % 3) as i64 * 600 + 30,
+                18.0 + k as f64,
+                confs[(k + 1) % 3],
+            );
+            v.scan = 1.5;
+            v.track = 1.5;
+            viirs.push(v);
+        }
+
+        (modis, viirs)
+    }
+
+    #[test]
+    fn timed_harmonize_with_links_is_bit_identical_to_reference_across_seeds_and_configs() {
+        let mut large_radius = PipelineConfig::default();
+        large_radius.fleet.radius_km = 10.0;
+        large_radius.matching.radius_km = 10.0;
+
+        let mut zero_radius = PipelineConfig::default();
+        zero_radius.fleet.radius_km = 0.0;
+        zero_radius.matching.radius_km = 0.0;
+
+        let mut neg_dedup_ratio = PipelineConfig::default();
+        neg_dedup_ratio.dedup.min_overlap_ratio = -0.1;
+
+        let mut zero_window = PipelineConfig::default();
+        zero_window.dedup.max_time_diff_secs = 0;
+        zero_window.fleet.viirs_window_secs = 0;
+        zero_window.fleet.modis_window_secs = 0;
+        zero_window.matching.window_secs = 0;
+
+        let configs = [
+            ("default", PipelineConfig::default()),
+            ("large_radius_10km", large_radius),
+            ("zero_radius", zero_radius),
+            ("neg_dedup_ratio", neg_dedup_ratio),
+            ("zero_window", zero_window),
+        ];
+
+        for seed in [0x9E37_79B9_7F4A_7C15_u64, 0xCAFE_BABE_1357_2468_u64] {
+            let full = synthetic_pipeline_dataset(seed, 1_200, 1_800);
+            let fallback = synthetic_pipeline_dataset(seed ^ 0x33CC, 300, 450);
+
+            for (label, cfg) in &configs {
+                let (modis, viirs) = if cfg.dedup.min_overlap_ratio < 0.0 {
+                    &fallback
+                } else {
+                    &full
+                };
+                let actual = harmonize_with_links_config(modis.clone(), viirs.clone(), cfg);
+                let expected =
+                    reference_harmonize_with_links_config(modis.clone(), viirs.clone(), cfg);
+                assert_links_bits_eq(&actual, &expected, &format!("{label} seed={seed}"));
+            }
+        }
     }
 }

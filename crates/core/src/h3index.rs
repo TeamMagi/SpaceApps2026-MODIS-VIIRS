@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
 
+use chrono::{DateTime, TimeDelta, Utc};
 use h3o::{CellIndex, LatLng, Resolution};
 
 // H3 resolution 8 has ~0.737 km² mean cell area, ~0.461 km edge, and ~0.80 km center spacing,
@@ -78,6 +80,263 @@ impl H3Index {
     pub fn len(&self) -> usize {
         self.len
     }
+}
+
+#[derive(Default)]
+struct CellHasher(u64);
+
+impl Hasher for CellHasher {
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    #[inline]
+    fn write(&mut self, bytes: &[u8]) {
+        for &b in bytes {
+            self.0 = self.0.wrapping_mul(0x9e37_79b9_7f4a_7c15) ^ u64::from(b);
+        }
+    }
+
+    #[inline]
+    fn write_u64(&mut self, i: u64) {
+        let mut x = i.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        self.0 = x ^ (x >> 31);
+    }
+}
+
+type FastCellMap<V> = HashMap<CellIndex, V, BuildHasherDefault<CellHasher>>;
+
+#[derive(Debug, Clone, Copy)]
+struct TimedEntry {
+    acquired: DateTime<Utc>,
+    pos: usize,
+}
+
+/// Time-sliced H3 resolution-8 index over points sorted by `acquired` ascending.
+///
+/// Uses a flat CSR layout (`entries` + `offsets`) so building over millions of points avoids
+/// per-cell `Vec` allocations while keeping each bucket's entries in ascending `pos` order for
+/// `partition_point` time slicing. Points whose coordinates fail `to_cell` are kept in `invalid`
+/// and merged into every query whose time range matches.
+pub struct TimedH3Index {
+    buckets: FastCellMap<u32>,
+    offsets: Vec<u32>,
+    entries: Vec<TimedEntry>,
+    invalid: Vec<TimedEntry>,
+    point_cells: Vec<Option<CellIndex>>,
+    len: usize,
+}
+
+impl TimedH3Index {
+    /// Build an index from `(lat, lon, acquired)` points already sorted by `acquired` ascending.
+    pub fn build(points: impl IntoIterator<Item = (f64, f64, DateTime<Utc>)>) -> Self {
+        let iter = points.into_iter();
+        let (lower, _) = iter.size_hint();
+        let mut buckets: FastCellMap<u32> =
+            HashMap::with_capacity_and_hasher(lower / 4, BuildHasherDefault::default());
+        let mut counts: Vec<u32> = Vec::with_capacity(lower / 4);
+        let mut valid_items: Vec<(u32, TimedEntry)> = Vec::with_capacity(lower);
+        let mut invalid = Vec::new();
+        let mut point_cells = Vec::with_capacity(lower);
+        let mut len = 0usize;
+        #[cfg(debug_assertions)]
+        let mut prev_acquired: Option<DateTime<Utc>> = None;
+
+        for (pos, (lat, lon, acquired)) in iter.enumerate() {
+            #[cfg(debug_assertions)]
+            {
+                if let Some(prev) = prev_acquired {
+                    debug_assert!(
+                        prev <= acquired,
+                        "TimedH3Index::build requires points sorted by acquired ascending"
+                    );
+                }
+                prev_acquired = Some(acquired);
+            }
+
+            let entry = TimedEntry { acquired, pos };
+            let cell = to_cell(lat, lon);
+            point_cells.push(cell);
+            match cell {
+                Some(c) => {
+                    let bucket_id = *buckets.entry(c).or_insert_with(|| {
+                        let id = counts.len() as u32;
+                        counts.push(0);
+                        id
+                    });
+                    counts[bucket_id as usize] += 1;
+                    valid_items.push((bucket_id, entry));
+                }
+                None => invalid.push(entry),
+            }
+            len += 1;
+        }
+
+        let mut offsets = counts;
+        let mut total = 0u32;
+        for slot in &mut offsets {
+            let count = *slot;
+            *slot = total;
+            total += count;
+        }
+        let mut cursors = offsets.clone();
+        offsets.push(total);
+
+        let mut entries = vec![
+            TimedEntry {
+                acquired: DateTime::<Utc>::MIN_UTC,
+                pos: 0,
+            };
+            total as usize
+        ];
+        for (bucket_id, entry) in valid_items {
+            let cursor = &mut cursors[bucket_id as usize];
+            entries[*cursor as usize] = entry;
+            *cursor += 1;
+        }
+
+        Self {
+            buckets,
+            offsets,
+            entries,
+            invalid,
+            point_cells,
+            len,
+        }
+    }
+
+    /// Candidate positions within the `k`-ring around `(lat, lon)` whose `acquired` falls within
+    /// `[t_min, t_max]`. Returns `None` if `(lat, lon)` fails `to_cell` so callers fall back to
+    /// a full scan. Returned positions are strictly ascending and deduplicated.
+    pub fn candidates_within(
+        &self,
+        lat: f64,
+        lon: f64,
+        k: u32,
+        t_min: DateTime<Utc>,
+        t_max: DateTime<Utc>,
+    ) -> Option<Vec<usize>> {
+        let mut out = Vec::new();
+        if !self.candidates_within_into(lat, lon, k, t_min, t_max, &mut out) {
+            return None;
+        }
+        Some(out)
+    }
+
+    /// Reuses `out` to return strictly ascending, deduplicated candidate positions within the
+    /// `k`-ring around `(lat, lon)` and `[t_min, t_max]`. Returns `false` if `(lat, lon)` fails
+    /// `to_cell` (leaving `out` empty).
+    pub fn candidates_within_into(
+        &self,
+        lat: f64,
+        lon: f64,
+        k: u32,
+        t_min: DateTime<Utc>,
+        t_max: DateTime<Utc>,
+        out: &mut Vec<usize>,
+    ) -> bool {
+        out.clear();
+        let Some(cell) = to_cell(lat, lon) else {
+            return false;
+        };
+        self.query_cell_into(cell, k, t_min, t_max, out);
+        true
+    }
+
+    /// Same as [`TimedH3Index::candidates_within_into`], reusing the H3 cell computed during
+    /// `build` for indexed position `pos` instead of re-projecting `(lat, lon)`.
+    pub fn candidates_for_pos_within_into(
+        &self,
+        pos: usize,
+        k: u32,
+        t_min: DateTime<Utc>,
+        t_max: DateTime<Utc>,
+        out: &mut Vec<usize>,
+    ) -> bool {
+        out.clear();
+        let Some(cell) = self.point_cells[pos] else {
+            return false;
+        };
+        self.query_cell_into(cell, k, t_min, t_max, out);
+        true
+    }
+
+    fn query_cell_into(
+        &self,
+        cell: CellIndex,
+        k: u32,
+        t_min: DateTime<Utc>,
+        t_max: DateTime<Utc>,
+        out: &mut Vec<usize>,
+    ) {
+        if t_min > t_max {
+            return;
+        }
+
+        let neighbors: Vec<CellIndex> = cell.grid_disk(k);
+        let mut slice_count = 0usize;
+
+        for neighbor in neighbors {
+            if let Some(&bucket_id) = self.buckets.get(&neighbor) {
+                let start = self.offsets[bucket_id as usize] as usize;
+                let end = self.offsets[bucket_id as usize + 1] as usize;
+                let slice = time_slice(&self.entries[start..end], t_min, t_max);
+                if !slice.is_empty() {
+                    out.extend(slice.iter().map(|e| e.pos));
+                    slice_count += 1;
+                }
+            }
+        }
+
+        if !self.invalid.is_empty() {
+            let slice = time_slice(&self.invalid, t_min, t_max);
+            if !slice.is_empty() {
+                out.extend(slice.iter().map(|e| e.pos));
+                slice_count += 1;
+            }
+        }
+
+        // Single-slice hits already preserve the strictly ascending insertion order.
+        if slice_count > 1 {
+            out.sort_unstable();
+            out.dedup();
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    pub fn len(&self) -> usize {
+        self.len
+    }
+}
+
+fn time_slice(
+    entries: &[TimedEntry],
+    t_min: DateTime<Utc>,
+    t_max: DateTime<Utc>,
+) -> &[TimedEntry] {
+    if entries.is_empty() || entries[entries.len() - 1].acquired < t_min || entries[0].acquired > t_max {
+        return &[];
+    }
+    let start = entries.partition_point(|e| e.acquired < t_min);
+    let end = start + entries[start..].partition_point(|e| e.acquired <= t_max);
+    &entries[start..end]
+}
+
+/// Shift `t` by `delta_secs`, clamping to UTC bounds instead of overflowing on extreme configs.
+pub(crate) fn shift_time_clamped(t: DateTime<Utc>, delta_secs: i64) -> DateTime<Utc> {
+    TimeDelta::try_seconds(delta_secs)
+        .and_then(|d| t.checked_add_signed(d))
+        .unwrap_or(if delta_secs < 0 {
+            DateTime::<Utc>::MIN_UTC
+        } else {
+            DateTime::<Utc>::MAX_UTC
+        })
 }
 
 fn to_cell(lat: f64, lon: f64) -> Option<CellIndex> {
@@ -236,5 +495,131 @@ mod tests {
         assert!(index.is_empty());
         assert_eq!(index.len(), 0);
         assert!(index.candidates(39.0, 32.0).is_empty());
+    }
+
+    #[test]
+    fn timed_index_matches_h3_index_intersected_with_time_window() {
+        let base = DateTime::from_timestamp(1_700_000_000, 0).unwrap();
+        let mut seed: u64 = 0x1234_5678_9ABC_DEF0;
+        let mut next_u64 = || -> u64 {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed
+        };
+
+        let centers = [
+            (39.0, 32.0),
+            (0.0, 179.995),
+            (0.0, -179.995),
+            (85.0, 15.0),
+            (-85.0, -45.0),
+        ];
+
+        let mut points = Vec::with_capacity(1_500);
+        for i in 0..1_500 {
+            let (clat, clon) = centers[(next_u64() as usize) % centers.len()];
+            let dlat = ((next_u64() % 10_000) as f64 / 10_000.0 - 0.5) * 0.04;
+            let dlon = ((next_u64() % 10_000) as f64 / 10_000.0 - 0.5) * 0.04;
+            let lat = (clat + dlat).clamp(-89.9, 89.9);
+            let mut lon = clon + dlon;
+            if lon > 180.0 {
+                lon -= 360.0;
+            } else if lon < -180.0 {
+                lon += 360.0;
+            }
+            // Quantize some timestamps to test equal timestamps and sub-second offsets.
+            let sec = ((i / 5) * 30 + (next_u64() % 20) as usize) as i64;
+            let millis = ((next_u64() % 4) * 250) as i64;
+            let acquired = base + TimeDelta::seconds(sec) + TimeDelta::milliseconds(millis);
+            points.push((lat, lon, acquired));
+        }
+        points.sort_by_key(|p| p.2);
+
+        let spatial = H3Index::build(points.iter().map(|&(lat, lon, _)| (lat, lon)));
+        let timed = TimedH3Index::build(points.iter().copied());
+        assert_eq!(timed.len(), points.len());
+        assert!(!timed.is_empty());
+
+        for k in [1, 3, 6] {
+            for &(qlat, qlon) in &centers {
+                for &(t0_off, t1_off) in &[
+                    (-100, -10),
+                    (0, 0),
+                    (120, 600),
+                    (1_500, 3_600),
+                    (500, 400), // empty reversed window
+                ] {
+                    let t_min = base + TimeDelta::seconds(t0_off);
+                    let t_max = base + TimeDelta::seconds(t1_off);
+
+                    let actual = timed
+                        .candidates_within(qlat, qlon, k, t_min, t_max)
+                        .expect("valid query coords");
+                    assert!(actual.windows(2).all(|w| w[0] < w[1]));
+
+                    let expected: Vec<usize> = if t_min > t_max {
+                        Vec::new()
+                    } else {
+                        spatial
+                            .candidates_within(qlat, qlon, k)
+                            .into_iter()
+                            .filter(|&pos| points[pos].2 >= t_min && points[pos].2 <= t_max)
+                            .collect()
+                    };
+                    assert_eq!(actual, expected, "k={k} q=({qlat},{qlon})");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn timed_index_preserves_invalid_points_and_returns_none_for_invalid_query() {
+        let base = DateTime::from_timestamp(1_700_000_000, 0).unwrap();
+        let points = vec![
+            (95.0, 20.0, base),
+            (39.0, 32.0, base + TimeDelta::seconds(10)),
+            (f64::NAN, 10.0, base + TimeDelta::seconds(20)),
+            (39.001, 32.001, base + TimeDelta::seconds(30)),
+        ];
+        let timed = TimedH3Index::build(points);
+        assert_eq!(timed.len(), 4);
+
+        // Querying valid point returns valid neighbors in window PLUS invalid points in window.
+        assert_eq!(
+            timed.candidates_within(
+                39.0,
+                32.0,
+                3,
+                base,
+                base + TimeDelta::seconds(25),
+            ),
+            Some(vec![0, 1, 2])
+        );
+        // Invalid point outside time window is excluded.
+        assert_eq!(
+            timed.candidates_within(
+                39.0,
+                32.0,
+                3,
+                base + TimeDelta::seconds(5),
+                base + TimeDelta::seconds(15),
+            ),
+            Some(vec![1])
+        );
+        // Invalid query coordinate returns None so caller falls back to full scan.
+        assert_eq!(
+            timed.candidates_within(95.0, 20.0, 3, base, base + TimeDelta::seconds(30)),
+            None
+        );
+        assert_eq!(
+            timed.candidates_within(f64::NAN, 0.0, 3, base, base + TimeDelta::seconds(30)),
+            None
+        );
+
+        let empty = TimedH3Index::build(std::iter::empty());
+        assert!(empty.is_empty());
+        assert_eq!(empty.len(), 0);
+        assert_eq!(empty.candidates_within(39.0, 32.0, 3, base, base), Some(vec![]));
     }
 }
