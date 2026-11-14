@@ -90,7 +90,7 @@ data: ## Download the full FIRMS country archive (~41 GB, opt-in, no API key nee
 	@echo "This can take a while depending on your connection. No FIRMS API key is required."
 	@echo "Safe to interrupt with Ctrl+C at any time; re-run 'make data' to resume where it left off."
 	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
-	docker compose --profile seed run --rm seed
+	docker compose --profile seed run --rm --build seed
 
 docker-seed: data ## Alias for 'make data' (prefer 'make data')
 
