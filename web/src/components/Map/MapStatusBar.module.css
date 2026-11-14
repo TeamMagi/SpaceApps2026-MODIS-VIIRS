@@ -1,16 +1,21 @@
 .statusBar {
+  container-type: inline-size;
+  width: 100%;
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+  z-index: calc(var(--z-map-overlay) + 1);
+}
+
+.barInner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-half) var(--space-2);
   padding: var(--space-half) var(--space-2);
-  background: var(--color-surface);
-  border-bottom: var(--border-width) solid var(--color-border-subtle);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-snug);
   color: var(--color-text-secondary);
-  z-index: calc(var(--z-map-overlay) + 1);
 }
 
 .primaryGroup,
@@ -26,16 +31,92 @@
   color: var(--color-text);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-md);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  flex-shrink: 0;
+}
+
+.stepButton,
+.clearMonthButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--dur-ui) var(--ease-standard),
+    border-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+.clearMonthButton {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+@media (pointer: coarse) {
+  .stepButton,
+  .clearMonthButton {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+.stepButton:hover:not(:disabled),
+.clearMonthButton:hover {
+  background: var(--color-hover);
+  border-color: var(--color-text-secondary);
+  color: var(--color-text);
+}
+
+.stepButton:active:not(:disabled),
+.clearMonthButton:active {
+  background: var(--color-active);
+}
+
+.stepButton:disabled {
+  background: var(--color-surface-sunken);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-disabled);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.stepButton:focus-visible,
+.clearMonthButton:focus-visible {
+  outline: 2px solid var(--map-focus, var(--color-focus));
+  outline-offset: 2px;
 }
 
 .period {
-  color: var(--color-text-secondary);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .modeBadge {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   padding: 2px var(--space-1);
   background: var(--color-surface-raised);
   border: var(--border-width) solid var(--color-border);
@@ -43,6 +124,7 @@
   color: var(--color-text);
   font-size: var(--font-size-2xs);
   font-weight: var(--font-weight-medium);
+  white-space: nowrap;
 }
 
 .modeBadge[data-harmonized="true"] {
@@ -53,9 +135,23 @@
   color: var(--color-text);
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.subsetNote,
+.separator {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.subsetNote {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline dotted var(--color-border-strong);
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  cursor: help;
+}
+
 .statusText {
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
@@ -70,23 +166,6 @@
 
 .errorText {
   color: var(--color-text);
-}
-
-.filterChip {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-half);
-  padding-left: var(--space-1);
-  background: var(--color-surface-raised);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-text);
-}
-
-.filterText {
-  color: var(--color-text);
-  font-variant-numeric: tabular-nums;
 }
 
 .actionButton {
@@ -123,7 +202,32 @@
   outline-offset: 2px;
 }
 
+@container (min-width: 480px) {
+  .barInner {
+    flex-wrap: nowrap;
+  }
+
+  .primaryGroup,
+  .countsGroup {
+    flex-wrap: nowrap;
+  }
+}
+
+@container (max-width: 620px) {
+  .barInner {
+    padding: var(--space-half) var(--space-1);
+    gap: var(--space-half) var(--space-1);
+  }
+
+  .primaryGroup,
+  .countsGroup {
+    gap: var(--space-half);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .stepButton,
+  .clearMonthButton,
   .actionButton {
     transition: none;
   }

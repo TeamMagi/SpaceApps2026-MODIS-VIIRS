@@ -1,8 +1,8 @@
 /**
  * BurnCalendar — annular radial "year clock" of monthly fire detections, paired with
- * year navigation/playback and a compact multi-year histogram.
+ * year navigation and playback.
  *
- * Visual geometry (slice radii, dashed normal arcs, bar heights, colours) follows
+ * Visual geometry (slice radii, dashed normal arcs, colours) follows
  * `geometryHarmonized`; numerical text and ARIA labels only flip when `revealAnswer` is true
  * so Raw mode never leaks the harmonized answer.
  */
@@ -42,7 +42,6 @@ import {
   polarToCartesian,
   resolveActiveYear,
   resolveFocusMonth,
-  resolveVisibleYearTicks,
   sliceColorVar,
   stepYear,
 } from "../../lib/radialCalendar";
@@ -54,12 +53,6 @@ import CalendarTooltip, { formatCalendarCellText } from "./CalendarTooltip";
 interface SliceCssVars extends CSSProperties {
   "--slice-raw": string;
   "--slice-harm"?: string;
-}
-
-interface HistBarCssVars extends CSSProperties {
-  "--bar-h": string;
-  "--bar-raw": string;
-  "--bar-harm"?: string;
 }
 
 interface TooltipAnchor {
@@ -82,26 +75,18 @@ function BurnCalendar() {
     geometryHarmonized: v.geometryHarmonized,
     revealAnswer: v.revealAnswer,
   }));
-  const { status, error, retry, yearly, months, cliff, firstYear, lastYear, defaultMapMonth } =
+  const { status, error, retry, yearly, months, firstYear, lastYear, defaultMapMonth } =
     useRegionData();
   const selected = useSelectedMonthCell();
   const region = useAppStore((state) => state.region);
   const toggleMonth = useAppStore((state) => state.toggleMonth);
+  const calendarYear = useAppStore((state) => state.calendarYear);
+  const setCalendarYear = useAppStore((state) => state.setCalendarYear);
 
   const tooltipId = useId();
   const containerRef = useRef<HTMLElement | null>(null);
   const wheelSvgRef = useRef<SVGSVGElement | null>(null);
-  const histRowRef = useRef<HTMLDivElement | null>(null);
 
-  const [viewYear, setViewYear] = useState<number | null>(() =>
-    resolveActiveYear({
-      viewYear: null,
-      selectedMonth: selected,
-      defaultMapMonth,
-      firstYear,
-      lastYear,
-    }),
-  );
   const [hoveredMonth, setHoveredMonth] = useState<number | null>(null);
   const [focusedMonth, setFocusedMonth] = useState<number | null>(null);
   const [rovingMonth, setRovingMonth] = useState<number>(() => selected?.month ?? defaultMapMonth?.month ?? 7);
@@ -114,20 +99,23 @@ function BurnCalendar() {
   const activeYear = useMemo(
     () =>
       resolveActiveYear({
-        viewYear,
+        viewYear: calendarYear,
         selectedMonth: selected,
         defaultMapMonth,
         firstYear,
         lastYear,
       }),
-    [viewYear, selected, defaultMapMonth, firstYear, lastYear],
+    [calendarYear, selected, defaultMapMonth, firstYear, lastYear],
   );
 
   // Single entry point for year navigation: drops the hover that belonged to the previous year.
-  const handleYearChange = useCallback((nextYear: number) => {
-    setViewYear(nextYear);
-    setHoveredMonth(null);
-  }, []);
+  const handleYearChange = useCallback(
+    (nextYear: number) => {
+      setCalendarYear(nextYear);
+      setHoveredMonth(null);
+    },
+    [setCalendarYear],
+  );
 
   const { isPlaying, stop: stopPlayback, togglePlay } = useYearPlayback({
     activeYear,
@@ -144,11 +132,11 @@ function BurnCalendar() {
     if (prev.region === region && prev.seriesKey === seriesKey) return;
     prevResetRef.current = { region, seriesKey };
     stopPlayback();
-    setViewYear(null);
+    setCalendarYear(null);
     setHoveredMonth(null);
     setFocusedMonth(null);
     setRovingMonth(selected?.month ?? defaultMapMonth?.month ?? 7);
-  }, [region, seriesKey, selected, defaultMapMonth, stopPlayback]);
+  }, [region, seriesKey, selected, defaultMapMonth, stopPlayback, setCalendarYear]);
 
   useEffect(() => {
     const currentSelectedKey = selected ? cellKey(selected.year, selected.month) : null;
@@ -156,11 +144,11 @@ function BurnCalendar() {
     prevSelectedKeyRef.current = currentSelectedKey;
     stopPlayback();
     if (selected) {
-      setViewYear(selected.year);
+      setCalendarYear(selected.year);
       setHoveredMonth(null);
       setRovingMonth(selected.month);
     }
-  }, [selected, stopPlayback]);
+  }, [selected, stopPlayback, setCalendarYear]);
 
   const cellMap = useMemo(() => {
     const map = new Map<string, MonthCell>();
@@ -226,62 +214,6 @@ function BurnCalendar() {
     }
     return set;
   }, [yearly]);
-
-  const histYears = useMemo(() => {
-    if (yearly.length > 0) return yearly;
-    if (firstYear === null || lastYear === null) return [];
-    const fallback = [];
-    for (let y = firstYear; y <= lastYear; y++) {
-      const yCells = MONTH_NUMBERS.map((m) => cellMap.get(cellKey(y, m))).filter(
-        (c): c is MonthCell => c !== undefined && c.hasData,
-      );
-      const raw = yCells.reduce((acc, c) => acc + c.rawCount, 0);
-      const harmonized = yCells.reduce((acc, c) => acc + c.harmonizedCount, 0);
-      fallback.push({
-        year: y,
-        raw,
-        rawModis: 0,
-        rawViirs: 0,
-        harmonized,
-        matched: 0,
-        modisOnly: 0,
-        viirsOnly: 0,
-        interscanRemoved: 0,
-        fleetMerged: 0,
-        firstDate: null,
-        lastDate: null,
-        partial: false,
-      });
-    }
-    return fallback;
-  }, [yearly, firstYear, lastYear, cellMap]);
-
-  const histStats = useMemo(() => {
-    let maxRaw = 1;
-    let maxHarm = 1;
-    let sumRaw = 0;
-    let sumHarm = 0;
-    for (const y of histYears) {
-      if (y.raw > maxRaw) maxRaw = y.raw;
-      if (y.harmonized > maxHarm) maxHarm = y.harmonized;
-      sumRaw += y.raw;
-      sumHarm += y.harmonized;
-    }
-    const count = Math.max(1, histYears.length);
-    return {
-      maxRaw,
-      maxHarm,
-      meanRaw: sumRaw / count,
-      meanHarm: sumHarm / count,
-    };
-  }, [histYears]);
-
-  const cliffYear = cliff?.toYear ?? null;
-
-  const visibleTickYears = useMemo(() => {
-    if (firstYear === null || lastYear === null) return new Set<number>();
-    return resolveVisibleYearTicks(firstYear, lastYear, cliffYear, activeYear);
-  }, [firstYear, lastYear, cliffYear, activeYear]);
 
   const computeAnchorForMonth = useCallback(
     (year: number, month: number, outerRadius: number, midAngle: number): TooltipAnchor | null => {
@@ -402,28 +334,6 @@ function BurnCalendar() {
       ?.focus();
   };
 
-  const handleHistKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (activeYear === null || firstYear === null || lastYear === null) return;
-    let nextYear = activeYear;
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
-      nextYear = stepYear(activeYear, 1, firstYear, lastYear);
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
-      nextYear = stepYear(activeYear, -1, firstYear, lastYear);
-    } else if (e.key === "Home") {
-      nextYear = firstYear;
-    } else if (e.key === "End") {
-      nextYear = lastYear;
-    } else {
-      return;
-    }
-    e.preventDefault();
-    stopPlayback();
-    handleYearChange(nextYear);
-    histRowRef.current
-      ?.querySelector<HTMLButtonElement>(`button[data-year="${nextYear}"]`)
-      ?.focus();
-  };
-
   const clockSubText =
     firstYear !== null && lastYear !== null
       ? t("calendarClockRange", { first: String(firstYear), last: String(lastYear) })
@@ -440,7 +350,10 @@ function BurnCalendar() {
     return (
       <section ref={containerRef} className={styles.calendar} aria-label={t("calendarLabel")}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{t("calendarHeading")}</h2>
+          <div className={styles.titleGroup}>
+            <h2 className={styles.title}>{t("calendarHeading")}</h2>
+            <p className={styles.sliceHint}>{t("calendarSliceHint")}</p>
+          </div>
           <span className={styles.clockSub}>{clockSubText}</span>
         </div>
         <div className={styles.stateBox} role="status">
@@ -457,7 +370,10 @@ function BurnCalendar() {
     return (
       <section ref={containerRef} className={styles.calendar} aria-label={t("calendarLabel")}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{t("calendarHeading")}</h2>
+          <div className={styles.titleGroup}>
+            <h2 className={styles.title}>{t("calendarHeading")}</h2>
+            <p className={styles.sliceHint}>{t("calendarSliceHint")}</p>
+          </div>
           <span className={styles.clockSub}>{clockSubText}</span>
         </div>
         <div className={styles.stateBox} role="status">
@@ -471,7 +387,10 @@ function BurnCalendar() {
     return (
       <section ref={containerRef} className={styles.calendar} aria-label={t("calendarLabel")}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{t("calendarHeading")}</h2>
+          <div className={styles.titleGroup}>
+            <h2 className={styles.title}>{t("calendarHeading")}</h2>
+            <p className={styles.sliceHint}>{t("calendarSliceHint")}</p>
+          </div>
           <span className={styles.clockSub}>{clockSubText}</span>
         </div>
         <div className={styles.stateBox} role="status">
@@ -492,6 +411,8 @@ function BurnCalendar() {
     : "";
 
   const isActiveYearPartial = partialYears.has(activeYear);
+  const formattedYearTotal = fmt.number(activeYearTotal);
+  const isLongYearTotal = formattedYearTotal.length >= 8;
 
   return (
     <section
@@ -502,7 +423,10 @@ function BurnCalendar() {
       data-harmonized={geometryHarmonized}
     >
       <div className={styles.header}>
-        <h2 className={styles.title}>{t("calendarHeading")}</h2>
+        <div className={styles.titleGroup}>
+          <h2 className={styles.title}>{t("calendarHeading")}</h2>
+          <p className={styles.sliceHint}>{t("calendarSliceHint")}</p>
+        </div>
         <span className={styles.clockSub}>
           {status === "loading" ? t("loadingFirms") : clockSubText}
         </span>
@@ -643,22 +567,23 @@ function BurnCalendar() {
             />
             <text
               x={RADIAL_CENTER}
-              y={RADIAL_CENTER - 7}
+              y={RADIAL_CENTER - 9}
               textAnchor="middle"
               dominantBaseline="central"
               className={styles.centerYear}
+              data-long={isLongYearTotal ? "true" : undefined}
             >
-              {activeYear}
-              {isActiveYearPartial ? "*" : ""}
+              {formattedYearTotal}
             </text>
             <text
               x={RADIAL_CENTER}
-              y={RADIAL_CENTER + 14}
+              y={RADIAL_CENTER + 13}
               textAnchor="middle"
               dominantBaseline="central"
               className={styles.centerCount}
             >
-              {t("calendarYearDetections", { count: activeYearTotal })}
+              {t("calendarYearScope", { year: String(activeYear) })}
+              {isActiveYearPartial ? "*" : ""}
             </text>
           </svg>
         </div>
@@ -714,81 +639,6 @@ function BurnCalendar() {
           <p className={styles.detailLine} role="status" aria-live="polite">
             {detailLineText}
           </p>
-
-          <div
-            ref={histRowRef}
-            className={styles.histogramWrap}
-            role="group"
-            aria-label={t("calendarHistogramLabel")}
-            onKeyDown={handleHistKeyDown}
-          >
-            <div className={styles.histogramBars}>
-              {histYears.map((y) => {
-                const isYearActive = y.year === activeYear;
-                const isCliff = cliffYear !== null && y.year === cliffYear;
-                const geomVal = geometryHarmonized ? y.harmonized : y.raw;
-                const maxGeom = geometryHarmonized ? histStats.maxHarm : histStats.maxRaw;
-                const heightPct = Math.max(8, Math.min(100, Math.round((geomVal / Math.max(1, maxGeom)) * 100)));
-                const ariaCount = revealAnswer ? y.harmonized : y.raw;
-                const rawBarColor = sliceColorVar(true, y.raw, null, histStats.meanRaw);
-                const harmBarColor = sliceColorVar(true, y.harmonized, null, histStats.meanHarm);
-                const barStyle: HistBarCssVars = {
-                  "--bar-h": `${heightPct}%`,
-                  "--bar-raw": rawBarColor,
-                  ...(showHarmonizedStyle ? { "--bar-harm": harmBarColor } : {}),
-                };
-                const showTick = visibleTickYears.has(y.year);
-                const partialTitle = y.partial
-                  ? t("cliffPartialYear", { year: String(y.year) })
-                  : undefined;
-
-                return (
-                  <div
-                    key={y.year}
-                    className={styles.histCol}
-                    data-cliff={isCliff ? "true" : undefined}
-                    data-active={isYearActive ? "true" : undefined}
-                  >
-                    {isCliff && <span className={styles.histCliffLine} aria-hidden="true" />}
-                    <button
-                      type="button"
-                      data-year={y.year}
-                      tabIndex={isYearActive ? 0 : -1}
-                      aria-pressed={isYearActive}
-                      aria-label={
-                        y.partial
-                          ? `${t("calendarHistogramBarAria", { year: String(y.year), count: ariaCount })} (${t("cliffPartialYear", { year: String(y.year) })})`
-                          : t("calendarHistogramBarAria", { year: String(y.year), count: ariaCount })
-                      }
-                      title={
-                        partialTitle ??
-                        t("calendarHistogramBarAria", { year: String(y.year), count: ariaCount })
-                      }
-                      className={styles.histBarBtn}
-                      style={barStyle}
-                      data-active={isYearActive ? "true" : undefined}
-                      data-partial={y.partial ? "true" : undefined}
-                      onClick={() => {
-                        stopPlayback();
-                        handleYearChange(y.year);
-                      }}
-                    >
-                      <span className={styles.histBarFill} />
-                    </button>
-                    <span
-                      className={styles.histTick}
-                      data-visible={showTick ? "true" : undefined}
-                      data-cliff={isCliff ? "true" : undefined}
-                      data-active={isYearActive ? "true" : undefined}
-                      title={partialTitle}
-                    >
-                      {showTick ? `${y.year}${y.partial ? "*" : ""}` : ""}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -807,7 +657,6 @@ function BurnCalendar() {
             <span>{t("calendarAboveNormalShort")}</span>
           </span>
         </div>
-        <p className={styles.sliceHint}>{t("calendarSliceHint")}</p>
       </div>
 
       {tooltipVisible && tooltipCell && tooltipAnchor && (

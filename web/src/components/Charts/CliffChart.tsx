@@ -7,12 +7,14 @@
  */
 
 import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { formatApiError } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
+import { resolveActiveYear } from "../../lib/radialCalendar";
 import { yearTicks } from "../../lib/yearTicks";
+import { resolveMonthForYear, useAppStore } from "../../store/useAppStore";
 import type { YearlyPoint } from "../../types";
 import styles from "./CliffChart.module.css";
 
@@ -20,6 +22,8 @@ const PAD_LEFT = 44;
 const PAD_RIGHT = 8;
 const PAD_TOP = 20;
 const PAD_BOTTOM = 20;
+const MIN_TICK_GAP_PX = 36;
+const TOOLTIP_FLIP_Y = PAD_TOP + 50;
 const DEFAULT_SIZE = { width: 460, height: 170 };
 
 function niceCeil(value: number): number {
@@ -99,9 +103,15 @@ export default function CliffChart() {
     revealAnswer: v.revealAnswer,
     durations: v.durations,
   }));
-  const { status, error, retry, yearly, cliff, firstYear, lastYear } = useRegionData();
+  const { status, error, retry, yearly, months, cliff, firstYear, lastYear, defaultMapMonth } = useRegionData();
+  const calendarYear = useAppStore((state) => state.calendarYear);
+  const selectedMonth = useAppStore((state) => state.selectedMonth);
+  const setCalendarYear = useAppStore((state) => state.setCalendarYear);
+  const selectMonth = useAppStore((state) => state.selectMonth);
+  const stopYearPlayback = useAppStore((state) => state.stopYearPlayback);
   const reducedMotion = useReducedMotion() ?? false;
 
+  const sliderHintId = useId();
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState(DEFAULT_SIZE);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -212,12 +222,111 @@ export default function CliffChart() {
   const cliffX = cliffIndex >= 0 ? xAt(cliffIndex) : null;
   const hasAnyPartial = useMemo(() => yearly.some((p) => p.partial), [yearly]);
 
+  const selectedYear = useMemo(
+    () =>
+      resolveActiveYear({
+        viewYear: calendarYear,
+        selectedMonth,
+        defaultMapMonth,
+        firstYear,
+        lastYear,
+      }),
+    [calendarYear, selectedMonth, defaultMapMonth, firstYear, lastYear],
+  );
+  const selectedIndex = useMemo(
+    () => (selectedYear !== null ? yearly.findIndex((p) => p.year === selectedYear) : -1),
+    [yearly, selectedYear],
+  );
+  const selectedX = selectedIndex >= 0 ? xAt(selectedIndex) : null;
+  const colW = plotW / Math.max(n, 1);
+
+  const handleSelectYear = useCallback(
+    (year: number) => {
+      // Stop playback on any user year selection even if the resolved month matches the current one.
+      stopYearPlayback();
+      setCalendarYear(year);
+      const currentMonth = (selectedMonth ?? defaultMapMonth)?.month ?? null;
+      const nextMonth = resolveMonthForYear({
+        year,
+        months,
+        currentMonth,
+        harmonized: revealAnswer,
+      });
+      if (nextMonth) {
+        selectMonth(nextMonth);
+      }
+    },
+    [stopYearPlayback, setCalendarYear, selectedMonth, defaultMapMonth, months, revealAnswer, selectMonth],
+  );
+
+  const nearCliffDist = cliffX !== null && selectedX !== null ? selectedX - cliffX : null;
+  const selectedLabelOverlap = nearCliffDist !== null && Math.abs(nearCliffDist) < MIN_TICK_GAP_PX;
+  const selectedLabelX =
+    selectedX === null
+      ? 0
+      : selectedLabelOverlap && cliffX !== null && nearCliffDist !== null
+        ? nearCliffDist < 0
+          ? Math.min(selectedX, cliffX - 18)
+          : Math.max(selectedX, cliffX + 18)
+        : selectedX;
+  const selectedLabelAnchor =
+    selectedLabelOverlap && nearCliffDist !== null
+      ? nearCliffDist < 0
+        ? "end"
+        : "start"
+      : "middle";
+  const selectedLabelCenterX =
+    selectedLabelAnchor === "end"
+      ? selectedLabelX - 14
+      : selectedLabelAnchor === "start"
+        ? selectedLabelX + 14
+        : selectedLabelX;
+
   const yTicks = [0, niceMax / 2, niceMax];
   const xTickYears = useMemo(() => {
     if (n === 0) return [];
     const ticks = yearTicks(yearly[0].year, yearly[n - 1].year, cliffYear);
-    return yearly.map((p, index) => ({ year: p.year, index })).filter((item) => ticks.has(item.year));
-  }, [yearly, n, cliffYear]);
+    const markersX: number[] = [];
+    if (cliffX !== null) markersX.push(cliffX);
+    if (selectedYear !== null && selectedYear !== cliffYear && selectedX !== null) {
+      markersX.push(selectedLabelCenterX);
+    }
+
+    const eligible = yearly
+      .map((p, index) => ({ year: p.year, index, x: xAt(index) }))
+      .filter((item) => {
+        if (!ticks.has(item.year)) return false;
+        if (cliffYear !== null && item.year === cliffYear) return true;
+        if (selectedYear !== null && item.year === selectedYear) return false;
+        return markersX.every((mx) => Math.abs(item.x - mx) >= MIN_TICK_GAP_PX);
+      });
+
+    // Prioritize cliff and boundary years (first/last), then intermediate ticks that do not collide.
+    const firstItem = eligible[0];
+    const lastItem = eligible.length > 1 ? eligible[eligible.length - 1] : null;
+    const kept: typeof eligible = [];
+    const tryAdd = (item: (typeof eligible)[number]) => {
+      if (cliffYear !== null && item.year === cliffYear) {
+        kept.push(item);
+        return;
+      }
+      if (kept.every((k) => Math.abs(k.x - item.x) >= MIN_TICK_GAP_PX)) {
+        kept.push(item);
+      }
+    };
+
+    for (const item of eligible) {
+      if (cliffYear !== null && item.year === cliffYear) tryAdd(item);
+    }
+    if (firstItem && firstItem.year !== cliffYear) tryAdd(firstItem);
+    if (lastItem && lastItem.year !== cliffYear) tryAdd(lastItem);
+    for (const item of eligible) {
+      if (item !== firstItem && item !== lastItem && item.year !== cliffYear) {
+        tryAdd(item);
+      }
+    }
+    return kept.sort((a, b) => a.index - b.index);
+  }, [yearly, n, cliffYear, cliffX, selectedYear, selectedX, selectedLabelCenterX, xAt]);
 
   const handlePointerMove = (e: PointerEvent<SVGSVGElement>) => {
     if (n === 0) return;
@@ -228,14 +337,32 @@ export default function CliffChart() {
     setActiveIndex(idx);
   };
 
-  const handleKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (n === 0) return;
-    if (e.key === "ArrowRight") {
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev === null ? 0 : Math.min(n - 1, prev + 1)));
-    } else if (e.key === "ArrowLeft") {
+      setActiveIndex((prev) => {
+        const base = prev ?? (selectedIndex >= 0 ? selectedIndex : -1);
+        return Math.min(n - 1, base + 1);
+      });
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev === null ? n - 1 : Math.max(0, prev - 1)));
+      setActiveIndex((prev) => {
+        const base = prev ?? (selectedIndex >= 0 ? selectedIndex : n);
+        return Math.max(0, base - 1);
+      });
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActiveIndex(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActiveIndex(n - 1);
+    } else if (e.key === "Enter" || e.key === " ") {
+      const idx = activeIndex ?? (selectedIndex >= 0 ? selectedIndex : null);
+      if (idx !== null && yearly[idx]) {
+        e.preventDefault();
+        handleSelectYear(yearly[idx].year);
+      }
     } else if (e.key === "Escape") {
       setActiveIndex(null);
     }
@@ -246,8 +373,10 @@ export default function CliffChart() {
   const activeX = activeIndex !== null ? xAt(activeIndex) : 0;
   const activeY = activePoint ? yAt(activeValue) : 0;
 
-  const tooltipLeft = Math.max(85, Math.min(size.width - 85, activeX));
-  const tooltipTop = Math.max(44, activeY);
+  const tooltipBelow = activeY < TOOLTIP_FLIP_Y;
+  const tooltipHalfW = Math.min(115, Math.max(60, Math.floor(size.width * 0.25)));
+  const tooltipLeft = Math.max(tooltipHalfW, Math.min(size.width - tooltipHalfW, activeX));
+  const tooltipTop = tooltipBelow ? Math.max(PAD_TOP + 2, activeY) : activeY;
   const chartTitle =
     firstYear !== null && lastYear !== null
       ? t("cliffChartTitle", { first: String(firstYear), last: String(lastYear) })
@@ -295,6 +424,17 @@ export default function CliffChart() {
     );
   }
 
+  const sliderIndex = Math.max(0, Math.min(n - 1, activeIndex ?? (selectedIndex >= 0 ? selectedIndex : 0)));
+  const sliderPoint = yearly[sliderIndex];
+  const sliderValue = revealAnswer ? sliderPoint.harmonized : sliderPoint.raw;
+  const sliderYearLabel = sliderPoint.partial
+    ? t("cliffPartialYear", { year: String(sliderPoint.year) })
+    : String(sliderPoint.year);
+  const sliderValueText = t("cliffSliderValue", {
+    year: sliderYearLabel,
+    count: sliderValue,
+  });
+
   return (
     <figure className={styles.chart} aria-label={t("cliffChartLabel")} data-loading={status === "loading" ? "true" : undefined}>
       <div className={styles.header}>
@@ -333,11 +473,8 @@ export default function CliffChart() {
           viewBox={`0 0 ${size.width} ${size.height}`}
           role="img"
           aria-label={t("cliffChartLabel")}
-          tabIndex={0}
           onPointerMove={handlePointerMove}
           onPointerLeave={() => setActiveIndex(null)}
-          onBlur={() => setActiveIndex(null)}
-          onKeyDown={handleKeyDown}
         >
           {yTicks.map((tick) => {
             const y = yAt(tick);
@@ -357,6 +494,26 @@ export default function CliffChart() {
             );
           })}
 
+          {selectedIndex >= 0 && selectedX !== null && (
+            <g aria-hidden="true">
+              <rect
+                x={PAD_LEFT + selectedIndex * colW}
+                y={PAD_TOP}
+                width={colW}
+                height={plotH}
+                rx={2}
+                className={styles.selectedYearBand}
+              />
+              <line
+                x1={selectedX}
+                y1={PAD_TOP}
+                x2={selectedX}
+                y2={PAD_TOP + plotH}
+                className={styles.selectedYearLine}
+              />
+            </g>
+          )}
+
           {xTickYears.map(({ year, index }) => {
             const x = xAt(index);
             const isCliff = cliffYear !== null && year === cliffYear;
@@ -372,6 +529,17 @@ export default function CliffChart() {
               </text>
             );
           })}
+
+          {selectedYear !== null && selectedYear !== cliffYear && selectedX !== null && (
+            <text
+              x={selectedLabelX}
+              y={PAD_TOP + plotH + 14}
+              textAnchor={selectedLabelAnchor}
+              className={`${styles.axisLabel} ${styles.selectedYearLabel}`}
+            >
+              {selectedYear}
+            </text>
+          )}
 
           {cliffYear !== null && cliffX !== null && (
             <g>
@@ -434,10 +602,50 @@ export default function CliffChart() {
               <circle cx={activeX} cy={activeY} r={3.5} className={styles.hoverDot} />
             </g>
           )}
+
+          <g className={styles.hitGroup}>
+            {yearly.map((p, i) => (
+              <rect
+                key={`hit-${p.year}`}
+                x={PAD_LEFT + i * colW}
+                y={PAD_TOP - 4}
+                width={colW}
+                height={plotH + PAD_BOTTOM + 4}
+                data-year={p.year}
+                className={styles.hitCol}
+                onPointerEnter={() => setActiveIndex(i)}
+                onClick={() => handleSelectYear(p.year)}
+              />
+            ))}
+          </g>
         </svg>
 
+        <div
+          role="slider"
+          tabIndex={0}
+          className={styles.yearSlider}
+          aria-label={t("cliffSliderLabel")}
+          aria-describedby={sliderHintId}
+          aria-orientation="horizontal"
+          aria-valuemin={yearly[0].year}
+          aria-valuemax={yearly[n - 1].year}
+          aria-valuenow={sliderPoint.year}
+          aria-valuetext={sliderValueText}
+          onFocus={() => setActiveIndex((prev) => prev ?? (selectedIndex >= 0 ? selectedIndex : 0))}
+          onBlur={() => setActiveIndex(null)}
+          onKeyDown={handleKeyDown}
+        />
+        <span id={sliderHintId} className={styles.srOnly}>
+          {t("cliffSliderHint")}
+        </span>
+
         {activePoint && (
-          <div className={styles.tooltip} style={{ left: tooltipLeft, top: tooltipTop }} role="status">
+          <div
+            className={styles.tooltip}
+            data-placement={tooltipBelow ? "below" : "above"}
+            style={{ left: tooltipLeft, top: tooltipTop }}
+            role="status"
+          >
             <span className={styles.tooltipYear}>
               {activePoint.partial ? t("cliffPartialYear", { year: String(activePoint.year) }) : activePoint.year}
             </span>

@@ -9,7 +9,13 @@
   font-size: var(--font-size-xs);
   line-height: var(--line-height-snug);
   color: var(--color-text);
-  max-width: min(320px, calc(100vw - 2 * var(--space-2)));
+  max-width: min(268px, calc(100vw - 2 * var(--space-2)));
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 .toggleButton {
@@ -19,16 +25,17 @@
   gap: var(--space-1);
   flex-shrink: 0;
   min-width: 44px;
-  min-height: 36px;
-  padding: 0 var(--space-2);
+  min-height: 30px;
+  padding: var(--space-half) var(--space-1);
   background: transparent;
   border: none;
   border-radius: var(--radius-md);
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  transition: background var(--dur-ui) var(--ease-standard);
 }
 
 @media (pointer: coarse) {
@@ -49,41 +56,185 @@
 .chevron {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: 1;
+}
+
+.filterHint {
+  margin: 0;
+  padding: 0 var(--space-1) var(--space-half);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-tight);
 }
 
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   min-height: 0;
   overflow-y: auto;
-  padding: var(--space-1) var(--space-2) var(--space-1);
+  padding: var(--space-half) var(--space-1) var(--space-1);
   border-top: var(--border-width) solid var(--color-border-subtle);
 }
 
-.shapeList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.rawSection,
+.harmonizedSection,
+.ringsSection {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--dur-ui) var(--ease-standard),
+    opacity var(--dur-ui) var(--ease-standard),
+    visibility 0s;
 }
 
-.row {
+.legend[data-harmonized="true"] .rawSection {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    grid-template-rows var(--dur-ui) var(--ease-standard),
+    opacity var(--dur-ui) var(--ease-standard),
+    visibility 0s linear var(--dur-ui);
+}
+
+.legend[data-harmonized="false"] .harmonizedSection {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    grid-template-rows var(--dur-ui) var(--ease-standard),
+    opacity var(--dur-ui) var(--ease-standard),
+    visibility 0s linear var(--dur-ui);
+}
+
+.legend[data-harmonized="false"][data-rings="false"] .ringsSection {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    grid-template-rows var(--dur-ui) var(--ease-standard),
+    opacity var(--dur-ui) var(--ease-standard),
+    visibility 0s linear var(--dur-ui);
+}
+
+.collapsibleInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sensorGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  padding-bottom: var(--space-half);
+}
+
+.sensorChip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 28px;
+  padding: 2px var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-ui) var(--ease-standard),
+    border-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+@media (pointer: coarse) {
+  .sensorChip {
+    min-height: 44px;
+  }
+}
+
+.sensorChip:hover {
+  background: var(--color-hover);
+  border-color: var(--color-border-strong);
+}
+
+.sensorChip:active {
+  background: var(--color-active);
+}
+
+.sensorChip:focus-visible {
+  outline: 2px solid var(--map-focus, var(--color-focus));
+  outline-offset: 1px;
+}
+
+.sensorChip[aria-pressed="false"] {
+  background: var(--color-surface-sunken);
+  border-color: var(--color-border-subtle);
+  border-style: dashed;
+  color: var(--color-text-secondary);
+}
+
+.sensorChip[aria-pressed="false"] .markWrap {
+  opacity: 0.45;
+}
+
+.sensorChip[aria-pressed="false"] .markWrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 1.5px;
+  background: var(--color-text-secondary);
+  transform: rotate(-30deg);
+}
+
+.sensorChip[aria-pressed="false"] .sensorLabel {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-muted);
+}
+
+.sensorLabel {
+  min-width: 0;
+}
+
+.harmonizedBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  padding-bottom: var(--space-half);
+}
+
+.row,
+.ringRow {
   display: flex;
   align-items: center;
   gap: var(--space-1);
   color: var(--color-text);
 }
 
+.ringRow {
+  padding-bottom: var(--space-half);
+}
+
 .markWrap {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+  transition: opacity var(--dur-ui) var(--ease-standard);
 }
 
 .modis {
@@ -104,7 +255,7 @@
   height: 9px;
   border-radius: 50%;
   background: var(--frp-6);
-  border: 1px solid var(--map-halo-light, var(--color-bg));
+  border: var(--border-width) solid var(--map-halo-light, var(--color-bg));
 }
 
 .ring {
@@ -117,7 +268,7 @@
 .frpSection {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-half);
 }
 
 .title {
@@ -192,13 +343,19 @@
 
 .dotNote {
   margin: 0;
-  color: var(--color-text);
+  color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-tight);
 }
 
-.helpLine {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-2xs);
+@media (prefers-reduced-motion: reduce) {
+  .toggleButton,
+  .rawSection,
+  .harmonizedSection,
+  .ringsSection,
+  .sensorChip,
+  .markWrap {
+    transition: none;
+  }
 }

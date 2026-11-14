@@ -13,6 +13,11 @@ import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
 import styles from "./Headline.module.css";
 
+const FROM_TOKEN = "\u0000FROM\u0000";
+const TO_TOKEN = "\u0000TO\u0000";
+const PCT_TOKEN = "\u0000PCT\u0000";
+const RANGE_TOKEN = "\u0000RANGE\u0000";
+
 function renderWithYearAccent(text: string, yearText: string): ReactNode {
   const index = text.indexOf(yearText);
   if (index === -1) return text;
@@ -23,6 +28,70 @@ function renderWithYearAccent(text: string, yearText: string): ReactNode {
       {text.slice(index + yearText.length)}
     </>
   );
+}
+
+function renderTokenized(
+  input: string,
+  tokens: ReadonlyArray<readonly [token: string, node: ReactNode]>,
+): ReactNode {
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  while (cursor < input.length) {
+    let nextIdx = -1;
+    let matched: (typeof tokens)[number] | null = null;
+    for (const entry of tokens) {
+      const idx = input.indexOf(entry[0], cursor);
+      if (idx !== -1 && (nextIdx === -1 || idx < nextIdx)) {
+        nextIdx = idx;
+        matched = entry;
+      }
+    }
+    if (nextIdx === -1 || !matched) {
+      parts.push(input.slice(cursor));
+      break;
+    }
+    if (nextIdx > cursor) {
+      parts.push(input.slice(cursor, nextIdx));
+    }
+    parts.push(matched[1]);
+    cursor = nextIdx + matched[0].length;
+  }
+  return parts;
+}
+
+function renderHarmonizedHeadline(template: string, vars: { pct: string; from: string; to: string }): ReactNode {
+  const fromIdx = template.indexOf(FROM_TOKEN);
+  const toIdx = template.indexOf(TO_TOKEN);
+  let between = "";
+  let normalized = template;
+  if (fromIdx !== -1 && toIdx > fromIdx) {
+    between = template.slice(fromIdx + FROM_TOKEN.length, toIdx);
+    normalized = template.slice(0, fromIdx) + RANGE_TOKEN + template.slice(toIdx + TO_TOKEN.length);
+  }
+
+  return renderTokenized(normalized, [
+    [
+      RANGE_TOKEN,
+      <span key="range" className={styles.nowrap}>
+        {vars.from}
+        {between}
+        <span className={styles.year}>{vars.to}</span>
+      </span>,
+    ],
+    [
+      PCT_TOKEN,
+      <span key="pct" className={styles.nowrap}>
+        {vars.pct}
+      </span>,
+    ],
+    [FROM_TOKEN, vars.from],
+    [
+      TO_TOKEN,
+      <span key="to" className={styles.year}>
+        {vars.to}
+      </span>,
+    ],
+  ]);
 }
 
 export default function Headline() {
@@ -72,18 +141,21 @@ export default function Headline() {
     );
   }
 
+  const fromStr = String(cliff.fromYear);
   const yearStr = String(cliff.toYear);
   const rawAbsPct = Math.round(Math.abs(cliff.rawChangePct ?? 0));
-  const rawText =
-    (cliff.rawChangePct ?? 0) < 0
+  const pctStr = revealAnswer ? fmt.signedPercent(cliff.harmonizedChangeRatio ?? 0) : "";
+  const text = revealAnswer
+    ? t("headlineHarmonized", { pct: pctStr, from: fromStr, to: yearStr })
+    : (cliff.rawChangePct ?? 0) < 0
       ? t("headlineRawDropped", { x: rawAbsPct, year: yearStr })
       : t("headlineRaw", { x: rawAbsPct, year: yearStr });
-  const harmonizedText = t("headlineHarmonized", {
-    pct: fmt.signedPercent(cliff.harmonizedChangeRatio ?? 0),
-    from: String(cliff.fromYear),
-    to: yearStr,
-  });
-  const text = revealAnswer ? harmonizedText : rawText;
+  const content = revealAnswer
+    ? renderHarmonizedHeadline(
+        t("headlineHarmonized", { pct: PCT_TOKEN, from: FROM_TOKEN, to: TO_TOKEN }),
+        { pct: pctStr, from: fromStr, to: yearStr },
+      )
+    : renderWithYearAccent(text, yearStr);
 
   const cliffYearPoint = yearly.find((y) => y.year === cliff.toYear);
   const isCliffPartial = cliffYearPoint?.partial === true;
@@ -109,7 +181,7 @@ export default function Headline() {
               exit={{ opacity: 0, y: -slideY }}
               transition={{ duration: swapSeconds, ease: [0.2, 0, 0, 1] }}
             >
-              {renderWithYearAccent(text, yearStr)}
+              {content}
             </motion.span>
           </AnimatePresence>
         </span>

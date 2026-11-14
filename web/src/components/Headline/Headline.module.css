@@ -24,10 +24,18 @@
 .stage {
   display: grid;
   align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .line {
   grid-area: 1 / 1;
+  min-width: 0;
+  text-wrap: balance;
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 .year {

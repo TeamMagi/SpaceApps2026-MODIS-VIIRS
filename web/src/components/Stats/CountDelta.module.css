@@ -31,11 +31,28 @@ button.count[aria-expanded="true"] {
   background: var(--color-active);
 }
 
+.scope {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  font-variant-numeric: tabular-nums;
+}
+
 .summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  column-gap: var(--space-half);
+  max-width: 100%;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   font-variant-numeric: tabular-nums;
+}
+
+.summaryUnit {
+  white-space: nowrap;
 }
 
 .unique {
@@ -80,6 +97,10 @@ button.count[aria-expanded="true"] {
   .count {
     align-items: flex-end;
     text-align: right;
+  }
+
+  .summary {
+    justify-content: flex-end;
   }
 }
 

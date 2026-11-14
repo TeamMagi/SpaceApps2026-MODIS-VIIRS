@@ -208,7 +208,7 @@ const pointInput: ScenePointInput = { raw: rawPoints, harmonized: harmPoints };
 const scene = buildScene(dataset, "Azerbaijan", pointInput, azeProj);
 
 check("buildScene with Azerbaijan + 2,000 synthetic points validates typed arrays, buckets, shapes, flags", () => {
-  const validMask = PointFlag.Duplicate | PointFlag.Removed | PointFlag.Matched;
+  const validMask = PointFlag.Duplicate | PointFlag.Removed | PointFlag.Matched | PointFlag.Modis | PointFlag.Viirs;
 
   for (const [layer, expectedCount] of [
     [scene.raw, RAW_COUNT],
@@ -234,7 +234,7 @@ check("buildScene with Azerbaijan + 2,000 synthetic points validates typed array
 
   assert.equal(scene.raw.shapes[0], PointShape.HollowCircle);
   assert.equal(scene.raw.shapes[1], PointShape.Square);
-  assert.equal(scene.raw.flags[0], PointFlag.Duplicate | PointFlag.Removed);
+  assert.equal(scene.raw.flags[0], PointFlag.Duplicate | PointFlag.Removed | PointFlag.Modis);
   assert.equal(scene.harmonized.shapes[0], PointShape.Circle);
 });
 

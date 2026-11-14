@@ -246,7 +246,7 @@ function MapLabels({
       const name = c.isSelected
         ? selectedDisplayName
         : c.regionId
-          ? formatRegionName({ id: c.regionId, name: c.rawName }, lang)
+          ? ((lang === "tr" ? MAP_CONTEXT_NAMES_TR[c.code] : undefined) ?? formatRegionName({ id: c.regionId, name: c.rawName }, lang))
           : lang === "tr"
             ? (MAP_CONTEXT_NAMES_TR[c.code] ?? c.rawName)
             : c.rawName;

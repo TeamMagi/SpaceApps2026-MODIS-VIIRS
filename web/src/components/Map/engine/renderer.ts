@@ -17,6 +17,7 @@ import {
   type ScenePointInput,
   type ScenePoints,
   type ScenePointLayer,
+  type SensorFilter,
   type ViewTransform,
 } from "./types";
 
@@ -27,6 +28,8 @@ const VIEWPORT_MARGIN_PX = 12;
 const DUP_LINE_DASH: number[] = [2.5, 2];
 const SCRATCH_RADII = new Float64Array(8);
 const SCRATCH_PATHS: (Path2D | null)[] = [null, null, null, null, null, null, null, null];
+const SCRATCH_DIM_PATHS: Path2D[] = [];
+const SCRATCH_SELECTABLE_PATHS: Path2D[] = [];
 
 const DARK_DEFAULTS: MapPalette = {
   water: "#0a0c0f",
@@ -255,12 +258,10 @@ function buildPathFromRings(rings: readonly Float32Array[]): Path2D | null {
   return path;
 }
 
-function strokeAndFillRingsFallback(
+function fillRingsFallback(
   ctx: CanvasRenderingContext2D,
   rings: readonly Float32Array[],
   fillStyle: string,
-  strokeStyle: string,
-  lineWidth: number,
 ): void {
   if (rings.length === 0) return;
   ctx.beginPath();
@@ -276,9 +277,44 @@ function strokeAndFillRingsFallback(
   }
   ctx.fillStyle = fillStyle;
   ctx.fill();
+}
+
+function strokeRingsFallback(
+  ctx: CanvasRenderingContext2D,
+  rings: readonly Float32Array[],
+  strokeStyle: string,
+  lineWidth: number,
+): void {
+  if (rings.length === 0) return;
+  ctx.beginPath();
+  for (let r = 0; r < rings.length; r++) {
+    const coords = rings[r];
+    const len = coords.length;
+    if (len < 4) continue;
+    ctx.moveTo(coords[0], coords[1]);
+    for (let i = 2; i < len; i += 2) {
+      ctx.lineTo(coords[i], coords[i + 1]);
+    }
+    ctx.closePath();
+  }
   ctx.strokeStyle = strokeStyle;
   ctx.lineWidth = lineWidth;
   ctx.stroke();
+}
+
+export function pointMatchesSensorFilter(
+  flag: number,
+  shape: number,
+  filter?: SensorFilter | null,
+): boolean {
+  if (!filter || (filter.modis && filter.viirs)) return true;
+  if (!filter.modis && !filter.viirs) return false;
+  const sensorBits = flag & (PointFlag.Modis | PointFlag.Viirs);
+  if (sensorBits !== 0) {
+    const mask = (filter.modis ? PointFlag.Modis : 0) | (filter.viirs ? PointFlag.Viirs : 0);
+    return (sensorBits & mask) !== 0;
+  }
+  return shape === PointShape.HollowCircle ? filter.modis : filter.viirs;
 }
 
 function emptyPointLayer(): ScenePointLayer {
@@ -325,7 +361,7 @@ function buildRawLayer(
     buckets[i] = frpBucket(p.frp);
     shapes[i] = p.sensor === "MODIS" ? PointShape.HollowCircle : PointShape.Square;
 
-    let flag = PointFlag.None;
+    let flag = p.sensor === "MODIS" ? PointFlag.Modis : PointFlag.Viirs;
     const hId = p.harmonizedId;
     if (hId === null) {
       flag |= PointFlag.Duplicate | PointFlag.Removed;
@@ -382,7 +418,12 @@ function buildHarmonizedLayer(
     buckets[i] = frpBucket(p.frpCorrected);
     shapes[i] = PointShape.Circle;
 
-    let flag = PointFlag.None;
+    let flag =
+      p.source === HotspotSource.ModisOnly
+        ? PointFlag.Modis
+        : p.source === HotspotSource.ViirsOnly
+          ? PointFlag.Viirs
+          : PointFlag.Modis | PointFlag.Viirs;
     if (p.source === HotspotSource.Matched) {
       flag |= PointFlag.Duplicate | PointFlag.Matched;
     } else if ((rawCountByHarmId.get(p.id) ?? 0) > 1) {
@@ -419,6 +460,7 @@ const EMPTY_GEOMETRY: SceneGeometry = {
 
 interface ProjectedFeature {
   readonly selected: boolean;
+  readonly selectable: boolean;
   readonly rings: Float32Array[];
   readonly ringBounds: number[];
   readonly minX: number;
@@ -451,6 +493,7 @@ export function buildSceneGeometry(
   regionId: string,
   projection: RegionProjection | null | undefined,
   selectedFeatures?: ReadonlySet<number> | null,
+  selectableFeatures?: ReadonlySet<number> | null,
 ): SceneGeometry {
   if (!projection) return EMPTY_GEOMETRY;
 
@@ -474,6 +517,7 @@ export function buildSceneGeometry(
     const isSelected = selectedFeatures
       ? selectedFeatures.has(fIdx)
       : feature.regionId === regionId;
+    const isSelectable = !isSelected && Boolean(selectableFeatures?.has(fIdx));
     const targetRings = isSelected ? selectedRings : contextRings;
     const polygons = feature.polygons;
     const featureRings: Float32Array[] = [];
@@ -524,6 +568,7 @@ export function buildSceneGeometry(
 
     projected.push({
       selected: isSelected,
+      selectable: isSelectable,
       rings: featureRings,
       ringBounds: ringBoxes,
       minX: fMinX,
@@ -539,6 +584,7 @@ export function buildSceneGeometry(
 
   const sceneFeatures: SceneFeature[] = projected.map((f) => ({
     selected: f.selected,
+    selectable: f.selectable,
     rings: f.rings,
     ringBounds: Float32Array.from(f.ringBounds),
     minX: f.minX,
@@ -644,10 +690,17 @@ export function buildScene(
   points: ScenePointInput | null | undefined,
   projection: RegionProjection | null | undefined,
   selectedFeatures?: ReadonlySet<number> | null,
+  selectableFeatures?: ReadonlySet<number> | null,
 ): MapScene {
   return composeScene(
     regionId,
-    buildSceneGeometry(datasetOrFeatures, regionId, projection, selectedFeatures),
+    buildSceneGeometry(
+      datasetOrFeatures,
+      regionId,
+      projection,
+      selectedFeatures,
+      selectableFeatures,
+    ),
     buildScenePoints(points, projection),
   );
 }
@@ -663,12 +716,14 @@ function pointRadiusFor(
   zoomScale: number,
 ): number {
   if (!isHarmonized) {
-    const base = shape === PointShape.HollowCircle ? 3.6 : 2.8;
-    return clamp(base * zoomScale, 2, 8.5);
+    const base = shape === PointShape.HollowCircle ? 3.5 : 2.4;
+    return shape === PointShape.HollowCircle
+      ? clamp(base * zoomScale, 1.75, 7.5)
+      : clamp(base * zoomScale, 1.25, 5.8);
   }
   const b = clamp(bucket, 1, 8);
-  const base = 2.4 + (b - 1) * 0.52;
-  return clamp(base * zoomScale, 2, 9);
+  const base = 2.2 + (b - 1) * 0.48;
+  return clamp(base * zoomScale, 1.4, 8.5);
 }
 
 function drawHighlightedPoint(
@@ -769,7 +824,7 @@ export function drawFeatureHighlight(
   ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * tx, dpr * ty);
   ctx.lineJoin = "round";
   ctx.globalAlpha = HIGHLIGHT_FILL_ALPHA;
-  ctx.fillStyle = palette.land;
+  ctx.fillStyle = palette.landSelected;
   ctx.fill(path, "evenodd");
   ctx.globalAlpha = 1;
   ctx.strokeStyle = palette.borderSelected;
@@ -779,29 +834,79 @@ export function drawFeatureHighlight(
 }
 
 /**
- * Context outlines that intersect the viewport, at the coarsest level of detail that stays under
- * half a pixel of error, so a zoomed-out world view and a zoomed-in region both stay cheap to draw.
+ * Populates scratch lists of visible non-selected feature paths split into non-selectable (dim)
+ * and selectable (data-bearing) buckets at the coarsest LOD that stays within error budget.
  */
-function visibleContextPaths(
+function collectVisibleContextPaths(
   scene: MapScene,
   k: number,
   tx: number,
   ty: number,
   width: number,
   height: number,
-): Path2D[] {
+  selectableFeatures: ReadonlySet<number> | null | undefined,
+): void {
+  SCRATCH_DIM_PATHS.length = 0;
+  SCRATCH_SELECTABLE_PATHS.length = 0;
   const level = pickLodLevel(scene.lodTolerances, k);
   const minX = -tx / k;
   const minY = -ty / k;
   const maxX = (width - tx) / k;
   const maxY = (height - ty) / k;
-  const out: Path2D[] = [];
-  for (const f of scene.features) {
+  const { features } = scene;
+  for (let i = 0; i < features.length; i++) {
+    const f = features[i];
     if (f.selected || f.maxX < minX || f.minX > maxX || f.maxY < minY || f.minY > maxY) continue;
-    const path = level >= 0 ? f.lodPaths[level] : f.path;
-    if (path) out.push(path);
+    const path = (level >= 0 ? f.lodPaths[level] : null) ?? f.path;
+    if (!path) continue;
+    const isSelectable = selectableFeatures ? selectableFeatures.has(i) : Boolean(f.selectable);
+    if (isSelectable) {
+      SCRATCH_SELECTABLE_PATHS.push(path);
+    } else {
+      SCRATCH_DIM_PATHS.push(path);
+    }
   }
-  return out;
+}
+
+function strokeContextAndSelectedBorders(
+  ctx: CanvasRenderingContext2D,
+  scene: MapScene,
+  dpr: number,
+  k: number,
+  tx: number,
+  ty: number,
+  palette: MapPalette,
+): void {
+  ctx.save();
+  ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * tx, dpr * ty);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  const hasContextPaths = SCRATCH_DIM_PATHS.length > 0 || SCRATCH_SELECTABLE_PATHS.length > 0;
+  if (hasContextPaths) {
+    ctx.strokeStyle = palette.border;
+    ctx.lineWidth = 0.85 / k;
+    for (let i = 0; i < SCRATCH_DIM_PATHS.length; i++) ctx.stroke(SCRATCH_DIM_PATHS[i]);
+    for (let i = 0; i < SCRATCH_SELECTABLE_PATHS.length; i++) ctx.stroke(SCRATCH_SELECTABLE_PATHS[i]);
+  } else if (typeof Path2D === "undefined" && scene.contextRings.length > 0) {
+    strokeRingsFallback(ctx, scene.contextRings, palette.border, 0.85 / k);
+  }
+
+  if (scene.selectedPath) {
+    // Subtle dark/light casing beneath the primary border keeps coastlines legible over dense coastal hotspots.
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = palette.haloLight;
+    ctx.lineWidth = 2.4 / k;
+    ctx.stroke(scene.selectedPath);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = palette.borderSelected;
+    ctx.lineWidth = 1.4 / k;
+    ctx.stroke(scene.selectedPath);
+  } else if (scene.selectedRings.length > 0) {
+    strokeRingsFallback(ctx, scene.selectedRings, palette.borderSelected, 1.4 / k);
+  }
+
+  ctx.restore();
 }
 
 export function drawMap(
@@ -812,7 +917,10 @@ export function drawMap(
 ): DrawStats {
   const isHarmonized = view.harmonized ?? view.mode === "harmonized";
   const layer = isHarmonized ? scene.harmonized : scene.raw;
-  const total = layer.count;
+  const layerTotal = layer.count;
+  const sensorFilter = view.sensorFilter;
+  const filterAll = !sensorFilter || (sensorFilter.modis && sensorFilter.viirs);
+  const filterNone = Boolean(sensorFilter && !sensorFilter.modis && !sensorFilter.viirs);
 
   const dpr = clamp(
     view.dpr ?? (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
@@ -823,7 +931,7 @@ export function drawMap(
   const height = view.height ?? ctx.canvas.clientHeight;
 
   if (width <= 0 || height <= 0 || !Number.isFinite(width) || !Number.isFinite(height)) {
-    return { drawn: 0, inView: 0, total };
+    return { drawn: 0, inView: 0, total: filterNone ? 0 : layerTotal };
   }
 
   const targetW = Math.round(width * dpr);
@@ -834,6 +942,7 @@ export function drawMap(
   const k = view.transform ? view.transform.k : (view.k ?? 1);
   const tx = view.transform ? view.transform.tx : (view.tx ?? 0);
   const ty = view.transform ? view.transform.ty : (view.ty ?? 0);
+  const hasValidTransform = k > 0 && Number.isFinite(k) && Number.isFinite(tx) && Number.isFinite(ty);
 
   const palette = isPaletteObject(theme) ? theme : readPalette(ctx.canvas, theme);
 
@@ -844,58 +953,61 @@ export function drawMap(
   ctx.rect(0, 0, width, height);
   ctx.clip();
 
-  if (k > 0 && Number.isFinite(k) && Number.isFinite(tx) && Number.isFinite(ty)) {
+  if (hasValidTransform) {
     ctx.save();
     ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * tx, dpr * ty);
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
 
-    const contextPaths = visibleContextPaths(scene, k, tx, ty, width, height);
-    if (contextPaths.length > 0) {
+    collectVisibleContextPaths(scene, k, tx, ty, width, height, view.selectableFeatures);
+    if (SCRATCH_DIM_PATHS.length > 0) {
       ctx.fillStyle = palette.landDim;
-      for (let i = 0; i < contextPaths.length; i++) ctx.fill(contextPaths[i]);
-      ctx.strokeStyle = palette.border;
-      ctx.lineWidth = 0.85 / k;
-      for (let i = 0; i < contextPaths.length; i++) ctx.stroke(contextPaths[i]);
-    } else if (typeof Path2D === "undefined" && scene.contextRings.length > 0) {
-      strokeAndFillRingsFallback(
-        ctx,
-        scene.contextRings,
-        palette.landDim,
-        palette.border,
-        0.85 / k,
-      );
+      for (let i = 0; i < SCRATCH_DIM_PATHS.length; i++) ctx.fill(SCRATCH_DIM_PATHS[i]);
+    }
+    if (SCRATCH_SELECTABLE_PATHS.length > 0) {
+      ctx.fillStyle = palette.land;
+      for (let i = 0; i < SCRATCH_SELECTABLE_PATHS.length; i++) ctx.fill(SCRATCH_SELECTABLE_PATHS[i]);
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = palette.landSelected;
+      for (let i = 0; i < SCRATCH_SELECTABLE_PATHS.length; i++) ctx.fill(SCRATCH_SELECTABLE_PATHS[i]);
+      ctx.globalAlpha = 1;
+    }
+    if (
+      SCRATCH_DIM_PATHS.length === 0 &&
+      SCRATCH_SELECTABLE_PATHS.length === 0 &&
+      typeof Path2D === "undefined" &&
+      scene.contextRings.length > 0
+    ) {
+      fillRingsFallback(ctx, scene.contextRings, palette.landDim);
     }
 
     if (scene.selectedPath) {
       ctx.fillStyle = palette.landSelected;
       ctx.fill(scene.selectedPath);
-      ctx.strokeStyle = palette.borderSelected;
-      ctx.lineWidth = 1.6 / k;
-      ctx.stroke(scene.selectedPath);
     } else if (scene.selectedRings.length > 0) {
-      strokeAndFillRingsFallback(
-        ctx,
-        scene.selectedRings,
-        palette.landSelected,
-        palette.borderSelected,
-        1.6 / k,
-      );
+      fillRingsFallback(ctx, scene.selectedRings, palette.landSelected);
     }
 
     ctx.restore();
   }
 
-  if (total === 0 || k <= 0 || !Number.isFinite(k)) {
+  if (layerTotal === 0 || !hasValidTransform || filterNone) {
+    if (hasValidTransform) {
+      strokeContextAndSelectedBorders(ctx, scene, dpr, k, tx, ty, palette);
+    }
+    SCRATCH_DIM_PATHS.length = 0;
+    SCRATCH_SELECTABLE_PATHS.length = 0;
     ctx.restore();
-    return { drawn: 0, inView: 0, total };
+    return { drawn: 0, inView: 0, total: 0 };
   }
 
   const spanX = Math.max(scene.bounds.maxX - scene.bounds.minX, 1e-6);
   const spanY = Math.max(scene.bounds.maxY - scene.bounds.minY, 1e-6);
   const refFitK = Math.min(width / spanX, height / spanY);
-  const zoomRatio = refFitK > 0 ? Math.max(0.5, k / refFitK) : 1;
-  const zoomScale = clamp(Math.pow(zoomRatio, 0.2), 0.85, 2.2);
+  const zoomRatio = refFitK > 0 ? Math.max(0.4, k / refFitK) : 1;
+  // Smaller markers at country-level zoom (zoomRatio ~ 1) that grow smoothly as the user zooms in.
+  const zoomScale = clamp(0.62 * Math.pow(zoomRatio, 0.38), 0.48, 2.1);
+  const rawZoomT = clamp(Math.log2(Math.max(1, zoomRatio)) / 4, 0, 1);
 
   const minPlaneX = (-VIEWPORT_MARGIN_PX - tx) / k;
   const maxPlaneX = (width + VIEWPORT_MARGIN_PX - tx) / k;
@@ -903,8 +1015,13 @@ export function drawMap(
   const maxPlaneY = (height + VIEWPORT_MARGIN_PX - ty) / k;
 
   const { xs, ys, buckets, shapes, flags } = layer;
+  let visibleTotal = 0;
   let inView = 0;
-  for (let i = 0; i < total; i++) {
+  for (let i = 0; i < layerTotal; i++) {
+    if (!filterAll && !pointMatchesSensorFilter(flags[i], shapes[i], sensorFilter)) {
+      continue;
+    }
+    visibleTotal++;
     const px = xs[i];
     const py = ys[i];
     if (px >= minPlaneX && px <= maxPlaneX && py >= minPlaneY && py <= maxPlaneY) {
@@ -925,17 +1042,21 @@ export function drawMap(
       const rModis = pointRadiusFor(1, PointShape.HollowCircle, false, zoomScale);
       const rViirs = pointRadiusFor(1, PointShape.Square, false, zoomScale);
       const sideViirs = rViirs * 2;
-      const rDup = clamp(rModis + 3.0, 4.5, 9);
-
-      const modisPath = hasPath2D ? new Path2D() : null;
-      const viirsPath = hasPath2D ? new Path2D() : null;
+      const rDup = clamp(rModis + 2.4, 3.6, 8);
+      const viirsAlpha = 0.28 + 0.5 * rawZoomT;
+      const modisAlpha = 0.36 + 0.48 * rawZoomT;
       const dupPath = showDupRings && hasPath2D ? new Path2D() : null;
-      let hasModis = false;
-      let hasViirs = false;
       let hasDup = false;
 
-      // Deterministic Bresenham index-stride sampling guarantees exactly `maxDrawn` evenly spaced points when `inView > maxDrawn`.
-      for (let i = 0; i < total; i++) {
+      ctx.fillStyle = palette.viirs;
+      ctx.strokeStyle = palette.modis;
+      ctx.lineWidth = clamp(0.95 * zoomScale, 0.85, 1.5);
+
+      // Draw each Raw marker individually with low alpha so overlapping detections accumulate density.
+      for (let i = 0; i < layerTotal; i++) {
+        if (!filterAll && !pointMatchesSensorFilter(flags[i], shapes[i], sensorFilter)) {
+          continue;
+        }
         const px = xs[i];
         const py = ys[i];
         if (px < minPlaneX || px > maxPlaneX || py < minPlaneY || py > maxPlaneY) {
@@ -961,68 +1082,23 @@ export function drawMap(
         }
 
         if (shapes[i] === PointShape.HollowCircle) {
-          hasModis = true;
-          if (modisPath) {
-            modisPath.moveTo(sx + rModis, sy);
-            modisPath.arc(sx, sy, rModis, 0, TAU);
-          }
+          ctx.globalAlpha = modisAlpha;
+          ctx.beginPath();
+          ctx.arc(sx, sy, rModis, 0, TAU);
+          ctx.stroke();
         } else {
-          hasViirs = true;
-          if (viirsPath) {
-            viirsPath.rect(sx - rViirs, sy - rViirs, sideViirs, sideViirs);
-          }
+          ctx.globalAlpha = viirsAlpha;
+          ctx.fillRect(sx - rViirs, sy - rViirs, sideViirs, sideViirs);
         }
       }
 
-      if (hasViirs) {
-        ctx.fillStyle = palette.viirs;
-        if (viirsPath) {
-          ctx.fill(viirsPath);
-        } else {
-          ctx.beginPath();
-          let vIdx = 0;
-          for (let i = 0; i < total; i++) {
-            const px = xs[i];
-            const py = ys[i];
-            if (px < minPlaneX || px > maxPlaneX || py < minPlaneY || py > maxPlaneY) continue;
-            const curVis = vIdx++;
-            if (needsStride && Math.floor(((curVis + 1) * maxDrawn) / inView) === Math.floor((curVis * maxDrawn) / inView)) continue;
-            if (shapes[i] !== PointShape.HollowCircle) {
-              ctx.rect(px * k + tx - rViirs, py * k + ty - rViirs, sideViirs, sideViirs);
-            }
-          }
-          ctx.fill();
-        }
-      }
-      if (hasModis) {
-        ctx.strokeStyle = palette.modis;
-        ctx.lineWidth = clamp(1.4 * zoomScale, 1.2, 2.2);
-        if (modisPath) {
-          ctx.stroke(modisPath);
-        } else {
-          ctx.beginPath();
-          let vIdx = 0;
-          for (let i = 0; i < total; i++) {
-            const px = xs[i];
-            const py = ys[i];
-            if (px < minPlaneX || px > maxPlaneX || py < minPlaneY || py > maxPlaneY) continue;
-            const curVis = vIdx++;
-            if (needsStride && Math.floor(((curVis + 1) * maxDrawn) / inView) === Math.floor((curVis * maxDrawn) / inView)) continue;
-            if (shapes[i] === PointShape.HollowCircle) {
-              const sx = px * k + tx;
-              const sy = py * k + ty;
-              ctx.moveTo(sx + rModis, sy);
-              ctx.arc(sx, sy, rModis, 0, TAU);
-            }
-          }
-          ctx.stroke();
-        }
-      }
+      ctx.globalAlpha = 1;
       if (hasDup && dupPath) {
         ctx.save();
+        ctx.globalAlpha = 0.7;
         ctx.setLineDash(DUP_LINE_DASH);
         ctx.strokeStyle = palette.duplicateRing;
-        ctx.lineWidth = 1.15;
+        ctx.lineWidth = 1.05;
         ctx.stroke(dupPath);
         ctx.restore();
       }
@@ -1034,7 +1110,10 @@ export function drawMap(
       const dupPath = showDupRings && hasPath2D ? new Path2D() : null;
       let hasDup = false;
 
-      for (let i = 0; i < total; i++) {
+      for (let i = 0; i < layerTotal; i++) {
+        if (!filterAll && !pointMatchesSensorFilter(flags[i], shapes[i], sensorFilter)) {
+          continue;
+        }
         const px = xs[i];
         const py = ys[i];
         if (px < minPlaneX || px > maxPlaneX || py < minPlaneY || py > maxPlaneY) {
@@ -1069,7 +1148,7 @@ export function drawMap(
 
         if (showDupRings && (flags[i] & PointFlag.Duplicate) !== 0) {
           hasDup = true;
-          const rDup = clamp(r + 3.0, 4.5, 9);
+          const rDup = clamp(r + 2.4, 3.6, 8);
           if (dupPath) {
             dupPath.moveTo(sx + rDup, sy);
             dupPath.arc(sx, sy, rDup, 0, TAU);
@@ -1078,7 +1157,7 @@ export function drawMap(
       }
 
       ctx.strokeStyle = palette.haloLight;
-      ctx.lineWidth = 0.75;
+      ctx.lineWidth = clamp(0.6 * zoomScale, 0.45, 0.85);
       for (let bIdx = 0; bIdx < 8; bIdx++) {
         const path = SCRATCH_PATHS[bIdx];
         SCRATCH_PATHS[bIdx] = null;
@@ -1090,14 +1169,20 @@ export function drawMap(
 
       if (hasDup && dupPath) {
         ctx.save();
+        ctx.globalAlpha = 0.7;
         ctx.setLineDash(DUP_LINE_DASH);
         ctx.strokeStyle = palette.duplicateRing;
-        ctx.lineWidth = 1.15;
+        ctx.lineWidth = 1.05;
         ctx.stroke(dupPath);
         ctx.restore();
       }
     }
   }
+
+  // Draw coastlines and country borders ABOVE the point layer so geography stays legible.
+  strokeContextAndSelectedBorders(ctx, scene, dpr, k, tx, ty, palette);
+  SCRATCH_DIM_PATHS.length = 0;
+  SCRATCH_SELECTABLE_PATHS.length = 0;
 
   const resolvedHoveredIdx =
     view.hoveredIndex !== undefined && view.hoveredIndex !== null
@@ -1113,7 +1198,12 @@ export function drawMap(
         ? (layer.indexById.get(view.selectedId) ?? -1)
         : -1;
 
-  if (resolvedHoveredIdx >= 0 && resolvedHoveredIdx !== resolvedSelectedIdx) {
+  if (
+    resolvedHoveredIdx >= 0 &&
+    resolvedHoveredIdx < layerTotal &&
+    resolvedHoveredIdx !== resolvedSelectedIdx &&
+    (filterAll || pointMatchesSensorFilter(flags[resolvedHoveredIdx], shapes[resolvedHoveredIdx], sensorFilter))
+  ) {
     drawHighlightedPoint(
       ctx,
       layer,
@@ -1128,7 +1218,11 @@ export function drawMap(
     );
   }
 
-  if (resolvedSelectedIdx >= 0) {
+  if (
+    resolvedSelectedIdx >= 0 &&
+    resolvedSelectedIdx < layerTotal &&
+    (filterAll || pointMatchesSensorFilter(flags[resolvedSelectedIdx], shapes[resolvedSelectedIdx], sensorFilter))
+  ) {
     drawHighlightedPoint(
       ctx,
       layer,
@@ -1144,5 +1238,5 @@ export function drawMap(
   }
 
   ctx.restore();
-  return { drawn, inView, total };
+  return { drawn, inView, total: visibleTotal };
 }

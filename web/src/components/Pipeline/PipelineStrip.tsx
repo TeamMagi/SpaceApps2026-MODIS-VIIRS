@@ -1,5 +1,5 @@
 /**
- * PipelineStrip — the 7 harmonization steps (Zeigarnik: empty in Raw, fills on harmonize).
+ * PipelineStrip — the 6 applied harmonization steps (Zeigarnik: empty in Raw, fills on harmonize).
  *
  * Uses real stage removal counts: stages from /api/points when a period is filtered on the map,
  * and archive-wide interscan_removed / matched from /api/series.
@@ -10,8 +10,6 @@ import { PIPELINE_COPY } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import {
   APPLIED_PIPELINE_ORDER,
-  isPlannedStage,
-  PIPELINE_ORDER,
   useHarmonizeTransition,
 } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
@@ -69,6 +67,17 @@ export default function PipelineStrip() {
     canShowTotals
       ? t("pipelineSplit", { dedup: fmt.signed(-dedupRemoved), fleet: fmt.signed(-fleetRemoved), match: fmt.signed(-matchRemoved) })
       : null;
+  const shortCount =
+    litNodes === PIPELINE_NODE_COUNT
+      ? t("pipelineCountShortDone")
+      : t("pipelineCountShort", { n: litNodes });
+  const compactSummary = canShowTotals
+    ? t("pipelineSummaryCompact", {
+        count: shortCount,
+        removed: fmt.signed(-totalRemoved),
+      })
+    : null;
+  const summaryTitle = totalStatus ? (split ? `${totalStatus} — ${split}` : totalStatus) : undefined;
 
   const pulseSeconds = reduceMotion ? 0 : Math.min(0.28, (durations.merge || 200) / 1000);
   const fadeSeconds = reduceMotion ? 0.15 : 0.16;
@@ -76,18 +85,15 @@ export default function PipelineStrip() {
   return (
     <div className={styles.strip}>
       <ol className={styles.nodes} role="list" aria-label={t("pipelineLabel")}>
-        {PIPELINE_ORDER.map((key, index) => {
-          const planned = isPlannedStage(key);
-          const appliedIndex = APPLIED_PIPELINE_ORDER.indexOf(key);
-          const lit = !planned && appliedIndex >= 0 && appliedIndex < litNodes;
-          const active = !planned && key === activeStage;
+        {APPLIED_PIPELINE_ORDER.map((key, index) => {
+          const lit = index < litNodes;
+          const active = key === activeStage;
           return (
             <li
               key={key}
               className={styles.node}
               data-lit={lit}
               data-active={active}
-              data-planned={planned ? "true" : undefined}
             >
               {index > 0 && (
                 <span className={styles.connector} aria-hidden="true">
@@ -104,16 +110,13 @@ export default function PipelineStrip() {
               </motion.span>
               <span className={styles.labels}>
                 <span className={styles.name}>{t(PIPELINE_COPY[key].name)}</span>
-                <span className={styles.tech}>
-                  {t(PIPELINE_COPY[key].tech)}
-                  {planned && <span className={styles.plannedBadge}>{t("pipelinePlannedBadge")}</span>}
-                </span>
+                <span className={styles.tech}>{t(PIPELINE_COPY[key].tech)}</span>
                 <AnimatePresence>
                   {active && activeStatus && (
                     <motion.span
                       key={key}
                       className={styles.nodeProgress}
-                      data-align={index >= 5 ? "end" : "start"}
+                      data-align={index >= 4 ? "end" : "start"}
                       initial={{ opacity: 0, y: reduceMotion ? 0 : -2 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: reduceMotion ? 0 : -2 }}
@@ -129,18 +132,18 @@ export default function PipelineStrip() {
         })}
       </ol>
       <div className={styles.meta}>
-        {totalStatus && (
-          <span className={styles.status}>
-            {totalStatus}
-            {split && <span className={styles.split}>{split}</span>}
+        {compactSummary ? (
+          <span className={styles.summary} title={summaryTitle}>
+            {compactSummary}
           </span>
+        ) : (
+          <span className={styles.count}>{count}</span>
         )}
         {nrt.status === "ready" && nrt.stats && (
           <span className={styles.nrtMeta}>
             {t("nrtTransactions", { n: nrt.stats.pipeline.transactionsSpent })}
           </span>
         )}
-        <span className={styles.count}>{count}</span>
         <span className="sr-only" aria-live="polite">
           {announced}
         </span>

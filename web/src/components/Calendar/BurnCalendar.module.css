@@ -12,24 +12,36 @@
   border-radius: var(--radius-xl);
 }
 
-.calendar[data-loading="true"] .wheelWrap,
-.calendar[data-loading="true"] .histogramWrap {
+.calendar[data-loading="true"] .wheelWrap {
   opacity: 0.72;
 }
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-1);
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .title {
   color: var(--color-text);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.sliceHint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2xs);
   line-height: var(--line-height-tight);
 }
 
@@ -198,7 +210,7 @@
 }
 
 .monthLabel {
-  fill: var(--color-text-muted);
+  fill: var(--color-text-secondary);
   font-size: 12.25px;
   font-weight: var(--font-weight-regular);
   pointer-events: none;
@@ -215,15 +227,19 @@
 
 .centerYear {
   fill: var(--color-text);
-  font-size: 23px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
 
+.centerYear[data-long="true"] {
+  font-size: var(--font-size-lg);
+}
+
 .centerCount {
   fill: var(--color-text-secondary);
-  font-size: 10.5px;
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
@@ -293,30 +309,33 @@
 .playPill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 24px;
-  padding: 2px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--color-accent-dim);
-  border: var(--border-width) solid var(--color-accent);
-  color: var(--color-accent);
+  gap: var(--space-half);
+  min-height: 22px;
+  padding: 2px var(--space-1);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-2xs);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
   line-height: 1;
   white-space: nowrap;
   transition:
     background-color var(--dur-ui) var(--ease-standard),
-    color var(--dur-ui) var(--ease-standard);
+    color var(--dur-ui) var(--ease-standard),
+    border-color var(--dur-ui) var(--ease-standard);
 }
 
 .playPill:hover:not(:disabled) {
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  background: var(--color-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
 }
 
 .playPill[aria-pressed="true"] {
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  background: var(--color-active);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
 }
 
 .playPill:focus-visible {
@@ -337,127 +356,11 @@
   color: var(--color-text-secondary);
   font-size: var(--font-size-2xs);
   font-variant-numeric: tabular-nums;
-  line-height: var(--line-height-tight);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: var(--line-height-snug);
+  text-wrap: balance;
 }
 
-/* --- Compact Multi-Year Histogram ----------------------------------------- */
-
-.histogramWrap {
-  flex-shrink: 0;
-  width: 100%;
-  padding-top: 2px;
-  transition: opacity var(--dur-ui) var(--ease-standard);
-}
-
-.histogramBars {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  align-items: end;
-  gap: 2px;
-  width: 100%;
-}
-
-.histCol {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-}
-
-.histCliffLine {
-  position: absolute;
-  top: -2px;
-  bottom: 13px;
-  left: -1px;
-  width: 0;
-  border-left: 1.5px dashed var(--color-accent);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.histBarBtn {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  width: 100%;
-  height: 26px;
-  padding: 0;
-  border-radius: 2px;
-  background: transparent;
-}
-
-.histBarFill {
-  display: block;
-  width: 100%;
-  height: var(--bar-h, 12%);
-  min-height: 3px;
-  border-radius: 2px;
-  background-color: var(--bar-raw);
-  transition:
-    height var(--run-merge, var(--dur-merge)) var(--ease-standard),
-    background-color var(--run-merge, var(--dur-merge)) var(--ease-standard);
-}
-
-.calendar[data-harmonized="true"] .histBarFill {
-  background-color: var(--bar-harm, var(--bar-raw));
-}
-
-.histBarBtn[data-partial="true"] .histBarFill {
-  opacity: 0.78;
-}
-
-.histBarBtn:hover .histBarFill {
-  outline: 1px solid var(--color-focus);
-  outline-offset: 0;
-}
-
-.histBarBtn:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-.histBarBtn[data-active="true"] .histBarFill {
-  outline: 1.5px solid var(--color-text);
-  outline-offset: 0;
-  z-index: 1;
-}
-
-.histTick {
-  display: block;
-  height: 12px;
-  margin-top: 2px;
-  color: var(--color-text-muted);
-  font-size: 9.5px;
-  line-height: 12px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  user-select: none;
-}
-
-.histTick[data-cliff="true"] {
-  color: var(--color-accent);
-  font-weight: var(--font-weight-semibold);
-}
-
-.histTick[data-active="true"] {
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
-}
-
-.histCol:first-child .histTick {
-  align-self: flex-start;
-}
-
-.histCol:last-child .histTick {
-  align-self: flex-end;
-}
-
-/* --- Footer Legend & Hint ------------------------------------------------- */
+/* --- Footer Legend -------------------------------------------------------- */
 
 .footerBar {
   display: flex;
@@ -510,11 +413,6 @@
   background: var(--anom-pos-2);
 }
 
-.sliceHint {
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
-
 @media (pointer: coarse) {
   .retry {
     min-width: 44px;
@@ -559,18 +457,6 @@
     justify-content: center;
     gap: var(--space-1);
   }
-
-  .detailLine {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    text-wrap: balance;
-    line-height: var(--line-height-snug);
-  }
-
-  .histBarBtn {
-    height: 34px;
-  }
 }
 
 @media (min-width: 1024px) {
@@ -588,9 +474,5 @@
   .wheelSvg {
     max-width: 310px;
     max-height: 100%;
-  }
-
-  .histBarBtn {
-    height: 32px;
   }
 }

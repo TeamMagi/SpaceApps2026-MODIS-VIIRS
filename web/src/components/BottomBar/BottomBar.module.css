@@ -11,17 +11,6 @@
   min-width: 0;
 }
 
-.link {
-  color: var(--color-text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color var(--dur-ui) var(--ease-standard);
-}
-
-.link:hover {
-  color: var(--color-text);
-}
-
 .actions {
   display: flex;
   flex-direction: column;
@@ -60,12 +49,17 @@
 
 .action {
   color: var(--color-text-secondary);
+  border-color: var(--color-border);
 }
 
-.action:hover,
+.action:hover:not(:disabled),
 .primary:hover {
   background: var(--color-hover);
   color: var(--color-text);
+}
+
+.action:disabled {
+  color: var(--color-text-disabled);
 }
 
 .action[data-copied="true"] {
@@ -77,13 +71,6 @@
   background: var(--color-active);
   color: var(--color-text);
   font-weight: var(--font-weight-medium);
-}
-
-.file {
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-2xs);
-  overflow-wrap: anywhere;
 }
 
 @media (min-width: 1024px) {

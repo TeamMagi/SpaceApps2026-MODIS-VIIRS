@@ -24,7 +24,7 @@ const UNIQUE_TOKEN = "\u0000UNIQUE\u0000";
 export default function CountDelta() {
   const { t, fmt } = useCopy();
   const revealAnswer = useHarmonizeTransition((v) => v.revealAnswer);
-  const { status, hasData, error, retry, totals } = useRegionData();
+  const { status, hasData, error, retry, totals, firstYear, lastYear } = useRegionData();
   const { bbox } = useMapPoints();
   const nrt = useNrtData(bbox);
   const reduceMotion = useReducedMotion();
@@ -86,9 +86,15 @@ export default function CountDelta() {
     );
   }
 
+  const scopeLabel =
+    firstYear !== null && lastYear !== null
+      ? t("countScopeRange", { first: String(firstYear), last: String(lastYear) })
+      : t("countScopeAll");
+
   if (!revealAnswer) {
     return (
       <div className={styles.count}>
+        <p className={styles.scope}>{scopeLabel}</p>
         <p className={styles.summary}>{t("countRawSummary", { raw: totals.raw })}</p>
         <p className={styles.subline}>{t("countRawSubline", { modis: totals.modis, viirs: totals.viirs })}</p>
       </div>
@@ -96,7 +102,11 @@ export default function CountDelta() {
   }
 
   const summaryTemplate = t("countSummary", { raw: fmt.number(totals.raw), unique: UNIQUE_TOKEN });
-  const [summaryPrefix, summarySuffix = ""] = summaryTemplate.split(UNIQUE_TOKEN);
+  const arrowIndex = summaryTemplate.indexOf("→");
+  const hasArrow = arrowIndex !== -1;
+  const rawSide = hasArrow ? summaryTemplate.slice(0, arrowIndex).trimEnd() : "";
+  const harmonizedSide = hasArrow ? summaryTemplate.slice(arrowIndex).trimStart() : summaryTemplate;
+  const [summaryPrefix, summarySuffix = ""] = harmonizedSide.split(UNIQUE_TOKEN);
 
   return (
     <div className={styles.anchor}>
@@ -108,10 +118,14 @@ export default function CountDelta() {
         title={t("countOpenReceipt")}
         onClick={() => toggleDrawer("receipt")}
       >
+        <span className={styles.scope}>{scopeLabel}</span>
         <span className={styles.summary}>
-          {summaryPrefix}
-          <span ref={uniqueRef} className={styles.unique} />
-          {summarySuffix}
+          {hasArrow && <span className={styles.summaryUnit}>{rawSide}</span>}
+          <span className={styles.summaryUnit}>
+            {summaryPrefix}
+            <span ref={uniqueRef} className={styles.unique} />
+            {summarySuffix}
+          </span>
         </span>
         <span className={styles.subline}>
           {t("countSubline", { dup: totals.doubleCounts, pct: fmt.percent(totals.doubleCountShare) })}

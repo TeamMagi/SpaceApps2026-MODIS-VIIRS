@@ -27,9 +27,16 @@ export const PointFlag = {
   Duplicate: 1,
   Removed: 2,
   Matched: 4,
+  Modis: 8,
+  Viirs: 16,
 } as const;
 
 export type PointFlag = (typeof PointFlag)[keyof typeof PointFlag];
+
+export interface SensorFilter {
+  readonly modis: boolean;
+  readonly viirs: boolean;
+}
 
 export interface PointSpatialIndex {
   readonly count: number;
@@ -76,6 +83,8 @@ export interface SceneFeature {
   readonly path: Path2D | null;
   /** Drawn from the full-detail selected path rather than as context. */
   readonly selected: boolean;
+  /** True when the feature maps to a selectable archive region with data. */
+  readonly selectable?: boolean;
   /** Simplified outlines, index-aligned with the scene's `lodTolerances`; empty for selected features. */
   readonly lodPaths: readonly (Path2D | null)[];
 }
@@ -144,6 +153,8 @@ export interface DrawMapView {
   readonly harmonized?: boolean;
   readonly mode?: ViewMode;
   readonly showDuplicateRings?: boolean;
+  readonly sensorFilter?: SensorFilter | null;
+  readonly selectableFeatures?: ReadonlySet<number> | null;
   readonly hoveredIndex?: number | null;
   readonly selectedIndex?: number | null;
   readonly hoveredId?: string | null;

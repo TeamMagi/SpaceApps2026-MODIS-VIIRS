@@ -4,6 +4,7 @@ import type {
   ActivePhase,
   DrawerId,
   Lang,
+  MonthCell,
   MonthRef,
   Phase,
   PhaseDurations,
@@ -11,6 +12,41 @@ import type {
   Theme,
   ViewMode,
 } from "../types";
+
+/**
+ * Resolves which month to select on the map when jumping to `year`:
+ * keeps `currentMonth` if it has data in `year`, otherwise picks the month in `year`
+ * with the most detections (using `harmonizedCount` only when `harmonized` is true).
+ */
+export function resolveMonthForYear(params: {
+  year: number;
+  months: readonly MonthCell[];
+  currentMonth: number | null;
+  harmonized: boolean;
+}): MonthRef | null {
+  const { year, months, currentMonth, harmonized } = params;
+  const yearCells = months.filter((c) => c.year === year && c.hasData);
+  if (yearCells.length === 0) return null;
+
+  if (currentMonth !== null) {
+    const matching = yearCells.find((c) => c.month === currentMonth);
+    if (matching) {
+      return { year, month: matching.month };
+    }
+  }
+
+  let best = yearCells[0];
+  let bestCount = harmonized ? best.harmonizedCount : best.rawCount;
+  for (let i = 1; i < yearCells.length; i++) {
+    const cell = yearCells[i];
+    const count = harmonized ? cell.harmonizedCount : cell.rawCount;
+    if (count > bestCount) {
+      best = cell;
+      bestCount = count;
+    }
+  }
+  return { year, month: best.month };
+}
 
 /** One Raw <-> Harmonized run, written by the transition clock (hooks/useHarmonizeTransition). */
 export interface TransitionRun {
@@ -49,6 +85,8 @@ export interface AppState {
   lang: Lang;
   theme: Theme;
   selectedMonth: MonthRef | null;
+  calendarYear: number | null;
+  yearPlaying: boolean;
   openDrawer: DrawerId | null;
   presentation: boolean;
   nrtDays: number;
@@ -61,6 +99,9 @@ export interface AppState {
   selectMonth: (month: MonthRef | null) => void;
   /** Selects the month, or clears the selection when it is already selected. */
   toggleMonth: (month: MonthRef) => void;
+  setCalendarYear: (year: number | null) => void;
+  setYearPlaying: (playing: boolean) => void;
+  stopYearPlayback: () => void;
   showDrawer: (id: DrawerId) => void;
   closeDrawer: () => void;
   toggleDrawer: (id: DrawerId) => void;
@@ -128,6 +169,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   lang: initialUrl.lang ?? "en",
   theme: typeof window === "undefined" ? "dark" : readStoredTheme(),
   selectedMonth: initialUrl.month ?? null,
+  calendarYear: initialUrl.month?.year ?? null,
+  yearPlaying: false,
   openDrawer: null,
   presentation: false,
   nrtDays: 2,
@@ -135,7 +178,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   setRegion: (region) => {
     const state = get();
     if (state.region === region) return;
-    set({ region, selectedMonth: null, ...snapped(state) });
+    set({ region, selectedMonth: null, calendarYear: null, yearPlaying: false, ...snapped(state) });
   },
   toggleMode: () => set((s) => ({ targetMode: s.targetMode === "raw" ? "harmonized" : "raw" })),
   setLang: (lang) => {
@@ -144,12 +187,24 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({ lang, ...snapped(state) });
   },
   setTheme: (theme) => set({ theme }),
-  selectMonth: (month) => set({ selectedMonth: month }),
+  selectMonth: (month) =>
+    set((s) => ({
+      selectedMonth: month,
+      calendarYear: month ? month.year : s.calendarYear,
+    })),
   toggleMonth: (month) =>
     set((s) => ({
       selectedMonth:
         s.selectedMonth && s.selectedMonth.year === month.year && s.selectedMonth.month === month.month ? null : month,
+      calendarYear: month.year,
     })),
+  setCalendarYear: (calendarYear) => set({ calendarYear }),
+  setYearPlaying: (yearPlaying) => {
+    if (get().yearPlaying !== yearPlaying) set({ yearPlaying });
+  },
+  stopYearPlayback: () => {
+    if (get().yearPlaying) set({ yearPlaying: false });
+  },
   showDrawer: (id) => set({ openDrawer: id }),
   closeDrawer: () => set({ openDrawer: null }),
   toggleDrawer: (id) => set((s) => ({ openDrawer: s.openDrawer === id ? null : id })),
@@ -160,15 +215,28 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const state = get();
     const nextRegion = url.region ?? state.region;
     const regionChanged = nextRegion !== state.region;
+    const nextSelectedMonth =
+      url.month !== undefined
+        ? url.month
+        : regionChanged
+          ? null
+          : state.selectedMonth;
+    const nextCalendarYear =
+      url.month !== undefined
+        ? url.month
+          ? url.month.year
+          : regionChanged
+            ? null
+            : state.calendarYear
+        : regionChanged
+          ? null
+          : state.calendarYear;
     set({
       region: nextRegion,
       lang: url.lang ?? state.lang,
-      selectedMonth:
-        url.month !== undefined
-          ? url.month
-          : regionChanged
-            ? null
-            : state.selectedMonth,
+      selectedMonth: nextSelectedMonth,
+      calendarYear: nextCalendarYear,
+      yearPlaying: regionChanged ? false : state.yearPlaying,
       ...snapped(state, url.mode ?? state.targetMode),
     });
   },

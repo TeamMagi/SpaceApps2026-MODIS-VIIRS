@@ -36,6 +36,7 @@ import {
   composeScene,
   drawFeatureHighlight,
   drawMap,
+  pointMatchesSensorFilter,
   readPalette,
 } from "./engine/renderer";
 import {
@@ -50,7 +51,7 @@ import { planeToScreen, screenToPlane } from "./engine/viewport";
 import MapControls from "./MapControls";
 import MapCountryTooltip from "./MapCountryTooltip";
 import MapLabels from "./MapLabels";
-import MapLegend from "./MapLegend";
+import MapLegend, { type SensorFilter } from "./MapLegend";
 import MapStateOverlay from "./MapStateOverlay";
 import MapStatusBar from "./MapStatusBar";
 import PointDetail, { formatPointAnnouncement } from "./PointDetail";
@@ -66,6 +67,7 @@ const COUNTRY_CLICK_MAX_MOVE_PX = 4;
 const TOOLTIP_OFFSET_X_PX = 14;
 const TOOLTIP_OFFSET_Y_PX = 16;
 const TOOLTIP_EDGE_PX = 8;
+const DEFAULT_SENSOR_FILTER: SensorFilter = { modis: true, viirs: true };
 
 function readDpr(): number {
   return typeof window !== "undefined" &&
@@ -87,11 +89,14 @@ function HotspotMap() {
   const setRegion = useAppStore((state) => state.setRegion);
   const points = useMapPoints();
   const geo = useGeoDataset();
-  const { geometryHarmonized, showDuplicateRings, revealAnswer } = useHarmonizeTransition((v) => ({
-    geometryHarmonized: v.geometryHarmonized,
-    showDuplicateRings: v.showDuplicateRings,
-    revealAnswer: v.revealAnswer,
-  }));
+  const { mode, targetMode, geometryHarmonized, showDuplicateRings, revealAnswer } =
+    useHarmonizeTransition((v) => ({
+      mode: v.mode,
+      targetMode: v.targetMode,
+      geometryHarmonized: v.geometryHarmonized,
+      showDuplicateRings: v.showDuplicateRings,
+      revealAnswer: v.revealAnswer,
+    }));
   const selectedMonth = useAppStore((state) => state.selectedMonth);
   const selectMonth = useAppStore((state) => state.selectMonth);
   const theme = useAppStore((state) => state.theme);
@@ -106,6 +111,17 @@ function HotspotMap() {
   const [canvasSize, setCanvasSize] = useState<ViewportSize>({ width: 0, height: 0 });
   const [dpr, setDpr] = useState<number>(readDpr);
   const [paletteVersion, setPaletteVersion] = useState(0);
+  const [sensorFilter, setSensorFilter] = useState<SensorFilter>(DEFAULT_SENSOR_FILTER);
+
+  // Sensor filter is Raw-only; reset whenever region or view mode changes so it is never stuck active when hidden.
+  useEffect(() => {
+    setSensorFilter((prev) =>
+      prev.modis && prev.viirs ? prev : DEFAULT_SENSOR_FILTER,
+    );
+  }, [region.id, mode, targetMode, geometryHarmonized]);
+
+  const effectiveSensorFilter =
+    geometryHarmonized || revealAnswer ? DEFAULT_SENSOR_FILTER : sensorFilter;
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -178,6 +194,20 @@ function HotspotMap() {
     () => new Set(regionMatch?.featuresByRegion.get(region.id) ?? []),
     [regionMatch, region.id],
   );
+  const selectableFeatureSet = useMemo<ReadonlySet<number>>(() => {
+    const set = new Set<number>();
+    if (!regionMatch) return set;
+    const { regionByFeature } = regionMatch;
+    for (let i = 0; i < regionByFeature.length; i++) {
+      const rId = regionByFeature[i];
+      if (rId === null || rId === region.id) continue;
+      const summary = regionById.get(rId);
+      if (summary && !summary.tooLarge) {
+        set.add(i);
+      }
+    }
+    return set;
+  }, [regionMatch, region.id, regionById]);
   const regionFeatures = useMemo(() => {
     const dataset = geo.dataset;
     return dataset ? [...selectedFeatureSet].map((idx) => dataset.features[idx]) : [];
@@ -216,8 +246,15 @@ function HotspotMap() {
   );
 
   const sceneGeometry = useMemo(
-    () => buildSceneGeometry(geo.dataset, region.id, projection, selectedFeatureSet),
-    [geo.dataset, region.id, projection, selectedFeatureSet],
+    () =>
+      buildSceneGeometry(
+        geo.dataset,
+        region.id,
+        projection,
+        selectedFeatureSet,
+        selectableFeatureSet,
+      ),
+    [geo.dataset, region.id, projection, selectedFeatureSet, selectableFeatureSet],
   );
   const scenePoints = useMemo(
     () => buildScenePoints(pointInput, projection),
@@ -254,10 +291,22 @@ function HotspotMap() {
     index: null,
   });
 
-  const hoveredIndex = hoverState.scope === selectionScope ? hoverState.index : null;
-  const selectedIndex = selectedState.scope === selectionScope ? selectedState.index : null;
-
   const activeLayer = geometryHarmonized ? scene.harmonized : scene.raw;
+
+  const isPointVisible = useCallback(
+    (idx: number): boolean =>
+      idx >= 0 &&
+      idx < activeLayer.count &&
+      pointMatchesSensorFilter(activeLayer.flags[idx], activeLayer.shapes[idx], effectiveSensorFilter),
+    [activeLayer.count, activeLayer.flags, activeLayer.shapes, effectiveSensorFilter],
+  );
+
+  const rawHoveredIndex = hoverState.scope === selectionScope ? hoverState.index : null;
+  const rawSelectedIndex = selectedState.scope === selectionScope ? selectedState.index : null;
+  const hoveredIndex =
+    rawHoveredIndex !== null && isPointVisible(rawHoveredIndex) ? rawHoveredIndex : null;
+  const selectedIndex =
+    rawSelectedIndex !== null && isPointVisible(rawSelectedIndex) ? rawSelectedIndex : null;
 
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
 
@@ -350,6 +399,8 @@ function HotspotMap() {
           dpr,
           harmonized: geometryHarmonized,
           showDuplicateRings,
+          sensorFilter: effectiveSensorFilter,
+          selectableFeatures: selectableFeatureSet,
           hoveredIndex,
           selectedIndex,
         },
@@ -371,6 +422,8 @@ function HotspotMap() {
     dpr,
     geometryHarmonized,
     showDuplicateRings,
+    effectiveSensorFilter,
+    selectableFeatureSet,
     hoveredIndex,
     selectedIndex,
     theme,
@@ -419,7 +472,7 @@ function HotspotMap() {
 
   const resolvePointPair = useCallback(
     (index: number | null) => {
-      if (index === null || index < 0 || index >= activeLayer.count) {
+      if (index === null || !isPointVisible(index)) {
         return {
           rawPoint: null as RawPoint | null,
           harmPoint: null as HarmonizedPoint | null,
@@ -449,6 +502,7 @@ function HotspotMap() {
     },
     [
       activeLayer,
+      isPointVisible,
       viewport.transform,
       geometryHarmonized,
       points.harmonized,
@@ -556,7 +610,7 @@ function HotspotMap() {
     let resolved: number | null = null;
     if (activeLayer.count > 0) {
       const maxDistPlane = Math.max(HIT_TOLERANCE_PX, 12) / viewport.transform.k;
-      const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane);
+      const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane, isPointVisible);
       resolved = idx >= 0 ? idx : null;
     }
     setHoverState((prev) =>
@@ -569,7 +623,15 @@ function HotspotMap() {
     const nextFeature = feature >= 0 ? feature : null;
     setHoveredFeature((prev) => (prev === nextFeature ? prev : nextFeature));
     positionTooltip();
-  }, [viewport.transform, activeLayer, selectionScope, countryAt, clearHoveredFeature, positionTooltip]);
+  }, [
+    viewport.transform,
+    activeLayer,
+    isPointVisible,
+    selectionScope,
+    countryAt,
+    clearHoveredFeature,
+    positionTooltip,
+  ]);
 
   const runHoverRef = useRef(runHover);
   useLayoutEffect(() => {
@@ -591,10 +653,10 @@ function HotspotMap() {
     positionTooltip();
   }, [hoveredCountry, positionTooltip]);
 
-  // Zoom (wheel, keys, buttons) moves countries under a resting pointer.
+  // Zoom (wheel, keys, buttons) or filter changes update what lies under a resting pointer.
   useEffect(() => {
     if (hoverPosRef.current && pointerDownRef.current === null) scheduleHover();
-  }, [viewport.transform, scene, scheduleHover]);
+  }, [viewport.transform, scene, effectiveSensorFilter, scheduleHover]);
 
   const setViewportEl = useCallback(
     (el: HTMLDivElement | null) => {
@@ -737,7 +799,7 @@ function HotspotMap() {
 
       if (activeLayer.count > 0) {
         const maxDistPlane = Math.max(HIT_TOLERANCE_PX, 14) / viewport.transform.k;
-        const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane);
+        const idx = nearest(activeLayer.spatialIndex, planeX, planeY, maxDistPlane, isPointVisible);
         const nextIdx = idx >= 0 ? idx : null;
         setSelectedState({ scope: selectionScope, index: nextIdx });
         if (nextIdx !== null) {
@@ -763,6 +825,7 @@ function HotspotMap() {
       viewport.bind,
       viewport.transform,
       activeLayer,
+      isPointVisible,
       selectionScope,
       countryAt,
       selectableRegionFor,
@@ -845,6 +908,7 @@ function HotspotMap() {
         const inViewIndices: number[] = [];
         const { xs, ys, count } = activeLayer;
         for (let i = 0; i < count; i++) {
+          if (!isPointVisible(i)) continue;
           const px = xs[i];
           const py = ys[i];
           if (px >= minPlaneX && px <= maxPlaneX && py >= minPlaneY && py <= maxPlaneY) {
@@ -878,6 +942,7 @@ function HotspotMap() {
       hoveredIndex,
       handleCloseDetail,
       activeLayer,
+      isPointVisible,
       canvasSize,
       viewport.transform,
       viewport.bind,
@@ -895,11 +960,45 @@ function HotspotMap() {
             "long",
           );
 
-  const rawTotal = points.stages.rawModis + points.stages.rawViirs || points.raw.length;
-  const harmonizedTotal = points.stages.harmonized || points.harmonized.length;
+  const visibleRawLoaded = useMemo(() => {
+    if (effectiveSensorFilter.modis && effectiveSensorFilter.viirs) return points.raw.length;
+    if (!effectiveSensorFilter.modis && !effectiveSensorFilter.viirs) return 0;
+    const { flags, shapes, count } = scene.raw;
+    let n = 0;
+    for (let i = 0; i < count; i++) {
+      if (pointMatchesSensorFilter(flags[i], shapes[i], effectiveSensorFilter)) n++;
+    }
+    return n;
+  }, [points.raw.length, scene.raw, effectiveSensorFilter]);
+
+  const visibleHarmonizedLoaded = points.harmonized.length;
+
+  const stageRawTotal =
+    (effectiveSensorFilter.modis ? points.stages.rawModis : 0) +
+    (effectiveSensorFilter.viirs ? points.stages.rawViirs : 0);
+  // Never fall back to a capped sample count when the response is truncated.
+  const rawTotal =
+    !effectiveSensorFilter.modis && !effectiveSensorFilter.viirs
+      ? 0
+      : stageRawTotal > 0
+        ? stageRawTotal
+        : points.truncated
+          ? 0
+          : visibleRawLoaded;
+  const harmonizedTotal =
+    points.stages.harmonized > 0
+      ? points.stages.harmonized
+      : points.truncated
+        ? 0
+        : points.harmonized.length;
   const activeTotal = revealAnswer ? harmonizedTotal : rawTotal;
-  const activeLoaded = revealAnswer ? points.harmonized.length : points.raw.length;
-  const shownCount = drawStats.total > 0 ? drawStats.drawn : activeLoaded;
+  const activeLoaded = revealAnswer ? visibleHarmonizedLoaded : visibleRawLoaded;
+  const shownCount =
+    !effectiveSensorFilter.modis && !effectiveSensorFilter.viirs
+      ? 0
+      : drawStats.total > 0
+        ? drawStats.drawn
+        : activeLoaded;
 
   const overlayState: MapState =
     points.status === "ready" && points.raw.length === 0 && points.harmonized.length === 0
@@ -972,13 +1071,14 @@ function HotspotMap() {
         regionName={region.displayName}
         periodText={periodText}
         revealAnswer={revealAnswer}
+        sensorFilter={effectiveSensorFilter}
         status={overlayState}
         error={points.error}
         onRetry={points.retry}
         rawTotal={rawTotal}
         harmonizedTotal={harmonizedTotal}
-        rawLoaded={points.raw.length}
-        harmonizedLoaded={points.harmonized.length}
+        rawLoaded={visibleRawLoaded}
+        harmonizedLoaded={visibleHarmonizedLoaded}
         truncated={points.truncated}
         drawStats={drawStats}
         selectedMonth={selectedMonth}
@@ -1051,7 +1151,10 @@ function HotspotMap() {
         )}
 
         <div className={styles.legendDock} data-map-ui="true">
-          <MapLegend />
+          <MapLegend
+            sensorFilter={effectiveSensorFilter}
+            onSensorFilterChange={setSensorFilter}
+          />
         </div>
 
         <MapStateOverlay

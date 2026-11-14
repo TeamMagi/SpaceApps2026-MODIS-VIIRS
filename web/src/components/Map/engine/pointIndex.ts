@@ -118,6 +118,7 @@ export function nearest(
   planeX: number,
   planeY: number,
   maxDistPlane: number,
+  accept?: (index: number) => boolean,
 ): number {
   const { count, xs, ys, minX, minY, maxX, maxY, cellSize, cols, rows, heads, next } = index;
   if (
@@ -154,12 +155,14 @@ export function nearest(
     for (let c = c0; c <= c1; c++) {
       let i = heads[rowOffset + c];
       while (i !== -1) {
-        const dx = xs[i] - planeX;
-        const dy = ys[i] - planeY;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < bestDistSq || (d2 === bestDistSq && (bestIdx === -1 || i < bestIdx))) {
-          bestDistSq = d2;
-          bestIdx = i;
+        if (!accept || accept(i)) {
+          const dx = xs[i] - planeX;
+          const dy = ys[i] - planeY;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < bestDistSq || (d2 === bestDistSq && (bestIdx === -1 || i < bestIdx))) {
+            bestDistSq = d2;
+            bestIdx = i;
+          }
         }
         i = next[i];
       }
@@ -175,6 +178,7 @@ export function withinRadius(
   planeY: number,
   radiusPlane: number,
   maxResults: number = 32,
+  accept?: (index: number) => boolean,
 ): number[] {
   const { count, xs, ys, minX, minY, maxX, maxY, cellSize, cols, rows, heads, next } = index;
   if (
@@ -212,11 +216,13 @@ export function withinRadius(
     for (let c = c0; c <= c1; c++) {
       let i = heads[rowOffset + c];
       while (i !== -1) {
-        const dx = xs[i] - planeX;
-        const dy = ys[i] - planeY;
-        const d2 = dx * dx + dy * dy;
-        if (d2 <= maxDistSq) {
-          matches.push({ idx: i, d2 });
+        if (!accept || accept(i)) {
+          const dx = xs[i] - planeX;
+          const dy = ys[i] - planeY;
+          const d2 = dx * dx + dy * dy;
+          if (d2 <= maxDistSq) {
+            matches.push({ idx: i, d2 });
+          }
         }
         i = next[i];
       }
