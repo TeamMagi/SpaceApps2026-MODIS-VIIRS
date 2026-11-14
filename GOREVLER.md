@@ -115,10 +115,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | 🔄 |
-| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | ⬜ |
-| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | ⬜ |
-| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | ⬜ |
-| R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ⏸ |
+| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | 🔄 |
+| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | 🔄 |
+| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | 🔄 |
+| R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ⬜ |
 | R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ⏸ |
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ⏸ |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ⏸ |
@@ -136,7 +136,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G5 — Sunum materyali + demo senaryosu (R5 ve Y1 de bekliyor). G4 bitti.
-- **Can:** C2, C3, C4 — C1 bitti, kararlar `docs/UI-UX-KONSEPT.md`'de sabitlendi.
+- **Can:** C1–C4 tasarımları + çalışan React prototipi (`web/src`) hazır (`🔄`); ekip onayı ve kalan uyumlaştırma maddeleri sonrası kapanacak.
+- **Serhat:** R1 (ve G4 bittiği için R1 netleşince R2–R4) — `web/src/styles/tokens.css`, `AppShell` yerleşimi ve C1–C4 bileşen prototipleri üzerinden hemen başlanabilir / devralınabilir.
 - **Samet:** S5 — CI/CD (S1 bitti), S2 — integration testleri ve S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil.
 
@@ -315,40 +316,45 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Kalan:** ekibe paylaşım ve onay. Onay gelince ✅ olur.
 - **Bulgu:** `HarmonizeResponse.raw` yalnızca sayaç döndürüyor (`modis_count`, `viirs_count`, `total_raw`), ham hotspot koordinatları yok. Raw modda haritada gerçek ham noktalar gösterilecekse G4'te bu alanın eklenmesi gerekiyor — aksi halde Raw harita görünümü `HarmonizedHotspot.source` üzerinden türetilmek zorunda.
 
-### C2 — Tasarım sistemi ⏸
+### C2 — Tasarım sistemi 🔄
 - **Bekler:** C1 · **Açar:** R1
 - Serhat'ın kodlayacağı component'ler için görsel standartlar:
-  - Renk paleti (primary, secondary, accent; MODIS için bir renk, VIIRS için bir renk, harmonized için bir renk)
-  - Tipografi (font family, size scale, weight)
-  - Spacing sistemi (8px grid)
-  - Button, card, panel, tooltip component tasarımları
-  - Dark mode desteği düşünülmeli
-- **Çıktı:** Figma dosyası veya tasarım dökümanı; CSS variable isimleri belirlenmiş.
+  - ✅ Renk paleti (primary, secondary, accent; MODIS, VIIRS ve harmonized FRP/anomali skalaları CSS token olarak tanımlı)
+  - ✅ Tipografi (font family, size scale, weight)
+  - ✅ Spacing sistemi (8px grid)
+  - ✅ Button, card, panel, tooltip component tasarımları (`web/src/components/**/*.module.css` içinde çalışır durumda)
+  - ✅ Dark mode desteği (`[data-theme="dark"]` varsayılan + `[data-theme="light"]`)
+- **Çıktı (Can, 2026-11-14):** `web/src/styles/tokens.css`, `web/src/styles/global.css` ve CSS Modules bileşen stilleri içinde tüm CSS variable isimleri ve tema paletleri belirlendi.
+- **Kalan:** Figma/ayrı tasarım sistemi özeti dökümanı (gerekirse) ve ekip/Serhat onayı (`R1`'in önü açık).
 - **Bitti sayılır:** Serhat bu dökümanla component'leri birebir kodlayabilir; renk ve spacing soruları kalmamış.
 
-### C3 — Harita + takvim detay tasarımı ⏸
+### C3 — Harita + takvim detay tasarımı 🔄
 - **Bekler:** C1 · **Açar:** R2, R3
 - İki ana görselleştirme panelinin detaylı tasarımı:
-  - **Harita:** hotspot noktaları nasıl gösterilecek (renk, boyut, opacity → FRP ve confidence'a göre), cluster davranışı, popup içeriği
-  - **Takvim:** aylık hücrelerin renk skalası (anomaly'ye göre), yıl ve ay eksenleri, hover detayı
-  - İkisi arasındaki etkileşim: takvimde bir aya tıklayınca haritada o ayın verileri
+  - ✅ **Harita:** hotspot noktaları nasıl gösterilecek (FRP ve confidence'a göre renk/boyut/şekil, Canvas 2D örnekleme ve `PointDetail` popup/detay içeriği, boş/yükleniyor/hata/veri durumları)
+  - ✅ **Takvim:** aylık hücrelerin renk skalası (PuOr anomali skalasına göre), yıl ve ay eksenleri, hover detayı (`CalendarTooltip`)
+  - ✅ İkisi arasındaki etkileşim: takvimde bir aya tıklayınca haritada o ayın verileri
+- **Çıktı (Can, 2026-11-14):** `web/src/components/Map/HotspotMap.tsx` (+ `engine/`, `PointDetail.tsx`, `MapStateOverlay.tsx`) ve `web/src/components/Calendar/BurnCalendar.tsx` (+ `CalendarTooltip.tsx`) içinde çalışır şekilde uygulandı.
+- **Kalan:** Serbest bbox çizimi yerine ülke/bölge seçimi tercihinin ekip onayı ve `G4` canlı API uçlarıyla (`/api/harmonize`, `/api/calendar`) uyum kontrolü.
 - **Bitti sayılır:** harita ve takvim component'lerinin her durumu (boş, yükleniyor, veri var, hata) tasarlanmış.
 
-### C4 — Raw ↔ Harmonized karşılaştırma tasarımı ⏸
+### C4 — Raw ↔ Harmonized karşılaştırma tasarımı 🔄
 - **Bekler:** C1 · **Açar:** R5
 - Projenin **en önemli demo anı:** toggle ile Raw ve Harmonized arasında geçiş.
-  - Toggle/switch UI tasarımı (belirgin, anlaşılır)
-  - Raw modda sensör renkleri farklı (MODIS mavi, VIIRS kırmızı; sensor cliff görülsün)
-  - Harmonized modda tek renk skalası (fused data)
-  - Geçiş animasyonu: noktaların birleşmesi, duplikasyonların kaybolması
-  - İstatistik paneli: "Raw: 1,247 detections → Harmonized: 892 detections (28% duplicate removed)"
+  - ✅ Toggle/switch UI tasarımı (belirgin, anlaşılır; `ViewToggle.tsx`)
+  - ✅ Raw modda sensör ayrımı ve sensor cliff görünümü (`TASARIM_KONSEPT.md`: renk körü güvenliği için kırmızı/yeşil yerine MODIS içi boş daire + VIIRS dolu kare ayrımı; `CliffChart.tsx`)
+  - ✅ Harmonized modda tek renk skalası (fused data / inferno FRP skalası)
+  - ✅ Geçiş animasyonu: noktaların birleşmesi, duplikasyonların kaybolması (3 vuruşlu koreografi: `useHarmonizeTransition.ts`, 1400/500/150 ms)
+  - ✅ İstatistik paneli ve düzeltme fişi (`CountDelta.tsx`, `Receipt.tsx`)
+- **Çıktı (Can, 2026-11-14):** `ViewToggle.tsx`, `useHarmonizeTransition.ts`, `CliffChart.tsx`, `CountDelta.tsx`, `Receipt.tsx` ve `docs/TASARIM_KONSEPT.md`.
+- **Kalan:** `G4` `/api/compare` ve filo birleştirme (`fleet_merged`) kırılımının fiş ile hizalanması ve ekip onayı.
 - **Bitti sayılır:** toggle'ın her iki durumu ve geçiş animasyonunun tasarımı tamamlanmış; Serhat implementasyon için hazır.
 
 ---
 
 ## Serhat'ın görevleri
 
-### R1 — React component mimarisi + layout ⏸
+### R1 — React component mimarisi + layout ⬜
 - **Bekler:** C2 · **Açar:** R2, R3, R4, Y1–Y4
 - Frontend'in iskeletini kurmak (mevcut `web/` dizini üzerinde):
   - Can'ın tasarım sistemini CSS variables olarak implement etme
