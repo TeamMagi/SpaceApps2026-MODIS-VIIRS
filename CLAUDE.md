@@ -56,3 +56,29 @@ make docker-down      # Docker durdur
 - Gereksiz abstraction yapılmaz. Basit ve direkt kod tercih edilir.
 - Her crate'in kendi `CLAUDE.md` dosyası vardır, o modüle özgü kurallar orada belirtilir.
 - Kullanılmayan dependency'ler ve import'lar temizlenir.
+
+## Agent Orkestrasyon (Zorunlu)
+
+**Her konuşmada bu kurallar otomatik geçerlidir.** Detaylar: `.claude/skills/orchestrator/SKILL.md`
+
+### Rol Dağılımı
+- **Sen (Claude Code):** Planlama, görev parçalama, prompt yazma, review, birleştirme. **Asla bizzat kod üretme** — kod üretimini her zaman bir alt ajana delege et.
+- **DeepSeek V4.1 Flash (High):** Ana işgücü. `/deepseek` skill'i ile çağır (OpenCode CLI). Ücretsiz/sınırsız.
+- **Gemini 4 Hydrogen (High):** Güçlü kodlama, geniş context, multimodal/görsel. `/gemini` skill'i ile çağır (Antigravity CLI).
+- **Gemini 4 Argon (High):** Opus seviye muhakeme. `/gemini-argon` skill'i ile çağır. **KISITLI KOTA** — sadece kritik mimari kararlarda.
+
+### Görev Seviyeleri
+1. **Basit işler** (regex, boilerplate, format, dokümantasyon) → `/deepseek`
+2. **Orta backend** (API, CRUD, test, algoritma) → `/deepseek`, geniş context gerekirse `/gemini`
+3. **Üst seviye / görsel / UI** (entegrasyon, multimodal, UI/UX) → `/gemini`
+4. **Mimari konsey** (riskli/belirsiz kararlar) → `/gemini-argon` + `/deepseek` paralel → senin sentezin
+
+### Fallback Zinciri
+Dış servis hata verirse (429, kota, timeout, boş yanıt):
+- Tier 1: DeepSeek → Claude Haiku alt ajanı
+- Tier 2: DeepSeek → Hydrogen → Haiku (rutin) veya Sonnet (karmaşık)
+- Tier 3: Hydrogen → Claude Sonnet alt ajanı
+- Tier 4: Yanıt veremeyen modelin yerine "Eleştirel Sistem Mimarı" rolüyle Claude Sonnet
+
+### Devre Kesici
+Kota/rate-limit hatası alan servis oturum boyunca `EXHAUSTED` işaretlenir, tekrar istek atılmaz. Doğrudan fallback rotasına geçilir. Kullanıcıya tek satır bilgi verilir.
