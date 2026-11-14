@@ -9,6 +9,13 @@
 - Tek branch (`main`) üzerinden sırayla commit atılır.
 - Her commit tek bir mantıksal değişikliği kapsamalıdır.
 
+### Git Push Kuralları
+- **Remote kontrol edilmeden push YAPILAMAZ.** Her push'tan önce mutlaka `git pull` çalıştırılır.
+- `git pull` sonucunda **herhangi bir çakışma (conflict) veya ezme (overwrite) riski varsa, push yapılmaz.** Önce çakışmalar çözülür, çözüm doğrulanır, ancak ondan sonra push edilebilir.
+- Çakışma çözümünde karşı tarafın değişikliği körü körüne ezilmez; her iki tarafın niyeti korunacak şekilde birleştirilir. Hangi değişikliğin neden tercih edildiği kullanıcıya bildirilir.
+- Çakışma çözümünden sonra push öncesi `make test` (veya en az `cargo test --workspace`) tekrar koşulur; testler geçmeden push edilmez.
+- `git push --force` ve `--force-with-lease` **kullanıcı açıkça istemediği sürece kullanılmaz.**
+
 ### Dil ve Derleyici Kuralları
 - **Backend mutlaka Rust ile yazılır.** Başka backend dili kabul edilmez.
 - **TypeScript derleyicisi olarak SWC kullanılır** (`@vitejs/plugin-react-swc`). Babel kullanılmaz.
