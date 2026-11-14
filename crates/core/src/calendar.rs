@@ -297,4 +297,84 @@ mod tests {
         assert_eq!(cells[0].count_normalized, None);
         assert_eq!(cells[0].anomaly, None);
     }
+
+    #[test]
+    fn empty_input_yields_empty_calendar() {
+        assert!(build_calendar(&[]).is_empty());
+    }
+
+    #[test]
+    fn twenty_four_months_yield_twenty_four_sorted_cells() {
+        let mut hotspots = Vec::new();
+        for year in 2023..=2024 {
+            for month in 1..=12 {
+                hotspots.push(make_harmonized(year, month, 15, 40.0, 40.0));
+            }
+        }
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 24);
+        assert_eq!((cells[0].year, cells[0].month), (2023, 1));
+        assert_eq!((cells[23].year, cells[23].month), (2024, 12));
+        assert!(
+            cells
+                .windows(2)
+                .all(|w| (w[0].year, w[0].month) < (w[1].year, w[1].month))
+        );
+        assert!(cells.iter().all(|c| c.count == 1));
+        assert!(cells.iter().all(|c| c.anomaly.is_none()));
+    }
+
+    #[test]
+    fn identical_counts_across_years_give_no_anomaly() {
+        let hotspots = vec![
+            make_harmonized(2022, 8, 1, 40.0, 40.0),
+            make_harmonized(2023, 8, 1, 40.0, 40.0),
+            make_harmonized(2024, 8, 1, 40.0, 40.0),
+        ];
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 3);
+        assert!(cells.iter().all(|c| c.anomaly.is_none()));
+    }
+
+    #[test]
+    fn anomaly_is_population_z_score_of_normalized_counts() {
+        let hotspots = vec![
+            make_harmonized(2021, 7, 1, 40.0, 40.0),
+            make_harmonized(2022, 7, 1, 40.0, 40.0),
+            make_harmonized(2022, 7, 2, 40.0, 40.0),
+            make_harmonized(2023, 7, 1, 40.0, 40.0),
+            make_harmonized(2023, 7, 2, 40.0, 40.0),
+            make_harmonized(2023, 7, 3, 40.0, 40.0),
+        ];
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 3);
+        // MODIS-only months have unit effort, so the normalized counts equal the raw 1, 2, 3.
+        assert!(cells.iter().all(|c| c.effort_omega == Some(1.0)));
+        let anomalies: Vec<f64> = cells.iter().map(|c| c.anomaly.unwrap()).collect();
+        assert!((anomalies[0] - (-1.224744871391589)).abs() < 1e-9);
+        assert!(anomalies[1].abs() < 1e-9);
+        assert!((anomalies[2] - 1.224744871391589).abs() < 1e-9);
+    }
+
+    #[test]
+    fn month_boundary_uses_utc_calendar_month() {
+        let mut first = make_harmonized(2025, 7, 1, 40.0, 40.0);
+        first.acquired = Utc.with_ymd_and_hms(2025, 7, 31, 23, 59, 59).unwrap();
+        let mut second = make_harmonized(2025, 8, 1, 40.0, 40.0);
+        second.acquired = Utc.with_ymd_and_hms(2025, 8, 1, 0, 0, 0).unwrap();
+
+        let cells = build_calendar(&[first, second]);
+        assert_eq!(cells.len(), 2);
+        assert_eq!(
+            (cells[0].year, cells[0].month, cells[0].count),
+            (2025, 7, 1)
+        );
+        assert_eq!(
+            (cells[1].year, cells[1].month, cells[1].count),
+            (2025, 8, 1)
+        );
+    }
 }
