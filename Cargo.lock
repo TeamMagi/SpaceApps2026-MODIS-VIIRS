@@ -903,12 +903,8 @@ dependencies = [
 name = "pyrosync-core"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "chrono",
  "serde",
- "serde_json",
- "thiserror",
- "tracing",
 ]
 
 [[package]]
@@ -925,6 +921,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
