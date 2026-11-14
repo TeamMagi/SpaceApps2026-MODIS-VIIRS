@@ -59,7 +59,7 @@ check("every archive region in data/archive-set.json matches regions.json geomet
   assert.equal(match.regionByFeature.filter((r) => r !== null).length, 12);
 });
 
-check("future regions match by ISO code or normalized name without a lookup table", () => {
+check("other regions match by FIRMS id, ISO code or normalized name", () => {
   const match = matchRegionsToFeatures(dataset.features, [
     { id: "Kazakhstan", name: "Kazakhstan" },
     { id: "UKR", name: "Ukraine" },
@@ -132,7 +132,11 @@ check("overlapping features resolve to the smallest one so enclaves stay reachab
     bbox: [0.4, 0.4, 0.6, 0.6],
     polygons: [[square(0.4, 0.4, 0.6, 0.6)]],
   };
-  const identity = { project: (lon: number, lat: number) => [lon, lat] as const };
+  const identity = {
+    centerLon: 0,
+    project: (lon: number, lat: number) => [lon, lat] as const,
+    projectUnwrapped: (lon: number, lat: number) => [lon, lat] as const,
+  };
   const geometry = buildSceneGeometry([big, enclave], "", identity, new Set());
   assert.equal(hitTestFeatures(geometry.features, 0.5, 0.5), 1);
   assert.equal(hitTestFeatures(geometry.features, 0.1, 0.1), 0);

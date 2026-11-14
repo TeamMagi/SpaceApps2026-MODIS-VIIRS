@@ -9,11 +9,7 @@ import {
   planeBounds,
   regionExtent,
 } from "../src/lib/geo/projection.ts";
-import {
-  featuresForRegion,
-  isMappedRegion,
-  regionIdToCodes,
-} from "../src/lib/geo/regionCodes.ts";
+import { featuresForRegion } from "./regionFeatures.ts";
 import {
   GeoLoadError,
   loadGeoDataset,
@@ -77,12 +73,7 @@ check("regions.json meta fields present and non-empty", () => {
 });
 
 check("all 11 NASA region ids mapped with >= 1 feature, Cyprus has CYP+CYN, Nowhere unmapped", () => {
-  assert.deepEqual(
-    Object.keys(regionIdToCodes).slice().sort(),
-    [...NASA_REGION_IDS].slice().sort(),
-  );
   for (const regionId of NASA_REGION_IDS) {
-    assert.equal(isMappedRegion(regionId), true, `${regionId} should be mapped`);
     const feats = featuresForRegion(dataset, regionId);
     assert.ok(feats.length >= 1, `${regionId} should have >= 1 feature`);
   }
@@ -92,7 +83,6 @@ check("all 11 NASA region ids mapped with >= 1 feature, Cyprus has CYP+CYN, Nowh
     cyprusFeats.map((f) => f.code).sort(),
     ["CYN", "CYP"],
   );
-  assert.equal(isMappedRegion("Nowhere"), false);
   assert.deepEqual(featuresForRegion(dataset, "Nowhere"), []);
 });
 

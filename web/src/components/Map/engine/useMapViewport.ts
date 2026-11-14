@@ -12,6 +12,7 @@ import type { PlaneBounds, ViewportSize, ViewTransform } from "./types";
 import {
   clampTransform,
   DEFAULT_FIT_PADDING,
+  EXTENT_MIN_ZOOM_FACTOR,
   fitTo,
   IDENTITY_TRANSFORM,
   MAX_ZOOM_FACTOR,
@@ -27,7 +28,10 @@ const DOUBLE_TAP_MS = 300;
 const DOUBLE_TAP_PX = 24;
 
 export interface UseMapViewportOptions {
+  /** What fit/reset frames. */
   readonly bounds: PlaneBounds | null;
+  /** Everything drawable (e.g. the whole world): zoom-out floor and pan limit. Defaults to `bounds`. */
+  readonly extent?: PlaneBounds | null;
   readonly size: ViewportSize;
   readonly resetKey?: string | number;
   readonly padding?: number;
@@ -71,6 +75,7 @@ function sameTransform(a: ViewTransform, b: ViewTransform): boolean {
 
 export function useMapViewport({
   bounds,
+  extent = null,
   size,
   resetKey = "",
   padding = DEFAULT_FIT_PADDING,
@@ -91,8 +96,39 @@ export function useMapViewport({
     return fitTo(bounds, { width, height }, padding);
   }, [bounds, hasValidBounds, width, height, padding]);
 
-  const minK = fitView.k * MIN_ZOOM_FACTOR;
+  const extentValid =
+    extent !== null &&
+    [extent.minX, extent.minY, extent.maxX, extent.maxY].every(Number.isFinite);
+  const extMinX = extentValid ? Math.min(extent.minX, minX) : minX;
+  const extMinY = extentValid ? Math.min(extent.minY, minY) : minY;
+  const extMaxX = extentValid ? Math.max(extent.maxX, maxX) : maxX;
+  const extMaxY = extentValid ? Math.max(extent.maxY, maxY) : maxY;
+  const panBounds = useMemo<PlaneBounds>(
+    () => ({ minX: extMinX, minY: extMinY, maxX: extMaxX, maxY: extMaxY }),
+    [extMinX, extMinY, extMaxX, extMaxY],
+  );
+
+  const extentFitK =
+    hasValidBounds && width > 0 && height > 0 ? fitTo(panBounds, { width, height }, padding).k : 0;
+  const minK =
+    extentFitK > 0
+      ? Math.min(fitView.k * MIN_ZOOM_FACTOR, extentFitK * EXTENT_MIN_ZOOM_FACTOR)
+      : fitView.k * MIN_ZOOM_FACTOR;
   const maxK = Math.max(minK, fitView.k * MAX_ZOOM_FACTOR);
+
+  // With an extent the view centre must stay over it, so zooming far out or panning never loses the map.
+  const clampView = useCallback(
+    (t: ViewTransform): ViewTransform =>
+      clampTransform(
+        t,
+        panBounds,
+        { width, height },
+        minK,
+        maxK,
+        extentValid ? { x: width / 2, y: height / 2 } : undefined,
+      ),
+    [panBounds, width, height, minK, maxK, extentValid],
+  );
 
   const [viewState, setViewState] = useState<{
     scope: string;
@@ -123,7 +159,7 @@ export function useMapViewport({
       );
       activeTransform = sameTransform(viewState.transform, prevFit)
         ? fitView
-        : clampTransform(viewState.transform, bounds, { width, height }, minK, maxK);
+        : clampView(viewState.transform);
     }
   } else {
     activeTransform = viewState.transform;
@@ -158,11 +194,11 @@ export function useMapViewport({
         const prevFit = fitTo(bounds, prevSize, padding);
         transformRef.current = sameTransform(transformRef.current, prevFit)
           ? fitView
-          : clampTransform(transformRef.current, bounds, { width, height }, minK, maxK);
+          : clampView(transformRef.current);
       }
     }
     return transformRef.current;
-  }, [scopeKey, width, height, bounds, hasValidBounds, padding, fitView, minK, maxK]);
+  }, [scopeKey, width, height, bounds, hasValidBounds, padding, fitView, clampView]);
 
   const cancelPendingRaf = useCallback(() => {
     if (rafRef.current !== null && typeof cancelAnimationFrame !== "undefined") {
@@ -227,18 +263,12 @@ export function useMapViewport({
       const targetK = Math.min(Math.max(cur.k * factor, minK), maxK);
       const effectiveFactor = cur.k > 0 ? targetK / cur.k : 1;
       if (Math.abs(effectiveFactor - 1) < 1e-5) return false;
-      const next = clampTransform(
-        zoomAt(cur, effectiveFactor, cx, cy),
-        bounds,
-        { width, height },
-        minK,
-        maxK,
-      );
+      const next = clampView(zoomAt(cur, effectiveFactor, cx, cy));
       if (sameTransform(cur, next)) return false;
       publishTransform(next, immediate);
       return true;
     },
-    [bounds, width, height, minK, maxK, ensureCurrent, publishTransform],
+    [bounds, width, height, minK, maxK, clampView, ensureCurrent, publishTransform],
   );
 
   const fit = useCallback(() => {
@@ -305,14 +335,7 @@ export function useMapViewport({
         pointers.set(e.pointerId, { x, y });
         if (dx === 0 && dy === 0) return;
         const cur = ensureCurrent();
-        const next = clampTransform(
-          panBy(cur, dx, dy),
-          bounds,
-          { width, height },
-          minK,
-          maxK,
-        );
-        publishTransform(next);
+        publishTransform(clampView(panBy(cur, dx, dy)));
         return;
       }
 
@@ -341,10 +364,9 @@ export function useMapViewport({
         stepped = zoomAt(stepped, effectiveFactor, nextCx, nextCy);
       }
 
-      const next = clampTransform(stepped, bounds, { width, height }, minK, maxK);
-      publishTransform(next);
+      publishTransform(clampView(stepped));
     },
-    [bounds, width, height, minK, maxK, ensureCurrent, publishTransform],
+    [bounds, width, height, minK, maxK, clampView, ensureCurrent, publishTransform],
   );
 
   const releasePointer = useCallback((e: ReactPointerEvent<HTMLElement>) => {
@@ -415,14 +437,7 @@ export function useMapViewport({
           const dx = e.key === "ArrowLeft" ? PAN_KEY_STEP : e.key === "ArrowRight" ? -PAN_KEY_STEP : 0;
           const dy = e.key === "ArrowUp" ? PAN_KEY_STEP : e.key === "ArrowDown" ? -PAN_KEY_STEP : 0;
           const cur = ensureCurrent();
-          const next = clampTransform(
-            panBy(cur, dx, dy),
-            bounds,
-            { width, height },
-            minK,
-            maxK,
-          );
-          publishTransform(next, true);
+          publishTransform(clampView(panBy(cur, dx, dy)), true);
           break;
         }
         case "+":
@@ -444,7 +459,7 @@ export function useMapViewport({
         }
       }
     },
-    [bounds, width, height, minK, maxK, ensureCurrent, publishTransform, zoomIn, zoomOut, fit],
+    [bounds, width, height, clampView, ensureCurrent, publishTransform, zoomIn, zoomOut, fit],
   );
 
   const bind = useMemo<MapViewportBind>(

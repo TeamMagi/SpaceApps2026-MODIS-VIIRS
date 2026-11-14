@@ -1,7 +1,7 @@
 import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import { formatRegionName } from "../../content/copy";
 import { MAP_CONTEXT_NAMES_TR } from "../../content/copyMap";
-import type { RegionProjection } from "../../lib/geo/projection";
+import { projectRing, type RegionProjection } from "../../lib/geo/projection";
 import type { GeoDataset, Position } from "../../lib/geo/types";
 import type { Lang } from "../../types";
 import type { ViewportSize, ViewTransform } from "./engine/types";
@@ -63,6 +63,7 @@ function computeRingInteriorPoint(
   area: number;
 } {
   const n = ring.length;
+  const coords = projectRing(projection, ring);
   const xs = new Float32Array(n);
   const ys = new Float32Array(n);
   let minX = Infinity;
@@ -71,7 +72,8 @@ function computeRingInteriorPoint(
   let maxY = -Infinity;
 
   for (let i = 0; i < n; i++) {
-    const [px, py] = projection.project(ring[i][0], ring[i][1]);
+    const px = coords[i * 2];
+    const py = coords[i * 2 + 1];
     xs[i] = px;
     ys[i] = py;
     if (px < minX) minX = px;

@@ -35,9 +35,7 @@ class StubPath2D {
 const { createProjection, padBBox, regionExtent } = await import(
   "../src/lib/geo/projection.ts"
 );
-const { featuresForRegion } = await import(
-  "../src/lib/geo/regionCodes.ts"
-);
+const { featuresForRegion } = await import("./regionFeatures.ts");
 const { buildScene, drawMap, readPalette } = await import(
   "../src/components/Map/engine/renderer.ts"
 );
@@ -132,7 +130,7 @@ check("buildScene edge cases: null dataset, empty features, empty points, unmapp
   const sNull = buildScene(null, "Azerbaijan", null, azeProj);
   assert.equal(sNull.contextRings.length, 0);
   assert.equal(sNull.selectedRings.length, 0);
-  assert.equal(sNull.contextPath, null);
+  assert.equal(sNull.features.length, 0);
   assert.equal(sNull.selectedPath, null);
   assert.equal(sNull.raw.count, 0);
   assert.equal(sNull.harmonized.count, 0);
@@ -145,7 +143,10 @@ check("buildScene edge cases: null dataset, empty features, empty points, unmapp
   assert.ok(sEmptyPts.selectedRings.length > 0);
   assert.ok(sEmptyPts.contextRings.length > 0);
   assert.ok(sEmptyPts.selectedPath instanceof StubPath2D);
-  assert.ok(sEmptyPts.contextPath instanceof StubPath2D);
+  const context = sEmptyPts.features.find((f) => !f.selected);
+  assert.ok(context && context.path instanceof StubPath2D);
+  assert.equal(context.lodPaths.length, sEmptyPts.lodTolerances.length);
+  assert.ok(sEmptyPts.features.filter((f) => f.selected).every((f) => f.lodPaths.length === 0));
   assert.equal(sEmptyPts.raw.count, 0);
   assert.equal(sEmptyPts.harmonized.count, 0);
 

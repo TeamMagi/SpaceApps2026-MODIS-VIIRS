@@ -237,6 +237,7 @@ function HotspotMap() {
 
   const viewport = useMapViewport({
     bounds: viewportBounds,
+    extent: sceneGeometry.allBounds,
     size: canvasSize,
     resetKey: region.id,
     padding: VIEWPORT_FIT_PADDING,
@@ -385,12 +386,18 @@ function HotspotMap() {
       drawFeatureHighlight(
         ctx,
         highlightedFeature !== null ? scene.features[highlightedFeature] : null,
-        { transform: viewport.transform, width: canvasSize.width, height: canvasSize.height, dpr },
+        {
+          transform: viewport.transform,
+          width: canvasSize.width,
+          height: canvasSize.height,
+          dpr,
+          lodTolerances: scene.lodTolerances,
+        },
         readPalette(viewportRef.current ?? canvas, theme),
       );
     });
     return () => cancelAnimationFrame(rafId);
-  }, [highlightedFeature, scene.features, viewport.transform, canvasSize, dpr, theme, paletteVersion]);
+  }, [highlightedFeature, scene.features, scene.lodTolerances, viewport.transform, canvasSize, dpr, theme, paletteVersion]);
 
   const harmById = useMemo(() => {
     const map = new Map<string, HarmonizedPoint>();

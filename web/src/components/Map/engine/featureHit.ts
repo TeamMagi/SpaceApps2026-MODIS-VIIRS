@@ -1,9 +1,24 @@
 import type { SceneFeature } from "./types";
 
-/** Even-odd test across every ring of a feature, so MultiPolygon parts and holes need no special casing. */
-export function pointInRings(rings: readonly Float32Array[], x: number, y: number): boolean {
+/**
+ * Even-odd test across every ring of a feature, so MultiPolygon parts and holes need no special casing.
+ * With `ringBounds` (minX, minY, maxX, maxY per ring) rings whose box misses the point are skipped:
+ * a point outside a ring adds an even number of crossings, so skipping never changes the parity.
+ */
+export function pointInRings(
+  rings: readonly Float32Array[],
+  x: number,
+  y: number,
+  ringBounds?: Float32Array,
+): boolean {
   let inside = false;
   for (let r = 0; r < rings.length; r++) {
+    if (ringBounds) {
+      const b = r * 4;
+      if (x < ringBounds[b] || y < ringBounds[b + 1] || x > ringBounds[b + 2] || y > ringBounds[b + 3]) {
+        continue;
+      }
+    }
     const coords = rings[r];
     const n = coords.length >> 1;
     if (n < 3) continue;
@@ -40,7 +55,7 @@ export function hitTestFeatures(
     const area = (f.maxX - f.minX) * (f.maxY - f.minY);
     if (area >= bestArea) continue;
     if (accept && !accept(i)) continue;
-    if (pointInRings(f.rings, x, y)) {
+    if (pointInRings(f.rings, x, y, f.ringBounds)) {
       best = i;
       bestArea = area;
     }

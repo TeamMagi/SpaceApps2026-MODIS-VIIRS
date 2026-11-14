@@ -5,6 +5,14 @@ export type { PlaneBounds, ViewportSize, ViewTransform };
 
 export const MIN_ZOOM_FACTOR = 0.9;
 export const MAX_ZOOM_FACTOR = 40;
+/** Zoom-out floor relative to the scale that fits the whole map extent (e.g. the world). */
+export const EXTENT_MIN_ZOOM_FACTOR = 0.8;
+
+/** Minimum on-screen overlap (px) between the viewport and the clamp bounds, per axis. */
+export interface ClampOverlap {
+  readonly x: number;
+  readonly y: number;
+}
 export const DEFAULT_FIT_PADDING = 20;
 
 export const IDENTITY_TRANSFORM: ViewTransform = { k: 1, tx: 0, ty: 0 };
@@ -37,6 +45,7 @@ export function clampTransform(
   size: ViewportSize,
   minK?: number,
   maxK?: number,
+  overlap?: ClampOverlap,
 ): ViewTransform {
   const { width, height } = size;
   if (width <= 0 || height <= 0 || !Number.isFinite(width) || !Number.isFinite(height)) {
@@ -58,9 +67,9 @@ export function clampTransform(
 
   const k = Math.min(Math.max(Number.isFinite(t.k) && t.k > 0 ? t.k : loK, loK), hiK);
 
-  // Keep at least 25% of the viewport (capped at 64px) overlapping the region bbox so it can never be panned off-screen.
-  const marginX = Math.min(64, width * 0.25);
-  const marginY = Math.min(64, height * 0.25);
+  // By default keep at least 25% of the viewport (capped at 64px) overlapping the bbox so it can never be panned off-screen.
+  const marginX = Math.min(overlap?.x ?? Math.min(64, width * 0.25), width / 2);
+  const marginY = Math.min(overlap?.y ?? Math.min(64, height * 0.25), height / 2);
   const minTx = marginX - bounds.maxX * k;
   const maxTx = width - marginX - bounds.minX * k;
   const minTy = marginY - bounds.maxY * k;

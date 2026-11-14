@@ -35,9 +35,7 @@ class BenchPath2D {
 const { createProjection, padBBox, regionExtent } = await import(
   "../src/lib/geo/projection.ts"
 );
-const { featuresForRegion } = await import(
-  "../src/lib/geo/regionCodes.ts"
-);
+const { featuresForRegion } = await import("./regionFeatures.ts");
 const { DEFAULT_MAX_DRAWN, buildScene, drawMap } = await import(
   "../src/components/Map/engine/renderer.ts"
 );

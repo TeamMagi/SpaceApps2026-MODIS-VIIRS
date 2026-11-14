@@ -67,19 +67,26 @@ export interface ScenePointInput {
 /** One boundary feature projected to the plane; rings are shared with the context/selected lists. */
 export interface SceneFeature {
   readonly rings: readonly Float32Array[];
+  /** minX, minY, maxX, maxY per ring, index-aligned with `rings`. */
+  readonly ringBounds: Float32Array;
   readonly minX: number;
   readonly minY: number;
   readonly maxX: number;
   readonly maxY: number;
   readonly path: Path2D | null;
+  /** Drawn from the full-detail selected path rather than as context. */
+  readonly selected: boolean;
+  /** Simplified outlines, index-aligned with the scene's `lodTolerances`; empty for selected features. */
+  readonly lodPaths: readonly (Path2D | null)[];
 }
 
 export interface SceneGeometry {
   readonly features: readonly SceneFeature[];
   readonly contextRings: readonly Float32Array[];
   readonly selectedRings: readonly Float32Array[];
-  readonly contextPath: Path2D | null;
   readonly selectedPath: Path2D | null;
+  /** Plane-unit tolerance of each level-of-detail outline, coarsest first. */
+  readonly lodTolerances: readonly number[];
   readonly selectedBounds: PlaneBounds | null;
   readonly allBounds: PlaneBounds | null;
 }
@@ -96,8 +103,8 @@ export interface MapScene {
   readonly features: readonly SceneFeature[];
   readonly contextRings: readonly Float32Array[];
   readonly selectedRings: readonly Float32Array[];
-  readonly contextPath: Path2D | null;
   readonly selectedPath: Path2D | null;
+  readonly lodTolerances: readonly number[];
   readonly raw: ScenePointLayer;
   readonly harmonized: ScenePointLayer;
 }

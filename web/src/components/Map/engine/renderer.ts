@@ -1,7 +1,8 @@
-import type { RegionProjection } from "../../../lib/geo/projection";
+import { projectRing, type RegionProjection } from "../../../lib/geo/projection";
 import type { GeoDataset, GeoFeature } from "../../../lib/geo/types";
 import { frpBucket } from "../../../lib/scales";
 import { HotspotSource, type HarmonizedPoint, type RawPoint, type Theme } from "../../../types";
+import { LOD_SPAN_DIVISORS, pickLodLevel, simplifyRing } from "./lod";
 import { buildIndex } from "./pointIndex";
 import {
   PointFlag,
@@ -410,11 +411,39 @@ const EMPTY_GEOMETRY: SceneGeometry = {
   features: [],
   contextRings: [],
   selectedRings: [],
-  contextPath: null,
   selectedPath: null,
+  lodTolerances: [],
   selectedBounds: null,
   allBounds: null,
 };
+
+interface ProjectedFeature {
+  readonly selected: boolean;
+  readonly rings: Float32Array[];
+  readonly ringBounds: number[];
+  readonly minX: number;
+  readonly minY: number;
+  readonly maxX: number;
+  readonly maxY: number;
+}
+
+function buildLodPath(
+  rings: readonly Float32Array[],
+  ringBounds: readonly number[],
+  tolerance: number,
+): Path2D | null {
+  const kept: Float32Array[] = [];
+  for (let r = 0; r < rings.length; r++) {
+    const b = r * 4;
+    // Rings smaller than the tolerance are sub-pixel wherever this level is drawn.
+    if (ringBounds[b + 2] - ringBounds[b] < tolerance && ringBounds[b + 3] - ringBounds[b + 1] < tolerance) {
+      continue;
+    }
+    const simplified = simplifyRing(rings[r], tolerance);
+    if (simplified) kept.push(simplified);
+  }
+  return buildPathFromRings(kept);
+}
 
 /** Projected boundaries only; independent of points so period changes never re-project geometry. */
 export function buildSceneGeometry(
@@ -428,7 +457,7 @@ export function buildSceneGeometry(
   const features = extractFeatures(datasetOrFeatures);
   const contextRings: Float32Array[] = [];
   const selectedRings: Float32Array[] = [];
-  const sceneFeatures: SceneFeature[] = [];
+  const projected: ProjectedFeature[] = [];
 
   let selMinX = Infinity;
   let selMinY = Infinity;
@@ -448,6 +477,7 @@ export function buildSceneGeometry(
     const targetRings = isSelected ? selectedRings : contextRings;
     const polygons = feature.polygons;
     const featureRings: Float32Array[] = [];
+    const ringBoxes: number[] = [];
     let fMinX = Infinity;
     let fMinY = Infinity;
     let fMaxX = -Infinity;
@@ -457,19 +487,25 @@ export function buildSceneGeometry(
       const rings = polygons[pIdx];
       for (let rIdx = 0; rIdx < rings.length; rIdx++) {
         const ring = rings[rIdx];
-        const n = ring.length;
-        if (n < 3) continue;
-        const coords = new Float32Array(n * 2);
-        for (let i = 0; i < n; i++) {
-          const pos = ring[i];
-          const [px, py] = projection.project(pos[0], pos[1]);
-          coords[i * 2] = px;
-          coords[i * 2 + 1] = py;
-          if (px < fMinX) fMinX = px;
-          if (py < fMinY) fMinY = py;
-          if (px > fMaxX) fMaxX = px;
-          if (py > fMaxY) fMaxY = py;
+        if (ring.length < 3) continue;
+        const coords = projectRing(projection, ring);
+        let rMinX = Infinity;
+        let rMinY = Infinity;
+        let rMaxX = -Infinity;
+        let rMaxY = -Infinity;
+        for (let i = 0; i < coords.length; i += 2) {
+          const px = coords[i];
+          const py = coords[i + 1];
+          if (px < rMinX) rMinX = px;
+          if (py < rMinY) rMinY = py;
+          if (px > rMaxX) rMaxX = px;
+          if (py > rMaxY) rMaxY = py;
         }
+        if (rMinX < fMinX) fMinX = rMinX;
+        if (rMinY < fMinY) fMinY = rMinY;
+        if (rMaxX > fMaxX) fMaxX = rMaxX;
+        if (rMaxY > fMaxY) fMaxY = rMaxY;
+        ringBoxes.push(rMinX, rMinY, rMaxX, rMaxY);
         targetRings.push(coords);
         featureRings.push(coords);
       }
@@ -486,22 +522,43 @@ export function buildSceneGeometry(
       if (fMaxY > selMaxY) selMaxY = fMaxY;
     }
 
-    sceneFeatures.push({
+    projected.push({
+      selected: isSelected,
       rings: featureRings,
+      ringBounds: ringBoxes,
       minX: fMinX,
       minY: fMinY,
       maxX: fMaxX,
       maxY: fMaxY,
-      path: buildPathFromRings(featureRings),
     });
   }
+
+  const span = Math.max(allMaxX - allMinX, allMaxY - allMinY);
+  const lodTolerances =
+    Number.isFinite(span) && span > 0 ? LOD_SPAN_DIVISORS.map((d) => span / d) : [];
+
+  const sceneFeatures: SceneFeature[] = projected.map((f) => ({
+    selected: f.selected,
+    rings: f.rings,
+    ringBounds: Float32Array.from(f.ringBounds),
+    minX: f.minX,
+    minY: f.minY,
+    maxX: f.maxX,
+    maxY: f.maxY,
+    path: buildPathFromRings(f.rings),
+    // Selected features are always drawn from the full-detail selected path.
+    lodPaths:
+      f.selected || typeof Path2D === "undefined"
+        ? []
+        : lodTolerances.map((tol) => buildLodPath(f.rings, f.ringBounds, tol)),
+  }));
 
   return {
     features: sceneFeatures,
     contextRings,
     selectedRings,
-    contextPath: buildPathFromRings(contextRings),
     selectedPath: buildPathFromRings(selectedRings),
+    lodTolerances,
     selectedBounds:
       Number.isFinite(selMinX) && Number.isFinite(selMaxX)
         ? { minX: selMinX, minY: selMinY, maxX: selMaxX, maxY: selMaxY }
@@ -574,7 +631,7 @@ export function composeScene(
     features: geometry.features,
     contextRings: geometry.contextRings,
     selectedRings: geometry.selectedRings,
-    contextPath: geometry.contextPath,
+    lodTolerances: geometry.lodTolerances,
     selectedPath: geometry.selectedPath,
     raw: rawLayer,
     harmonized: points.harmonized,
@@ -675,6 +732,8 @@ export interface HighlightView {
   readonly width: number;
   readonly height: number;
   readonly dpr: number;
+  /** The scene's tolerances; when given, non-selected features are highlighted from their LOD path. */
+  readonly lodTolerances?: readonly number[];
 }
 
 const HIGHLIGHT_FILL_ALPHA = 0.55;
@@ -703,17 +762,46 @@ export function drawFeatureHighlight(
   const { k, tx, ty } = view.transform;
   if (!feature?.path || !(k > 0) || !Number.isFinite(tx) || !Number.isFinite(ty)) return;
 
+  const level = view.lodTolerances ? pickLodLevel(view.lodTolerances, k) : -1;
+  const path = (level >= 0 ? feature.lodPaths[level] : null) ?? feature.path;
+
   ctx.save();
   ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * tx, dpr * ty);
   ctx.lineJoin = "round";
   ctx.globalAlpha = HIGHLIGHT_FILL_ALPHA;
   ctx.fillStyle = palette.land;
-  ctx.fill(feature.path, "evenodd");
+  ctx.fill(path, "evenodd");
   ctx.globalAlpha = 1;
   ctx.strokeStyle = palette.borderSelected;
   ctx.lineWidth = 1.2 / k;
-  ctx.stroke(feature.path);
+  ctx.stroke(path);
   ctx.restore();
+}
+
+/**
+ * Context outlines that intersect the viewport, at the coarsest level of detail that stays under
+ * half a pixel of error, so a zoomed-out world view and a zoomed-in region both stay cheap to draw.
+ */
+function visibleContextPaths(
+  scene: MapScene,
+  k: number,
+  tx: number,
+  ty: number,
+  width: number,
+  height: number,
+): Path2D[] {
+  const level = pickLodLevel(scene.lodTolerances, k);
+  const minX = -tx / k;
+  const minY = -ty / k;
+  const maxX = (width - tx) / k;
+  const maxY = (height - ty) / k;
+  const out: Path2D[] = [];
+  for (const f of scene.features) {
+    if (f.selected || f.maxX < minX || f.minX > maxX || f.maxY < minY || f.minY > maxY) continue;
+    const path = level >= 0 ? f.lodPaths[level] : f.path;
+    if (path) out.push(path);
+  }
+  return out;
 }
 
 export function drawMap(
@@ -762,13 +850,14 @@ export function drawMap(
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
 
-    if (scene.contextPath) {
+    const contextPaths = visibleContextPaths(scene, k, tx, ty, width, height);
+    if (contextPaths.length > 0) {
       ctx.fillStyle = palette.landDim;
-      ctx.fill(scene.contextPath);
+      for (let i = 0; i < contextPaths.length; i++) ctx.fill(contextPaths[i]);
       ctx.strokeStyle = palette.border;
       ctx.lineWidth = 0.85 / k;
-      ctx.stroke(scene.contextPath);
-    } else if (scene.contextRings.length > 0) {
+      for (let i = 0; i < contextPaths.length; i++) ctx.stroke(contextPaths[i]);
+    } else if (typeof Path2D === "undefined" && scene.contextRings.length > 0) {
       strokeAndFillRingsFallback(
         ctx,
         scene.contextRings,

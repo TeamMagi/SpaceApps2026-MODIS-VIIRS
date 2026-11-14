@@ -8,31 +8,43 @@ const WEB_DIR = path.resolve(__dirname, "..");
 const WORLD_ATLAS_DIR = path.join(WEB_DIR, "node_modules", "world-atlas");
 const TOPO_PATH = path.join(WORLD_ATLAS_DIR, "countries-50m.json");
 const WORLD_ATLAS_PKG_PATH = path.join(WORLD_ATLAS_DIR, "package.json");
+const FIRMS_TABLE_PATH = path.join(WEB_DIR, "src", "lib", "geo", "firmsCountries.json");
 const OUT_PATH = path.join(WEB_DIR, "public", "geo", "regions.json");
 
 const TOLERANCE_DEFAULT_DEG = 0.02;
-const TOLERANCE_RUSSIA_DEG = 0.06;
-const MAX_BYTES = 450 * 1024;
-const CONTEXT_BBOX = [14, 22, 72, 60]; // [west, south, east, north]
-const NORTH_CYPRUS_NAME = "N. Cyprus";
-const NORTH_CYPRUS_CODE = "CYN";
-const RUSSIA_NUMERIC_ID = "643";
+// Arcs used only by very large high-latitude countries can be coarser without visible loss.
+const TOLERANCE_COARSE_DEG = 0.06;
+const COARSE_ARC_CODES = new Set(["RUS", "CAN", "GRL", "USA", "AUS", "CHN", "BRA"]);
+const MAX_BYTES = 700 * 1024;
+const RUSSIA_CODE = "RUS";
 
-const MAPPED_REGIONS = new Map([
-  ["792", { code: "TUR", regionId: "Turkey" }],
-  ["300", { code: "GRC", regionId: "Greece" }],
-  ["100", { code: "BGR", regionId: "Bulgaria" }],
-  ["196", { code: "CYP", regionId: "Cyprus" }],
-  ["268", { code: "GEO", regionId: "Georgia" }],
-  ["051", { code: "ARM", regionId: "Armenia" }],
-  ["031", { code: "AZE", regionId: "Azerbaijan" }],
-  ["364", { code: "IRN", regionId: "Iran" }],
-  ["368", { code: "IRQ", regionId: "Iraq" }],
-  ["760", { code: "SYR", regionId: "Syria" }],
-  ["643", { code: "RUS", regionId: "Russian_Federation" }],
+// Antarctica is dropped: no burnable land, and in a regional conic it becomes a band that dwarfs the map.
+const EXCLUDED_CODES = new Set(["ATA"]);
+
+// world-atlas carries ISO 3166-1 numeric ids (France/Norway already fixed). These features have no
+// numeric id, or share one with another feature; they get their Natural Earth ADM0_A3 code instead.
+const CODE_BY_NAME = new Map([
+  ["N. Cyprus", "CYN"],
+  ["Kosovo", "KOS"],
+  ["Somaliland", "SOL"],
+  ["Indian Ocean Ter.", "IOA"],
+  ["Siachen Glacier", "KAS"],
+  ["Ashmore and Cartier Is.", "ATC"],
 ]);
 
-// Complete ISO 3166-1 numeric -> alpha-3 table so context neighbours never use name matching.
+// Natural Earth admin-0 keeps these overseas parts inside their parent country, while FIRMS publishes
+// them as separate countries. Parent polygons whose bbox lies inside `box` become their own feature.
+const OVERSEAS_SPLITS = [
+  { parent: "FRA", code: "GUF", name: "French Guiana", box: [-55, 1.5, -51, 6.5] },
+  { parent: "FRA", code: "GLP", name: "Guadeloupe", box: [-62, 15.8, -61, 16.6] },
+  { parent: "FRA", code: "MTQ", name: "Martinique", box: [-61.3, 14.3, -60.7, 14.95] },
+  { parent: "FRA", code: "REU", name: "Réunion", box: [55, -21.5, 56, -20.7] },
+  { parent: "FRA", code: "MYT", name: "Mayotte", box: [44.9, -13.1, 45.4, -12.5] },
+  { parent: "NOR", code: "SJM", name: "Svalbard and Jan Mayen", box: [10, 74, 35, 81] },
+  { parent: "NOR", code: "SJM", name: "Svalbard and Jan Mayen", box: [-9.5, 70.5, -7.5, 71.5] },
+];
+
+// Complete ISO 3166-1 numeric -> alpha-3 table.
 const ISO_NUMERIC_TO_ALPHA3 = {
   "004": "AFG", "008": "ALB", "010": "ATA", "012": "DZA", "016": "ASM",
   "020": "AND", "024": "AGO", "028": "ATG", "031": "AZE", "032": "ARG",
@@ -208,11 +220,18 @@ function ringSignedArea(ring) {
 
 function cleanRing(rawRing, unwrapAntimeridian) {
   const pts = [];
+  let prevLon = null;
   for (const pos of rawRing) {
     let lon = pos[0];
     if (unwrapAntimeridian && lon < 0) {
       lon += 360;
     }
+    // A few rings touch both +180 and -180 (Fiji); keep every ring continuous in longitude.
+    if (prevLon !== null) {
+      while (lon - prevLon > 180) lon -= 360;
+      while (lon - prevLon < -180) lon += 360;
+    }
+    prevLon = lon;
     const rLon = round2(lon);
     const rLat = round2(pos[1]);
     const prev = pts[pts.length - 1];
@@ -270,166 +289,172 @@ function ringBBox(ring) {
   return [west, south, east, north];
 }
 
+/**
+ * Longitude extent is the shortest arc covering every polygon, so countries split by the
+ * antimeridian (USA, Fiji, Kiribati, Russia) get `east > 180` instead of a -180..180 span that
+ * would centre their regional projection on the wrong side of the globe.
+ */
 function featureBBox(polygons) {
-  let west = Infinity;
   let south = Infinity;
-  let east = -Infinity;
   let north = -Infinity;
+  const spans = [];
   for (const poly of polygons) {
     const [w, s, e, n] = ringBBox(poly[0]);
-    if (w < west) west = w;
     if (s < south) south = s;
-    if (e > east) east = e;
     if (n > north) north = n;
+    const start = ((((w + 180) % 360) + 360) % 360) - 180;
+    spans.push([start, start + (e - w)]);
   }
-  return [west, south, east, north];
+  spans.sort((a, b) => a[0] - b[0]);
+
+  // The widest gap between consecutive (circularly merged) spans is the part of the globe to leave out.
+  let reachEast = spans[0][1];
+  let bestGap = spans[0][0] + 360 - Math.max(...spans.map((s) => s[1]));
+  let west = spans[0][0];
+  let east = Math.max(...spans.map((s) => s[1]));
+  for (let i = 1; i < spans.length; i++) {
+    const gap = spans[i][0] - reachEast;
+    if (gap > bestGap) {
+      bestGap = gap;
+      west = spans[i][0];
+      east = reachEast + 360;
+    }
+    if (spans[i][1] > reachEast) reachEast = spans[i][1];
+  }
+  return [round2(west), south, round2(east), north];
 }
 
-function bboxIntersects(a, b) {
-  return a[2] >= b[0] && a[0] <= b[2] && a[3] >= b[1] && a[1] <= b[3];
+function bboxInside(inner, outer) {
+  return inner[0] >= outer[0] && inner[1] >= outer[1] && inner[2] <= outer[2] && inner[3] <= outer[3];
+}
+
+function featureCode(geom) {
+  const name = typeof geom.properties?.name === "string" ? geom.properties.name : "";
+  const byName = CODE_BY_NAME.get(name);
+  if (byName) return byName;
+  if (geom.id == null) {
+    throw new Error(`Feature "${name}" has no ISO numeric id and no CODE_BY_NAME entry.`);
+  }
+  const numeric = String(geom.id).padStart(3, "0");
+  const code = ISO_NUMERIC_TO_ALPHA3[numeric];
+  if (!code) throw new Error(`Feature "${name}" has unmapped ISO numeric id "${numeric}".`);
+  return code;
+}
+
+function firmsIdByCode(table) {
+  const byCode = new Map();
+  for (const [firmsId, codes] of Object.entries(table.countries)) {
+    for (const code of codes) {
+      if (byCode.has(code)) {
+        throw new Error(`ISO code ${code} is claimed by both ${byCode.get(code)} and ${firmsId}.`);
+      }
+      byCode.set(code, firmsId);
+    }
+  }
+  return byCode;
 }
 
 async function main() {
-  const [topoRaw, pkgRaw] = await Promise.all([
+  const [topoRaw, pkgRaw, firmsRaw] = await Promise.all([
     readFile(TOPO_PATH, "utf8"),
     readFile(WORLD_ATLAS_PKG_PATH, "utf8"),
+    readFile(FIRMS_TABLE_PATH, "utf8"),
   ]);
 
   const topology = JSON.parse(topoRaw);
   const worldAtlasPkg = JSON.parse(pkgRaw);
+  const firmsByCode = firmsIdByCode(JSON.parse(firmsRaw));
   const countriesObj = topology?.objects?.countries;
 
   if (!countriesObj || !Array.isArray(countriesObj.geometries)) {
     throw new Error("Invalid world-atlas TopoJSON: missing objects.countries.geometries");
   }
 
-  const russiaArcs = new Set();
-  const otherArcs = new Set();
-  for (const geom of countriesObj.geometries) {
-    const id = geom.id == null ? null : String(geom.id).padStart(3, "0");
-    collectGeometryArcs(geom, id === RUSSIA_NUMERIC_ID ? russiaArcs : otherArcs);
+  const geometries = countriesObj.geometries
+    .map((geom) => ({ geom, code: featureCode(geom) }))
+    .filter(({ code }) => !EXCLUDED_CODES.has(code));
+
+  const coarseArcs = new Set();
+  const fineArcs = new Set();
+  for (const { geom, code } of geometries) {
+    collectGeometryArcs(geom, COARSE_ARC_CODES.has(code) ? coarseArcs : fineArcs);
   }
 
   // Simplify each shared arc once in world degrees to prevent boundary slivers between neighbours.
   const decodePoint = topoTransform(topology.transform);
-  const simplifiedArcs = topology.arcs.map((arc, idx) => {
-    const decoded = arc.map((pt, pointIdx) => decodePoint(pt, pointIdx));
-    const isRussiaOnly = russiaArcs.has(idx) && !otherArcs.has(idx);
-    const tol = isRussiaOnly ? TOLERANCE_RUSSIA_DEG : TOLERANCE_DEFAULT_DEG;
-    return simplifyArc(decoded, tol);
-  });
-
+  const decodedArcs = topology.arcs.map((arc) => arc.map((pt, i) => decodePoint(pt, i)));
   const simplifiedTopology = {
     ...topology,
     transform: undefined,
-    arcs: simplifiedArcs,
+    arcs: decodedArcs.map((arc, idx) => {
+      const coarse = coarseArcs.has(idx) && !fineArcs.has(idx);
+      return simplifyArc(arc, coarse ? TOLERANCE_COARSE_DEG : TOLERANCE_DEFAULT_DEG);
+    }),
   };
+  const unsimplifiedTopology = { ...topology, transform: undefined, arcs: decodedArcs };
 
   const features = [];
-  const foundMappedIds = new Set();
   const seenCodes = new Set();
-  let foundNorthCyprus = false;
-  let unknownContextIndex = 0;
-
-  for (const geom of countriesObj.geometries) {
-    const rawId = geom.id == null ? null : String(geom.id).padStart(3, "0");
-    const name = typeof geom.properties?.name === "string" ? geom.properties.name : "";
-
-    const mapped = rawId !== null ? MAPPED_REGIONS.get(rawId) : undefined;
-    const isNorthCyprus = rawId === null && name === NORTH_CYPRUS_NAME;
-    const isRussia = rawId === RUSSIA_NUMERIC_ID;
-
-    const geojsonFeature = topoFeature(simplifiedTopology, geom);
-    const polygons = normalizePolygons(geojsonFeature.geometry, isRussia);
-
-    if (mapped) {
-      if (polygons.length === 0) {
-        throw new Error(`Mapped region ${mapped.regionId} (id=${rawId}) has no valid polygons.`);
-      }
-      foundMappedIds.add(rawId);
-      if (seenCodes.has(mapped.code)) {
-        throw new Error(`Duplicate feature code "${mapped.code}".`);
-      }
-      seenCodes.add(mapped.code);
-      features.push({
-        code: mapped.code,
-        name,
-        regionId: mapped.regionId,
-        bbox: featureBBox(polygons),
-        polygons,
-      });
-      continue;
-    }
-
-    if (isNorthCyprus) {
-      if (polygons.length === 0) {
-        throw new Error('Cyprus exception feature "N. Cyprus" has no valid polygons.');
-      }
-      foundNorthCyprus = true;
-      if (seenCodes.has(NORTH_CYPRUS_CODE)) {
-        throw new Error(`Duplicate feature code "${NORTH_CYPRUS_CODE}".`);
-      }
-      seenCodes.add(NORTH_CYPRUS_CODE);
-      features.push({
-        code: NORTH_CYPRUS_CODE,
-        name,
-        regionId: "Cyprus",
-        bbox: featureBBox(polygons),
-        polygons,
-      });
-      continue;
-    }
-
-    if (polygons.length === 0) continue;
-
-    // Test per-polygon bbox so transoceanic territories (e.g. USA/France) do not span the context box.
-    const intersectsContext = polygons.some((poly) =>
-      bboxIntersects(ringBBox(poly[0]), CONTEXT_BBOX),
-    );
-    if (!intersectsContext) continue;
-
-    let code;
-    if (rawId !== null) {
-      code = ISO_NUMERIC_TO_ALPHA3[rawId];
-      if (!code) {
-        throw new Error(
-          `Context feature "${name}" has unmapped ISO numeric id "${rawId}".`,
-        );
-      }
-    } else {
-      unknownContextIndex += 1;
-      code = `X${unknownContextIndex}`;
-      console.warn(
-        `Context-only feature without ISO id inside context window: "${name}" -> assigned code "${code}".`,
-      );
-    }
-
-    if (seenCodes.has(code)) {
-      throw new Error(`Duplicate feature code "${code}" (feature "${name}").`);
-    }
+  const pushFeature = (code, name, polygons) => {
+    if (seenCodes.has(code)) throw new Error(`Duplicate feature code "${code}" (feature "${name}").`);
     seenCodes.add(code);
-
     features.push({
       code,
       name,
-      regionId: null,
+      regionId: firmsByCode.get(code) ?? null,
       bbox: featureBBox(polygons),
       polygons,
     });
-  }
+  };
 
-  for (const [id, entry] of MAPPED_REGIONS.entries()) {
-    if (!foundMappedIds.has(id)) {
-      throw new Error(
-        `Missing required mapped region "${entry.regionId}" (ISO numeric id "${id}").`,
-      );
+  for (const { geom, code } of geometries) {
+    const name = typeof geom.properties?.name === "string" ? geom.properties.name : "";
+    const unwrap = code === RUSSIA_CODE;
+    let polygons = normalizePolygons(topoFeature(simplifiedTopology, geom).geometry, unwrap);
+    if (polygons.length === 0) {
+      // Islands smaller than the tolerance collapse; keep them at full detail so they stay clickable.
+      polygons = normalizePolygons(topoFeature(unsimplifiedTopology, geom).geometry, unwrap);
     }
-  }
-  if (!foundNorthCyprus) {
-    throw new Error(`Missing required Cyprus exception feature "${NORTH_CYPRUS_NAME}".`);
+    if (polygons.length === 0) {
+      console.warn(`Skipping "${name}" (${code}): no polygon survives rounding.`);
+      continue;
+    }
+
+    const splits = OVERSEAS_SPLITS.filter((s) => s.parent === code);
+    if (splits.length > 0) {
+      const parts = new Map();
+      const home = [];
+      for (const poly of polygons) {
+        const box = ringBBox(poly[0]);
+        const split = splits.find((s) => bboxInside(box, s.box));
+        if (!split) {
+          home.push(poly);
+          continue;
+        }
+        const part = parts.get(split.code) ?? { name: split.name, polygons: [] };
+        part.polygons.push(poly);
+        parts.set(split.code, part);
+      }
+      for (const split of splits) {
+        if (!parts.has(split.code)) {
+          throw new Error(`Overseas split ${split.code} found no polygon inside ${code}.`);
+        }
+      }
+      polygons = home;
+      for (const [partCode, part] of parts) pushFeature(partCode, part.name, part.polygons);
+    }
+
+    pushFeature(code, name, polygons);
   }
 
   features.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
+
+  const withoutGeometry = [...firmsByCode.entries()]
+    .filter(([code]) => !seenCodes.has(code))
+    .map(([code, firmsId]) => `${firmsId} (${code})`);
+  if (withoutGeometry.length > 0) {
+    console.log(`FIRMS countries without geometry: ${withoutGeometry.join(", ")}`);
+  }
 
   const dataset = {
     meta: {
@@ -439,7 +464,7 @@ async function main() {
       sourceVersion: "4.1.0",
       license: "ISC (world-atlas) / Public Domain (Natural Earth)",
       resolution: "1:50m",
-      simplification: `topology-aware Douglas-Peucker ${TOLERANCE_DEFAULT_DEG}deg (${TOLERANCE_RUSSIA_DEG}deg RUS), rounded 2 decimals`,
+      simplification: `topology-aware Douglas-Peucker ${TOLERANCE_DEFAULT_DEG}deg (${TOLERANCE_COARSE_DEG}deg for arcs of ${[...COARSE_ARC_CODES].join("/")}), rounded 2 decimals`,
     },
     features,
   };
@@ -455,8 +480,9 @@ async function main() {
   await mkdir(path.dirname(OUT_PATH), { recursive: true });
   await writeFile(OUT_PATH, json, "utf8");
 
+  const linked = features.filter((f) => f.regionId !== null).length;
   console.log(
-    `Wrote ${features.length} features (${byteLength} bytes) to ${path.relative(WEB_DIR, OUT_PATH)}`,
+    `Wrote ${features.length} features (${linked} linked to FIRMS ids, ${byteLength} bytes) to ${path.relative(WEB_DIR, OUT_PATH)}`,
   );
 }
 

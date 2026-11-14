@@ -1,3 +1,4 @@
+import firmsCountries from "./firmsCountries.json";
 import type { GeoFeature } from "./types.ts";
 
 export interface RegionRef {
@@ -41,6 +42,27 @@ export function tokenizeGeoName(name: string): NameTokens {
   return { words, abbreviated, key: words.join(" ") };
 }
 
+// Every FIRMS archive country id (plus common aliases) mapped to the feature codes it covers; shared
+// with scripts/build-geo.mjs, which stamps the canonical id onto each feature as `regionId`.
+const FIRMS_CODES_BY_KEY: ReadonlyMap<string, readonly string[]> = (() => {
+  const countries: Readonly<Record<string, readonly string[]>> = firmsCountries.countries;
+  const aliases: Readonly<Record<string, string>> = firmsCountries.aliases;
+  const map = new Map<string, readonly string[]>();
+  for (const [id, codes] of Object.entries(countries)) map.set(tokenizeGeoName(id).key, codes);
+  for (const [alias, id] of Object.entries(aliases)) {
+    const codes = countries[id];
+    if (codes) map.set(tokenizeGeoName(alias).key, codes);
+  }
+  return map;
+})();
+
+/** Feature codes for a FIRMS country id, alias, display name or ISO alpha-3 code; null if unknown. */
+export function firmsCodesFor(idOrName: string): readonly string[] | null {
+  const codes = FIRMS_CODES_BY_KEY.get(tokenizeGeoName(idOrName).key);
+  if (codes) return codes;
+  return ISO_ALPHA3.test(idOrName) ? [idOrName.toUpperCase()] : null;
+}
+
 function abbreviationMatch(a: NameTokens, b: NameTokens): boolean {
   if (a.words.length === 0 || a.words.length !== b.words.length) return false;
   for (let i = 0; i < a.words.length; i++) {
@@ -58,7 +80,7 @@ function abbreviationMatch(a: NameTokens, b: NameTokens): boolean {
  * Links archive regions to boundary features. Each region stops at the first rule that yields a
  * feature, and a feature is never claimed twice:
  *   1. the feature's build-time `regionId` link,
- *   2. a region id that is an ISO alpha-3 code equal to the feature code,
+ *   2. the FIRMS country table (id, alias or name -> feature codes), or an ISO alpha-3 region id,
  *   3. equal normalized names (region id or name vs feature name),
  *   4. a unique abbreviation-aware name match ("Bosnia and Herz." vs "Bosnia_and_Herzegovina").
  */
@@ -97,9 +119,11 @@ export function matchRegionsToFeatures(
       if (regionByFeature[i] === null) byCode.set(features[i].code.toUpperCase(), i);
     }
     for (const region of pending) {
-      if (!ISO_ALPHA3.test(region.id)) continue;
-      const idx = byCode.get(region.id.toUpperCase());
-      if (idx !== undefined && regionByFeature[idx] === null) claim(region.id, idx);
+      const codes = firmsCodesFor(region.id) ?? firmsCodesFor(region.name) ?? [];
+      for (const code of codes) {
+        const idx = byCode.get(code);
+        if (idx !== undefined && regionByFeature[idx] === null) claim(region.id, idx);
+      }
     }
     pending = pending.filter((r) => !featuresByRegion.has(r.id));
   }

@@ -1,7 +1,11 @@
-import type { GeoFeature } from "./types.ts";
+import type { GeoFeature, Position } from "./types.ts";
 
 export interface RegionProjection {
+  /** Central meridian; `project` wraps longitudes into centerLon ± 180. */
+  readonly centerLon: number;
   project(lon: number, lat: number): readonly [x: number, y: number];
+  /** Like `project` without wrapping, for longitudes already unwrapped around `centerLon`. */
+  projectUnwrapped(lon: number, lat: number): readonly [x: number, y: number];
 }
 
 export type GeoBBox = readonly [west: number, south: number, east: number, north: number];
@@ -45,32 +49,61 @@ export function createProjection(bbox: GeoBBox): RegionProjection {
   if (Math.abs(n) < 1e-7) {
     const safeCos = Math.abs(cosPhi1) < 1e-7 ? 1 : cosPhi1;
     const sinPhi0 = Math.sin(phi0);
+    const projectDelta = (dLonDeg: number, lat: number): readonly [x: number, y: number] => {
+      const x = dLonDeg * DEG_TO_RAD * safeCos;
+      const y = -(Math.sin(lat * DEG_TO_RAD) - sinPhi0) / safeCos;
+      return [x, y];
+    };
     return {
-      project(lon: number, lat: number): readonly [x: number, y: number] {
-        const dLonRad = wrapDeltaLon(lon - lon0Deg) * DEG_TO_RAD;
-        const phi = lat * DEG_TO_RAD;
-        const x = dLonRad * safeCos;
-        const y = -(Math.sin(phi) - sinPhi0) / safeCos;
-        return [x, y];
-      },
+      centerLon: lon0Deg,
+      project: (lon, lat) => projectDelta(wrapDeltaLon(lon - lon0Deg), lat),
+      projectUnwrapped: (lon, lat) => projectDelta(lon - lon0Deg, lat),
     };
   }
 
   const c = cosPhi1 * cosPhi1 + 2 * n * sinPhi1;
   const rho0 = Math.sqrt(Math.max(0, c - 2 * n * Math.sin(phi0))) / n;
 
-  return {
-    project(lon: number, lat: number): readonly [x: number, y: number] {
-      const dLonRad = wrapDeltaLon(lon - lon0Deg) * DEG_TO_RAD;
-      const phi = lat * DEG_TO_RAD;
-      const theta = n * dLonRad;
-      const rho = Math.sqrt(Math.max(0, c - 2 * n * Math.sin(phi))) / n;
-      const x = rho * Math.sin(theta);
-      // Negate standard north-up Albers y so screen-like plane y grows downward.
-      const y = rho * Math.cos(theta) - rho0;
-      return [x, y];
-    },
+  const projectDelta = (dLonDeg: number, lat: number): readonly [x: number, y: number] => {
+    const theta = n * dLonDeg * DEG_TO_RAD;
+    const rho = Math.sqrt(Math.max(0, c - 2 * n * Math.sin(lat * DEG_TO_RAD))) / n;
+    const x = rho * Math.sin(theta);
+    // Negate standard north-up Albers y so screen-like plane y grows downward.
+    const y = rho * Math.cos(theta) - rho0;
+    return [x, y];
   };
+  return {
+    centerLon: lon0Deg,
+    project: (lon, lat) => projectDelta(wrapDeltaLon(lon - lon0Deg), lat),
+    projectUnwrapped: (lon, lat) => projectDelta(lon - lon0Deg, lat),
+  };
+}
+
+/**
+ * Projects a ring as one continuous piece: longitudes are unwrapped vertex to vertex and the ring is
+ * placed on the side of the projection seam (centerLon + 180) where most of it lies. Wrapping each
+ * vertex on its own would draw a ring that straddles the seam (e.g. Alaska seen from Türkiye) as a
+ * band across the whole map.
+ */
+export function projectRing(projection: RegionProjection, ring: readonly Position[]): Float32Array {
+  const n = ring.length;
+  const out = new Float32Array(n * 2);
+  if (n === 0) return out;
+  const lons = new Float64Array(n);
+  let lon = projection.centerLon + wrapDeltaLon(ring[0][0] - projection.centerLon);
+  let sum = 0;
+  for (let i = 0; i < n; i++) {
+    if (i > 0) lon += wrapDeltaLon(ring[i][0] - ring[i - 1][0]);
+    lons[i] = lon;
+    sum += lon;
+  }
+  const shift = -360 * Math.round((sum / n - projection.centerLon) / 360);
+  for (let i = 0; i < n; i++) {
+    const [x, y] = projection.projectUnwrapped(lons[i] + shift, ring[i][1]);
+    out[i * 2] = x;
+    out[i * 2 + 1] = y;
+  }
+  return out;
 }
 
 export function planeBounds(projection: RegionProjection, bbox: GeoBBox): PlaneBounds {
