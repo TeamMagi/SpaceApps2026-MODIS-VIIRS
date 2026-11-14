@@ -10,6 +10,7 @@
 | Dosya | İçerik |
 |-------|--------|
 | `MIMARI.md` | Proje mimarisi, dizin yapısı, pipeline açıklaması, tech stack |
+| `UI-UX-KONSEPT.md` | UI/UX konsepti, wireframe'ler, kullanıcı akışı, bileşen ağacı (C1) |
 
 ## Doküman Ekleme Kuralları
 
