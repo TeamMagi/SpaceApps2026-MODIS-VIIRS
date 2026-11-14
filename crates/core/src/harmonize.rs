@@ -772,4 +772,85 @@ mod tests {
             vec![Sensor::ModisTerra, Sensor::ModisAqua]
         );
     }
+
+    #[test]
+    fn empty_inputs_produce_empty_output() {
+        assert!(harmonize(vec![], vec![]).is_empty());
+    }
+
+    #[test]
+    fn every_modis_detection_matched_at_three_sites() {
+        let sites = [(36.0, 30.0), (37.0, 31.0), (38.0, 32.0)];
+        let mut modis = Vec::new();
+        let mut viirs = Vec::new();
+
+        for (i, &(lat, lon)) in sites.iter().enumerate() {
+            let i = i as i64;
+            modis.push(make_hotspot(
+                Sensor::ModisTerra,
+                lat,
+                lon,
+                i * 600,
+                50.0,
+                Confidence::Nominal,
+            ));
+            viirs.push(make_hotspot(
+                Sensor::ViirsSNPP,
+                lat + 0.003,
+                lon,
+                i * 600 + 300,
+                40.0,
+                Confidence::High,
+            ));
+        }
+
+        let out = harmonize(modis, viirs);
+        assert_eq!(out.len(), 3);
+        assert!(out.iter().all(|h| h.source == HotspotSource::Matched));
+        assert!(out.iter().all(|h| h.n_obs == 2));
+        assert!(out.windows(2).all(|w| w[0].acquired <= w[1].acquired));
+    }
+
+    #[test]
+    fn no_detection_matched_when_viirs_is_5km_away() {
+        let sites = [(36.0, 30.0), (37.0, 31.0), (38.0, 32.0)];
+        let mut modis = Vec::new();
+        let mut viirs = Vec::new();
+
+        for (i, &(lat, lon)) in sites.iter().enumerate() {
+            let i = i as i64;
+            modis.push(make_hotspot(
+                Sensor::ModisTerra,
+                lat,
+                lon,
+                i * 600,
+                50.0,
+                Confidence::Nominal,
+            ));
+            viirs.push(make_hotspot(
+                Sensor::ViirsSNPP,
+                lat + 0.045,
+                lon,
+                i * 600 + 300,
+                40.0,
+                Confidence::High,
+            ));
+        }
+
+        let out = harmonize(modis, viirs);
+        assert_eq!(out.len(), 6);
+        assert_eq!(
+            out.iter()
+                .filter(|h| h.source == HotspotSource::ModisOnly)
+                .count(),
+            3
+        );
+        assert_eq!(
+            out.iter()
+                .filter(|h| h.source == HotspotSource::ViirsOnly)
+                .count(),
+            3
+        );
+        assert!(!out.iter().any(|h| h.source == HotspotSource::Matched));
+    }
 }
