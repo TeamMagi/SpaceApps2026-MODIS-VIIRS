@@ -21,8 +21,7 @@ pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
         if to_remove[i] {
             continue;
         }
-        let mut group_frp = vec![hotspots[i].frp];
-        let mut best = i;
+        let mut group = vec![i];
 
         for j in (i + 1)..hotspots.len() {
             if to_remove[j] {
@@ -39,24 +38,26 @@ pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
                 continue;
             }
 
-            let overlap = pixel_overlap(&hotspots[i], &hotspots[j]);
-            if overlap > MIN_OVERLAP_RATIO {
-                group_frp.push(hotspots[j].frp);
-                if hotspots[j].confidence > hotspots[best].confidence {
-                    best = j;
-                }
-                if j != best {
-                    to_remove[j] = true;
-                }
+            if pixel_overlap(&hotspots[i], &hotspots[j]) > MIN_OVERLAP_RATIO {
+                group.push(j);
             }
         }
 
-        if group_frp.len() > 1 {
-            let mean_frp: f64 = group_frp.iter().sum::<f64>() / group_frp.len() as f64;
+        if group.len() > 1 {
+            let mut best = group[0];
+            for &idx in &group[1..] {
+                if hotspots[idx].confidence > hotspots[best].confidence {
+                    best = idx;
+                }
+            }
+
+            let mean_frp: f64 =
+                group.iter().map(|&idx| hotspots[idx].frp).sum::<f64>() / group.len() as f64;
             hotspots[best].frp = mean_frp;
-            for k in [i, best] {
-                if k != best {
-                    to_remove[k] = true;
+
+            for &idx in &group {
+                if idx != best {
+                    to_remove[idx] = true;
                 }
             }
         }
@@ -95,4 +96,158 @@ pub fn haversine_km(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     let a = (dlat / 2.0).sin().powi(2)
         + lat1.to_radians().cos() * lat2.to_radians().cos() * (dlon / 2.0).sin().powi(2);
     R * 2.0 * a.sqrt().asin()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{Confidence, DayNight, FireType, Sensor};
+    use chrono::{DateTime, TimeDelta};
+
+    fn make_hotspot(
+        lat: f64,
+        lon: f64,
+        frp: f64,
+        confidence: Confidence,
+        sensor: Sensor,
+        offset_secs: i64,
+    ) -> Hotspot {
+        let base = DateTime::from_timestamp(1_700_000_000, 0).expect("valid timestamp");
+        Hotspot {
+            lat,
+            lon,
+            brightness: 320.0,
+            frp,
+            confidence,
+            sensor,
+            acquired: base + TimeDelta::seconds(offset_secs),
+            scan: 1.0,
+            track: 1.0,
+            satellite: "Test".to_string(),
+            daynight: DayNight::Day,
+            vza: None,
+            fire_type: FireType::VegetationFire,
+        }
+    }
+
+    #[test]
+    fn ascending_confidence_keeps_single_highest_with_mean_frp() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 10.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(
+                37.001,
+                29.001,
+                20.0,
+                Confidence::Nominal,
+                Sensor::ModisTerra,
+                3,
+            ),
+            make_hotspot(37.002, 29.002, 30.0, Confidence::High, Sensor::ModisTerra, 6),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(hotspots[0].confidence, Confidence::High);
+        assert!((hotspots[0].frp - 20.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn descending_confidence_keeps_single_highest_with_mean_frp() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 12.0, Confidence::High, Sensor::ModisAqua, 0),
+            make_hotspot(
+                37.001,
+                29.001,
+                24.0,
+                Confidence::Nominal,
+                Sensor::ModisAqua,
+                2,
+            ),
+            make_hotspot(37.002, 29.002, 36.0, Confidence::Low, Sensor::ModisAqua, 5),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(hotspots[0].confidence, Confidence::High);
+        assert!((hotspots[0].frp - 24.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn different_sensors_are_not_deduplicated() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 25.0, Confidence::High, Sensor::ViirsSNPP, 0),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 2);
+    }
+
+    #[test]
+    fn outside_time_window_not_deduplicated() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 25.0, Confidence::High, Sensor::ModisTerra, 9),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 2);
+    }
+
+    #[test]
+    fn non_overlapping_locations_not_deduplicated() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.45, 29.0, 25.0, Confidence::High, Sensor::ModisTerra, 0),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 2);
+    }
+
+    #[test]
+    fn empty_and_single_element_do_not_panic() {
+        let mut empty: Vec<Hotspot> = Vec::new();
+        remove_interscan_duplicates(&mut empty);
+        assert!(empty.is_empty());
+
+        let mut single = vec![make_hotspot(
+            37.0,
+            29.0,
+            42.5,
+            Confidence::Nominal,
+            Sensor::ViirsNOAA20,
+            0,
+        )];
+        remove_interscan_duplicates(&mut single);
+        assert_eq!(single.len(), 1);
+        assert!((single[0].frp - 42.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn output_remains_sorted_by_acquired() {
+        let mut hotspots = vec![
+            make_hotspot(37.45, 29.0, 30.0, Confidence::High, Sensor::ModisTerra, 30),
+            make_hotspot(
+                37.001,
+                29.001,
+                20.0,
+                Confidence::High,
+                Sensor::ModisTerra,
+                14,
+            ),
+            make_hotspot(37.0, 29.0, 10.0, Confidence::Low, Sensor::ModisTerra, 10),
+            make_hotspot(38.0, 29.0, 5.0, Confidence::Nominal, Sensor::ModisTerra, 2),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 3);
+        assert!(hotspots.windows(2).all(|w| w[0].acquired <= w[1].acquired));
+    }
 }
