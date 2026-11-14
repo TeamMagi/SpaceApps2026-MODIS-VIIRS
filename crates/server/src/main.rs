@@ -18,7 +18,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::EnvFilter;
 
 use pyrosync_core::effort::EffortFactor;
@@ -606,10 +606,22 @@ fn build_router(
 
     let api_router = api_router.fallback(api_not_found);
 
-    Router::new()
-        .nest("/api", api_router)
-        .fallback_service(ServeDir::new(static_dir))
-        .layer(cors)
+    let index_path = std::path::Path::new(static_dir).join("index.html");
+    if index_path.is_file() {
+        Router::new()
+            .nest("/api", api_router)
+            .fallback_service(ServeDir::new(static_dir).fallback(ServeFile::new(index_path)))
+            .layer(cors)
+    } else {
+        tracing::warn!(
+            "SPA fallback disabled: index.html not found at {}",
+            index_path.display()
+        );
+        Router::new()
+            .nest("/api", api_router)
+            .fallback_service(ServeDir::new(static_dir))
+            .layer(cors)
+    }
 }
 
 #[tokio::main]
@@ -2343,6 +2355,107 @@ mod tests {
                 .to_ascii_lowercase()
                 .contains("access-control-allow-origin:")
         );
+
+        server.abort();
+    }
+
+    #[tokio::test]
+    async fn spa_fallback_serves_index_for_unknown_paths_but_not_for_api() {
+        let unique = format!(
+            "pyrosync-spa-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock after unix epoch")
+                .as_nanos()
+        );
+        let static_dir = std::env::temp_dir().join(unique);
+        std::fs::create_dir_all(&static_dir).expect("create temp static dir");
+        std::fs::write(
+            static_dir.join("index.html"),
+            "<html><body>spa-index-marker</body></html>",
+        )
+        .expect("write index.html");
+        std::fs::write(static_dir.join("app.js"), "// spa-js-marker").expect("write app.js");
+
+        let state = test_state(1024, None);
+        let archive_api = Arc::new(archive_api::ArchiveState::new(
+            PathBuf::from("nonexistent-archive-dir-for-test"),
+            archive_api::ArchiveLimits::from_env(),
+        ));
+        let cors = build_cors_layer(None);
+        let app = build_router(
+            state,
+            Some(archive_api),
+            static_dir.to_str().expect("utf8 temp dir path"),
+            cors,
+        );
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind ephemeral port");
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let spa_route = send_http_request(
+            addr,
+            "GET /harita HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(spa_route.starts_with("HTTP/1.1 200 OK\r\n"));
+        assert!(spa_route.contains("spa-index-marker"));
+
+        let js_asset = send_http_request(
+            addr,
+            "GET /app.js HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(js_asset.starts_with("HTTP/1.1 200 OK\r\n"));
+        assert!(js_asset.contains("spa-js-marker"));
+
+        let api_404 = send_http_request(
+            addr,
+            "GET /api/olmayanbirsey HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(api_404.starts_with("HTTP/1.1 404 Not Found\r\n"));
+        assert!(api_404.contains("Unknown API endpoint"));
+
+        server.abort();
+        std::fs::remove_dir_all(&static_dir).expect("remove temp static dir");
+    }
+
+    #[tokio::test]
+    async fn missing_static_dir_keeps_plain_404_without_panicking() {
+        let state = test_state(1024, None);
+        let archive_api = Arc::new(archive_api::ArchiveState::new(
+            PathBuf::from("nonexistent-archive-dir-for-test"),
+            archive_api::ArchiveLimits::from_env(),
+        ));
+        let cors = build_cors_layer(None);
+        let app = build_router(
+            state,
+            Some(archive_api),
+            "nonexistent-static-dir-for-test",
+            cors,
+        );
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind ephemeral port");
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let non_api = send_http_request(
+            addr,
+            "GET /harita HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        )
+        .await;
+        assert!(non_api.starts_with("HTTP/1.1 404 Not Found\r\n"));
 
         server.abort();
     }

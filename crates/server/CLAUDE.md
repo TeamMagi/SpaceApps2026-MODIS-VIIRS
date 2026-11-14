@@ -31,7 +31,7 @@
 
 ## Teknik Notlar
 
-- `tower_http::services::ServeDir` ile SPA fallback sağlanır; `/api/*` altındaki bilinmeyen yollar ise JSON `404` döner.
+- `ServeDir` statik dosyaları sunar; bilinmeyen API dışı yollar `ServeFile` ile `index.html`'e düşer, böylece derin bağlantılar ve F5 çalışır. `index.html` yoksa fallback uyarı loglanarak devre dışı kalır ve bu yollar `404` döner; `/api/*` altındaki bilinmeyen yollar ise JSON `404` döner.
 - `CORS_ALLOWED_ORIGINS` tanımlıysa yalnızca belirtilen origin'lere (`GET`, `content-type`) izin verilir; tanımsızsa `CorsLayer::permissive()` kullanılır ve başlangıçta uyarı loglanır.
 - `/api/harmonize`, `/api/compare` ve `/api/stats` yanıtları bellek bütçeli response cache kullanır ve `X-Cache: HIT` / `MISS` header'ı döner.
 - Response cache iki seviyeli TTL uygular: `days` (NRT) istekleri 600 sn, `start`/`end` (arşiv) istekleri 21600 sn (6 saat).
