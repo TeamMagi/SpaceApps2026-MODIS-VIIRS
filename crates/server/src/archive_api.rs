@@ -80,6 +80,7 @@ pub struct ArchiveState {
     limits: ArchiveLimits,
     config: Arc<PipelineConfig>,
     derived_cache: Arc<DerivedCache>,
+    bundled_cache: Arc<DerivedCache>,
     index: OnceCell<Arc<ArchiveIndex>>,
     coverage: OnceCell<Arc<Coverage>>,
     series: Mutex<HashMap<String, Arc<OnceCell<Bytes>>>>,
@@ -97,6 +98,7 @@ impl ArchiveState {
             limits,
             config,
             derived_cache: Arc::new(DerivedCache::from_env()),
+            bundled_cache: Arc::new(DerivedCache::bundled_from_env()),
             index: OnceCell::new(),
             coverage: OnceCell::new(),
             series: Mutex::new(HashMap::new()),
@@ -108,6 +110,12 @@ impl ArchiveState {
     #[cfg(test)]
     pub fn with_derived_cache_dir(mut self, dir: PathBuf) -> Self {
         self.derived_cache = Arc::new(DerivedCache::new(dir));
+        self
+    }
+
+    #[cfg(test)]
+    pub fn with_bundled_cache_dir(mut self, dir: PathBuf) -> Self {
+        self.bundled_cache = Arc::new(DerivedCache::read_only(dir));
         self
     }
 
@@ -290,13 +298,6 @@ enum ArchiveSensorKind {
     ViirsNoaa20,
 }
 
-fn mtime_secs(meta: &std::fs::Metadata) -> u64 {
-    meta.modified()
-        .ok()
-        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map_or(0, |d| d.as_secs())
-}
-
 fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
     let modis_slug = archive_slug(Sensor::ModisTerra);
     let viirs_slug = archive_slug(Sensor::ViirsSNPP);
@@ -325,7 +326,6 @@ fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
                 file.slug, file.year, file.slug, file.year, file.country
             ),
             bytes,
-            mtime_secs: mtime_secs(&meta),
         };
         let region = Arc::make_mut(regions.entry(file.country.clone()).or_insert_with(|| {
             Arc::new(RegionInfo {
@@ -610,6 +610,7 @@ async fn regions(State(state): State<Arc<ArchiveState>>) -> Result<Json<RegionsR
             .collect()
     };
     let cache = state.derived_cache.clone();
+    let bundled = state.bundled_cache.clone();
     let config = state.config.clone();
     let max_region_bytes = state.limits.max_region_bytes;
     let entries = tokio::task::spawn_blocking(move || {
@@ -618,7 +619,8 @@ async fn regions(State(state): State<Arc<ArchiveState>>) -> Result<Json<RegionsR
             .values()
             .map(|r| {
                 let stamp = SeriesStamp::for_region(&config, &r.files);
-                let precomputed = cache.has_valid_series(&r.id, &stamp);
+                let precomputed = cache.has_valid_series(&r.id, &stamp)
+                    || bundled.has_valid_series(&r.id, &stamp);
                 let series_available = precomputed || in_memory.contains(&r.id);
                 RegionEntry {
                     id: r.id.clone(),
@@ -1071,6 +1073,7 @@ struct SeriesParams {
 enum SeriesSource {
     Memory,
     Disk,
+    Bundled,
     Computed,
 }
 
@@ -1079,6 +1082,7 @@ impl SeriesSource {
         match self {
             Self::Memory => "memory",
             Self::Disk => "disk",
+            Self::Bundled => "bundled",
             Self::Computed => "computed",
         }
     }
@@ -1112,14 +1116,22 @@ async fn series(
         .get_or_try_init(|| async {
             let stamp = SeriesStamp::for_region(&state.config, &region.files);
             let cache = state.derived_cache.clone();
+            let bundled = state.bundled_cache.clone();
             let region_id = region.id.clone();
-            let disk_stamp = stamp.clone();
-            if let Some(bytes) =
-                tokio::task::spawn_blocking(move || cache.read_series(&region_id, &disk_stamp))
-                    .await
-                    .map_err(join_error)?
+            let check_stamp = stamp.clone();
+            if let Some((bytes, hit_source)) = tokio::task::spawn_blocking(move || {
+                if let Some(bytes) = cache.read_series(&region_id, &check_stamp) {
+                    Some((bytes, SeriesSource::Disk))
+                } else {
+                    bundled
+                        .read_series(&region_id, &check_stamp)
+                        .map(|bytes| (bytes, SeriesSource::Bundled))
+                }
+            })
+            .await
+            .map_err(join_error)?
             {
-                source = SeriesSource::Disk;
+                source = hit_source;
                 return Ok::<_, ApiError>(bytes);
             }
 
@@ -1153,6 +1165,11 @@ async fn series(
             region = %region.id,
             elapsed_ms,
             "served /api/series from disk cache"
+        ),
+        SeriesSource::Bundled => tracing::info!(
+            region = %region.id,
+            elapsed_ms,
+            "served /api/series from bundled cache"
         ),
         SeriesSource::Memory => tracing::debug!(
             region = %region.id,
@@ -1230,18 +1247,26 @@ async fn precompute_one_region(
     region: &Arc<RegionInfo>,
     coverage: &Arc<Coverage>,
     force: bool,
-) -> Result<PrecomputeOutcome, String> {
+) -> Result<(PrecomputeOutcome, Option<&'static str>), String> {
     let stamp = SeriesStamp::for_region(&state.config, &region.files);
     if !force {
         let cache = state.derived_cache.clone();
+        let bundled = state.bundled_cache.clone();
         let region_id = region.id.clone();
         let check_stamp = stamp.clone();
-        let hit = tokio::task::spawn_blocking(move || cache.read_series(&region_id, &check_stamp))
-            .await
-            .map_err(|err| format!("cache check task failed: {err}"))?
-            .is_some();
-        if hit {
-            return Ok(PrecomputeOutcome::Skipped);
+        let hit = tokio::task::spawn_blocking(move || {
+            if cache.read_series(&region_id, &check_stamp).is_some() {
+                Some("disk")
+            } else if bundled.read_series(&region_id, &check_stamp).is_some() {
+                Some("bundled")
+            } else {
+                None
+            }
+        })
+        .await
+        .map_err(|err| format!("cache check task failed: {err}"))?;
+        if let Some(layer) = hit {
+            return Ok((PrecomputeOutcome::Skipped, Some(layer)));
         }
     }
 
@@ -1257,7 +1282,7 @@ async fn precompute_one_region(
         .map_err(|err| format!("cache write task failed: {err}"))?
         .map_err(|err| format!("failed to write derived cache: {err}"))?;
 
-    Ok(PrecomputeOutcome::Computed)
+    Ok((PrecomputeOutcome::Computed, None))
 }
 
 /// Precomputes `/api/series` responses into the disk cache for the selected regions
@@ -1307,10 +1332,11 @@ pub async fn precompute_series(
         };
 
         let years = region_years(region).len();
-        let outcome = match precompute_one_region(&state, region, &coverage, opts.force).await {
-            Ok(outcome) => outcome,
-            Err(err) => PrecomputeOutcome::Failed(err),
-        };
+        let (outcome, skipped_from) =
+            match precompute_one_region(&state, region, &coverage, opts.force).await {
+                Ok(res) => res,
+                Err(err) => (PrecomputeOutcome::Failed(err), None),
+            };
         let elapsed = region_started.elapsed();
         let elapsed_s = (elapsed.as_secs_f64() * 100.0).round() / 100.0;
 
@@ -1331,6 +1357,7 @@ pub async fn precompute_series(
                 years,
                 elapsed_s,
                 outcome = "skipped",
+                source = skipped_from.unwrap_or("unknown"),
                 "precompute region"
             ),
             PrecomputeOutcome::Failed(err) => tracing::error!(
@@ -1675,9 +1702,10 @@ mod tests {
         std::fs::write(path.join(format!("{slug}_{year}_{country}.csv")), csv).unwrap();
     }
 
-    fn state_with_config(
+    fn state_with_caches(
         dir: PathBuf,
         derived_dir: PathBuf,
+        bundled_dir: PathBuf,
         max_region_bytes: u64,
         config: PipelineConfig,
     ) -> Arc<ArchiveState> {
@@ -1690,8 +1718,19 @@ mod tests {
                 },
                 Arc::new(config),
             )
-            .with_derived_cache_dir(derived_dir),
+            .with_derived_cache_dir(derived_dir)
+            .with_bundled_cache_dir(bundled_dir),
         )
+    }
+
+    fn state_with_config(
+        dir: PathBuf,
+        derived_dir: PathBuf,
+        max_region_bytes: u64,
+        config: PipelineConfig,
+    ) -> Arc<ArchiveState> {
+        let bundled_dir = dir.join("_bundled_cache");
+        state_with_caches(dir, derived_dir, bundled_dir, max_region_bytes, config)
     }
 
     fn state(dir: PathBuf, max_region_bytes: u64) -> Arc<ArchiveState> {
@@ -2187,6 +2226,7 @@ mod tests {
                     Arc::new(PipelineConfig::default()),
                 )
                 .with_derived_cache_dir(dir.join("_derived_cache"))
+                .with_bundled_cache_dir(dir.join("_bundled_cache"))
                 .with_year_concurrency(2),
             )
         };
@@ -2383,6 +2423,359 @@ mod tests {
         .unwrap();
         assert_eq!(err.status, StatusCode::PAYLOAD_TOO_LARGE);
         assert!(err.message.contains("2020"), "{}", err.message);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    /// Copies a computed `series/<region>.{json,meta.json}` pair from `src` to `dst`.
+    fn copy_series_files(src: &Path, dst: &Path, region: &str) {
+        let dst_series = dst.join("series");
+        std::fs::create_dir_all(&dst_series).unwrap();
+        for suffix in ["json", "meta.json"] {
+            let name = format!("{region}.{suffix}");
+            std::fs::copy(src.join("series").join(&name), dst_series.join(&name)).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn series_disk_cache_survives_archive_mtime_change_and_invalidates_on_size_change() {
+        let dir = temp_archive("mtime-independent");
+        write_file(&dir, "modis", 2015, "Cyprus", &[(35.0, "2015-07-01", 0)]);
+
+        let report = precompute_series(
+            state(dir.clone(), u64::MAX),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+
+        // Changing mtime without changing size or content must keep the stamp valid (machine-independent).
+        let csv_path = dir.join("modis/2015/modis_2015_Cyprus.csv");
+        let past = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000_000);
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&csv_path)
+            .unwrap()
+            .set_modified(past)
+            .unwrap();
+
+        let s_after_mtime = state(dir.clone(), u64::MAX);
+        let (src_mtime, _) = series_raw(&s_after_mtime, "Cyprus").await.ok().unwrap();
+        assert_eq!(src_mtime.as_deref(), Some("disk"));
+
+        // Changing byte size must still invalidate the stamp and recompute.
+        let mut contents = std::fs::read_to_string(&csv_path).unwrap();
+        contents.push_str("35.5,32.0,320,0.5,0.5,2015-07-02,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n");
+        std::fs::write(&csv_path, contents).unwrap();
+
+        let s_after_size = state(dir.clone(), u64::MAX);
+        let (src_size, body_size) = series_raw(&s_after_size, "Cyprus").await.ok().unwrap();
+        assert_eq!(src_size.as_deref(), Some("computed"));
+        let json: serde_json::Value = serde_json::from_slice(&body_size).unwrap();
+        assert_eq!(json["years"][0]["raw_total"], 2);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_serves_from_bundled_without_writing_disk_then_memory() {
+        let dir = temp_archive("bundled-hit");
+        write_file(&dir, "modis", 2015, "Malta", &[(35.9, "2015-07-01", 0)]);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let staging_state = state_with_caches(
+            dir.clone(),
+            staging_dir.clone(),
+            dir.join("_unused_bundled"),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src_comp, body_comp) = series_raw(&staging_state, "Malta").await.ok().unwrap();
+        assert_eq!(src_comp.as_deref(), Some("computed"));
+        copy_series_files(&staging_dir, &bundled_dir, "Malta");
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src_bundled, body_bundled) = series_raw(&s, "Malta").await.ok().unwrap();
+        assert_eq!(src_bundled.as_deref(), Some("bundled"));
+        assert_eq!(body_bundled, body_comp);
+        assert!(
+            !writable_dir.exists(),
+            "serving from bundled must not create or write to the writable cache"
+        );
+
+        let (src_mem, body_mem) = series_raw(&s, "Malta").await.ok().unwrap();
+        assert_eq!(src_mem.as_deref(), Some("memory"));
+        assert_eq!(body_mem, body_comp);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_prefers_writable_disk_over_bundled() {
+        let dir = temp_archive("disk-over-bundled");
+        write_file(&dir, "modis", 2015, "Crete", &[(35.2, "2015-07-01", 0)]);
+
+        let writable_dir = dir.join("_writable");
+        let bundled_dir = dir.join("_bundled");
+
+        let seed_state = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            dir.join("_unused_bundled"),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src_seed, _) = series_raw(&seed_state, "Crete").await.ok().unwrap();
+        assert_eq!(src_seed.as_deref(), Some("computed"));
+        copy_series_files(&writable_dir, &bundled_dir, "Crete");
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir,
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, _) = series_raw(&s, "Crete").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("disk"));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_ignores_corrupt_bundled_body_without_modifying_bundled_file() {
+        let dir = temp_archive("bundled-corrupt");
+        write_file(&dir, "modis", 2015, "Rhodes", &[(36.2, "2015-07-01", 0)]);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let staging_state = state_with_caches(
+            dir.clone(),
+            staging_dir.clone(),
+            dir.join("_unused_bundled"),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (_, expected_body) = series_raw(&staging_state, "Rhodes").await.ok().unwrap();
+        copy_series_files(&staging_dir, &bundled_dir, "Rhodes");
+
+        let corrupt_bytes = b"{corrupt-bundled";
+        let bundled_body_path = bundled_dir.join("series/Rhodes.json");
+        std::fs::write(&bundled_body_path, corrupt_bytes).unwrap();
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, body) = series_raw(&s, "Rhodes").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("computed"));
+        assert_eq!(body, expected_body);
+        assert_eq!(std::fs::read(&bundled_body_path).unwrap(), corrupt_bytes);
+        assert!(writable_dir.join("series/Rhodes.json").is_file());
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn regions_marks_bundled_oversized_region_available() {
+        let dir = temp_archive("regions-bundled");
+        let big: Vec<(f64, &str, u8)> = (0..120)
+            .map(|i| (30.0 + f64::from(i) * 0.05, "2015-07-01", 0))
+            .collect();
+        write_file(&dir, "modis", 2015, "BigBundled", &big);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let precompute_state = state_with_caches(
+            dir.clone(),
+            staging_dir.clone(),
+            dir.join("_unused_bundled"),
+            100,
+            PipelineConfig::default(),
+        );
+        let report = precompute_series(
+            precompute_state,
+            &PrecomputeOptions {
+                regions: vec!["BigBundled".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+        copy_series_files(&staging_dir, &bundled_dir, "BigBundled");
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir,
+            bundled_dir,
+            100,
+            PipelineConfig::default(),
+        );
+        let Json(listing) = regions(State(s)).await.ok().unwrap();
+        let entry = listing
+            .regions
+            .iter()
+            .find(|r| r.id == "BigBundled")
+            .unwrap();
+        assert!(!entry.too_large);
+        assert!(entry.precomputed);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn precompute_skips_valid_bundled_region_and_force_writes_to_disk() {
+        let dir = temp_archive("precompute-bundled");
+        write_file(&dir, "modis", 2015, "Samos", &[(37.7, "2015-07-01", 0)]);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let r_stage = precompute_series(
+            state_with_caches(
+                dir.clone(),
+                staging_dir.clone(),
+                dir.join("_unused_bundled"),
+                u64::MAX,
+                PipelineConfig::default(),
+            ),
+            &PrecomputeOptions {
+                regions: vec!["Samos".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r_stage.computed(), 1);
+        copy_series_files(&staging_dir, &bundled_dir, "Samos");
+
+        let r_skip = precompute_series(
+            state_with_caches(
+                dir.clone(),
+                writable_dir.clone(),
+                bundled_dir.clone(),
+                u64::MAX,
+                PipelineConfig::default(),
+            ),
+            &PrecomputeOptions {
+                regions: vec!["Samos".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r_skip.skipped(), 1);
+        assert_eq!(r_skip.computed(), 0);
+        assert_eq!(r_skip.failed(), 0);
+        assert!(!writable_dir.exists());
+
+        let r_force = precompute_series(
+            state_with_caches(
+                dir.clone(),
+                writable_dir.clone(),
+                bundled_dir,
+                u64::MAX,
+                PipelineConfig::default(),
+            ),
+            &PrecomputeOptions {
+                regions: vec!["Samos".to_string()],
+                force: true,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r_force.computed(), 1);
+        assert_eq!(r_force.skipped(), 0);
+        assert_eq!(r_force.failed(), 0);
+        assert!(writable_dir.join("series/Samos.json").is_file());
+        assert!(writable_dir.join("series/Samos.meta.json").is_file());
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_treats_v1_schema_with_mtime_secs_as_stale_and_recomputes() {
+        let dir = temp_archive("schema-v1-stale");
+        write_file(&dir, "modis", 2015, "Lesbos", &[(39.1, "2015-07-01", 0)]);
+
+        let writable_dir = dir.join("_writable");
+        let bundled_dir = dir.join("_bundled");
+
+        let seed_state = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir.clone(),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (_, real_body) = series_raw(&seed_state, "Lesbos").await.ok().unwrap();
+
+        let csv_path = dir.join("modis/2015/modis_2015_Lesbos.csv");
+        let csv_bytes = std::fs::metadata(&csv_path).unwrap().len();
+        let v1_meta = serde_json::json!({
+            "schema_version": 1,
+            "config_hash": crate::derived_cache::config_digest(&PipelineConfig::default()),
+            "files": [{
+                "path": "modis/2015/modis_2015_Lesbos.csv",
+                "bytes": csv_bytes,
+                "mtime_secs": 1_700_000_000u64,
+            }],
+            "body_hash": format!("{:016x}", crate::derived_cache::fnv1a_64(&real_body)),
+        });
+        let v1_meta_bytes = serde_json::to_vec_pretty(&v1_meta).unwrap();
+
+        std::fs::create_dir_all(bundled_dir.join("series")).unwrap();
+        std::fs::write(bundled_dir.join("series/Lesbos.json"), &real_body).unwrap();
+        std::fs::write(bundled_dir.join("series/Lesbos.meta.json"), &v1_meta_bytes).unwrap();
+        std::fs::write(writable_dir.join("series/Lesbos.meta.json"), &v1_meta_bytes).unwrap();
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, body) = series_raw(&s, "Lesbos").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("computed"));
+        assert_eq!(body, real_body);
+
+        let refreshed_meta: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(writable_dir.join("series/Lesbos.meta.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            refreshed_meta["schema_version"].as_u64(),
+            Some(u64::from(crate::derived_cache::DERIVED_SCHEMA_VERSION))
+        );
+        assert!(refreshed_meta["files"][0].get("mtime_secs").is_none());
 
         let _ = std::fs::remove_dir_all(dir);
     }

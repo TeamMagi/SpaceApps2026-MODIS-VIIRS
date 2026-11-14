@@ -1,4 +1,4 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local fetch-sample verify-data manifest clean clean-cache clean-derived help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local bundle-derived fetch-sample verify-data manifest clean clean-cache clean-derived help
 
 # Shared host directory for the FIRMS country archive (override via environment or make args)
 ARCHIVE_CACHE_HOST_DIR ?= .cache/firms-archive
@@ -108,6 +108,22 @@ precompute: ## Precompute /api/series disk cache for all archive regions via Doc
 precompute-local: ## Precompute /api/series disk cache locally without Docker
 	mkdir -p $(DERIVED_CACHE_HOST_DIR)
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) DERIVED_CACHE_DIR=$(DERIVED_CACHE_HOST_DIR) cargo run --release -p pyrosync-server -- precompute
+
+bundle-derived: ## Copy precomputed /api/series cache into data/derived/series for git sharing
+	@if [ ! -d "$(DERIVED_CACHE_HOST_DIR)/series" ]; then \
+		echo "Error: $(DERIVED_CACHE_HOST_DIR)/series not found. Run 'make precompute' or 'make precompute-local' first."; \
+		exit 1; \
+	fi
+	mkdir -p data/derived/series
+	@count=0; \
+	for f in "$(DERIVED_CACHE_HOST_DIR)/series"/*; do \
+		[ -f "$$f" ] || continue; \
+		case "$$(basename "$$f")" in .*.tmp.*) continue ;; esac; \
+		cp "$$f" data/derived/series/; \
+		count=$$((count + 1)); \
+	done; \
+	echo "Copied $$count file(s) to data/derived/series/."; \
+	echo "Commit data/derived to share precomputed results with the team."
 
 fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
 	@if [ -z "$$FIRMS_API_KEY" ]; then \

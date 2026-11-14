@@ -14,6 +14,7 @@ services:
       - RUST_LOG=${RUST_LOG:-pyrosync=info}
       - ARCHIVE_CACHE_DIR=${ARCHIVE_CACHE_DIR:-/app/.cache/firms-archive}
       - DERIVED_CACHE_DIR=${DERIVED_CACHE_DIR:-/app/.cache/pyrosync-derived}
+      - BUNDLED_DERIVED_DIR=${BUNDLED_DERIVED_DIR:-/app/data/derived}
       - CACHE_BUDGET_MB=${CACHE_BUDGET_MB:-128}
       - REQUEST_TIMEOUT_SECS=${REQUEST_TIMEOUT_SECS:-300}
       # Pass through only when defined so an unset value keeps CORS permissive rather than passing ""

@@ -1,6 +1,8 @@
+use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use axum::body::Bytes;
@@ -9,24 +11,34 @@ use serde::{Deserialize, Serialize};
 use pyrosync_core::config::PipelineConfig;
 
 pub const DEFAULT_DERIVED_CACHE_DIR: &str = ".cache/pyrosync-derived";
+pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 
 /// Bump manually whenever the `/api/series` response schema or the harmonization/aggregation
 /// logic that produces it changes, so previously persisted cache entries are invalidated.
-pub const DERIVED_SCHEMA_VERSION: u32 = 1;
+pub const DERIVED_SCHEMA_VERSION: u32 = 2;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;
 
 static NEXT_TMP_ID: AtomicU64 = AtomicU64::new(0);
 
-/// Resolves the derived cache directory from `DERIVED_CACHE_DIR`, falling back to the default.
-pub fn dir_from_env() -> PathBuf {
-    std::env::var("DERIVED_CACHE_DIR")
+fn dir_from_env_or(var: &str, default: &str) -> PathBuf {
+    std::env::var(var)
         .ok()
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(DEFAULT_DERIVED_CACHE_DIR))
+        .unwrap_or_else(|| PathBuf::from(default))
+}
+
+/// Resolves the derived cache directory from `DERIVED_CACHE_DIR`, falling back to the default.
+pub fn dir_from_env() -> PathBuf {
+    dir_from_env_or("DERIVED_CACHE_DIR", DEFAULT_DERIVED_CACHE_DIR)
+}
+
+/// Resolves the read-only bundled derived directory from `BUNDLED_DERIVED_DIR`, falling back to the default.
+pub fn bundled_dir_from_env() -> PathBuf {
+    dir_from_env_or("BUNDLED_DERIVED_DIR", DEFAULT_BUNDLED_DERIVED_DIR)
 }
 
 /// Computes a deterministic 64-bit FNV-1a hash of `bytes`.
@@ -47,11 +59,14 @@ pub fn config_digest(config: &PipelineConfig) -> String {
 }
 
 /// Metadata identifying one source archive CSV belonging to a region.
+///
+/// File mtime is omitted so stamps stay machine-independent and precomputed results can be
+/// distributed through the repository; `make verify-data` (SHA-256 manifest) guarantees identical
+/// file contents, while `bytes` catches missing, re-downloaded, or partial files.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ArchiveFileStamp {
     pub path: String,
     pub bytes: u64,
-    pub mtime_secs: u64,
 }
 
 /// Validation stamp that must match exactly for a cached `/api/series` file to be reused.
@@ -86,21 +101,50 @@ struct SeriesMeta {
 /// Persistent on-disk cache for `/api/series` JSON responses.
 pub struct DerivedCache {
     dir: PathBuf,
+    read_only: bool,
     warned_unwritable: AtomicBool,
+    warned_regions: Mutex<HashSet<String>>,
 }
 
 impl DerivedCache {
-    /// Creates a disk cache rooted at `dir`.
+    /// Creates a writable disk cache rooted at `dir`.
     pub fn new(dir: PathBuf) -> Self {
         Self {
             dir,
+            read_only: false,
             warned_unwritable: AtomicBool::new(false),
+            warned_regions: Mutex::new(HashSet::new()),
         }
     }
 
-    /// Creates a disk cache using `DERIVED_CACHE_DIR` or its default path.
+    /// Creates a read-only disk cache rooted at `dir` (used for bundled repository outputs).
+    pub fn read_only(dir: PathBuf) -> Self {
+        Self {
+            dir,
+            read_only: true,
+            warned_unwritable: AtomicBool::new(false),
+            warned_regions: Mutex::new(HashSet::new()),
+        }
+    }
+
+    /// Creates a writable disk cache using `DERIVED_CACHE_DIR` or its default path.
     pub fn from_env() -> Self {
         Self::new(dir_from_env())
+    }
+
+    /// Creates a read-only bundled cache using `BUNDLED_DERIVED_DIR` or its default path.
+    pub fn bundled_from_env() -> Self {
+        Self::read_only(bundled_dir_from_env())
+    }
+
+    fn should_warn(&self, region: &str) -> bool {
+        if !self.read_only {
+            return true;
+        }
+        self.warned_regions
+            .lock()
+            .expect("warned_regions lock")
+            .insert(region.to_string())
     }
 
     fn series_paths(&self, region: &str) -> Option<(PathBuf, PathBuf, PathBuf)> {
@@ -138,13 +182,15 @@ impl DerivedCache {
             Ok(bytes) => bytes,
             Err(err) if err.kind() == io::ErrorKind::NotFound => return None,
             Err(err) => {
-                tracing::warn!(
-                    target: "pyrosync::derived_cache",
-                    region = %region,
-                    path = %meta_path.display(),
-                    error = %err,
-                    "failed to read derived series metadata; ignoring cache"
-                );
+                if self.should_warn(region) {
+                    tracing::warn!(
+                        target: "pyrosync::derived_cache",
+                        region = %region,
+                        path = %meta_path.display(),
+                        error = %err,
+                        "failed to read derived series metadata; ignoring cache"
+                    );
+                }
                 return None;
             }
         };
@@ -152,13 +198,15 @@ impl DerivedCache {
         let meta: SeriesMeta = match serde_json::from_slice(&meta_bytes) {
             Ok(meta) => meta,
             Err(err) => {
-                tracing::warn!(
-                    target: "pyrosync::derived_cache",
-                    region = %region,
-                    path = %meta_path.display(),
-                    error = %err,
-                    "corrupt derived series metadata; ignoring cache"
-                );
+                if self.should_warn(region) {
+                    tracing::warn!(
+                        target: "pyrosync::derived_cache",
+                        region = %region,
+                        path = %meta_path.display(),
+                        error = %err,
+                        "corrupt derived series metadata; ignoring cache"
+                    );
+                }
                 return None;
             }
         };
@@ -167,6 +215,16 @@ impl DerivedCache {
             || meta.config_hash != expected.config_hash
             || meta.files != expected.files
         {
+            if self.read_only && self.should_warn(region) {
+                tracing::warn!(
+                    target: "pyrosync::derived_cache",
+                    region = %region,
+                    path = %meta_path.display(),
+                    found_schema = meta.schema_version,
+                    expected_schema = expected.schema_version,
+                    "bundled derived series stamp mismatch; ignoring cache"
+                );
+            }
             return None;
         }
 
@@ -186,24 +244,28 @@ impl DerivedCache {
         let body_bytes = match fs::read(&body_path) {
             Ok(bytes) => bytes,
             Err(err) => {
-                tracing::warn!(
-                    target: "pyrosync::derived_cache",
-                    region = %region,
-                    path = %body_path.display(),
-                    error = %err,
-                    "failed to read derived series body; ignoring cache"
-                );
+                if self.should_warn(region) {
+                    tracing::warn!(
+                        target: "pyrosync::derived_cache",
+                        region = %region,
+                        path = %body_path.display(),
+                        error = %err,
+                        "failed to read derived series body; ignoring cache"
+                    );
+                }
                 return None;
             }
         };
 
         if format!("{:016x}", fnv1a_64(&body_bytes)) != meta.body_hash {
-            tracing::warn!(
-                target: "pyrosync::derived_cache",
-                region = %region,
-                path = %body_path.display(),
-                "corrupt derived series body (checksum mismatch); ignoring cache"
-            );
+            if self.should_warn(region) {
+                tracing::warn!(
+                    target: "pyrosync::derived_cache",
+                    region = %region,
+                    path = %body_path.display(),
+                    "corrupt derived series body (checksum mismatch); ignoring cache"
+                );
+            }
             return None;
         }
 
@@ -217,6 +279,12 @@ impl DerivedCache {
         stamp: &SeriesStamp,
         body: &[u8],
     ) -> io::Result<()> {
+        if self.read_only {
+            return Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "bundled derived cache is read-only",
+            ));
+        }
         let Some((series_dir, body_path, meta_path)) = self.series_paths(region) else {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,

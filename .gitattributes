@@ -1,0 +1,2 @@
+# Keep precomputed /api/series JSON bytes identical across platforms so body_hash verification holds under core.autocrlf.
+data/derived/** -text

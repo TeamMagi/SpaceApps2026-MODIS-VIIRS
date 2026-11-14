@@ -115,10 +115,10 @@ Historical endpoints require the pre-packaged FIRMS country archive (~9 GB compr
 ```bash
 make data          # one time, ~9 GB download, ~41 GB on disk, no API key required
 make verify-data   # confirm every file matches the checksum manifest
-make precompute    # precompute /api/series responses into .cache/pyrosync-derived (resumable)
+make precompute    # optional: precompute /api/series into .cache/pyrosync-derived if needed
 ```
 
-- **Precomputing `/api/series` (`make precompute`):** Run `make precompute` after `make data` (or `make precompute-local` if running without Docker) to harmonize every region offline and persist its `/api/series` JSON and validation stamp to `DERIVED_CACHE_DIR` (`.cache/pyrosync-derived`). Large countries (such as Brazil, DRC, Russia, Australia, and the USA) exceed `ARCHIVE_MAX_REGION_MB` (default `512` MB) and are too expensive to harmonize on demand—without precomputation they return `413 Payload Too Large` and can only be served by `/api/series` once precomputed offline. Persisting results on disk also prevents losing cached series across server restarts. Valid cached regions are skipped automatically, so if interrupted (`Ctrl+C`) you can re-run `make precompute` to resume where it left off (pass `--force` to recompute).
+- **Precomputing `/api/series` (`make precompute`):** The repository bundles precomputed `/api/series` results in `data/derived` (`BUNDLED_DERIVED_DIR`), so after `make data` and `make verify-data` large countries open right away without running `make precompute`. Run `make precompute` (or `make precompute-local`) only if you changed pipeline configuration or bundled results are missing for a region; it persists results to `DERIVED_CACHE_DIR` (`.cache/pyrosync-derived`) and skips regions already valid on disk or in `data/derived` (pass `--force` to recompute). Maintainer workflow to update bundled results: `make precompute` → `make bundle-derived` → commit `data/derived`.
 
 - **Scope:** FIRMS country archive covering **all countries** (208–220 countries) across **48 sensor-years**: MODIS (2000–2025), VIIRS SNPP (2012–2025), and VIIRS NOAA-20 (`viirs-jpss1`, 2018–2025). **VIIRS NOAA-21 is not in the archive** and is available on live endpoints only.
 - **Endpoints that use the archive:** `/api/calendar`, `/api/regions`, `/api/series`, and `/api/points`. When archive data is missing locally, these endpoints respond with a message pointing to `make data` (and `/api/calendar` returns `404 Not Found` if no local data exists for the requested country).
