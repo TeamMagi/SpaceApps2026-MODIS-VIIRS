@@ -108,16 +108,16 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 | Kimlik | Görev | Sahip | Bekler | Açar | Durum |
 |--------|-------|-------|--------|------|-------|
-| G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | ⬜ |
-| G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ⏸ |
+| G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | ✅ |
+| G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ⬜ |
 | G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ⏸ |
 | G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ⏸ |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
-| C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | ⬜ |
-| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | ⏸ |
-| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | ⏸ |
-| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | ⏸ |
+| C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | 🔄 |
+| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | ⬜ |
+| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | ⬜ |
+| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | ⬜ |
 | R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ⏸ |
 | R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ⏸ |
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ⏸ |
@@ -126,7 +126,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | S1 | Core crate unit testleri | Samet | G2 | S5 | ⏸ |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ⏸ |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⏸ |
-| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⏸ |
+| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⬜ |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⏸ |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | ⏸ |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | ⏸ |
@@ -135,8 +135,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | ⬜ |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G1 — FIRMS API client iskelet hazır, gerçek veriye bağlama.
-- **Can:** C1 — UI/UX konsept tasarımı, hiçbir şeye bağımlı değil.
+- **Görkem:** G2 — Harmonizasyon pipeline, G1 bitti (canlı FIRMS verisi üç NRT kaynağından geliyor).
+- **Can:** C2, C3, C4 — C1 bitti, kararlar `docs/UI-UX-KONSEPT.md`'de sabitlendi.
+- **Samet:** S4 — Sample/demo veri pipeline'ı, G1 bitti.
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil.
 
 **Birbirini bekleyen kritik yollar:**
@@ -149,15 +150,17 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 ## Görkem'in görevleri
 
-### G1 — FIRMS API gerçek veri entegrasyonu ⬜
+### G1 — FIRMS API gerçek veri entegrasyonu ✅
 - **Bekler:** — · **Açar:** G2, S4
 - `pyrosync-firms` crate'i iskelet olarak hazır. Yapılacaklar:
-  - NASA FIRMS API key ile gerçek veri çekme testi
-  - Rate limiting ve retry mekanizması (API 429/503 dönebilir)
-  - Tarihsel veri desteği (NRT + SP + archive kaynaklarına göre endpoint seçimi)
-  - CSV parse'ın gerçek FIRMS çıktısıyla doğrulanması (MODIS ve VIIRS formatları farklı sütun isimleri kullanabiliyor)
-  - `data/sample/` altına birkaç günlük örnek veri kaydetme (offline geliştirme için)
+  - ✅ NASA FIRMS API key ile gerçek veri çekme testi — `examples/nrt_check.rs`
+  - ✅ Rate limiting ve retry mekanizması (API 429/503 dönebilir) — `limiter.rs`, `Retry-After` destekli exponential backoff
+  - ✅ Tarihsel veri desteği (NRT + SP + archive kaynaklarına göre endpoint seçimi) — `source.rs`, `availability.rs`, `archive.rs`
+  - ✅ CSV parse'ın gerçek FIRMS çıktısıyla doğrulanması (MODIS ve VIIRS formatları farklı sütun isimleri kullanabiliyor)
+  - ✅ `data/sample/` altına birkaç günlük örnek veri kaydetme (offline geliştirme için) — 5 format
 - **Bitti sayılır:** `cargo test -p pyrosync-firms` geçiyor; gerçek API key ile en az 3 farklı kaynak (MODIS_NRT, VIIRS_SNPP_NRT, VIIRS_NOAA20_NRT) üzerinden veri çekilip parse ediliyor; `data/sample/` altında örnek CSV var.
+- **Doğrulama (2026-11-14):** 43 test geçiyor, clippy temiz. Canlı API `--bbox 15,-15,30,0` ile: MODIS_NRT 21, VIIRS_SNPP_NRT 2300, VIIRS_NOAA20_NRT 348 hotspot parse edildi.
+- **Not:** Canlı doğrulama `acq_time` parse hatasını ortaya çıkardı — FIRMS baştaki sıfırları atıyor (`614` = 06:14), eski kod yalnızca 4 karakterlik değer kabul ediyordu. MODIS_NRT çekimi tümüyle başarısız oluyordu; `data/sample/` altındaki üç NRT dosyası da aynı sebeple offline parse edilemiyordu. `parse_hhmm` 1–4 haneli değerleri kabul edecek şekilde düzeltildi, 6 regresyon testi eklendi.
 
 ### G2 — Harmonizasyon pipeline tamamlama ⏸
 - **Bekler:** G1 · **Açar:** G3, G4, S1
@@ -210,15 +213,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 ## Can'ın görevleri
 
-### C1 — UI/UX genel konsept + wireframe ⬜
+### C1 — UI/UX genel konsept + wireframe 🔄
 - **Bekler:** — · **Açar:** C2, C3, C4
 - Projenin görsel kimliğini belirleyen ilk tasarım:
-  - Ana sayfa layout'u: harita, takvim, kontroller nerede duracak
-  - Kullanıcı akışı: bölge seçimi → veri yükleme → Raw/Harmonized geçişi → detay inceleme
-  - Wireframe (Figma veya kağıt üzeri) — tüm sayfalar/paneller
-  - Mobil responsive düşünülmeli (jüri telefonda bakabilir)
+  - ✅ Ana sayfa layout'u: harita, takvim, kontroller nerede duracak
+  - ✅ Kullanıcı akışı: bölge seçimi → veri yükleme → Raw/Harmonized geçişi → detay inceleme
+  - ✅ Wireframe — tüm sayfalar/paneller (ASCII, Figma yerine)
+  - ✅ Mobil responsive düşünülmeli (jüri telefonda bakabilir)
 - **Referans:** `STRATEGY.md`'deki "Raw ↔ Harmonised toggle" ve "Sensor Cliff" kavramları tasarımın merkezinde olmalı.
 - **Bitti sayılır:** wireframe tüm ekiplere paylaşıldı ve onaylandı; ana sayfa, harita görünümü, takvim görünümü, karşılaştırma paneli var.
+- **Çıktı (2026-11-14):** `docs/UI-UX-KONSEPT.md` — tasarım ilkeleri, desktop layout, kullanıcı akışı + loading/empty/error state'leri, 4 ekran wireframe'i (dashboard, harita + hotspot popover, yıl×ay takvim ısı matrisi, Raw↔Harmonised karşılaştırma + Sensor Cliff grafiği), mobil wireframe + breakpoint'ler, bileşen ağacı + state sahipliği tablosu, C2/C3/C4 devir notları.
+- **Kalan:** ekibe paylaşım ve onay. Onay gelince ✅ olur.
+- **Bulgu:** `HarmonizeResponse.raw` yalnızca sayaç döndürüyor (`modis_count`, `viirs_count`, `total_raw`), ham hotspot koordinatları yok. Raw modda haritada gerçek ham noktalar gösterilecekse G4'te bu alanın eklenmesi gerekiyor — aksi halde Raw harita görünümü `HarmonizedHotspot.source` üzerinden türetilmek zorunda.
 
 ### C2 — Tasarım sistemi ⏸
 - **Bekler:** C1 · **Açar:** R1
