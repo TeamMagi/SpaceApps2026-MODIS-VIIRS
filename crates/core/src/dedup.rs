@@ -250,4 +250,28 @@ mod tests {
         assert_eq!(hotspots.len(), 3);
         assert!(hotspots.windows(2).all(|w| w[0].acquired <= w[1].acquired));
     }
+
+    #[test]
+    fn haversine_zero_for_identical_points() {
+        assert_eq!(haversine_km(39.0, 32.0, 39.0, 32.0), 0.0);
+    }
+
+    #[test]
+    fn haversine_one_degree_of_latitude() {
+        let d = haversine_km(0.0, 30.0, 1.0, 30.0);
+        assert!((d - 111.19492664455873).abs() < 1e-9);
+    }
+
+    #[test]
+    fn haversine_is_symmetric() {
+        let forward = haversine_km(37.0, 29.0, 38.5, 31.2);
+        let backward = haversine_km(38.5, 31.2, 37.0, 29.0);
+        assert!((forward - backward).abs() < 1e-12);
+    }
+
+    #[test]
+    fn haversine_crosses_antimeridian_the_short_way() {
+        let d = haversine_km(0.0, 179.5, 0.0, -179.5);
+        assert!((d - 111.19492664455873).abs() < 1e-6);
+    }
 }
