@@ -1,19 +1,8 @@
 {
-  "countries": [
-    "Armenia",
-    "Azerbaijan",
-    "Bulgaria",
-    "Cyprus",
-    "Georgia",
-    "Greece",
-    "Iran",
-    "Iraq",
-    "Russian_Federation",
-    "Syria",
-    "Turkey"
-  ],
+  "scope": "all_countries",
   "sensors": [
     { "slug": "modis", "from": 2000, "to": 2025 },
-    { "slug": "viirs-snpp", "from": 2012, "to": 2025 }
+    { "slug": "viirs-snpp", "from": 2012, "to": 2025 },
+    { "slug": "viirs-jpss1", "from": 2018, "to": 2025 }
   ]
 }

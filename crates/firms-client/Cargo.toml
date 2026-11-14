@@ -15,6 +15,7 @@ tracing-subscriber = { workspace = true }
 tokio = { workspace = true }
 reqwest = { version = "0.12", features = ["json"] }
 csv = "1"
+zip = { workspace = true }
 pyrosync-core = { path = "../core" }
 
 [dev-dependencies]
