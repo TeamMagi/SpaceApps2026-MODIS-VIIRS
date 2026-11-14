@@ -30,8 +30,18 @@ pub fn archive_slug(sensor: Sensor) -> Option<&'static str> {
 }
 
 pub struct ArchiveClient {
-    http: reqwest::Client,
+    /// `None` for a read-only client: missing files are reported, never downloaded.
+    http: Option<reqwest::Client>,
     cache_dir: PathBuf,
+}
+
+/// One country-year CSV found in a local archive directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LocalArchiveFile {
+    pub slug: String,
+    pub year: i32,
+    pub country: String,
+    pub path: PathBuf,
 }
 
 impl ArchiveClient {
@@ -45,7 +55,27 @@ impl ArchiveClient {
             .user_agent(USER_AGENT)
             .build()?;
 
-        Ok(Self { http, cache_dir })
+        Ok(Self {
+            http: Some(http),
+            cache_dir,
+        })
+    }
+
+    /// Read-only client over an existing archive directory. It builds no HTTP client and
+    /// never downloads; a missing file yields [`ArchiveError::NotCached`].
+    pub fn offline(cache_dir: PathBuf) -> Self {
+        Self {
+            http: None,
+            cache_dir,
+        }
+    }
+
+    pub fn cache_dir(&self) -> &Path {
+        &self.cache_dir
+    }
+
+    pub fn is_offline(&self) -> bool {
+        self.http.is_none()
     }
 
     /// Returns true when (sensor, year) is served by the pre-packaged archive.
@@ -61,7 +91,7 @@ impl ArchiveClient {
         country: &str,
         year: i32,
     ) -> Result<String, ArchiveError> {
-        fetch_country_year_text(&self.http, &self.cache_dir, sensor, country, year).await
+        fetch_country_year_text(self.http.as_ref(), &self.cache_dir, sensor, country, year).await
     }
 
     /// Same as [`Self::fetch_country_year_csv`], parsed into hotspots.
@@ -102,7 +132,7 @@ impl ArchiveClient {
 
                 let handle = tokio::spawn(async move {
                     let _permit = permit;
-                    fetch_and_parse(&client, &cache_dir, sensor, &task_country, year).await
+                    fetch_and_parse(client.as_ref(), &cache_dir, sensor, &task_country, year).await
                 });
 
                 handles.push((country.clone(), year, handle));
@@ -134,7 +164,7 @@ impl ArchiveClient {
 }
 
 async fn fetch_and_parse(
-    http: &reqwest::Client,
+    http: Option<&reqwest::Client>,
     cache_dir: &Path,
     sensor: Sensor,
     country: &str,
@@ -146,7 +176,7 @@ async fn fetch_and_parse(
 }
 
 async fn fetch_country_year_text(
-    http: &reqwest::Client,
+    http: Option<&reqwest::Client>,
     cache_dir: &Path,
     sensor: Sensor,
     country: &str,
@@ -172,6 +202,10 @@ async fn fetch_country_year_text(
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
         Err(err) => return Err(err.into()),
     }
+
+    let Some(http) = http else {
+        return Err(ArchiveError::NotCached { path });
+    };
 
     let url = format!("{ARCHIVE_BASE}/{slug}/{year}/{slug}_{year}_{country}.csv");
     let response = http.get(&url).send().await?;
@@ -217,6 +251,64 @@ async fn fetch_country_year_text(
     Ok(body)
 }
 
+/// List every `<slug>/<year>/<slug>_<year>_<Country>.csv` under `cache_dir` for the
+/// packaged sensors, sorted by (country, slug, year). Unrelated files are ignored.
+pub fn scan_local_archive(cache_dir: &Path) -> std::io::Result<Vec<LocalArchiveFile>> {
+    if !cache_dir.is_dir() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("archive directory {} does not exist", cache_dir.display()),
+        ));
+    }
+
+    let mut slugs: Vec<&str> = [Sensor::ModisTerra, Sensor::ViirsSNPP]
+        .into_iter()
+        .filter_map(archive_slug)
+        .collect();
+    slugs.dedup();
+
+    let mut files = Vec::new();
+    for slug in slugs {
+        let Ok(year_dirs) = std::fs::read_dir(cache_dir.join(slug)) else {
+            continue;
+        };
+        for year_dir in year_dirs {
+            let year_dir = year_dir?;
+            let Some(year) = year_dir.file_name().to_str().and_then(|y| y.parse::<i32>().ok())
+            else {
+                continue;
+            };
+            if !year_dir.file_type()?.is_dir() {
+                continue;
+            }
+            let prefix = format!("{slug}_{year}_");
+            for entry in std::fs::read_dir(year_dir.path())? {
+                let entry = entry?;
+                let name = entry.file_name();
+                let Some(country) = name
+                    .to_str()
+                    .and_then(|n| n.strip_prefix(&prefix))
+                    .and_then(|n| n.strip_suffix(".csv"))
+                else {
+                    continue;
+                };
+                if country.is_empty() || !entry.file_type()?.is_file() {
+                    continue;
+                }
+                files.push(LocalArchiveFile {
+                    slug: slug.to_string(),
+                    year,
+                    country: country.to_string(),
+                    path: entry.path(),
+                });
+            }
+        }
+    }
+
+    files.sort_by(|a, b| (&a.country, &a.slug, a.year).cmp(&(&b.country, &b.slug, b.year)));
+    Ok(files)
+}
+
 /// Keep only points inside the inclusive bounding box. Archive files are whole-country,
 /// so this trims them down to the caller's region of interest.
 pub fn filter_bbox(hotspots: Vec<Hotspot>, bbox: &BBox) -> Vec<Hotspot> {
@@ -237,6 +329,8 @@ pub enum ArchiveError {
     UnsupportedYear { sensor: Sensor, year: i32 },
     #[error("archive has no file for {country} {year}")]
     NotFound { country: String, year: i32 },
+    #[error("archive file {} is not in the local archive (read-only client, no download)", path.display())]
+    NotCached { path: PathBuf },
     #[error("http {status} fetching {url}")]
     Http { status: u16, url: String },
     #[error(transparent)]
@@ -253,10 +347,103 @@ mod tests {
     use pyrosync_core::models::{Confidence, DayNight, FireType};
 
     fn test_client() -> ArchiveClient {
-        ArchiveClient {
-            http: reqwest::Client::new(),
-            cache_dir: PathBuf::new(),
+        ArchiveClient::offline(PathBuf::new())
+    }
+
+    /// Fresh per-test directory so parallel tests never share files.
+    fn temp_archive(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "pyrosync-archive-test-{name}-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    const MODIS_CSV: &str = concat!(
+        "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n",
+        "38.9486,28.1108,308.5,1,1,2011-01-09,1113,Aqua,MODIS,67,6.2,283.8,10.3,D,0\n",
+        "38.9397,28.113,309.6,1,1,2011-01-09,1113,Terra,MODIS,69,6.2,283.2,11.2,D,2\n",
+    );
+
+    #[tokio::test]
+    async fn offline_client_reads_existing_file() {
+        let dir = temp_archive("read");
+        let year_dir = dir.join("modis").join("2011");
+        std::fs::create_dir_all(&year_dir).unwrap();
+        std::fs::write(year_dir.join("modis_2011_Turkey.csv"), MODIS_CSV).unwrap();
+
+        let client = ArchiveClient::offline(dir.clone());
+        assert!(client.is_offline());
+        let hotspots = client
+            .fetch_country_year(Sensor::ModisTerra, "Turkey", 2011)
+            .await
+            .unwrap();
+        assert_eq!(hotspots.len(), 2);
+        assert_eq!(hotspots[0].sensor, Sensor::ModisAqua);
+        assert_eq!(hotspots[1].sensor, Sensor::ModisTerra);
+
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn offline_client_reports_missing_file_without_downloading() {
+        let dir = temp_archive("missing");
+        let client = ArchiveClient::offline(dir.clone());
+        let err = client
+            .fetch_country_year_csv(Sensor::ViirsSNPP, "Atlantis", 2015)
+            .await
+            .unwrap_err();
+        match err {
+            ArchiveError::NotCached { path } => {
+                assert!(path.ends_with("viirs-snpp/2015/viirs-snpp_2015_Atlantis.csv"));
+            }
+            other => panic!("expected NotCached, got {other:?}"),
         }
+        assert!(!dir.join("viirs-snpp").exists());
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn scan_local_archive_lists_country_year_files() {
+        let dir = temp_archive("scan");
+        for (slug, year, country) in [
+            ("modis", 2011, "Turkey"),
+            ("modis", 2012, "Turkey"),
+            ("modis", 2012, "Russian_Federation"),
+            ("viirs-snpp", 2012, "Turkey"),
+        ] {
+            let year_dir = dir.join(slug).join(year.to_string());
+            std::fs::create_dir_all(&year_dir).unwrap();
+            std::fs::write(year_dir.join(format!("{slug}_{year}_{country}.csv")), "x").unwrap();
+        }
+        std::fs::write(dir.join("modis").join("2012").join("notes.txt"), "x").unwrap();
+        std::fs::create_dir_all(dir.join("modis").join("tmp")).unwrap();
+        std::fs::create_dir_all(dir.join("viirs-noaa20").join("2020")).unwrap();
+
+        let files = scan_local_archive(&dir).unwrap();
+        let keys: Vec<(&str, i32, &str)> = files
+            .iter()
+            .map(|f| (f.slug.as_str(), f.year, f.country.as_str()))
+            .collect();
+        assert_eq!(
+            keys,
+            vec![
+                ("modis", 2012, "Russian_Federation"),
+                ("modis", 2011, "Turkey"),
+                ("modis", 2012, "Turkey"),
+                ("viirs-snpp", 2012, "Turkey"),
+            ]
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn scan_local_archive_errors_on_missing_directory() {
+        let dir = std::env::temp_dir().join("pyrosync-archive-test-does-not-exist");
+        let err = scan_local_archive(&dir).unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
     }
 
     fn hotspot(lat: f64, lon: f64) -> Hotspot {
