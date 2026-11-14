@@ -20,8 +20,8 @@ services:
     volumes:
       # Read-only because the server only reads offline fixtures and never writes to ./data
       - ./data:/app/data:ro
-      # Must stay writable: /api/calendar downloads and caches missing countries on demand via ArchiveClient
-      - ${ARCHIVE_CACHE_HOST_DIR:-./.cache/firms-archive}:/app/.cache/firms-archive
+      # Read-only because pyrosync uses an offline ArchiveClient and never writes or downloads archive files
+      - ${ARCHIVE_CACHE_HOST_DIR:-./.cache/firms-archive}:/app/.cache/firms-archive:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:$${PORT:-3001}/api/health || exit 1"]
       interval: 30s
@@ -42,7 +42,7 @@ services:
       - ARCHIVE_SET_FILE=${ARCHIVE_SET_FILE:-/app/data/archive-set.json}
       - RUST_LOG=${RUST_LOG:-pyrosync=info}
     volumes:
-      # Bind-mount the same host directory used locally so a single ~2.4 GB copy serves host and container
+      # Writable bind-mount of the same host directory read by pyrosync so a single ~41 GB copy serves host and container
       - ${ARCHIVE_CACHE_HOST_DIR:-./.cache/firms-archive}:/app/.cache/firms-archive
     # Country archive downloads use static unauthenticated CSVs and never need FIRMS_API_KEY;
     # keep the API key out of the seed container to avoid unnecessary secret exposure.

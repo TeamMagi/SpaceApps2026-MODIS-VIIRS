@@ -25,7 +25,7 @@ use pyrosync_core::effort::EffortFactor;
 use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
-use pyrosync_firms::archive::{ArchiveClient, archive_years, filter_bbox};
+use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_years, filter_bbox};
 use pyrosync_firms::{DayRange, FirmsClient, FirmsSource};
 
 const DEFAULT_CACHE_BUDGET_MB: usize = 128;
@@ -651,16 +651,8 @@ async fn main() -> anyhow::Result<()> {
         let warm_state = archive_api.clone();
         tokio::spawn(async move { warm_state.warm().await });
     }
-    let archive = match ArchiveClient::new(archive_cache_dir.clone()) {
-        Ok(client) => Some(Arc::new(client)),
-        Err(err) => {
-            tracing::error!(
-                "Failed to initialize FIRMS archive client at {}: {err}",
-                archive_cache_dir.display()
-            );
-            None
-        }
-    };
+    // Offline client: the server never downloads archive data on demand; populate via `make data`.
+    let archive = Some(Arc::new(ArchiveClient::offline(archive_cache_dir.clone())));
 
     let cache_budget_bytes = parse_cache_budget_bytes(std::env::var("CACHE_BUDGET_MB").ok().as_deref());
     let request_timeout = parse_request_timeout(std::env::var("REQUEST_TIMEOUT_SECS").ok().as_deref());
@@ -1392,6 +1384,17 @@ fn build_calendar_response(
         }
     }
 
+    if !failures.is_empty() {
+        let missing: Vec<String> = failures
+            .iter()
+            .map(|f| format!("{:?} {}", f.sensor, f.year))
+            .collect();
+        warnings.push(format!(
+            "Missing local archive data for: {}. Run `make data` to download the FIRMS country archive (~41 GB).",
+            missing.join(", ")
+        ));
+    }
+
     let coverage = archive_coverage();
     warnings.push(coverage.note.to_string());
 
@@ -1416,6 +1419,16 @@ fn build_calendar_response(
             failures,
         },
         warnings,
+    }
+}
+
+fn format_archive_error(err: ArchiveError) -> String {
+    match err {
+        ArchiveError::NotCached { path } => format!(
+            "missing locally: archive file {} is not in the local archive (read-only client, no download)",
+            path.display()
+        ),
+        other => other.to_string(),
     }
 }
 
@@ -1450,7 +1463,7 @@ async fn run_calendar_pipeline(
                     let mut hotspots = archive
                         .fetch_country_year(sensor, &country, year)
                         .await
-                        .map_err(|err| err.to_string())?;
+                        .map_err(format_archive_error)?;
                     // Filter per country-year before merging decades of detections to bound peak memory.
                     pyrosync_firms::parse::retain_wildfires(&mut hotspots);
                     if let Some(ref bbox) = bbox {
@@ -1494,6 +1507,13 @@ async fn run_calendar_pipeline(
         }
     }
 
+    if per_sensor_year.is_empty() && !failures.is_empty() {
+        return Err(ApiError::not_found(format!(
+            "No local archive data for country '{}'. Historical data is not downloaded by default; run `make data` to download the FIRMS country archive (~41 GB).",
+            query.country
+        )));
+    }
+
     let raw_detections = modis.len() + viirs.len();
     let harmonized = pyrosync_core::harmonize::harmonize(modis, viirs);
     let calendar_cells = pyrosync_core::calendar::build_calendar(&harmonized);
@@ -1517,7 +1537,7 @@ async fn run_calendar_with_timeout(
         Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, query)).await {
             Ok(result) => result,
             Err(_) => Err(ApiError::gateway_timeout(format!(
-                "Request timed out after {}s; cold-cache FIRMS country archive downloads can take several minutes for large countries or multi-year ranges. Increase REQUEST_TIMEOUT_SECS or narrow the year range.",
+                "Request timed out after {}s; reading and harmonizing large multi-year archives can take several minutes. Increase REQUEST_TIMEOUT_SECS or narrow the year range.",
                 timeout.as_secs()
             ))),
         },
@@ -1541,7 +1561,7 @@ async fn calendar(
         return Ok(json_bytes_response(cached_body, "HIT"));
     }
 
-    // Archive downloads do not use a FIRMS API key, so this endpoint works without `require_firms_client`.
+    // Offline archive reads do not use a FIRMS API key, so this endpoint works without `require_firms_client`.
     let response = run_calendar_with_timeout(&state, &query).await?;
     let body = serde_json::to_vec(&response)
         .map_err(|e| ApiError::internal(format!("Failed to serialize response: {e}")))?;
@@ -2509,13 +2529,17 @@ mod tests {
             vec![SensorYearFailure {
                 sensor: Sensor::ModisTerra,
                 year: 2017,
-                error: "http 503".to_string(),
+                error: "missing locally: archive file modis_2017_Turkey.csv is not in the local archive (read-only client, no download)".to_string(),
             }],
         );
         assert!(!failed_resp.effort.reliable);
         assert!(failed_resp.effort.reason.is_some());
         assert_eq!(failed_resp.fetch.failures.len(), 1);
-        assert!(failed_resp.warnings.len() >= 2);
+        assert!(failed_resp.warnings.len() >= 3);
+        assert!(failed_resp
+            .warnings
+            .iter()
+            .any(|w| w.contains("ModisTerra 2017") && w.contains("make data")));
     }
 
     #[test]
@@ -2571,6 +2595,36 @@ mod tests {
                 .get(X_CACHE_HEADER)
                 .and_then(|v| v.to_str().ok()),
             Some("HIT")
+        );
+    }
+
+    #[tokio::test]
+    async fn calendar_with_empty_archive_returns_404_with_make_data_hint() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let archive = Arc::new(ArchiveClient::offline(dir.path().to_path_buf()));
+        assert!(archive.is_offline());
+
+        let state = AppState {
+            firms: None,
+            archive: Some(archive),
+            cache: Arc::new(RwLock::new(ResponseCache::new(1024 * 1024))),
+            request_timeout: Some(Duration::from_secs(30)),
+        };
+
+        let err = calendar(
+            State(state.clone()),
+            Query(calendar_params("Turkey", Some(2020), Some(2020), None)),
+        )
+        .await
+        .expect_err("missing local archive must return 404 without downloading");
+
+        assert_eq!(err.status, StatusCode::NOT_FOUND);
+        assert!(err.message.contains("Turkey"), "message: {}", err.message);
+        assert!(err.message.contains("make data"), "message: {}", err.message);
+        assert!(state.cache.read().await.entries.is_empty());
+        assert!(
+            std::fs::read_dir(dir.path()).unwrap().next().is_none(),
+            "offline calendar must not create or download files"
         );
     }
 }

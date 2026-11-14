@@ -1,4 +1,4 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell docker-seed seed fetch-sample verify-data manifest clean clean-cache help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed fetch-sample verify-data manifest clean clean-cache help
 
 # Shared host directory for the FIRMS country archive (override via environment or make args)
 ARCHIVE_CACHE_HOST_DIR ?= .cache/firms-archive
@@ -70,6 +70,9 @@ docker-up: ## Start containers (requires .env)
 	fi
 	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	docker compose up -d
+	@if [ -z "$$(ls -A "$(ARCHIVE_CACHE_HOST_DIR)" 2>/dev/null)" ]; then \
+		echo 'Historical archive not downloaded. Live endpoints work; run `make data` for /api/calendar and the archive endpoints.'; \
+	fi || true
 
 docker-down: ## Stop containers
 	docker compose down
@@ -80,14 +83,19 @@ docker-logs: ## Show container logs
 docker-shell: ## Open a shell inside the running container
 	docker compose exec pyrosync /bin/sh
 
-docker-seed: ## Download the full FIRMS country archive into the host cache directory (~2.4 GB, first run is slow, no API key required)
+# ---- Data ----
+
+data: ## Download the full FIRMS country archive (~41 GB, opt-in, no API key needed)
+	@echo "Downloading the full FIRMS country archive (~9 GB download, ~41 GB unpacked on disk)."
+	@echo "This can take a while depending on your connection. No FIRMS API key is required."
+	@echo "Safe to interrupt with Ctrl+C at any time; re-run 'make data' to resume where it left off."
 	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	docker compose --profile seed run --rm seed
 
-# ---- Data ----
+docker-seed: data ## Alias for 'make data' (prefer 'make data')
 
-# Fastest path for developers with a Rust toolchain — seeds the host cache without building the Docker image.
-seed: ## Download the FIRMS country archive locally (no Docker, no API key)
+# Fastest path for developers with a Rust toolchain — Docker-free alternative to 'make data'.
+seed: ## Download the FIRMS country archive locally without Docker (alternative to 'make data', no API key)
 	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) cargo run --release -p pyrosync-firms --bin archive_seed
 
@@ -106,7 +114,7 @@ manifest: ## Regenerate data/archive-manifest.sha256 from the local cache
 
 # ---- Clean ----
 
-# Preserve .cache/ because re-downloading ~2.4 GB of FIRMS archives is slow
+# Preserve .cache/ because re-downloading ~41 GB of FIRMS archives is slow
 clean: ## Clean build artifacts (preserves .cache/)
 	cargo clean
 	rm -rf web/node_modules web/dist
