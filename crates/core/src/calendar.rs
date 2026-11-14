@@ -52,7 +52,9 @@ pub fn build_calendar(hotspots: &[HarmonizedHotspot]) -> Vec<CalendarCell> {
     cells
 }
 
-fn compute_anomalies(cells: &mut [CalendarCell]) {
+/// Fill `anomaly` with the z-score of each cell's `count_normalized` against the same
+/// calendar month across all cells; left `None` when that month has fewer than 3 cells or zero spread.
+pub fn compute_anomalies(cells: &mut [CalendarCell]) {
     let mut monthly_values: HashMap<u32, Vec<f64>> = HashMap::new();
 
     for cell in cells.iter() {

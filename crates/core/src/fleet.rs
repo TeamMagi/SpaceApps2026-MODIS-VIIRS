@@ -26,24 +26,43 @@ pub fn consolidate_viirs_fleet(viirs: &[Hotspot]) -> Vec<FleetObservation> {
     consolidate_fleet(viirs, VIIRS_FLEET_WINDOW_SECS)
 }
 
+/// Same as [`consolidate_viirs_fleet`], also returning input member indices per observation.
+pub fn consolidate_viirs_fleet_indexed(viirs: &[Hotspot]) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
+    consolidate_fleet_indexed(viirs, VIIRS_FLEET_WINDOW_SECS)
+}
+
 /// Consolidate near-coincident MODIS detections (Terra, Aqua) into one
 /// `FleetObservation` per group, sorted by `acquired`.
 pub fn consolidate_modis_fleet(modis: &[Hotspot]) -> Vec<FleetObservation> {
     consolidate_fleet(modis, MODIS_FLEET_WINDOW_SECS)
 }
 
+/// Same as [`consolidate_modis_fleet`], also returning input member indices per observation.
+pub fn consolidate_modis_fleet_indexed(modis: &[Hotspot]) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
+    consolidate_fleet_indexed(modis, MODIS_FLEET_WINDOW_SECS)
+}
+
 /// Consolidate near-coincident detections of the same fire across sibling platforms
 /// within `window_secs` into one `FleetObservation` per group, sorted by `acquired`.
 pub fn consolidate_fleet(hotspots: &[Hotspot], window_secs: i64) -> Vec<FleetObservation> {
+    consolidate_fleet_indexed(hotspots, window_secs).0
+}
+
+/// Same as [`consolidate_fleet`], also returning `members[k]` = indices in `hotspots`
+/// merged into the `k`-th output `FleetObservation`.
+pub fn consolidate_fleet_indexed(
+    hotspots: &[Hotspot],
+    window_secs: i64,
+) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
     if hotspots.is_empty() {
-        return Vec::new();
+        return (Vec::new(), Vec::new());
     }
 
     let mut order: Vec<usize> = (0..hotspots.len()).collect();
     order.sort_by_key(|&i| hotspots[i].acquired);
 
     let mut used = vec![false; order.len()];
-    let mut observations = Vec::with_capacity(order.len());
+    let mut entries: Vec<(FleetObservation, Vec<usize>)> = Vec::with_capacity(order.len());
 
     for p in 0..order.len() {
         if used[p] {
@@ -112,18 +131,21 @@ pub fn consolidate_fleet(hotspots: &[Hotspot], window_secs: i64) -> Vec<FleetObs
         platforms.sort();
         platforms.dedup();
 
-        observations.push(FleetObservation {
-            hotspot: hotspots[best_idx].clone(),
-            frp_mean,
-            frp_corrected_mean,
-            n_obs,
-            platforms,
-        });
+        entries.push((
+            FleetObservation {
+                hotspot: hotspots[best_idx].clone(),
+                frp_mean,
+                frp_corrected_mean,
+                n_obs,
+                platforms,
+            },
+            group,
+        ));
     }
 
     // Downstream sliding-window matching requires observations sorted by representative `acquired`.
-    observations.sort_by_key(|obs| obs.hotspot.acquired);
-    observations
+    entries.sort_by_key(|(obs, _)| obs.hotspot.acquired);
+    entries.into_iter().unzip()
 }
 
 #[cfg(test)]

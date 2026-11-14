@@ -9,11 +9,22 @@ const MIN_OVERLAP_RATIO: f64 = 0.30;
 /// overlap > 30%. Keeps the highest-confidence record and assigns
 /// the group's mean FRP (Li et al. 2018).
 pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
+    remove_interscan_duplicates_indexed(hotspots);
+}
+
+/// Same as [`remove_interscan_duplicates`], returning for each surviving hotspot (at its
+/// final index) the index it held in the input vector.
+pub fn remove_interscan_duplicates_indexed(hotspots: &mut Vec<Hotspot>) -> Vec<usize> {
     if hotspots.len() < 2 {
-        return;
+        return (0..hotspots.len()).collect();
     }
 
-    hotspots.sort_by_key(|a| a.acquired);
+    // Sorting an index permutation yields the exact stable order of `sort_by_key(acquired)`
+    // while preserving the input position of each survivor.
+    let mut origin: Vec<usize> = (0..hotspots.len()).collect();
+    origin.sort_by_key(|&i| hotspots[i].acquired);
+    let mut slots: Vec<Option<Hotspot>> = std::mem::take(hotspots).into_iter().map(Some).collect();
+    hotspots.extend(origin.iter().map(|&i| slots[i].take().expect("each index taken once")));
 
     let mut to_remove = vec![false; hotspots.len()];
 
@@ -69,6 +80,12 @@ pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
         idx += 1;
         keep
     });
+
+    origin
+        .into_iter()
+        .zip(to_remove)
+        .filter_map(|(i, removed)| (!removed).then_some(i))
+        .collect()
 }
 
 fn pixel_overlap(a: &Hotspot, b: &Hotspot) -> f64 {
@@ -344,5 +361,30 @@ mod tests {
         remove_interscan_duplicates(&mut hotspots);
 
         assert_eq!(hotspots.len(), 1);
+    }
+
+    #[test]
+    fn indexed_variant_reports_input_positions_of_survivors() {
+        // Input is out of time order so the sort permutation and dedup retention both matter.
+        let input = vec![
+            make_hotspot(38.0, 30.0, 5.0, Confidence::Low, Sensor::ModisTerra, 100),
+            make_hotspot(39.0, 32.0, 30.0, Confidence::High, Sensor::ModisTerra, 2),
+            make_hotspot(39.001, 32.0, 10.0, Confidence::Nominal, Sensor::ModisTerra, 0),
+            make_hotspot(40.0, 35.0, 7.0, Confidence::Nominal, Sensor::ModisTerra, 50),
+        ];
+        let mut plain = input.clone();
+        remove_interscan_duplicates(&mut plain);
+
+        let mut indexed = input.clone();
+        let origin = remove_interscan_duplicates_indexed(&mut indexed);
+
+        assert_eq!(origin, vec![1, 3, 0]);
+        assert_eq!(indexed.len(), plain.len());
+        for ((a, b), &i) in indexed.iter().zip(&plain).zip(&origin) {
+            assert_eq!(a.acquired, b.acquired);
+            assert_eq!(a.frp, b.frp);
+            assert_eq!(a.lat, input[i].lat);
+            assert_eq!(a.lon, input[i].lon);
+        }
     }
 }

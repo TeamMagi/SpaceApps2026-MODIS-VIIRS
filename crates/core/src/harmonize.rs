@@ -1,4 +1,4 @@
-use crate::dedup::{haversine_km, remove_interscan_duplicates};
+use crate::dedup::{haversine_km, remove_interscan_duplicates_indexed};
 use crate::fleet::{self, FleetObservation};
 use crate::h3index::H3Index;
 use crate::models::*;
@@ -8,6 +8,21 @@ const MATCH_RADIUS_KM: f64 = 2.0;
 // 180 minutes: orbital geometry separates MODIS and VIIRS overpasses of the same fire
 // (min 34 min, median ~158 min in live FIRMS data), so a narrow window yields zero matches.
 const MATCH_WINDOW_SECS: i64 = 10_800;
+
+/// Output of [`harmonize_with_links`]: the harmonized hotspots plus, for every input row,
+/// which output it became.
+#[derive(Debug, Clone)]
+pub struct HarmonizeLinks {
+    pub hotspots: Vec<HarmonizedHotspot>,
+    /// `modis_links[i]` is the index in `hotspots` produced by input MODIS row `i`,
+    /// or `None` if interscan dedup removed that row.
+    pub modis_links: Vec<Option<usize>>,
+    /// Same as `modis_links`, for the VIIRS input rows.
+    pub viirs_links: Vec<Option<usize>>,
+    pub interscan_removed: usize,
+    pub fleet_merged: usize,
+    pub matched_pairs: usize,
+}
 
 /// Full harmonization pipeline:
 /// 1. Deduplicate interscan overlaps
@@ -22,31 +37,45 @@ const MATCH_WINDOW_SECS: i64 = 10_800;
 /// prevent double-counting the same fire event, not for simultaneous radiometric comparison.
 /// VZA coefficient calibration requires simultaneous pairs and cannot be performed from FIRMS
 /// NRT data alone—it requires granule- or archive-level imagery.
-pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<HarmonizedHotspot> {
+pub fn harmonize(modis: Vec<Hotspot>, viirs: Vec<Hotspot>) -> Vec<HarmonizedHotspot> {
+    harmonize_with_links(modis, viirs).hotspots
+}
+
+/// Runs the same pipeline as [`harmonize`] and records which output each input row became.
+pub fn harmonize_with_links(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> HarmonizeLinks {
+    let modis_input_len = modis.len();
+    let viirs_input_len = viirs.len();
+
     // Step 1: Remove interscan duplicates (also sorts both vectors by `acquired` ascending)
-    remove_interscan_duplicates(&mut modis);
-    remove_interscan_duplicates(&mut viirs);
+    let modis_origin = remove_interscan_duplicates_indexed(&mut modis);
+    let viirs_origin = remove_interscan_duplicates_indexed(&mut viirs);
+    let interscan_removed =
+        (modis_input_len - modis.len()) + (viirs_input_len - viirs.len());
 
-    // Consolidate both fleets before cross-sensor matching so sibling detections (Terra/Aqua
-    // and SNPP/NOAA-20/NOAA-21) do not leak into the output as duplicate singletons.
-    let modis = fleet::consolidate_modis_fleet(&modis);
-    let viirs = fleet::consolidate_viirs_fleet(&viirs);
+    // Step 2: Consolidate both fleets before cross-sensor matching so sibling detections
+    // (Terra/Aqua and SNPP/NOAA-20/NOAA-21) do not leak into the output as duplicate singletons.
+    let (modis_fleet, modis_groups) = fleet::consolidate_modis_fleet_indexed(&modis);
+    let (viirs_fleet, viirs_groups) = fleet::consolidate_viirs_fleet_indexed(&viirs);
+    let fleet_merged =
+        (modis.len() - modis_fleet.len()) + (viirs.len() - viirs_fleet.len());
 
-    // Step 2 & 3: Match and fuse using H3 spatial index candidate lookup
-    let index = H3Index::build(viirs.iter().map(|v| (v.hotspot.lat, v.hotspot.lon)));
-    let mut result = Vec::with_capacity(modis.len() + viirs.len());
-    let mut viirs_matched = vec![false; viirs.len()];
+    // Step 3 & 4: Match and fuse using H3 spatial index candidate lookup
+    let index = H3Index::build(viirs_fleet.iter().map(|v| (v.hotspot.lat, v.hotspot.lon)));
+    let mut result = Vec::with_capacity(modis_fleet.len() + viirs_fleet.len());
+    let mut modis_fleet_out = vec![0usize; modis_fleet.len()];
+    let mut viirs_fleet_out: Vec<Option<usize>> = vec![None; viirs_fleet.len()];
+    let mut matched_pairs = 0usize;
 
-    for m in &modis {
+    for (mi, m) in modis_fleet.iter().enumerate() {
         let mh = &m.hotspot;
         let mut best_match: Option<(usize, f64)> = None;
 
         for j in index.candidates(mh.lat, mh.lon) {
-            if viirs_matched[j] {
+            if viirs_fleet_out[j].is_some() {
                 continue;
             }
 
-            let vh = &viirs[j].hotspot;
+            let vh = &viirs_fleet[j].hotspot;
             let dt = (vh.acquired - mh.acquired).num_seconds().abs();
             if dt > MATCH_WINDOW_SECS {
                 continue;
@@ -63,23 +92,62 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
             }
         }
 
+        modis_fleet_out[mi] = result.len();
         if let Some((j, _)) = best_match {
-            viirs_matched[j] = true;
-            result.push(fuse_matched(m, &viirs[j]));
+            viirs_fleet_out[j] = Some(result.len());
+            matched_pairs += 1;
+            result.push(fuse_matched(m, &viirs_fleet[j]));
         } else {
             result.push(from_modis_only(m));
         }
     }
 
     // Unmatched VIIRS detections
-    for (j, v) in viirs.iter().enumerate() {
-        if !viirs_matched[j] {
+    for (j, v) in viirs_fleet.iter().enumerate() {
+        if viirs_fleet_out[j].is_none() {
+            viirs_fleet_out[j] = Some(result.len());
             result.push(from_viirs_only(v));
         }
     }
 
-    result.sort_by_key(|a| a.acquired);
-    result
+    // Stable index sort preserves the exact ordering of `result.sort_by_key(|a| a.acquired)`
+    // while mapping fleet observations to their final positions in `hotspots`.
+    let mut order: Vec<usize> = (0..result.len()).collect();
+    order.sort_by_key(|&k| result[k].acquired);
+    let mut final_pos = vec![0usize; result.len()];
+    for (new_pos, &old_pos) in order.iter().enumerate() {
+        final_pos[old_pos] = new_pos;
+    }
+    let mut slots: Vec<Option<HarmonizedHotspot>> = result.into_iter().map(Some).collect();
+    let hotspots: Vec<HarmonizedHotspot> = order
+        .iter()
+        .map(|&k| slots[k].take().expect("each output taken once"))
+        .collect();
+
+    let mut modis_links = vec![None; modis_input_len];
+    for (mi, members) in modis_groups.iter().enumerate() {
+        let out = final_pos[modis_fleet_out[mi]];
+        for &dedup_idx in members {
+            modis_links[modis_origin[dedup_idx]] = Some(out);
+        }
+    }
+
+    let mut viirs_links = vec![None; viirs_input_len];
+    for (vj, members) in viirs_groups.iter().enumerate() {
+        let out = final_pos[viirs_fleet_out[vj].expect("every VIIRS fleet group produces or joins an output")];
+        for &dedup_idx in members {
+            viirs_links[viirs_origin[dedup_idx]] = Some(out);
+        }
+    }
+
+    HarmonizeLinks {
+        hotspots,
+        modis_links,
+        viirs_links,
+        interscan_removed,
+        fleet_merged,
+        matched_pairs,
+    }
 }
 
 fn fuse_matched(m: &FleetObservation, v: &FleetObservation) -> HarmonizedHotspot {
@@ -161,6 +229,7 @@ fn higher_confidence(a: Confidence, b: Confidence) -> Confidence {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dedup::remove_interscan_duplicates;
     use chrono::{Duration, TimeZone, Utc};
 
     fn make_hotspot(
@@ -852,5 +921,189 @@ mod tests {
             3
         );
         assert!(!out.iter().any(|h| h.source == HotspotSource::Matched));
+    }
+
+    fn synthetic(
+        seed: u64,
+        n_modis: usize,
+        n_viirs: usize,
+        pixel_km: f64,
+    ) -> (Vec<Hotspot>, Vec<Hotspot>) {
+        let mut state = seed;
+        let mut next = || -> u64 {
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            state >> 11
+        };
+        let confs = [Confidence::Low, Confidence::Nominal, Confidence::High];
+        let mut make = |sensor: Sensor, i: usize| {
+            let cluster = (next() % 25) as f64;
+            let r1 = (next() % 10_000) as f64 / 10_000.0;
+            let r2 = (next() % 10_000) as f64 / 10_000.0;
+            let t = (next() % 6_000) as i64;
+            let mut h = make_hotspot(
+                sensor,
+                36.0 + cluster * 0.2 + (r1 - 0.5) * 0.03,
+                27.0 + cluster * 0.3 + (r2 - 0.5) * 0.03,
+                t,
+                5.0 + (i % 37) as f64,
+                confs[(next() % 3) as usize],
+            );
+            h.scan = pixel_km;
+            h.track = pixel_km;
+            h.vza = Some((next() % 60) as f64);
+            h
+        };
+        let modis = (0..n_modis)
+            .map(|i| {
+                make(
+                    if i % 2 == 0 {
+                        Sensor::ModisTerra
+                    } else {
+                        Sensor::ModisAqua
+                    },
+                    i,
+                )
+            })
+            .collect();
+        let viirs = (0..n_viirs).map(|i| make(Sensor::ViirsSNPP, i)).collect();
+        (modis, viirs)
+    }
+
+    fn assert_links_valid(modis: &[Hotspot], viirs: &[Hotspot], out: &HarmonizeLinks) {
+        let n_out = out.hotspots.len();
+        assert_eq!(out.modis_links.len(), modis.len());
+        assert_eq!(out.viirs_links.len(), viirs.len());
+        assert_eq!(
+            n_out,
+            modis.len() + viirs.len() - out.interscan_removed - out.fleet_merged - out.matched_pairs
+        );
+
+        let mut modis_by_out: Vec<Vec<usize>> = vec![Vec::new(); n_out];
+        let mut viirs_by_out: Vec<Vec<usize>> = vec![Vec::new(); n_out];
+        for (i, link) in out.modis_links.iter().enumerate() {
+            if let Some(k) = *link {
+                assert!(k < n_out, "MODIS link {k} out of range {n_out}");
+                modis_by_out[k].push(i);
+            }
+        }
+        for (j, link) in out.viirs_links.iter().enumerate() {
+            if let Some(k) = *link {
+                assert!(k < n_out, "VIIRS link {k} out of range {n_out}");
+                viirs_by_out[k].push(j);
+            }
+        }
+
+        let mut matched = 0;
+        for (k, h) in out.hotspots.iter().enumerate() {
+            let (ms, vs) = (&modis_by_out[k], &viirs_by_out[k]);
+            assert_eq!(h.n_obs as usize, ms.len() + vs.len(), "output {k} n_obs");
+            for &i in ms {
+                assert!(
+                    h.platforms.contains(&modis[i].sensor),
+                    "output {k} missing MODIS sensor"
+                );
+            }
+            for &j in vs {
+                assert!(
+                    h.platforms.contains(&viirs[j].sensor),
+                    "output {k} missing VIIRS sensor"
+                );
+            }
+            match h.source {
+                HotspotSource::Matched => {
+                    matched += 1;
+                    assert!(!ms.is_empty() && !vs.is_empty(), "output {k}");
+                }
+                HotspotSource::ModisOnly => {
+                    assert!(!ms.is_empty() && vs.is_empty(), "output {k}");
+                }
+                HotspotSource::ViirsOnly => {
+                    assert!(ms.is_empty() && !vs.is_empty(), "output {k}");
+                }
+            }
+        }
+        assert_eq!(matched, out.matched_pairs);
+    }
+
+    fn check_equivalence_and_links(modis: Vec<Hotspot>, viirs: Vec<Hotspot>) -> HarmonizeLinks {
+        let expected = harmonize_brute_force(modis.clone(), viirs.clone());
+        let plain = harmonize(modis.clone(), viirs.clone());
+        let linked = harmonize_with_links(modis.clone(), viirs.clone());
+        assert_harmonized_eq(&plain, &expected);
+        assert_harmonized_eq(&linked.hotspots, &plain);
+        assert_links_valid(&modis, &viirs, &linked);
+        linked
+    }
+
+    #[test]
+    fn with_links_matches_harmonize_on_empty_inputs() {
+        let out = check_equivalence_and_links(Vec::new(), Vec::new());
+        assert!(out.hotspots.is_empty());
+        let (modis, _) = synthetic(1, 5, 0, 0.0);
+        check_equivalence_and_links(modis, Vec::new());
+        let (_, viirs) = synthetic(2, 0, 5, 0.0);
+        check_equivalence_and_links(Vec::new(), viirs);
+    }
+
+    #[test]
+    fn with_links_matches_harmonize_without_duplicates() {
+        let (modis, viirs) = synthetic(7, 1_500, 2_000, 0.0);
+        let out = check_equivalence_and_links(modis, viirs);
+        assert_eq!(out.interscan_removed, 0);
+        assert!(out.matched_pairs > 0);
+    }
+
+    #[test]
+    fn with_links_matches_harmonize_with_interscan_duplicates() {
+        for seed in [11, 12, 13] {
+            let (modis, viirs) = synthetic(seed, 2_000, 2_500, 4.0);
+            let out = check_equivalence_and_links(modis, viirs);
+            assert!(out.interscan_removed > 0, "seed {seed} produced no duplicates");
+            assert!(out.matched_pairs > 0, "seed {seed} produced no matches");
+        }
+    }
+
+    #[test]
+    fn with_links_on_hand_built_case() {
+        // Two overlapping MODIS rows 2 s apart collapse into one, which then matches the VIIRS row.
+        let mut m0 = make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 10.0, Confidence::Low);
+        let mut m1 = make_hotspot(Sensor::ModisTerra, 39.001, 32.0, 2, 30.0, Confidence::High);
+        let far = make_hotspot(Sensor::ModisAqua, 41.0, 35.0, -500, 8.0, Confidence::Nominal);
+        let v0 = make_hotspot(Sensor::ViirsSNPP, 39.0005, 32.0, 60, 12.0, Confidence::Nominal);
+        let v1 = make_hotspot(Sensor::ViirsSNPP, 37.0, 30.0, 900, 4.0, Confidence::Low);
+        m0.scan = 1.0;
+        m0.track = 1.0;
+        m1.scan = 1.0;
+        m1.track = 1.0;
+
+        let out = check_equivalence_and_links(vec![m0, m1, far], vec![v0, v1]);
+        assert_eq!(out.interscan_removed, 1);
+        assert_eq!(out.fleet_merged, 0);
+        assert_eq!(out.matched_pairs, 1);
+        assert_eq!(out.hotspots.len(), 3);
+        assert_eq!(out.modis_links, vec![None, Some(1), Some(0)]);
+        assert_eq!(out.viirs_links, vec![Some(1), Some(2)]);
+        assert_eq!(out.hotspots[1].source, HotspotSource::Matched);
+        assert_eq!(out.hotspots[2].source, HotspotSource::ViirsOnly);
+    }
+
+    #[test]
+    fn with_links_tracks_fleet_consolidation() {
+        // Terra and Aqua at the same fire merge in fleet consolidation, then match VIIRS.
+        let terra = make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 20.0, Confidence::Nominal);
+        let aqua = make_hotspot(Sensor::ModisAqua, 39.002, 32.0, 1800, 25.0, Confidence::High);
+        let snpp = make_hotspot(Sensor::ViirsSNPP, 39.001, 32.0, 2400, 18.0, Confidence::Nominal);
+
+        let out = check_equivalence_and_links(vec![terra, aqua], vec![snpp]);
+        assert_eq!(out.interscan_removed, 0);
+        assert_eq!(out.fleet_merged, 1);
+        assert_eq!(out.matched_pairs, 1);
+        assert_eq!(out.hotspots.len(), 1);
+        assert_eq!(out.modis_links, vec![Some(0), Some(0)]);
+        assert_eq!(out.viirs_links, vec![Some(0)]);
+        assert_eq!(out.hotspots[0].source, HotspotSource::Matched);
+        assert_eq!(out.hotspots[0].n_obs, 3);
     }
 }
