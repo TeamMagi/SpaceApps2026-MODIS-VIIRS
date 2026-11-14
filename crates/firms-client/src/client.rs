@@ -105,6 +105,21 @@ impl FirmsClient {
             .await
     }
 
+    /// One request for one window. Checks status, sniffs the body, returns raw validated CSV.
+    pub async fn fetch_window_csv(
+        &self,
+        source: FirmsSource,
+        bbox: &BBox,
+        start: NaiveDate,
+        days: DayRange,
+    ) -> anyhow::Result<String> {
+        let (result, _spent) = self
+            .request_ctx()
+            .fetch_window_csv_counted(source, &bbox.to_firms_string(), start, days)
+            .await;
+        result
+    }
+
     /// One request for one window. Checks status, sniffs the body, returns parsed hotspots.
     pub async fn fetch_window(
         &self,
@@ -352,13 +367,13 @@ impl FirmsClient {
 }
 
 impl RequestCtx {
-    async fn fetch_window_counted(
+    async fn fetch_window_csv_counted(
         &self,
         source: FirmsSource,
         bbox_str: &str,
         start: NaiveDate,
         days: DayRange,
-    ) -> (anyhow::Result<Vec<Hotspot>>, u32) {
+    ) -> (anyhow::Result<String>, u32) {
         let source_str = source.as_str();
         let url = format_firms_url(&self.api_key, source_str, bbox_str, start, days);
         let safe_url = format_firms_url("***", source_str, bbox_str, start, days);
@@ -422,11 +437,28 @@ impl RequestCtx {
                 }
             };
 
-            let parsed = parse_firms_response(status, &body, source_str, &safe_url, &self.api_key);
-            return (parsed, spent);
+            let validated = validate_firms_csv(status, body, &safe_url, &self.api_key);
+            return (validated, spent);
         }
 
         unreachable!("retry loop always exits by MAX_RETRIES")
+    }
+
+    async fn fetch_window_counted(
+        &self,
+        source: FirmsSource,
+        bbox_str: &str,
+        start: NaiveDate,
+        days: DayRange,
+    ) -> (anyhow::Result<Vec<Hotspot>>, u32) {
+        let (csv_res, spent) = self
+            .fetch_window_csv_counted(source, bbox_str, start, days)
+            .await;
+        let safe_url = format_firms_url("***", source.as_str(), bbox_str, start, days);
+        let parsed = csv_res.and_then(|body| {
+            parse_validated_csv(&body, source.as_str(), &safe_url, &self.api_key)
+        });
+        (parsed, spent)
     }
 }
 
@@ -444,13 +476,12 @@ fn format_firms_url(
     )
 }
 
-fn parse_firms_response(
+fn validate_firms_csv(
     status: StatusCode,
-    body: &str,
-    source: &str,
+    body: String,
     safe_url: &str,
     api_key: &str,
-) -> anyhow::Result<Vec<Hotspot>> {
+) -> anyhow::Result<String> {
     if !status.is_success() {
         let snippet = redact_key(&truncate_chars(body.trim(), MAX_ERROR_BODY_CHARS), api_key);
         anyhow::bail!("FIRMS request to {safe_url} failed with HTTP {status}: {snippet}");
@@ -458,11 +489,10 @@ fn parse_firms_response(
 
     let trimmed = body.trim();
     if trimmed.is_empty() {
-        return Ok(Vec::new());
+        return Ok(String::new());
     }
 
-    let mut lines = trimmed.lines();
-    let first_line = lines.next().unwrap_or("");
+    let first_line = trimmed.lines().next().unwrap_or("");
     if !first_line.contains("latitude") {
         let snippet = redact_key(&truncate_chars(trimmed, MAX_ERROR_BODY_CHARS), api_key);
         anyhow::bail!(
@@ -470,6 +500,22 @@ fn parse_firms_response(
         );
     }
 
+    Ok(body)
+}
+
+fn parse_validated_csv(
+    body: &str,
+    source: &str,
+    safe_url: &str,
+    api_key: &str,
+) -> anyhow::Result<Vec<Hotspot>> {
+    let trimmed = body.trim();
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut lines = trimmed.lines();
+    let _first_line = lines.next();
     if lines.all(|line| line.trim().is_empty()) {
         return Ok(Vec::new());
     }
@@ -558,6 +604,17 @@ mod tests {
         NaiveDate::from_ymd_opt(y, m, day).unwrap()
     }
 
+    fn parse_firms_response(
+        status: StatusCode,
+        body: &str,
+        source: &str,
+        safe_url: &str,
+        api_key: &str,
+    ) -> anyhow::Result<Vec<Hotspot>> {
+        let validated = validate_firms_csv(status, body.to_string(), safe_url, api_key)?;
+        parse_validated_csv(&validated, source, safe_url, api_key)
+    }
+
     #[test]
     fn splits_multi_week_range_into_max_five_day_windows_and_cost() {
         let windows = date_windows(d(2024, 1, 1), d(2024, 1, 12));
@@ -576,6 +633,15 @@ mod tests {
         let header_only = "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight\n";
         let res = parse_firms_response(StatusCode::OK, header_only, "MODIS_SP", safe_url, "secret");
         assert!(res.unwrap().is_empty());
+    }
+
+    #[test]
+    fn csv_path_returns_header_only_csv_as_text() {
+        let safe_url = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/***/MODIS_NRT/-10,10,10,20/1/2024-01-01";
+        let header_only = "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight\n";
+        let csv = validate_firms_csv(StatusCode::OK, header_only.to_string(), safe_url, "secret")
+            .unwrap();
+        assert_eq!(csv, header_only);
     }
 
     #[test]
