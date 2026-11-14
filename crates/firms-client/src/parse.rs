@@ -97,6 +97,14 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
             .map(FireType::from_code)
             .unwrap_or(FireType::VegetationFire);
 
+        // FIRMS omits viewing zenith angle; derive it from MODIS along-scan pixel expansion,
+        // leaving VIIRS as None because VIIRS uses different swath geometry and needs no correction.
+        let vza = if sensor.is_modis() {
+            pyrosync_core::vza::vza_from_scan(scan)
+        } else {
+            None
+        };
+
         hotspots.push(Hotspot {
             lat,
             lon,
@@ -109,7 +117,7 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
             track,
             satellite,
             daynight,
-            vza: None,
+            vza,
             fire_type,
         });
     }
@@ -311,5 +319,17 @@ mod tests {
             hotspots[0].acquired,
             Utc.with_ymd_and_hms(2024, 1, 15, 6, 14, 0).unwrap()
         );
+    }
+
+    #[test]
+    fn modis_nrt_derives_vza_from_scan() {
+        let csv = concat!(
+            "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight\n",
+            "-12.07836,26.41462,307.1,2.21,1.44,2026-11-13,614,Terra,MODIS,43,6.1NRT,291.89,12.34,D\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        assert_eq!(hotspots.len(), 1);
+        let vza = hotspots[0].vza.expect("expected derived VZA for MODIS row");
+        assert!(vza > 0.0 && vza < 70.0, "unexpected derived VZA: {vza}");
     }
 }
