@@ -1,7 +1,9 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed fetch-sample verify-data manifest clean clean-cache help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local fetch-sample verify-data manifest clean clean-cache clean-derived help
 
 # Shared host directory for the FIRMS country archive (override via environment or make args)
 ARCHIVE_CACHE_HOST_DIR ?= .cache/firms-archive
+# Shared host directory for precomputed /api/series disk cache (override via environment or make args)
+DERIVED_CACHE_HOST_DIR ?= .cache/pyrosync-derived
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
@@ -60,7 +62,7 @@ check: ## Quick compilation check (no tests)
 # Pre-create the bind-mount directory as the host user; otherwise Docker creates it owned by
 # root on Linux, preventing the non-root container user from writing to it.
 docker: ## Build Docker image
-	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR) $(DERIVED_CACHE_HOST_DIR)
 	docker compose build
 
 docker-up: ## Start containers (requires .env)
@@ -68,7 +70,7 @@ docker-up: ## Start containers (requires .env)
 		echo "Error: .env file not found. Copy .env.example to .env and set FIRMS_API_KEY."; \
 		exit 1; \
 	fi
-	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR) $(DERIVED_CACHE_HOST_DIR)
 	docker compose up -d
 	@if [ -z "$$(ls -A "$(ARCHIVE_CACHE_HOST_DIR)" 2>/dev/null)" ]; then \
 		echo 'Historical archive not downloaded. Live endpoints work; run `make data` for /api/calendar and the archive endpoints.'; \
@@ -99,6 +101,14 @@ seed: ## Download the FIRMS country archive locally without Docker (alternative 
 	mkdir -p $(ARCHIVE_CACHE_HOST_DIR)
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) cargo run --release -p pyrosync-firms --bin archive_seed
 
+precompute: ## Precompute /api/series disk cache for all archive regions via Docker
+	mkdir -p $(ARCHIVE_CACHE_HOST_DIR) $(DERIVED_CACHE_HOST_DIR)
+	docker compose run --rm --build pyrosync precompute
+
+precompute-local: ## Precompute /api/series disk cache locally without Docker
+	mkdir -p $(DERIVED_CACHE_HOST_DIR)
+	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) DERIVED_CACHE_DIR=$(DERIVED_CACHE_HOST_DIR) cargo run --release -p pyrosync-server -- precompute
+
 fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
 	@if [ -z "$$FIRMS_API_KEY" ]; then \
 		echo "Error: FIRMS_API_KEY must be set in the environment (e.g. from .env)."; \
@@ -121,6 +131,9 @@ clean: ## Clean build artifacts (preserves .cache/)
 
 clean-cache: ## Remove local FIRMS archive cache ($(ARCHIVE_CACHE_HOST_DIR))
 	rm -rf $(ARCHIVE_CACHE_HOST_DIR)
+
+clean-derived: ## Remove derived /api/series cache ($(DERIVED_CACHE_HOST_DIR))
+	rm -rf $(DERIVED_CACHE_HOST_DIR)
 
 # ---- Help ----
 

@@ -1,4 +1,5 @@
 mod archive_api;
+mod derived_cache;
 #[cfg(test)]
 mod integration_tests;
 mod pipeline_config;
@@ -657,12 +658,111 @@ fn build_router(
     }
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive("pyrosync=info".parse()?))
-        .init();
+const CLI_USAGE: &str = "\
+Usage:
+  pyrosync-server
+  pyrosync-server precompute [--region <id>]... [--concurrency <n>] [--force]";
 
+#[derive(Debug, PartialEq, Eq)]
+enum CliCommand {
+    Serve,
+    Help,
+    Precompute {
+        regions: Vec<String>,
+        concurrency: usize,
+        force: bool,
+    },
+}
+
+fn take_flag_value(
+    flag: &str,
+    inline: Option<&str>,
+    iter: &mut impl Iterator<Item = String>,
+) -> Result<String, String> {
+    let val = match inline {
+        Some(v) => v.to_string(),
+        None => iter
+            .next()
+            .ok_or_else(|| format!("missing value for {flag}"))?,
+    };
+    if val.trim().is_empty() {
+        return Err(format!("empty value for {flag}"));
+    }
+    Ok(val)
+}
+
+fn parse_cli(args: impl IntoIterator<Item = String>) -> Result<CliCommand, String> {
+    let mut iter = args.into_iter();
+    let Some(first) = iter.next() else {
+        return Ok(CliCommand::Serve);
+    };
+
+    match first.as_str() {
+        "-h" | "--help" => {
+            if let Some(extra) = iter.next() {
+                return Err(format!("unexpected argument '{extra}'"));
+            }
+            Ok(CliCommand::Help)
+        }
+        "precompute" => {
+            let mut regions = Vec::new();
+            let mut concurrency = archive_api::DEFAULT_PRECOMPUTE_CONCURRENCY;
+            let mut force = false;
+
+            while let Some(arg) = iter.next() {
+                if arg == "-h" || arg == "--help" {
+                    return Ok(CliCommand::Help);
+                } else if arg == "--force" {
+                    force = true;
+                } else if arg == "--region" {
+                    regions.push(take_flag_value("--region", None, &mut iter)?);
+                } else if let Some(val) = arg.strip_prefix("--region=") {
+                    regions.push(take_flag_value("--region", Some(val), &mut iter)?);
+                } else if arg == "--concurrency" {
+                    let raw = take_flag_value("--concurrency", None, &mut iter)?;
+                    concurrency = raw
+                        .trim()
+                        .parse::<usize>()
+                        .ok()
+                        .filter(|&n| n >= 1)
+                        .ok_or_else(|| format!("invalid --concurrency '{raw}': expected integer >= 1"))?;
+                } else if let Some(val) = arg.strip_prefix("--concurrency=") {
+                    let raw = take_flag_value("--concurrency", Some(val), &mut iter)?;
+                    concurrency = raw
+                        .trim()
+                        .parse::<usize>()
+                        .ok()
+                        .filter(|&n| n >= 1)
+                        .ok_or_else(|| format!("invalid --concurrency '{raw}': expected integer >= 1"))?;
+                } else {
+                    return Err(format!("unknown argument '{arg}'"));
+                }
+            }
+
+            Ok(CliCommand::Precompute {
+                regions,
+                concurrency,
+                force,
+            })
+        }
+        other => Err(format!("unknown subcommand or argument '{other}'")),
+    }
+}
+
+fn archive_cache_dir_from_env() -> PathBuf {
+    std::env::var("ARCHIVE_CACHE_DIR")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| {
+            std::env::var("FIRMS_ARCHIVE_DIR")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+        })
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(DEFAULT_ARCHIVE_CACHE_DIR))
+}
+
+fn load_pipeline_config() -> anyhow::Result<Arc<PipelineConfig>> {
     // A bad config aborts startup: silently falling back to defaults would change scientific
     // results without anyone noticing.
     let config_path = std::env::var("PYROSYNC_CONFIG")
@@ -674,7 +774,44 @@ async fn main() -> anyhow::Result<()> {
     })
     .inspect_err(|err| tracing::error!("Invalid pipeline configuration: {err:#}"))?;
     tracing::info!(config = ?pipeline_config, "Effective pipeline configuration");
-    let pipeline_config = Arc::new(pipeline_config);
+    Ok(Arc::new(pipeline_config))
+}
+
+async fn run_precompute(
+    regions: Vec<String>,
+    concurrency: usize,
+    force: bool,
+) -> std::process::ExitCode {
+    let Ok(pipeline_config) = load_pipeline_config() else {
+        return std::process::ExitCode::FAILURE;
+    };
+    let archive_cache_dir = archive_cache_dir_from_env();
+    let archive_state = Arc::new(
+        archive_api::ArchiveState::new(
+            archive_cache_dir,
+            archive_api::ArchiveLimits::from_env(),
+            pipeline_config,
+        )
+        .with_year_concurrency(concurrency),
+    );
+
+    match archive_api::precompute_series(
+        archive_state,
+        &archive_api::PrecomputeOptions { regions, force },
+    )
+    .await
+    {
+        Ok(report) if report.failed() == 0 => std::process::ExitCode::SUCCESS,
+        Ok(_) => std::process::ExitCode::FAILURE,
+        Err(err) => {
+            tracing::error!(target: "pyrosync::precompute", error = %err, "precompute aborted");
+            std::process::ExitCode::FAILURE
+        }
+    }
+}
+
+async fn run_server() -> anyhow::Result<()> {
+    let pipeline_config = load_pipeline_config()?;
 
     // Keep the server bootable without an API key so health checks and static assets stay live.
     let firms = match std::env::var("FIRMS_API_KEY") {
@@ -707,16 +844,7 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    let archive_cache_dir = std::env::var("ARCHIVE_CACHE_DIR")
-        .ok()
-        .filter(|s| !s.trim().is_empty())
-        .or_else(|| {
-            std::env::var("FIRMS_ARCHIVE_DIR")
-                .ok()
-                .filter(|s| !s.trim().is_empty())
-        })
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(DEFAULT_ARCHIVE_CACHE_DIR));
+    let archive_cache_dir = archive_cache_dir_from_env();
     let archive_api = Arc::new(archive_api::ArchiveState::new(
         archive_cache_dir.clone(),
         archive_api::ArchiveLimits::from_env(),
@@ -749,6 +877,41 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+#[tokio::main]
+async fn main() -> std::process::ExitCode {
+    let command = match parse_cli(std::env::args().skip(1)) {
+        Ok(cmd) => cmd,
+        Err(err) => {
+            eprintln!("error: {err}\n\n{CLI_USAGE}");
+            return std::process::ExitCode::from(2);
+        }
+    };
+    if matches!(command, CliCommand::Help) {
+        println!("{CLI_USAGE}");
+        return std::process::ExitCode::SUCCESS;
+    }
+
+    let filter = EnvFilter::from_default_env()
+        .add_directive("pyrosync=info".parse().expect("valid tracing directive"));
+    tracing_subscriber::fmt().with_env_filter(filter).init();
+
+    match command {
+        CliCommand::Serve => match run_server().await {
+            Ok(()) => std::process::ExitCode::SUCCESS,
+            Err(err) => {
+                tracing::error!("Server error: {err:#}");
+                std::process::ExitCode::FAILURE
+            }
+        },
+        CliCommand::Precompute {
+            regions,
+            concurrency,
+            force,
+        } => run_precompute(regions, concurrency, force).await,
+        CliCommand::Help => std::process::ExitCode::SUCCESS,
+    }
 }
 
 async fn health() -> Json<HealthResponse> {
@@ -3036,5 +3199,40 @@ mod tests {
             std::fs::read_dir(dir.path()).unwrap().next().is_none(),
             "offline calendar must not create or download files"
         );
+    }
+
+    #[test]
+    fn cli_parser_handles_server_precompute_and_errors() {
+        let parse = |args: &[&str]| parse_cli(args.iter().map(|s| (*s).to_string()));
+        assert_eq!(parse(&[]), Ok(CliCommand::Serve));
+        assert_eq!(parse(&["--help"]), Ok(CliCommand::Help));
+        assert_eq!(
+            parse(&["precompute"]),
+            Ok(CliCommand::Precompute {
+                regions: Vec::new(),
+                concurrency: archive_api::DEFAULT_PRECOMPUTE_CONCURRENCY,
+                force: false,
+            })
+        );
+        assert_eq!(
+            parse(&[
+                "precompute",
+                "--region",
+                "Cyprus",
+                "--region=Armenia",
+                "--concurrency",
+                "4",
+                "--force",
+            ]),
+            Ok(CliCommand::Precompute {
+                regions: vec!["Cyprus".to_string(), "Armenia".to_string()],
+                concurrency: 4,
+                force: true,
+            })
+        );
+        assert!(parse(&["unknown-cmd"]).is_err());
+        assert!(parse(&["precompute", "--bogus"]).is_err());
+        assert!(parse(&["precompute", "--concurrency", "0"]).is_err());
+        assert!(parse(&["precompute", "--region"]).is_err());
     }
 }

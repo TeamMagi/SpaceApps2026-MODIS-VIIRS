@@ -6,8 +6,9 @@ use std::time::{Duration, Instant};
 
 use axum::{
     Router,
+    body::Bytes,
     extract::{Query, Request, State},
-    http::StatusCode,
+    http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Json, Response},
     routing::get,
@@ -26,6 +27,11 @@ use pyrosync_core::models::{
 use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_slug, scan_local_archive};
 use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
+
+use crate::derived_cache::{ArchiveFileStamp, DerivedCache, SeriesStamp};
+
+const X_SERIES_SOURCE_HEADER: HeaderName = HeaderName::from_static("x-series-source");
+pub const DEFAULT_PRECOMPUTE_CONCURRENCY: usize = 2;
 
 const DEFAULT_POINTS_LIMIT: usize = 4000;
 const MAX_POINTS_LIMIT: usize = 20_000;
@@ -73,9 +79,10 @@ pub struct ArchiveState {
     client: Arc<ArchiveClient>,
     limits: ArchiveLimits,
     config: Arc<PipelineConfig>,
+    derived_cache: Arc<DerivedCache>,
     index: OnceCell<Arc<ArchiveIndex>>,
     coverage: OnceCell<Arc<Coverage>>,
-    series: Mutex<HashMap<String, Arc<OnceCell<Arc<SeriesResponse>>>>>,
+    series: Mutex<HashMap<String, Arc<OnceCell<Bytes>>>>,
     years: Mutex<YearCache>,
     /// Each slot holds one parsed year plus its harmonize working set until its stats are
     /// done, so this bounds both CPU use and peak memory.
@@ -89,12 +96,24 @@ impl ArchiveState {
             client: Arc::new(ArchiveClient::offline(dir)),
             limits,
             config,
+            derived_cache: Arc::new(DerivedCache::from_env()),
             index: OnceCell::new(),
             coverage: OnceCell::new(),
             series: Mutex::new(HashMap::new()),
             years: Mutex::new(YearCache::default()),
             load_slots: Arc::new(Semaphore::new((cpus / 2).clamp(2, 8))),
         }
+    }
+
+    #[cfg(test)]
+    pub fn with_derived_cache_dir(mut self, dir: PathBuf) -> Self {
+        self.derived_cache = Arc::new(DerivedCache::new(dir));
+        self
+    }
+
+    pub fn with_year_concurrency(mut self, concurrency: usize) -> Self {
+        self.load_slots = Arc::new(Semaphore::new(concurrency.max(1)));
+        self
     }
 
     pub fn dir(&self) -> &Path {
@@ -115,7 +134,7 @@ impl ArchiveState {
         Err(ApiError::new(
             StatusCode::PAYLOAD_TOO_LARGE,
             format!(
-                "Region too large for this server: ~{} detections / {:.0} MB of archive CSV; limit {:.0} MB (ARCHIVE_MAX_REGION_MB)",
+                "Region too large for this server: ~{} detections / {:.0} MB of archive CSV; limit {:.0} MB (ARCHIVE_MAX_REGION_MB). Run `make precompute` to precompute large regions offline.",
                 approx_count(region.bytes / BYTES_PER_ROW_ESTIMATE),
                 megabytes(region.bytes),
                 megabytes(self.limits.max_region_bytes),
@@ -163,9 +182,16 @@ fn approx_count(n: u64) -> String {
 
 // ---------- errors ----------
 
+#[derive(Debug)]
 pub struct ApiError {
     status: StatusCode,
     message: String,
+}
+
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
 }
 
 impl ApiError {
@@ -220,6 +246,7 @@ struct RegionInfo {
     noaa20_years: BTreeSet<i32>,
     /// Total size of the region's archive CSV files on disk.
     bytes: u64,
+    files: Vec<ArchiveFileStamp>,
 }
 
 struct ArchiveIndex {
@@ -235,6 +262,13 @@ enum ArchiveSensorKind {
     Modis,
     ViirsSnpp,
     ViirsNoaa20,
+}
+
+fn mtime_secs(meta: &std::fs::Metadata) -> u64 {
+    meta.modified()
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_secs())
 }
 
 fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
@@ -257,7 +291,16 @@ fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
         } else {
             continue;
         };
-        let bytes = std::fs::metadata(&file.path)?.len();
+        let meta = std::fs::metadata(&file.path)?;
+        let bytes = meta.len();
+        let stamp_file = ArchiveFileStamp {
+            path: format!(
+                "{}/{}/{}_{}_{}.csv",
+                file.slug, file.year, file.slug, file.year, file.country
+            ),
+            bytes,
+            mtime_secs: mtime_secs(&meta),
+        };
         let region = Arc::make_mut(regions.entry(file.country.clone()).or_insert_with(|| {
             Arc::new(RegionInfo {
                 name: file.country.replace('_', " "),
@@ -266,9 +309,11 @@ fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
                 viirs_years: BTreeSet::new(),
                 noaa20_years: BTreeSet::new(),
                 bytes: 0,
+                files: Vec::new(),
             })
         }));
         region.bytes += bytes;
+        region.files.push(stamp_file);
         let (years, files) = match kind {
             ArchiveSensorKind::Modis => (&mut region.modis_years, &mut modis_files),
             ArchiveSensorKind::ViirsSnpp => (&mut region.viirs_years, &mut viirs_files),
@@ -276,6 +321,12 @@ fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
         };
         years.insert(file.year);
         files.entry(file.year).or_default().push(file.path);
+    }
+
+    for region in regions.values_mut() {
+        Arc::make_mut(region)
+            .files
+            .sort_by(|a, b| a.path.cmp(&b.path));
     }
 
     Ok(ArchiveIndex {
@@ -856,17 +907,21 @@ fn change_pct(from: usize, to: usize) -> Option<f64> {
     (from > 0).then(|| (to as f64 - from as f64) / from as f64 * 100.0)
 }
 
+fn region_years(region: &RegionInfo) -> BTreeSet<i32> {
+    region
+        .modis_years
+        .union(&region.viirs_years)
+        .copied()
+        .chain(region.noaa20_years.iter().copied())
+        .collect()
+}
+
 async fn build_series(
     state: Arc<ArchiveState>,
     region: Arc<RegionInfo>,
     coverage: Arc<Coverage>,
 ) -> Result<SeriesResponse, ApiError> {
-    let years: BTreeSet<i32> = region
-        .modis_years
-        .union(&region.viirs_years)
-        .copied()
-        .chain(region.noaa20_years.iter().copied())
-        .collect();
+    let years = region_years(&region);
 
     let mut tasks = JoinSet::new();
     for year in years {
@@ -962,14 +1017,38 @@ struct SeriesParams {
     region: Option<String>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SeriesSource {
+    Memory,
+    Disk,
+    Computed,
+}
+
+impl SeriesSource {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Memory => "memory",
+            Self::Disk => "disk",
+            Self::Computed => "computed",
+        }
+    }
+}
+
+fn serialize_series(response: &SeriesResponse) -> Result<Bytes, ApiError> {
+    serde_json::to_vec(response).map(Bytes::from).map_err(|err| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("failed to serialize /api/series response: {err}"),
+        )
+    })
+}
+
 async fn series(
     State(state): State<Arc<ArchiveState>>,
     Query(params): Query<SeriesParams>,
 ) -> Result<Response, ApiError> {
     let started = Instant::now();
     let region = find_region(&state, params.region.as_deref()).await?;
-    state.admit(&region)?;
-    let coverage = load_coverage(&state).await?;
     let cell = state
         .series
         .lock()
@@ -978,24 +1057,263 @@ async fn series(
         .or_default()
         .clone();
 
-    let mut computed = false;
-    let response = cell
+    let mut source = SeriesSource::Memory;
+    let body = cell
         .get_or_try_init(|| async {
-            computed = true;
-            build_series(state.clone(), region.clone(), coverage)
-                .await
-                .map(Arc::new)
+            let stamp = SeriesStamp::for_region(&state.config, &region.files);
+            let cache = state.derived_cache.clone();
+            let region_id = region.id.clone();
+            let disk_stamp = stamp.clone();
+            if let Some(bytes) =
+                tokio::task::spawn_blocking(move || cache.read_series(&region_id, &disk_stamp))
+                    .await
+                    .map_err(join_error)?
+            {
+                source = SeriesSource::Disk;
+                return Ok::<_, ApiError>(bytes);
+            }
+
+            state.admit(&region)?;
+            let coverage = load_coverage(&state).await?;
+            let response = build_series(state.clone(), region.clone(), coverage).await?;
+            let bytes = serialize_series(&response)?;
+
+            let cache = state.derived_cache.clone();
+            let region_id = region.id.clone();
+            let bytes_for_disk = bytes.clone();
+            let _ = tokio::task::spawn_blocking(move || {
+                let _ = cache.write_series(&region_id, &stamp, &bytes_for_disk);
+            })
+            .await;
+
+            source = SeriesSource::Computed;
+            Ok(bytes)
         })
         .await?
         .clone();
 
     let elapsed_ms = started.elapsed().as_secs_f64() * 1000.0;
-    if computed {
-        tracing::info!(region = %region.id, elapsed_ms, "computed /api/series (first call, archive read + pipeline)");
-    } else {
-        tracing::debug!(region = %region.id, elapsed_ms, "served /api/series from cache");
+    match source {
+        SeriesSource::Computed => tracing::info!(
+            region = %region.id,
+            elapsed_ms,
+            "computed /api/series (archive read + pipeline)"
+        ),
+        SeriesSource::Disk => tracing::info!(
+            region = %region.id,
+            elapsed_ms,
+            "served /api/series from disk cache"
+        ),
+        SeriesSource::Memory => tracing::debug!(
+            region = %region.id,
+            elapsed_ms,
+            "served /api/series from memory cache"
+        ),
     }
-    Ok(Json(&*response).into_response())
+
+    let mut response = (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/json"),
+        )],
+        body,
+    )
+        .into_response();
+    response.headers_mut().insert(
+        X_SERIES_SOURCE_HEADER,
+        HeaderValue::from_static(source.as_str()),
+    );
+    Ok(response)
+}
+
+// ---------- precompute ----------
+
+#[derive(Debug, Clone)]
+pub struct PrecomputeOptions {
+    pub regions: Vec<String>,
+    pub force: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PrecomputeOutcome {
+    Computed,
+    Skipped,
+    Failed(String),
+}
+
+#[derive(Debug, Clone)]
+pub struct PrecomputeRegionResult {
+    pub outcome: PrecomputeOutcome,
+}
+
+#[derive(Debug, Clone)]
+pub struct PrecomputeReport {
+    pub results: Vec<PrecomputeRegionResult>,
+    pub total_elapsed: Duration,
+}
+
+impl PrecomputeReport {
+    pub fn computed(&self) -> usize {
+        self.results
+            .iter()
+            .filter(|r| matches!(r.outcome, PrecomputeOutcome::Computed))
+            .count()
+    }
+
+    pub fn skipped(&self) -> usize {
+        self.results
+            .iter()
+            .filter(|r| matches!(r.outcome, PrecomputeOutcome::Skipped))
+            .count()
+    }
+
+    pub fn failed(&self) -> usize {
+        self.results
+            .iter()
+            .filter(|r| matches!(r.outcome, PrecomputeOutcome::Failed(_)))
+            .count()
+    }
+}
+
+async fn precompute_one_region(
+    state: &Arc<ArchiveState>,
+    region: &Arc<RegionInfo>,
+    coverage: &Arc<Coverage>,
+    force: bool,
+) -> Result<PrecomputeOutcome, String> {
+    let stamp = SeriesStamp::for_region(&state.config, &region.files);
+    if !force {
+        let cache = state.derived_cache.clone();
+        let region_id = region.id.clone();
+        let check_stamp = stamp.clone();
+        let hit = tokio::task::spawn_blocking(move || cache.read_series(&region_id, &check_stamp))
+            .await
+            .map_err(|err| format!("cache check task failed: {err}"))?
+            .is_some();
+        if hit {
+            return Ok(PrecomputeOutcome::Skipped);
+        }
+    }
+
+    let series_resp = build_series(state.clone(), region.clone(), coverage.clone())
+        .await
+        .map_err(|err| err.message)?;
+    let bytes = serialize_series(&series_resp).map_err(|err| err.message)?;
+
+    let cache = state.derived_cache.clone();
+    let region_id = region.id.clone();
+    tokio::task::spawn_blocking(move || cache.write_series(&region_id, &stamp, &bytes))
+        .await
+        .map_err(|err| format!("cache write task failed: {err}"))?
+        .map_err(|err| format!("failed to write derived cache: {err}"))?;
+
+    Ok(PrecomputeOutcome::Computed)
+}
+
+/// Precomputes `/api/series` responses into the disk cache for the selected regions
+/// (or all indexed regions when `opts.regions` is empty), ignoring `ARCHIVE_MAX_REGION_MB`.
+pub async fn precompute_series(
+    state: Arc<ArchiveState>,
+    opts: &PrecomputeOptions,
+) -> Result<PrecomputeReport, ApiError> {
+    let total_started = Instant::now();
+    let index = load_index(&state).await?;
+    let coverage = load_coverage(&state).await?;
+
+    let targets: Vec<String> = if opts.regions.is_empty() {
+        index.regions.keys().cloned().collect()
+    } else {
+        let mut seen = BTreeSet::new();
+        opts.regions
+            .iter()
+            .filter(|id| seen.insert((*id).clone()))
+            .cloned()
+            .collect()
+    };
+
+    let total = targets.len();
+    let mut results = Vec::with_capacity(total);
+
+    // Process regions sequentially to bound peak memory (large countries hold millions of rows per year).
+    for (idx, region_id) in targets.into_iter().enumerate() {
+        let pos = format!("{}/{total}", idx + 1);
+        let region_started = Instant::now();
+        let Some(region) = index.regions.get(&region_id) else {
+            let err = format!("unknown region '{region_id}'");
+            tracing::error!(
+                target: "pyrosync::precompute",
+                progress = %pos,
+                region = %region_id,
+                years = 0,
+                elapsed_s = 0.0,
+                outcome = "failed",
+                error = %err,
+                "precompute region"
+            );
+            results.push(PrecomputeRegionResult {
+                outcome: PrecomputeOutcome::Failed(err),
+            });
+            continue;
+        };
+
+        let years = region_years(region).len();
+        let outcome = match precompute_one_region(&state, region, &coverage, opts.force).await {
+            Ok(outcome) => outcome,
+            Err(err) => PrecomputeOutcome::Failed(err),
+        };
+        let elapsed = region_started.elapsed();
+        let elapsed_s = (elapsed.as_secs_f64() * 100.0).round() / 100.0;
+
+        match &outcome {
+            PrecomputeOutcome::Computed => tracing::info!(
+                target: "pyrosync::precompute",
+                progress = %pos,
+                region = %region.id,
+                years,
+                elapsed_s,
+                outcome = "computed",
+                "precompute region"
+            ),
+            PrecomputeOutcome::Skipped => tracing::info!(
+                target: "pyrosync::precompute",
+                progress = %pos,
+                region = %region.id,
+                years,
+                elapsed_s,
+                outcome = "skipped",
+                "precompute region"
+            ),
+            PrecomputeOutcome::Failed(err) => tracing::error!(
+                target: "pyrosync::precompute",
+                progress = %pos,
+                region = %region.id,
+                years,
+                elapsed_s,
+                outcome = "failed",
+                error = %err,
+                "precompute region"
+            ),
+        }
+
+        results.push(PrecomputeRegionResult { outcome });
+    }
+
+    let report = PrecomputeReport {
+        results,
+        total_elapsed: total_started.elapsed(),
+    };
+    let total_s = (report.total_elapsed.as_secs_f64() * 100.0).round() / 100.0;
+    tracing::info!(
+        target: "pyrosync::precompute",
+        total,
+        computed = report.computed(),
+        skipped = report.skipped(),
+        failed = report.failed(),
+        elapsed_s = total_s,
+        "precompute summary"
+    );
+
+    Ok(report)
 }
 
 // ---------- points ----------
@@ -1307,18 +1625,34 @@ mod tests {
         std::fs::write(path.join(format!("{slug}_{year}_{country}.csv")), csv).unwrap();
     }
 
-    fn state(dir: PathBuf, max_region_bytes: u64) -> Arc<ArchiveState> {
-        Arc::new(ArchiveState::new(
-            dir,
-            ArchiveLimits {
-                max_region_bytes,
-                request_timeout: Duration::from_secs(30),
-            },
-            Arc::new(PipelineConfig::default()),
-        ))
+    fn state_with_config(
+        dir: PathBuf,
+        derived_dir: PathBuf,
+        max_region_bytes: u64,
+        config: PipelineConfig,
+    ) -> Arc<ArchiveState> {
+        Arc::new(
+            ArchiveState::new(
+                dir,
+                ArchiveLimits {
+                    max_region_bytes,
+                    request_timeout: Duration::from_secs(30),
+                },
+                Arc::new(config),
+            )
+            .with_derived_cache_dir(derived_dir),
+        )
     }
 
-    async fn series_json(state: &Arc<ArchiveState>, region: &str) -> Result<serde_json::Value, ApiError> {
+    fn state(dir: PathBuf, max_region_bytes: u64) -> Arc<ArchiveState> {
+        let derived_dir = dir.join("_derived_cache");
+        state_with_config(dir, derived_dir, max_region_bytes, PipelineConfig::default())
+    }
+
+    async fn series_raw(
+        state: &Arc<ArchiveState>,
+        region: &str,
+    ) -> Result<(Option<String>, Bytes), ApiError> {
         let response = series(
             State(state.clone()),
             Query(SeriesParams {
@@ -1326,9 +1660,19 @@ mod tests {
             }),
         )
         .await?;
+        let source = response
+            .headers()
+            .get(X_SERIES_SOURCE_HEADER)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_string);
         let body = axum::body::to_bytes(response.into_body(), usize::MAX)
             .await
             .unwrap();
+        Ok((source, body))
+    }
+
+    async fn series_json(state: &Arc<ArchiveState>, region: &str) -> Result<serde_json::Value, ApiError> {
+        let (_, body) = series_raw(state, region).await?;
         Ok(serde_json::from_slice(&body).unwrap())
     }
 
@@ -1609,6 +1953,248 @@ mod tests {
         assert_eq!(pts.stages.harmonized, 1);
         assert_eq!(pts.raw[0].sensor, "VIIRS");
         assert!(pts.harmonized[0].hotspot.platforms.contains(&Sensor::ViirsNOAA20));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_disk_cache_roundtrip_serves_identical_bytes() {
+        let dir = temp_archive("derived-roundtrip");
+        write_file(
+            &dir,
+            "modis",
+            2015,
+            "Alpha",
+            &[(39.0, "2015-07-01", 0), (39.5, "2015-08-15", 0)],
+        );
+        write_file(&dir, "viirs-snpp", 2015, "Alpha", &[(39.0, "2015-07-01", 0)]);
+
+        let first_state = state(dir.clone(), u64::MAX);
+        let (src1, body1) = series_raw(&first_state, "Alpha").await.ok().unwrap();
+        assert_eq!(src1.as_deref(), Some("computed"));
+
+        // New ArchiveState simulates a server restart with empty in-memory OnceCells.
+        let second_state = state(dir.clone(), u64::MAX);
+        let (src2, body2) = series_raw(&second_state, "Alpha").await.ok().unwrap();
+        assert_eq!(src2.as_deref(), Some("disk"));
+        assert_eq!(body1, body2);
+
+        let (src3, body3) = series_raw(&second_state, "Alpha").await.ok().unwrap();
+        assert_eq!(src3.as_deref(), Some("memory"));
+        assert_eq!(body1, body3);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_disk_cache_invalidates_on_csv_change_and_config_change() {
+        let dir = temp_archive("derived-invalidate");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2015, "Beta", &[(39.0, "2015-07-01", 0)]);
+
+        let s1 = state_with_config(
+            dir.clone(),
+            derived.clone(),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src1, body1) = series_raw(&s1, "Beta").await.ok().unwrap();
+        assert_eq!(src1.as_deref(), Some("computed"));
+        let json1: serde_json::Value = serde_json::from_slice(&body1).unwrap();
+        assert_eq!(json1["years"][0]["raw_total"], 1);
+
+        // Appending a row changes the CSV byte size, invalidating the file stamp.
+        let csv_path = dir.join("modis/2015/modis_2015_Beta.csv");
+        let mut contents = std::fs::read_to_string(&csv_path).unwrap();
+        contents.push_str("40.5,32.0,320,0.5,0.5,2015-07-02,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n");
+        std::fs::write(&csv_path, contents).unwrap();
+
+        let s2 = state_with_config(
+            dir.clone(),
+            derived.clone(),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src2, body2) = series_raw(&s2, "Beta").await.ok().unwrap();
+        assert_eq!(src2.as_deref(), Some("computed"));
+        let json2: serde_json::Value = serde_json::from_slice(&body2).unwrap();
+        assert_eq!(json2["years"][0]["raw_total"], 2);
+
+        // Changing PipelineConfig invalidates the config digest in the stamp.
+        let mut alt_cfg = PipelineConfig::default();
+        alt_cfg.matching.window_secs += 60;
+        let s3 = state_with_config(dir.clone(), derived.clone(), u64::MAX, alt_cfg);
+        let (src3, _) = series_raw(&s3, "Beta").await.ok().unwrap();
+        assert_eq!(src3.as_deref(), Some("computed"));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_disk_cache_and_memory_bypass_admit_limit() {
+        let dir = temp_archive("derived-admit-bypass");
+        let big: Vec<(f64, &str, u8)> = (0..100)
+            .map(|i| (30.0 + f64::from(i) * 0.05, "2018-07-01", 0))
+            .collect();
+        write_file(&dir, "modis", 2018, "Huge", &big);
+
+        let tight_state = state(dir.clone(), 100);
+        let err = series_raw(&tight_state, "Huge").await.err().unwrap();
+        assert_eq!(err.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert!(err.message.contains("make precompute"), "{}", err.message);
+
+        // Precompute ignores max_region_bytes and populates the disk cache.
+        let precompute_state = state(dir.clone(), 100);
+        let report = precompute_series(
+            precompute_state,
+            &PrecomputeOptions {
+                regions: vec!["Huge".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+        assert_eq!(report.failed(), 0);
+
+        // Now the exact same tight_state serves Huge from disk (and then memory) with 200 OK.
+        let (src_disk, body_disk) = series_raw(&tight_state, "Huge").await.ok().unwrap();
+        assert_eq!(src_disk.as_deref(), Some("disk"));
+        let json: serde_json::Value = serde_json::from_slice(&body_disk).unwrap();
+        assert_eq!(json["years"][0]["raw_total"], 100);
+
+        let (src_mem, body_mem) = series_raw(&tight_state, "Huge").await.ok().unwrap();
+        assert_eq!(src_mem.as_deref(), Some("memory"));
+        assert_eq!(body_disk, body_mem);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_succeeds_when_derived_cache_dir_is_unwritable() {
+        let dir = temp_archive("derived-unwritable");
+        write_file(&dir, "modis", 2015, "Gamma", &[(39.0, "2015-07-01", 0)]);
+        // A regular file cannot be created as a directory, simulating an unwritable cache path.
+        let blocker_file = dir.join("not-a-directory");
+        std::fs::write(&blocker_file, b"occupied").unwrap();
+
+        let s = state_with_config(
+            dir.clone(),
+            blocker_file,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, body) = series_raw(&s, "Gamma").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("computed"));
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["region"], "Gamma");
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_ignores_corrupt_disk_cache_and_recomputes() {
+        let dir = temp_archive("derived-corrupt");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2015, "Delta", &[(39.0, "2015-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let (src1, body1) = series_raw(&s1, "Delta").await.ok().unwrap();
+        assert_eq!(src1.as_deref(), Some("computed"));
+
+        // Corrupt the cached JSON body; the checksum mismatch must force recomputation.
+        std::fs::write(derived.join("series/Delta.json"), b"{corrupt").unwrap();
+        let s2 = state(dir.clone(), u64::MAX);
+        let (src2, body2) = series_raw(&s2, "Delta").await.ok().unwrap();
+        assert_eq!(src2.as_deref(), Some("computed"));
+        assert_eq!(body1, body2);
+
+        // Corrupt the metadata stamp; JSON parse failure must force recomputation.
+        std::fs::write(derived.join("series/Delta.meta.json"), b"not-json").unwrap();
+        let s3 = state(dir.clone(), u64::MAX);
+        let (src3, body3) = series_raw(&s3, "Delta").await.ok().unwrap();
+        assert_eq!(src3.as_deref(), Some("computed"));
+        assert_eq!(body1, body3);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn precompute_skips_valid_regions_and_recomputes_with_force() {
+        let dir = temp_archive("precompute-cmd");
+        write_file(&dir, "modis", 2015, "Cyprus", &[(35.0, "2015-07-01", 0)]);
+        write_file(&dir, "modis", 2015, "Armenia", &[(40.0, "2015-07-01", 0)]);
+
+        let make_state = || {
+            Arc::new(
+                ArchiveState::new(
+                    dir.clone(),
+                    ArchiveLimits {
+                        max_region_bytes: u64::MAX,
+                        request_timeout: Duration::from_secs(30),
+                    },
+                    Arc::new(PipelineConfig::default()),
+                )
+                .with_derived_cache_dir(dir.join("_derived_cache"))
+                .with_year_concurrency(2),
+            )
+        };
+
+        let r1 = precompute_series(
+            make_state(),
+            &PrecomputeOptions {
+                regions: Vec::new(),
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r1.computed(), 2);
+        assert_eq!(r1.skipped(), 0);
+        assert_eq!(r1.failed(), 0);
+
+        let r2 = precompute_series(
+            make_state(),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string(), "Armenia".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r2.computed(), 0);
+        assert_eq!(r2.skipped(), 2);
+        assert_eq!(r2.failed(), 0);
+
+        let r3 = precompute_series(
+            make_state(),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string()],
+                force: true,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r3.computed(), 1);
+        assert_eq!(r3.skipped(), 0);
+        assert_eq!(r3.failed(), 0);
+
+        let r4 = precompute_series(
+            make_state(),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string(), "MissingLand".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(r4.skipped(), 1);
+        assert_eq!(r4.failed(), 1);
 
         let _ = std::fs::remove_dir_all(dir);
     }

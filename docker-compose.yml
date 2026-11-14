@@ -13,6 +13,7 @@ services:
       - STATIC_DIR=${STATIC_DIR:-/app/static}
       - RUST_LOG=${RUST_LOG:-pyrosync=info}
       - ARCHIVE_CACHE_DIR=${ARCHIVE_CACHE_DIR:-/app/.cache/firms-archive}
+      - DERIVED_CACHE_DIR=${DERIVED_CACHE_DIR:-/app/.cache/pyrosync-derived}
       - CACHE_BUDGET_MB=${CACHE_BUDGET_MB:-128}
       - REQUEST_TIMEOUT_SECS=${REQUEST_TIMEOUT_SECS:-300}
       # Pass through only when defined so an unset value keeps CORS permissive rather than passing ""
@@ -22,6 +23,8 @@ services:
       - ./data:/app/data:ro
       # Read-only because pyrosync uses an offline ArchiveClient and never writes or downloads archive files
       - ${ARCHIVE_CACHE_HOST_DIR:-./.cache/firms-archive}:/app/.cache/firms-archive:ro
+      # Writable because the server and `precompute` persist derived /api/series caches here, not raw archive data
+      - ${DERIVED_CACHE_HOST_DIR:-./.cache/pyrosync-derived}:/app/.cache/pyrosync-derived
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:$${PORT:-3001}/api/health || exit 1"]
       interval: 30s
