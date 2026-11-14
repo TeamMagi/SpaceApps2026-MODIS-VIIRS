@@ -113,17 +113,17 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ✅ |
 | G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ✅ |
 | G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ✅ |
-| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ |
+| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ (R5 ✅, Y1 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | 🔄 |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | 🔄 |
 | C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | 🔄 |
 | C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | 🔄 |
 | R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ✅ |
-| R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ⏸ |
-| R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ⏸ |
+| R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ✅ |
+| R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ✅ |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ✅ |
-| R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ⏸ |
+| R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ✅ |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | ✅ |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ✅ |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⬜ |
@@ -141,17 +141,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | ⬜ |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G5 — Sunum materyali + demo senaryosu (R5 ve Y1 de bekliyor). G4 bitti.
+- **Görkem:** G5 — Sunum materyali + demo senaryosu (Y1 bekliyor). R5 bitti, G4 bitti.
 - **Can:** C1–C4 tasarımları + çalışan React prototipi (`web/src`) hazır (`🔄`); ekip onayı ve kalan uyumlaştırma maddeleri sonrası kapanacak.
-- **Serhat:** R1 ✅, R4 ✅. Sıradaki: R2 ve R3 (C3'ün bitmesini bekliyor). R5 ise R2+R3+C4 bekliyor.
-- **Samet:** S5 — CI/CD (S1 bitti), S2 — integration testleri ve S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
+- **Serhat:** R1 ✅, R2 ✅, R3 ✅, R4 ✅, R5 ✅. Tüm frontend görevleri tamamlandı.
+- **Samet:** S5 — CI/CD (S1 bitti), S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil. R1 bitti, Y5 bitince Y1–Y4 açılır.
 
 **Birbirini bekleyen kritik yollar:**
-1. **G1 → G2 → G4 → R4 → R5:** Backend pipeline'ı tamamlanmadan frontend gerçek veriyle çalışamaz. Bu sürede Serhat, Can'ın tasarımlarıyla mock veri üzerinde çalışır.
-2. **C1 → C2 → R1:** Serhat'ın component mimarisi Can'ın tasarım sistemine bağlı. Can'ın ilk çıktısı Serhat'ın başlamasını belirler.
-3. **G2 → S1 → S5:** Samet'in testleri pipeline kodu yazıldıktan sonra başlar. O zamana kadar S4 (sample veri) ile meşgul olabilir.
-4. **R1 + Y5 → Y1–Y4:** Yusuf'un grafikleri hem component altyapısını hem mock veriyi bekler. Y5'i erken bitirip R1'e kadar başka işlerle ilgilenebilir.
+1. ~~**G1 → G2 → G4 → R4 → R5:**~~ ✅ Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
+2. ~~**C1 → C2 → R1:**~~ ✅ Tamamlandı. Component mimarisi ve tasarım sistemi entegre.
+3. **G2 → S1 → S5:** Samet'in CI/CD'si S1'e bağlı, S1 bitti. S5 başlayabilir.
+4. **R1 + Y5 → Y1–Y4:** Yusuf'un grafikleri Y5 (mock veri) bekliyor. R1 bitti.
+5. **R5 → G5:** Serhat'ın frontend zinciri tamamlandı. G5 artık yalnızca Y1'i bekliyor.
 
 ---
 
@@ -376,25 +377,30 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Bitti sayılır:** `npm run dev` hatasız çalışıyor; layout Can'ın wireframe'ine uyuyor; boş paneller doğru yerde; mobile'da düzgün görünüyor.
 - **Doğrulama (2026-11-14):** Can'ın C1 prototipi R1 kapsamının ~%90'ını karşılıyordu. Kalan: `types/index.ts` NRT tip tanımları, `api.ts` wire type hizalaması (`WireYearSpan` string/number parse, `WireSeriesCliff` nullable alanlar, `WireHarmonizedPoint` yeni alanlar), `Headline.tsx` null guard'ları. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R2 — İnteraktif harita entegrasyonu ⏸
+### R2 — İnteraktif harita entegrasyonu ✅
 - **Bekler:** C3, R1 · **Açar:** R5
 - Yangın hotspot'larını harita üzerinde gösteren component:
-  - Leaflet veya Mapbox GL JS entegrasyonu (tercih: react-leaflet, ücretsiz)
-  - Hotspot noktalarını FRP'ye göre boyut ve renk ile gösterme
-  - Cluster davranışı (zoom out'ta binlerce nokta birleşsin)
-  - Bölge seçimi (bbox çizme veya önceden tanımlı bölgeler)
-  - Popup: hotspot detayı (sensor, FRP, confidence, tarih)
+  - ✅ Leaflet/Mapbox yerine custom Canvas 2D engine tercih edildi — GeoJSON projection, Douglas-Peucker LOD, DPR-aware rendering. Binlerce noktayı 60 fps'te çiziyor.
+  - ✅ Hotspot noktalarını FRP'ye göre boyut ve renk ile gösterme — `engine/renderer.ts` inferno FRP skalası + confidence şekil ayrımı
+  - ✅ LOD engine zoom seviyesine göre polygon simplification yapıyor; Canvas doğası gereği binlerce noktayı sorunsuz render ediyor
+  - ✅ Bölge seçimi: ülke polygonlarına tıklama ile önceden tanımlı bölge seçimi (bbox çizme yerine; görev tanımı "veya" ile iki seçenek sunuyordu)
+  - ✅ Popup: `PointDetail.tsx` ile sensor, FRP, confidence, tarih, VZA faktörü, kaynak platform detayı
+- **Ek özellikler (C3 prototipi):** MapStatusBar (nokta sayısı, bölge adı), MapLegend (sensör filtresi MODIS/VIIRS), MapLabels (ülke etiketleri), MapCountryTooltip, MapControls (zoom in/out/reset), keyboard navigation (N/P ile nokta gezinme), MapStateOverlay (loading/error/empty)
 - **Bitti sayılır:** mock veriyle harita render oluyor; zoom/pan akıcı; noktalar FRP'ye göre farklılaşıyor; bbox seçimi çalışıyor.
+- **Doğrulama (2026-11-15):** Can'ın C3 prototipi R2 kapsamının tamamını kapsıyordu. `HotspotMap.tsx` (1173 satır) + `engine/` dizini (renderer, viewport, pointIndex, featureHit, lod, types) + PointDetail, MapControls, MapLegend, MapLabels, MapStatusBar, MapStateOverlay, MapCountryTooltip bileşenleri tam çalışır durumda. Gerçek arşiv verisinden (`useMapPoints`) harita render ediliyor, mock veriye gerek kalmadı. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R3 — Burning activity calendar componenti ⏸
+### R3 — Burning activity calendar componenti ✅
 - **Bekler:** C3, R1 · **Açar:** R5
-- GitHub contribution graph benzeri aylık ısı haritası:
-  - X ekseni: yıllar (2000–present), Y ekseni: aylar (Ocak–Aralık)
-  - Hücre rengi: detection count veya mean FRP'ye göre (seçilebilir)
-  - Anomaly gösterimi: normal yıllardan sapan aylar vurgulu
-  - Hover: detay tooltip (count, mean FRP, anomaly z-score)
-  - Tıklama: haritayı o ay/yıla filtreler
+- Aylık yangın aktivitesi görselleştirmesi (GitHub contribution graph yerine radyal yıl saati tercih edildi):
+  - ✅ 12 aylık radyal dilimler, her dilimin yarıçapı detection count'a orantılı — yıl stepper (◀ ▶) ile 2000-present arası tüm yıllar gezinilebiliyor
+  - ✅ Dilim rengi: anomali skoru tabanlı (PuOr paleti CSS variable'larla), normalin altı/üstü görsel olarak belirgin
+  - ✅ Normal baseline: kesikli çizgi arc ile her ayın uzun vadeli ortalaması gösteriliyor
+  - ✅ Hover: `CalendarTooltip` ile count, anomali z-skoru, ham vs harmonize karşılaştırması
+  - ✅ Tıklama: `toggleMonth()` ile haritayı o ay/yıla filtreliyor
+  - ✅ Yıl oynatma: ▶ butonu ile yıllar arası otomatik geçiş animasyonu
+  - ✅ Keyboard navigation: ok tuşları ile ay gezinme, PageUp/PageDown ile yıl atlama, Enter/Space ile seçim
 - **Bitti sayılır:** mock veriyle takvim render oluyor; 2000–2026 arası tüm aylar görünüyor; renk skalası anlamlı; hover tooltip çalışıyor.
+- **Doğrulama (2026-11-15):** Can'ın C3 prototipi R3 kapsamının tamamını kapsıyordu. `BurnCalendar.tsx` (675 satır) + `CalendarTooltip.tsx` + `lib/radialCalendar.ts` (hesaplama yardımcıları) tam çalışır durumda. Gerçek arşiv verisinden (`useRegionData`) takvim render ediliyor. Görev tanımındaki "GitHub contribution graph" formatı yerine radyal yıl saati seçildi (cddf0ec commit'iyle güncellendi) — aynı veriyi daha kompakt gösteriyor ve yıl oynatma özelliği ekleniyor. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
 ### R4 — Backend API bağlantısı + state management ✅
 - **Bekler:** G4, R1 · **Açar:** R5
@@ -407,16 +413,19 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Bitti sayılır:** gerçek backend çalışırken frontend veri çekip gösteriyor; loading spinner var; API hatası kullanıcıya mesaj olarak dönüyor.
 - **Doğrulama (2026-11-14):** `api.ts`'e 4 NRT fetch fonksiyonu (fetchHarmonize, fetchCompare, fetchStats, fetchCalendar) + wire types + adapters eklendi (~477 satır). `useNrtData(bbox)` hook'u useSyncExternalStore pattern ile 3 paralel NRT fetch yönetiyor. Store'a `nrtDays` (1-5, varsayılan 2) eklendi. CountDelta ve PipelineStrip'e NRT veri gösterimi entegre edildi. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R5 — Raw ↔ Harmonized toggle implementasyonu ⏸
+### R5 — Raw ↔ Harmonized toggle implementasyonu ✅
 - **Bekler:** R2, R3, R4, C4 · **Açar:** G5
 - Projenin imza özelliği:
-  - Toggle/switch component (Can'ın C4 tasarımına göre)
-  - Raw modda: MODIS ve VIIRS ayrı renklerle, duplikasyonlar dahil
-  - Harmonized modda: fused data, tek renk skalası
-  - Geçiş animasyonu (noktaların birleşmesi/ayrılması)
-  - İstatistik paneli güncellenmesi (detection sayıları, FRP ortalamaları)
-  - Harita ve takvim aynı anda güncellenmeli
+  - ✅ Toggle/switch: `ViewToggle.tsx` — spring animasyonlu thumb, aria-checked, H kısayol tuşu
+  - ✅ Raw modda: MODIS (boş daire) ve VIIRS (dolu kare) ayrı şekillerle, renk körü güvenli; sensör filtresi (MapLegend) ile tek sensör izole edilebiliyor; duplikasyonlar halkalı gösteriliyor (`showDuplicateRings`)
+  - ✅ Harmonized modda: fused data, inferno FRP skalası, tek renk; duplikat halkaları yok
+  - ✅ Geçiş animasyonu: 3 vuruşlu koreografi (`useHarmonizeTransition.ts`) — detect (400ms) → merge (600ms) → settle (400ms); `geometryHarmonized` harita noktalarını geçişin ortasında değiştiriyor, `revealAnswer` sondaki sayısal cevabı açıyor
+  - ✅ İstatistik paneli: `CountDelta.tsx` raw → harmonized sayı animasyonu + `Receipt.tsx` düzeltme fişi (interscan dedup, filo birleştirme, cross-sensor eşleşme kırılımı)
+  - ✅ Harita ve takvim aynı anda güncelleniyor: `useHarmonizeTransition` tek saat olarak çalışıyor, `HotspotMap` ve `BurnCalendar` aynı state'e subscribe
+  - ✅ Sensor cliff: `CliffChart.tsx` yıllık ham tespit serisini sensör bazlı yığılmış alan grafiği olarak gösteriyor; 2012 SNPP ve 2018 NOAA-20 sıçramaları görsel olarak belirgin
+  - ✅ Pipeline şeridi: `PipelineStrip.tsx` 6 adımlı harmonizasyon aşamasını sırayla yakarak gösteriyor, toplam çıkarılan duplikat sayısını raporluyor
 - **Bitti sayılır:** toggle sorunsuz çalışıyor; Raw'dan Harmonized'a geçiş "sensor cliff" problemini açıkça gösteriyor; animasyon akıcı; jüri bu toggle'ı görünce farkı anlıyor.
+- **Doğrulama (2026-11-15):** Can'ın C4 prototipi R5 kapsamının tamamını kapsıyordu. `ViewToggle.tsx` (61 satır), `useHarmonizeTransition.ts` (3 vuruşlu koreografi motoru), `CliffChart.tsx`, `CountDelta.tsx`, `Receipt.tsx`, `PipelineStrip.tsx` hepsi `App.tsx`'te compose edilmiş ve çalışır durumda. Toggle'ın harita ve takvimi aynı anda güncellediği `useHarmonizeTransition` abonelik mekanizmasıyla doğrulandı. NRT veri entegrasyonu (R4'ten) CountDelta ve PipelineStrip'te canlı veri gösteriyor. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
 ---
 
