@@ -110,8 +110,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 |--------|-------|-------|--------|------|-------|
 | G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | ✅ |
 | G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ✅ |
-| G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ⬜ |
-| G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ⏸ |
+| G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ✅ |
+| G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ⬜ |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | 🔄 |
@@ -135,7 +135,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | ⬜ |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G3 — Effort normalization, G2 bitti. G4 (server API) de G3'ten sonra açılıyor.
+- **Görkem:** G4 — Server API endpoint'leri, G2 ve G3 bitti.
 - **Can:** C2, C3, C4 — C1 bitti, kararlar `docs/UI-UX-KONSEPT.md`'de sabitlendi.
 - **Samet:** S4 — Sample/demo veri pipeline'ı (G1 bitti) ve S1 — core crate testleri (G2 bitti).
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil.
@@ -203,13 +203,46 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **VZA katsayı kalibrasyonu ve R² — FIRMS verisiyle yapılamaz, G2 kapsamı dışına alındı.** Mekanizma çalışıyor: VZA `scan` piksel boyutundan türetiliyor, gerçek veride 20/20 MODIS kaydında tetikleniyor, en büyük düzeltme %42,4 (33,8 → 19,48 MW). Ancak `correction_ratio` polinomunun katsayıları (A=0,85 B=0,12 C=1,0) placeholder ve kalibre edilmeleri eşzamanlı MODIS/VIIRS gözlem çifti gerektiriyor; yukarıdaki ölçüm bu çiftlerin FIRMS'te bulunmadığını gösterdi (minimum 34 dk). İki yol var: (a) literatürden hazır katsayı girilip kaynak gösterilir, (b) granül/arşiv seviyesi veri sağlanır. S7 (case study veri seti) ile birlikte planlanmalı. **Katsayılar girilene kadar harmonize FRP değerleri gösterge niteliğindedir ve methods sayfasında (C5/R6) bu açıkça belirtilmeli.**
 - **Yan bulgu:** `VIIRS_SNPP_NRT` beslemesi 2026-11-02'de duruyor, diğer NRT kaynakları günceldir. `availability.rs` bunu doğru yönetiyor (SNPP sorgularını kendi aralığına kırpıyor), ama kısa pencereli isteklerde SNPP hiç katkı vermiyor; bu yüzden filo grupları o tarihlerde en fazla 2 platform içeriyor.
 
-### G3 — Effort normalization (Ω) ⏸
+### G3 — Effort normalization (Ω) ✅
 - **Bekler:** G2 · **Açar:** G4
-- 2000–2012 arası yalnız MODIS, 2012–2017 MODIS + 1 VIIRS, 2017+ MODIS + 2 VIIRS, 2023+ MODIS + 3 VIIRS. Uydu sayısı arttıkça aynı bölgede daha fazla detection olur — bu yapay artışı düzeltmek gerekiyor.
-  - Her ay/bölge için effective observation count hesaplama
-  - MODIS-only dönemine normalize etme (2000–2012 baseline)
-  - Takvim çıktısına anomaly z-score'ları ekleme
+- Uydu sayısı arttıkça aynı bölgede daha fazla detection olur — bu yapay artışı düzeltmek gerekiyor.
+  - ✅ Her ay/bölge için effective observation count hesaplama — `crates/core/src/effort.rs`
+  - ✅ MODIS-only dönemine normalize etme — taban dönemde Ω tanım gereği 1,0 çıkıyor
+  - ✅ Takvim çıktısına anomaly z-score'ları ekleme — anomali artık normalize seri üzerinden hesaplanıyor
 - **Bitti sayılır:** 2000–present boyunca monoton artan trend kalkıyor; 2012 ve 2017'deki uydu geçişlerinde yapay sıçrama yok.
+- **Görev tanımındaki iki hata düzeltildi (arşiv verisinden ölçüldü):**
+  - Görev "2017+ MODIS + 2 VIIRS" diyor; NOAA-20 verisi FIRMS'te **2018-04**'te başlıyor, 2017'de değil.
+  - Görev **Aqua'yı atlamış**. Arşivde Aqua'nın ilk tespiti **2002-07**, yani 2000-11'den 2002-06'ya kadar yalnız Terra var ve orada da bir efor geçişi mevcut. Ω bunu doğru yakalıyor (Terra tek başına 21 ay, Terra+Aqua 113 ay; ikisinde de Ω = 1,000 çünkü ikisi de MODIS-only).
+  - Gerçek platform zaman çizelgesi: Terra 2000-11 · +Aqua 2002-07 · +SNPP 2012-01 · +NOAA-20 2018-04 · +NOAA-21 2023-03.
+- **Tasarım: Ω sabit kodlanmadı, her serinin kendi verisinden ölçülüyor.**
+  - Ölçüm (arşiv, Türkiye, 2000-2025): MODIS-only dönem ~10.700 tespit/yıl, SNPP eklendikten sonra ~59.000 tespit/yıl, yani sıçrama **5-6 kat**. Buna karşılık MODIS'in kendi sayısı 26 yıl boyunca düz (10.733 → 11.123). Yani yapay trend platform SAYISIYLA değil sensör TESPİT VERİMİYLE ölçekleniyor (VIIRS 375 m vs MODIS 1 km).
+  - Bu yüzden "platform sayısına göre normalize et" yaklaşımı yetersiz kalırdı: 2→3 platform için 1,5 kat düzeltme yapar, ~4 katlık sıçrama yerinde kalırdı.
+  - Sabit Ω katsayısı da yanlış olurdu: SNPP/MODIS verim oranı bölgeye göre **3,28 (Bulgaristan) – 7,35 (Suriye)** arası değişiyor, 2,2 kat fark.
+  - Çözüm: MODIS referans cetvel olarak kullanılıyor. Her ay için `total` ve `modis_observable` (platforms alanında MODIS bulunan kayıtlar) sayılır; aylar **(MODIS var mı?, VIIRS platform kümesi)** anahtarına göre havuzlanır ve `omega = Σtotal / Σmodis_observable` hesaplanır. Taban dönemde her kayıt MODIS içerdiği için Ω = 1,0 **otomatik** çıkar, elle ayar yok.
+  - Havuzlama anahtarı MODIS alt bileşimine duyarsız. Gerekçe: Aralık 2018'de Türkiye'de yalnız 385 tespit vardı ve Terra hiç yangın görmedi; anahtar tam sensör kümesi olunca o ay tek başına havuzlandı, 3 ay eşiğini karşılamadı ve Ω'sını kaybetti. Dört platform da görevdeydi — Terra'nın yangın görmemesi yangınlar hakkında bilgidir, efor hakkında değil.
+  - "Alt kümeyse üst kümenin Ω'sını devral" kuralı bilinçli olarak REDDEDİLDİ: istek aralığı dönem ortasında başlarsa geçiş öncesi aylar eşiğin altında kalır, büyük Ω ile bölünür ve ters yönde yapay sıçrama üretir.
+- **Doğrulama (2026-11-14):** 73 core testi geçiyor, clippy temiz.
+
+  **2012 geçişi** — arşiv, 4 ülke (Türkiye/Yunanistan/Bulgaristan/Kıbrıs), 2000-2025, 26 yıl:
+
+  | Metrik | Ham seri | Normalize seri |
+  |--------|----------|----------------|
+  | Seviye kayması (5 yıl önce/sonra) | ×3,21 | **×0,84** |
+  | Dönem ortalaması (2002-11 → 2012-25) | ×3,34 | ×0,87 |
+  | Monoton artan trend (Spearman ρ, 2001-2025) | **+0,785** | **+0,087** |
+
+  Normalize serideki en büyük yıllık atlama (×2,66, 2008→2009) tamamen MODIS-only dönemin içinde, yani gerçek yangın aktivitesi — sensör artefaktı değil.
+
+  **2018 (NOAA-20) geçişi** — area API SP kaynakları, Türkiye bbox, 2017-07..2018-12, aynı mevsim kıyaslaması (Tem-Ara 2017 vs Tem-Ara 2018):
+
+  | | Ham | Normalize |
+  |---|-----|-----------|
+  | Kayma | ×1,317 | **×0,912** |
+  | \|log(kayma)\| | 0,275 | **0,092** |
+
+  Ω tam 2018-04'te 4,715'ten 6,812'ye atlıyor; konfigürasyon tespiti tarih sabiti kullanmadan, yalnızca veriden isabetli çalışıyor.
+- **Not: 2023 (NOAA-21) geçişi doğrulanmadı.** Ülke arşivi NOAA-20/21 taşımıyor, area API ile 2023 geçişini sınamak ek ~1400 FIRMS transaction gerektiriyor. Mekanizma platform kümesinden bağımsız çalıştığı için aynı şekilde davranması beklenir ama ÖLÇÜLMEDİ.
+- **Açık risk: fetch hatası Ω'yı sessizce bozuyor.** Doğrulama koşusunun ikincisinde 36 FIRMS isteği başarısız oldu ve NOAA-20 verisi eksik geldiği için 2018-08..12 ayları "NOAA-20 yok" konfigürasyonuna düşüp yanlış Ω (4,724 yerine 6,812) aldı. Yani bir kaynağın çekimi başarısız olursa efor normalizasyonu sessizce yanlış düzeltme uygular. **G4'te ele alınmalı:** `report.failures` boş değilse Ω güvenilmez sayılmalı ve API bunu açıkça bildirmeli.
 
 ### G4 — Server API endpoint'leri tamamlama ⏸
 - **Bekler:** G2, G3 · **Açar:** G5, R4, S2, S3
