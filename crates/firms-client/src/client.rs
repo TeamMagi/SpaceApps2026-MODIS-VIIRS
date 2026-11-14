@@ -15,7 +15,8 @@ use crate::limiter::RateLimiter;
 use crate::parse::parse_csv;
 use crate::source::FirmsSource;
 
-pub const FIRMS_BASE_URL: &str = "https://firms.modaps.eosdis.nasa.gov/api/area/csv";
+pub const FIRMS_API_ROOT: &str = "https://firms.modaps.eosdis.nasa.gov";
+const AREA_CSV_PATH: &str = "/api/area/csv";
 
 const USER_AGENT: &str = "pyrosync/0.1 (+https://github.com/TeamMagi)";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(120);
@@ -26,6 +27,7 @@ const MAX_ERROR_BODY_CHARS: usize = 200;
 pub struct FirmsClient {
     http: reqwest::Client,
     api_key: String,
+    api_root: String,
     limiter: Arc<RateLimiter>,
     availability: OnceCell<Availability>,
     concurrency: usize,
@@ -55,6 +57,7 @@ pub struct FetchReport {
 struct RequestCtx {
     http: reqwest::Client,
     api_key: String,
+    api_root: String,
     limiter: Arc<RateLimiter>,
 }
 
@@ -86,17 +89,24 @@ impl FirmsClient {
         Ok(Self {
             http,
             api_key,
+            api_root: FIRMS_API_ROOT.to_string(),
             limiter: Arc::new(RateLimiter::firms_default(concurrency)),
             availability: OnceCell::new(),
             concurrency: concurrency.max(1),
         })
     }
 
+    /// Points every request at `api_root` instead of the FIRMS host, e.g. a local mock in tests.
+    pub fn with_api_root(mut self, api_root: impl Into<String>) -> Self {
+        self.api_root = api_root.into().trim_end_matches('/').to_string();
+        self
+    }
+
     /// Lazily fetched once and cached; every date-routing decision needs it.
     pub async fn availability(&self) -> anyhow::Result<&Availability> {
         self.availability
             .get_or_try_init(|| async {
-                Availability::fetch(&self.http, &self.api_key)
+                Availability::fetch(&self.http, &self.api_root, &self.api_key)
                     .await
                     .map_err(|err| {
                         anyhow::anyhow!("{}", redact_key(&format!("{err:#}"), &self.api_key))
@@ -285,6 +295,7 @@ impl FirmsClient {
         RequestCtx {
             http: self.http.clone(),
             api_key: self.api_key.clone(),
+            api_root: self.api_root.clone(),
             limiter: Arc::clone(&self.limiter),
         }
     }
@@ -375,8 +386,15 @@ impl RequestCtx {
         days: DayRange,
     ) -> (anyhow::Result<String>, u32) {
         let source_str = source.as_str();
-        let url = format_firms_url(&self.api_key, source_str, bbox_str, start, days);
-        let safe_url = format_firms_url("***", source_str, bbox_str, start, days);
+        let url = format_firms_url(
+            &self.api_root,
+            &self.api_key,
+            source_str,
+            bbox_str,
+            start,
+            days,
+        );
+        let safe_url = format_firms_url(&self.api_root, "***", source_str, bbox_str, start, days);
         let cost = u32::from(days.get());
         let mut spent = 0u32;
 
@@ -454,7 +472,14 @@ impl RequestCtx {
         let (csv_res, spent) = self
             .fetch_window_csv_counted(source, bbox_str, start, days)
             .await;
-        let safe_url = format_firms_url("***", source.as_str(), bbox_str, start, days);
+        let safe_url = format_firms_url(
+            &self.api_root,
+            "***",
+            source.as_str(),
+            bbox_str,
+            start,
+            days,
+        );
         let parsed = csv_res.and_then(|body| {
             parse_validated_csv(&body, source.as_str(), &safe_url, &self.api_key)
         });
@@ -463,6 +488,7 @@ impl RequestCtx {
 }
 
 fn format_firms_url(
+    api_root: &str,
     api_key: &str,
     source: &str,
     bbox_str: &str,
@@ -470,7 +496,7 @@ fn format_firms_url(
     days: DayRange,
 ) -> String {
     format!(
-        "{FIRMS_BASE_URL}/{api_key}/{source}/{bbox_str}/{}/{}",
+        "{api_root}{AREA_CSV_PATH}/{api_key}/{source}/{bbox_str}/{}/{}",
         days.get(),
         start.format("%Y-%m-%d")
     )
@@ -677,6 +703,7 @@ mod tests {
     fn api_key_is_redacted_from_urls_and_error_messages() {
         let secret = "super-secret-firms-key-12345";
         let safe_url = format_firms_url(
+            FIRMS_API_ROOT,
             "***",
             "VIIRS_NOAA21_SP",
             "-125,24,-66,50",

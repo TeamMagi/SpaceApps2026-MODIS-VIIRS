@@ -1,4 +1,6 @@
 mod archive_api;
+#[cfg(test)]
+mod integration_tests;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;

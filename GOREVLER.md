@@ -125,7 +125,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ✅ |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ⏸ |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | ✅ |
-| S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ⬜ |
+| S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ✅ |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⬜ |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⬜ |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⬜ |
@@ -441,16 +441,24 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - `calendar.rs`: tespit olmayan aylar hücre olarak üretilmiyor, bu yüzden anomali baseline'ı yalnız tespit olan yıllardan hesaplanıyor. Ortalama olduğundan yüksek çıkar ve yangınsız yıllar takvimde hiç görünmez.
   - `dedup.rs`: yorum "|Δt| < 8 s" diyor ama kod 8 sn'yi de duplikat sayıyor (`dt > 8` ise kesiyor). Hangisinin doğru olduğu karar istiyor; sınır bu yüzden testle sabitlenmedi.
 
-### S2 — Server + FIRMS client integration testleri ⏸
+### S2 — Server + FIRMS client integration testleri ✅
 - **Bekler:** G4 · **Açar:** —
 - Uçtan uca API testleri:
-  - `/api/health` → 200 OK
-  - `/api/harmonize?west=...&south=...&east=...&north=...&days=1` → geçerli JSON, `harmonized.count > 0`
-  - `/api/calendar` → yıl/ay sıralı, anomaly hesabı tutarlı
-  - `/api/compare` → raw count > harmonized count
-  - Hatalı parametrelerde uygun HTTP status kodu
-  - FIRMS API key eksikse 500 + anlamlı hata mesajı
+  - ✅ `/api/health` → 200 OK
+  - ✅ `/api/harmonize?west=...&south=...&east=...&north=...&days=1` → geçerli JSON, `harmonized.count > 0`
+  - ✅ `/api/calendar` → yıl/ay sıralı, anomaly hesabı tutarlı
+  - ✅ `/api/compare` → raw count > harmonized count
+  - ✅ Hatalı parametrelerde uygun HTTP status kodu
+  - ✅ FIRMS API key eksikse 500 + anlamlı hata mesajı
+  - ✅ Ek: `/api/stats` ve `/api/availability`, response cache (`X-Cache` HIT/MISS), FIRMS hata yolları (geçersiz anahtar → 502, tek kaynak hatası → 200 + uyarı, 503 → tekrar deneme, zaman aşımı → 504), kapsanmayan tarih aralığı raporu, eksik arşiv yılı
 - **Bitti sayılır:** `cargo test -p pyrosync-server` en az 10 test geçiyor; mock FIRMS verisine karşı uçtan uca test çalışıyor.
+- **Yaklaşım:** `crates/server/src/integration_tests.rs` gerçek router'ı (`build_router`) ve gerçek `FirmsClient`'ı wiremock ile kurulan sahte bir FIRMS sunucusuna karşı çalıştırır. Takvim, geçici bir dizindeki çevrimdışı arşive karşı çalışır. Sınır değer ve denklik sınıfı vakaları (days, bbox, tarih penceresi) rstest ile parametreli.
+- **FIRMS istemcisinde ek değişiklik (geriye uyumlu):** Testlerin sahte sunucuya yönlenebilmesi için `FirmsClient::with_api_root(..)` eklendi. Varsayılan host değişmedi (`FIRMS_API_ROOT`), `Availability::fetch` artık host'u parametre olarak alıyor.
+- **Doğrulama (2026-11-14):**
+  - `cargo test -p pyrosync-server` 79 test geçiyor, 49'u bu görevden: 18 test fonksiyonu, ikisi parametreli (4 + 29 vaka).
+  - `cargo clippy --workspace --all-targets -- -D warnings` temiz; yeni dosya rustfmt'ye uygun.
+  - Satır kapsamı: `firms-client/client.rs` %36,7 → %55,3, `server/main.rs` %80,6 → %87,8, workspace toplamı %82,2 → %84,3.
+- **Yan bulgu (Görkem için):** Eksik query parametresinde (ör. `south` yok) 400 yanıtı JSON değil düz metin dönüyor; diğer doğrulama hataları `{"error": ...}` döndürüyor. Test bu yüzden şimdilik yalnız status kodunu doğruluyor.
 
 ### S3 — API dokümantasyonu ⏸
 - **Bekler:** G4 · **Açar:** —

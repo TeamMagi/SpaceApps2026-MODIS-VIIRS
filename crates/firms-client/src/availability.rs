@@ -7,7 +7,7 @@ use tracing::debug;
 
 use crate::source::{FirmsSource, Processing};
 
-const AVAILABILITY_URL: &str = "https://firms.modaps.eosdis.nasa.gov/api/data_availability/csv";
+const AVAILABILITY_PATH: &str = "/api/data_availability/csv";
 
 #[derive(Debug, Clone)]
 pub struct Availability {
@@ -15,8 +15,8 @@ pub struct Availability {
 }
 
 impl Availability {
-    pub async fn fetch(http: &reqwest::Client, api_key: &str) -> Result<Self> {
-        let url = format!("{AVAILABILITY_URL}/{api_key}/ALL");
+    pub async fn fetch(http: &reqwest::Client, api_root: &str, api_key: &str) -> Result<Self> {
+        let url = format!("{api_root}{AVAILABILITY_PATH}/{api_key}/ALL");
         let response = http
             .get(&url)
             .send()
