@@ -1,6 +1,7 @@
 mod archive_api;
 #[cfg(test)]
 mod integration_tests;
+mod pipeline_config;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
@@ -21,6 +22,7 @@ use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::EnvFilter;
 
+use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::effort::EffortFactor;
 use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
@@ -57,6 +59,7 @@ struct AppState {
     archive: Option<Arc<ArchiveClient>>,
     cache: Arc<RwLock<ResponseCache>>,
     request_timeout: Option<Duration>,
+    config: Arc<PipelineConfig>,
 }
 
 struct CacheEntry {
@@ -594,6 +597,7 @@ fn build_router(
 ) -> Router {
     let mut api_router = Router::new()
         .route("/health", get(health))
+        .route("/config", get(config))
         .route("/harmonize", get(harmonize))
         .route("/availability", get(availability))
         .route("/compare", get(compare))
@@ -632,6 +636,19 @@ async fn main() -> anyhow::Result<()> {
         .with_env_filter(EnvFilter::from_default_env().add_directive("pyrosync=info".parse()?))
         .init();
 
+    // A bad config aborts startup: silently falling back to defaults would change scientific
+    // results without anyone noticing.
+    let config_path = std::env::var("PYROSYNC_CONFIG")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+        .map(PathBuf::from);
+    let pipeline_config = pipeline_config::load(config_path.as_deref(), |name| {
+        std::env::var(name).ok()
+    })
+    .inspect_err(|err| tracing::error!("Invalid pipeline configuration: {err:#}"))?;
+    tracing::info!(config = ?pipeline_config, "Effective pipeline configuration");
+    let pipeline_config = Arc::new(pipeline_config);
+
     // Keep the server bootable without an API key so health checks and static assets stay live.
     let firms = match std::env::var("FIRMS_API_KEY") {
         Ok(key) if !key.trim().is_empty() => match FirmsClient::new(key) {
@@ -660,6 +677,7 @@ async fn main() -> anyhow::Result<()> {
     let archive_api = Arc::new(archive_api::ArchiveState::new(
         archive_cache_dir.clone(),
         archive_api::ArchiveLimits::from_env(),
+        pipeline_config.clone(),
     ));
     if archive_cache_dir.is_dir() {
         let warm_state = archive_api.clone();
@@ -677,6 +695,7 @@ async fn main() -> anyhow::Result<()> {
         archive,
         cache: Arc::new(RwLock::new(ResponseCache::new(cache_budget_bytes))),
         request_timeout,
+        config: pipeline_config,
     };
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "web/dist".to_string());
     let app = build_router(state, Some(archive_api), &static_dir, cors_layer);
@@ -694,6 +713,10 @@ async fn health() -> Json<HealthResponse> {
         status: "ok",
         version: env!("CARGO_PKG_VERSION"),
     })
+}
+
+async fn config(State(state): State<AppState>) -> Json<PipelineConfig> {
+    Json(state.config.as_ref().clone())
 }
 
 async fn availability(
@@ -762,7 +785,7 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
     raw.extend(modis.iter().cloned());
     raw.extend(viirs.iter().cloned());
 
-    let harmonized = pyrosync_core::harmonize::harmonize(modis, viirs);
+    let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &state.config);
     let calendar = pyrosync_core::calendar::build_calendar(&harmonized);
 
     let report_json = ReportResponse {
@@ -1541,6 +1564,7 @@ fn format_archive_error(err: ArchiveError) -> String {
 
 async fn run_calendar_pipeline(
     archive: &Arc<ArchiveClient>,
+    config: &PipelineConfig,
     query: &ValidatedCalendarQuery,
 ) -> Result<CalendarResponse, ApiError> {
     let mut modis = Vec::new();
@@ -1622,7 +1646,7 @@ async fn run_calendar_pipeline(
     }
 
     let raw_detections = modis.len() + viirs.len();
-    let harmonized = pyrosync_core::harmonize::harmonize(modis, viirs);
+    let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, config);
     let calendar_cells = pyrosync_core::calendar::build_calendar(&harmonized);
 
     Ok(build_calendar_response(
@@ -1641,14 +1665,14 @@ async fn run_calendar_with_timeout(
 ) -> Result<CalendarResponse, ApiError> {
     let archive = require_archive_client(state)?;
     match state.request_timeout {
-        Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, query)).await {
+        Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, &state.config, query)).await {
             Ok(result) => result,
             Err(_) => Err(ApiError::gateway_timeout(format!(
                 "Request timed out after {}s; reading and harmonizing large multi-year archives can take several minutes. Increase REQUEST_TIMEOUT_SECS or narrow the year range.",
                 timeout.as_secs()
             ))),
         },
-        None => run_calendar_pipeline(archive, query).await,
+        None => run_calendar_pipeline(archive, &state.config, query).await,
     }
 }
 
@@ -2146,12 +2170,28 @@ mod tests {
         assert_eq!(resp.warnings.len(), 2);
     }
 
+    #[tokio::test]
+    async fn config_endpoint_reflects_state_config() {
+        let mut state = test_state(1024, None);
+        let mut custom = PipelineConfig::default();
+        custom.matching.radius_km = 4.5;
+        custom.vza.a = 0.0;
+        state.config = Arc::new(custom.clone());
+
+        let Json(body) = config(State(state)).await;
+        assert_eq!(body, custom);
+        let json = serde_json::to_value(&body).unwrap();
+        assert_eq!(json["matching"]["radius_km"], 4.5);
+        assert_eq!(json["matching"]["window_secs"], 10_800);
+    }
+
     fn test_state(budget_bytes: usize, request_timeout: Option<Duration>) -> AppState {
         AppState {
             firms: None,
             archive: None,
             cache: Arc::new(RwLock::new(ResponseCache::new(budget_bytes))),
             request_timeout,
+            config: Arc::new(PipelineConfig::default()),
         }
     }
 
@@ -2465,6 +2505,7 @@ mod tests {
         let archive_api = Arc::new(archive_api::ArchiveState::new(
             PathBuf::from("nonexistent-archive-dir-for-test"),
             archive_api::ArchiveLimits::from_env(),
+            Arc::new(PipelineConfig::default()),
         ));
         let cors = build_cors_layer(Some("https://allowed.example, invalid origin, http://localhost:5173"));
         let app = build_router(state, Some(archive_api), "nonexistent-static-dir-for-test", cors);
@@ -2551,6 +2592,7 @@ mod tests {
         let archive_api = Arc::new(archive_api::ArchiveState::new(
             PathBuf::from("nonexistent-archive-dir-for-test"),
             archive_api::ArchiveLimits::from_env(),
+            Arc::new(PipelineConfig::default()),
         ));
         let cors = build_cors_layer(None);
         let app = build_router(
@@ -2602,6 +2644,7 @@ mod tests {
         let archive_api = Arc::new(archive_api::ArchiveState::new(
             PathBuf::from("nonexistent-archive-dir-for-test"),
             archive_api::ArchiveLimits::from_env(),
+            Arc::new(PipelineConfig::default()),
         ));
         let cors = build_cors_layer(None);
         let app = build_router(
@@ -2891,6 +2934,7 @@ mod tests {
             archive: Some(archive),
             cache: Arc::new(RwLock::new(ResponseCache::new(1024 * 1024))),
             request_timeout: Some(Duration::from_secs(30)),
+            config: Arc::new(PipelineConfig::default()),
         };
 
         let err = calendar(

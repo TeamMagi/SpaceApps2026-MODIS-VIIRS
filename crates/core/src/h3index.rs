@@ -6,9 +6,23 @@ use h3o::{CellIndex, LatLng, Resolution};
 // matching MODIS's 1 km nadir pixel footprint.
 const INDEX_RESOLUTION: Resolution = Resolution::Eight;
 
-// k=3 gives guaranteed coverage of (2k + 1) * apothem ≈ 2.8 km from the query cell center,
-// safely enclosing the 2.0 km match radius (k=2 only reaches ~2.0 km right at the boundary).
+// Ring used by `candidates` when the caller does not scale the search to a match radius.
 const SEARCH_K_RING: u32 = 3;
+
+// Resolution-8 hexagon apothem (center to edge midpoint) in km.
+const APOTHEM_KM: f64 = 0.40;
+// Safety factor on the required coverage so cell-edge geometry never drops a candidate.
+const COVERAGE_MARGIN: f64 = 1.25;
+
+/// Smallest k-ring size whose guaranteed coverage encloses `radius_km`.
+///
+/// A k-ring reaches at least (2k + 1) * apothem from the query cell center, so we need
+/// (2k + 1) * APOTHEM_KM >= radius_km * COVERAGE_MARGIN. For 2.0 km this yields k=3 (2.8 km
+/// coverage; k=2 only reaches 2.0 km, exactly on the boundary).
+pub fn k_ring_for_radius(radius_km: f64) -> u32 {
+    let k = ((radius_km * COVERAGE_MARGIN / APOTHEM_KM - 1.0) / 2.0).ceil();
+    k.max(1.0) as u32
+}
 
 /// Spatial index over point positions, bucketed into H3 cells at resolution 8.
 pub struct H3Index {
@@ -36,10 +50,15 @@ impl H3Index {
     /// Candidate point indices within the k-ring around the query position.
     /// Returns indices only; the caller applies the exact distance and time filters.
     pub fn candidates(&self, lat: f64, lon: f64) -> Vec<usize> {
+        self.candidates_within(lat, lon, SEARCH_K_RING)
+    }
+
+    /// Same as [`H3Index::candidates`] with an explicit k-ring size (see [`k_ring_for_radius`]).
+    pub fn candidates_within(&self, lat: f64, lon: f64, k: u32) -> Vec<usize> {
         let Some(cell) = to_cell(lat, lon) else {
             return Vec::new();
         };
-        let neighbors: Vec<CellIndex> = cell.grid_disk(SEARCH_K_RING);
+        let neighbors: Vec<CellIndex> = cell.grid_disk(k);
 
         let mut indices = Vec::new();
         for neighbor in neighbors {
@@ -181,6 +200,34 @@ mod tests {
         assert!(index.candidates(f64::INFINITY, 32.0).is_empty());
         // Valid index preserved original caller index 2 for (39.0, 32.0).
         assert_eq!(index.candidates(39.0, 32.0), vec![2]);
+    }
+
+    #[test]
+    fn k_ring_for_two_km_is_three() {
+        assert_eq!(k_ring_for_radius(2.0), 3);
+        assert_eq!(k_ring_for_radius(2.0), SEARCH_K_RING);
+    }
+
+    #[test]
+    fn k_ring_is_monotonic_and_at_least_one() {
+        let mut prev = 0;
+        let mut r = 0.5;
+        while r <= 10.0 {
+            let k = k_ring_for_radius(r);
+            assert!(k >= 1 && k >= prev, "k={k} prev={prev} at r={r}");
+            prev = k;
+            r += 0.25;
+        }
+        assert_eq!(k_ring_for_radius(0.01), 1);
+    }
+
+    #[test]
+    fn six_km_apart_found_with_scaled_ring_only() {
+        let a = (39.0, 32.0);
+        let b = offset_km(a.0, a.1, 6.0, 0.0);
+        let index = H3Index::build([b]);
+        assert_eq!(index.candidates_within(a.0, a.1, k_ring_for_radius(7.0)), vec![0]);
+        assert!(index.candidates_within(a.0, a.1, k_ring_for_radius(2.0)).is_empty());
     }
 
     #[test]

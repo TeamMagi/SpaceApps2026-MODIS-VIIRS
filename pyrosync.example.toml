@@ -1,0 +1,31 @@
+# Copy to pyrosync.toml (git-ignored) or point PYROSYNC_CONFIG at any file.
+# Every key is optional; omitted keys keep the defaults shown here.
+# Environment variables (PYROSYNC_*, see .env.example) override this file.
+
+[dedup]
+# Interscan duplicates: maximum time difference between two detections of one sensor, in seconds.
+max_time_diff_secs = 8
+# Interscan duplicates: minimum pixel footprint overlap, as a ratio in 0.0..=1.0.
+min_overlap_ratio = 0.30
+
+[fleet]
+# VIIRS platforms (SNPP, NOAA-20, NOAA-21) merge when detected within this many seconds.
+viirs_window_secs = 3600
+# MODIS platforms (Terra, Aqua) merge when detected within this many seconds.
+modis_window_secs = 10800
+# Maximum distance in km between detections merged into one fleet observation.
+radius_km = 2.0
+
+[matching]
+# Maximum MODIS-to-VIIRS distance in km for a cross-sensor match (at most 10).
+radius_km = 2.0
+# Maximum MODIS-to-VIIRS time difference in seconds (180 minutes: same-fire MODIS/VIIRS
+# overpasses are at least 34 minutes apart in FIRMS data, so a narrow window finds no matches).
+window_secs = 10800
+
+[vza]
+# MODIS viewing-zenith correction ratio R = a*theta^2 + b*theta + c (theta in radians).
+# These coefficients are uncalibrated placeholders, not fitted values.
+a = 0.85
+b = 0.12
+c = 1.0

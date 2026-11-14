@@ -1,7 +1,8 @@
+use crate::config::DedupConfig;
 use crate::models::Hotspot;
 
-const MAX_TIME_DIFF_SECS: i64 = 8;
-const MIN_OVERLAP_RATIO: f64 = 0.30;
+pub(crate) const MAX_TIME_DIFF_SECS: i64 = 8;
+pub(crate) const MIN_OVERLAP_RATIO: f64 = 0.30;
 
 /// Remove interscan duplicate detections within a single sensor's data.
 ///
@@ -9,12 +10,25 @@ const MIN_OVERLAP_RATIO: f64 = 0.30;
 /// overlap > 30%. Keeps the highest-confidence record and assigns
 /// the group's mean FRP (Li et al. 2018).
 pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
-    remove_interscan_duplicates_indexed(hotspots);
+    remove_interscan_duplicates_with(hotspots, &DedupConfig::default());
+}
+
+/// Same as [`remove_interscan_duplicates`] with configurable thresholds.
+pub fn remove_interscan_duplicates_with(hotspots: &mut Vec<Hotspot>, config: &DedupConfig) {
+    remove_interscan_duplicates_indexed_with(hotspots, config);
 }
 
 /// Same as [`remove_interscan_duplicates`], returning for each surviving hotspot (at its
 /// final index) the index it held in the input vector.
 pub fn remove_interscan_duplicates_indexed(hotspots: &mut Vec<Hotspot>) -> Vec<usize> {
+    remove_interscan_duplicates_indexed_with(hotspots, &DedupConfig::default())
+}
+
+/// Same as [`remove_interscan_duplicates_indexed`] with configurable thresholds.
+pub fn remove_interscan_duplicates_indexed_with(
+    hotspots: &mut Vec<Hotspot>,
+    config: &DedupConfig,
+) -> Vec<usize> {
     if hotspots.len() < 2 {
         return (0..hotspots.len()).collect();
     }
@@ -41,7 +55,7 @@ pub fn remove_interscan_duplicates_indexed(hotspots: &mut Vec<Hotspot>) -> Vec<u
             let dt = (hotspots[j].acquired - hotspots[i].acquired)
                 .num_seconds()
                 .abs();
-            if dt > MAX_TIME_DIFF_SECS {
+            if dt > config.max_time_diff_secs {
                 break;
             }
 
@@ -49,7 +63,7 @@ pub fn remove_interscan_duplicates_indexed(hotspots: &mut Vec<Hotspot>) -> Vec<u
                 continue;
             }
 
-            if pixel_overlap(&hotspots[i], &hotspots[j]) > MIN_OVERLAP_RATIO {
+            if pixel_overlap(&hotspots[i], &hotspots[j]) > config.min_overlap_ratio {
                 group.push(j);
             }
         }

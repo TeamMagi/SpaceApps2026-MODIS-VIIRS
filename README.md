@@ -72,6 +72,7 @@ tools/              Utility scripts (archive verification, data fetching)
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /api/health` | Health check and version |
+| `GET /api/config` | Effective pipeline configuration (thresholds used by the harmonization) as JSON |
 | `GET /api/availability` | Date coverage per FIRMS source |
 | `GET /api/harmonize` | Harmonized hotspots, calendar and effort factors (`west`, `south`, `east`, `north`, and either `days` or `start`+`end`; optional `include_raw=true`) |
 | `GET /api/compare` | Raw versus harmonized statistics for the same query |
@@ -82,6 +83,10 @@ tools/              Utility scripts (archive verification, data fetching)
 - Responses include an `X-Cache: HIT|MISS` header.
 - Responses include a `warnings` array and an `effort.reliable` flag; if a FIRMS source fails to fetch, effort normalization is marked unreliable and surfaced in the response.
 - `/api/calendar` reads from the local archive and requires **no API key**, though it covers a smaller satellite fleet than live endpoints because the country archive includes MODIS, VIIRS SNPP, and VIIRS NOAA-20 (`viirs-jpss1`) and does not include NOAA-21.
+
+## Configuration
+
+Harmonization thresholds (interscan dedup, fleet consolidation, cross-sensor matching, VZA coefficients) are configurable. Copy `pyrosync.example.toml` to `pyrosync.toml` (or point `PYROSYNC_CONFIG` at any TOML file); individual values can also be overridden with `PYROSYNC_*` environment variables, listed in `.env.example`. An invalid configuration stops the server at startup, and `GET /api/config` shows the values in effect.
 
 ## Quick Start
 

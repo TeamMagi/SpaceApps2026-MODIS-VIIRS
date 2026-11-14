@@ -1,3 +1,4 @@
+use crate::config::VzaConfig;
 use crate::models::Hotspot;
 
 const EARTH_RADIUS_KM: f64 = 6371.0;
@@ -87,12 +88,17 @@ pub fn vza_from_scan(scan_km: f64) -> Option<f64> {
 /// MODIS detections use the explicit `vza` when present and otherwise fall
 /// back to deriving it from `scan`, returning `None` if neither is valid.
 pub fn vza_factor(hotspot: &Hotspot) -> Option<f64> {
+    vza_factor_with(hotspot, &VzaConfig::default())
+}
+
+/// Same as [`vza_factor`] with configurable polynomial coefficients.
+pub fn vza_factor_with(hotspot: &Hotspot, config: &VzaConfig) -> Option<f64> {
     if hotspot.sensor.is_viirs() {
         return None;
     }
 
     let vza_deg = hotspot.vza.or_else(|| vza_from_scan(hotspot.scan))?;
-    Some(correction_ratio(vza_deg.to_radians()))
+    Some(correction_ratio_with(vza_deg.to_radians(), config))
 }
 
 /// Apply a precomputed VZA correction factor to a raw FRP value without
@@ -109,13 +115,18 @@ pub fn apply_vza_correction(raw_frp: f64, factor: Option<f64>) -> f64 {
 /// These coefficients are derived from VIIRS/MODIS FRP ratios
 /// binned at 1° VZA intervals. Placeholder values — will be
 /// refined with real overlap-period data.
-fn correction_ratio(theta_rad: f64) -> f64 {
-    const A: f64 = 0.85;
-    const B: f64 = 0.12;
-    const C: f64 = 1.0;
+pub(crate) const CORRECTION_A: f64 = 0.85;
+pub(crate) const CORRECTION_B: f64 = 0.12;
+pub(crate) const CORRECTION_C: f64 = 1.0;
 
-    let r = A * theta_rad.powi(2) + B * theta_rad + C;
+fn correction_ratio_with(theta_rad: f64, config: &VzaConfig) -> f64 {
+    let r = config.a * theta_rad.powi(2) + config.b * theta_rad + config.c;
     r.max(1.0)
+}
+
+#[cfg(test)]
+fn correction_ratio(theta_rad: f64) -> f64 {
+    correction_ratio_with(theta_rad, &VzaConfig::default())
 }
 
 #[cfg(test)]

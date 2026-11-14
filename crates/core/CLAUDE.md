@@ -9,10 +9,14 @@
 
 | Modül | Görev |
 |-------|-------|
+| `config.rs` | `PipelineConfig`: dedup, filo, eşleştirme ve VZA eşikleri; varsayılanlar önceki sabit değerlerle birebir aynı, `validate()` ile doğrulanır |
 | `models.rs` | Veri modelleri: Hotspot, HarmonizedHotspot, Sensor, Confidence, BBox, CalendarCell |
-| `dedup.rs` | İnterscan duplikat temizleme (Δt<8s, overlap>30%), haversine mesafe hesabı |
-| `vza.rs` | MODIS FRP görüş açısı düzeltmesi (kuadratik polinom) |
+| `dedup.rs` | İnterscan duplikat temizleme (varsayılan Δt<8s, overlap>30%), haversine mesafe hesabı |
+| `fleet.rs` | Aynı sensör ailesinin (MODIS Terra/Aqua, VIIRS SNPP/NOAA-20/21) eşzamanlı tespitlerini tek gözleme birleştirme |
+| `h3index.rs` | H3 (çözünürlük 8) uzamsal indeks; `k_ring_for_radius` arama halkasını eşleştirme yarıçapına göre ölçekler |
+| `vza.rs` | MODIS FRP görüş açısı düzeltmesi (kuadratik polinom, katsayılar `VzaConfig`'ten) |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
+| `effort.rs` | Gözlem eforu (EffortFactor) tahmini |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
 
@@ -20,7 +24,7 @@
 
 - `Confidence` enum'u `PartialOrd, Ord` derive eder: `Low < Nominal < High`.
 - `calendar.rs` içinde `use chrono::Datelike;` import'u gereklidir (`.year()` ve `.month()` için).
-- Cross-sensor matching: 2 km mesafe, 5 dakika zaman penceresi.
+- Cross-sensor matching: varsayılan 2 km mesafe, 180 dakika zaman penceresi (aynı yangının MODIS/VIIRS geçişleri FIRMS verisinde en az 34 dk arayla gelir). Tüm eşikler `PipelineConfig`'ten gelir; eski `harmonize`/`harmonize_with_links` fonksiyonları varsayılan konfigürasyonla çalışır, `*_config` varyantları konfigürasyon alır.
 - Fusion: VIIRS tercih edilir (yüksek çözünürlük), eşleşmeyenler her iki sensörden alınır.
 - FRP birimi: MW (megawatt). Negatif FRP olamaz.
 

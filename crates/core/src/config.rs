@@ -1,0 +1,201 @@
+use serde::{Deserialize, Serialize};
+
+use crate::dedup::{MAX_TIME_DIFF_SECS, MIN_OVERLAP_RATIO};
+use crate::fleet::{FLEET_RADIUS_KM, MODIS_FLEET_WINDOW_SECS, VIIRS_FLEET_WINDOW_SECS};
+use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS};
+use crate::vza::{CORRECTION_A, CORRECTION_B, CORRECTION_C};
+
+/// Upper bound on the cross-sensor match radius; it bounds the H3 candidate search cost.
+pub const MAX_MATCH_RADIUS_KM: f64 = 10.0;
+
+/// All tunable thresholds of the harmonization pipeline.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct PipelineConfig {
+    pub dedup: DedupConfig,
+    pub fleet: FleetConfig,
+    pub matching: MatchingConfig,
+    pub vza: VzaConfig,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct DedupConfig {
+    pub max_time_diff_secs: i64,
+    pub min_overlap_ratio: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct FleetConfig {
+    pub viirs_window_secs: i64,
+    pub modis_window_secs: i64,
+    pub radius_km: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct MatchingConfig {
+    pub radius_km: f64,
+    pub window_secs: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct VzaConfig {
+    pub a: f64,
+    pub b: f64,
+    pub c: f64,
+}
+
+impl Default for DedupConfig {
+    fn default() -> Self {
+        Self {
+            max_time_diff_secs: MAX_TIME_DIFF_SECS,
+            min_overlap_ratio: MIN_OVERLAP_RATIO,
+        }
+    }
+}
+
+impl Default for FleetConfig {
+    fn default() -> Self {
+        Self {
+            viirs_window_secs: VIIRS_FLEET_WINDOW_SECS,
+            modis_window_secs: MODIS_FLEET_WINDOW_SECS,
+            radius_km: FLEET_RADIUS_KM,
+        }
+    }
+}
+
+impl Default for MatchingConfig {
+    fn default() -> Self {
+        Self {
+            radius_km: MATCH_RADIUS_KM,
+            window_secs: MATCH_WINDOW_SECS,
+        }
+    }
+}
+
+impl Default for VzaConfig {
+    fn default() -> Self {
+        Self {
+            a: CORRECTION_A,
+            b: CORRECTION_B,
+            c: CORRECTION_C,
+        }
+    }
+}
+
+impl PipelineConfig {
+    /// Checks every field and names the offending one in the error.
+    pub fn validate(&self) -> Result<(), String> {
+        check_secs("dedup.max_time_diff_secs", self.dedup.max_time_diff_secs)?;
+        let ratio = self.dedup.min_overlap_ratio;
+        if !(0.0..=1.0).contains(&ratio) {
+            return Err(format!(
+                "dedup.min_overlap_ratio must be within 0.0..=1.0, got {ratio}"
+            ));
+        }
+        check_secs("fleet.viirs_window_secs", self.fleet.viirs_window_secs)?;
+        check_secs("fleet.modis_window_secs", self.fleet.modis_window_secs)?;
+        check_radius("fleet.radius_km", self.fleet.radius_km)?;
+        check_radius("matching.radius_km", self.matching.radius_km)?;
+        if self.matching.radius_km > MAX_MATCH_RADIUS_KM {
+            return Err(format!(
+                "matching.radius_km must be <= {MAX_MATCH_RADIUS_KM}, got {}",
+                self.matching.radius_km
+            ));
+        }
+        check_secs("matching.window_secs", self.matching.window_secs)?;
+        for (name, value) in [
+            ("vza.a", self.vza.a),
+            ("vza.b", self.vza.b),
+            ("vza.c", self.vza.c),
+        ] {
+            if !value.is_finite() {
+                return Err(format!("{name} must be finite, got {value}"));
+            }
+        }
+        Ok(())
+    }
+}
+
+fn check_secs(name: &str, value: i64) -> Result<(), String> {
+    if value < 0 {
+        return Err(format!("{name} must be >= 0, got {value}"));
+    }
+    Ok(())
+}
+
+fn check_radius(name: &str, value: f64) -> Result<(), String> {
+    if !value.is_finite() || value <= 0.0 {
+        return Err(format!("{name} must be finite and > 0, got {value}"));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_has_documented_values_and_is_valid() {
+        let c = PipelineConfig::default();
+        assert_eq!(c.dedup.max_time_diff_secs, 8);
+        assert_eq!(c.dedup.min_overlap_ratio, 0.30);
+        assert_eq!(c.fleet.viirs_window_secs, 3600);
+        assert_eq!(c.fleet.modis_window_secs, 10_800);
+        assert_eq!(c.fleet.radius_km, 2.0);
+        assert_eq!(c.matching.radius_km, 2.0);
+        assert_eq!(c.matching.window_secs, 10_800);
+        assert_eq!((c.vza.a, c.vza.b, c.vza.c), (0.85, 0.12, 1.0));
+        assert_eq!(c.validate(), Ok(()));
+    }
+
+    fn rejected(edit: impl FnOnce(&mut PipelineConfig), field: &str) {
+        let mut c = PipelineConfig::default();
+        edit(&mut c);
+        let err = c.validate().expect_err("config should be rejected");
+        assert!(err.contains(field), "`{err}` does not name `{field}`");
+    }
+
+    #[test]
+    fn validate_rejects_bad_values() {
+        rejected(|c| c.matching.window_secs = -1, "matching.window_secs");
+        rejected(|c| c.fleet.viirs_window_secs = -5, "fleet.viirs_window_secs");
+        rejected(|c| c.matching.radius_km = 0.0, "matching.radius_km");
+        rejected(|c| c.fleet.radius_km = f64::NAN, "fleet.radius_km");
+        rejected(|c| c.dedup.min_overlap_ratio = 1.5, "dedup.min_overlap_ratio");
+        rejected(|c| c.dedup.min_overlap_ratio = f64::NAN, "dedup.min_overlap_ratio");
+        rejected(|c| c.vza.b = f64::NAN, "vza.b");
+        rejected(|c| c.vza.a = f64::INFINITY, "vza.a");
+        rejected(|c| c.matching.radius_km = 10.5, "matching.radius_km");
+    }
+
+    #[test]
+    fn validate_accepts_upper_radius_bound() {
+        let mut c = PipelineConfig::default();
+        c.matching.radius_km = MAX_MATCH_RADIUS_KM;
+        assert_eq!(c.validate(), Ok(()));
+    }
+
+    #[test]
+    fn empty_object_deserializes_to_default() {
+        let c: PipelineConfig = serde_json::from_str("{}").unwrap();
+        assert_eq!(c, PipelineConfig::default());
+    }
+
+    #[test]
+    fn partial_section_keeps_other_defaults() {
+        let c: PipelineConfig = serde_json::from_str(r#"{"matching":{"window_secs":600}}"#).unwrap();
+        assert_eq!(c.matching.window_secs, 600);
+        assert_eq!(c.matching.radius_km, 2.0);
+        assert_eq!(c.dedup, DedupConfig::default());
+    }
+
+    #[test]
+    fn unknown_fields_are_rejected() {
+        assert!(serde_json::from_str::<PipelineConfig>(r#"{"bogus":1}"#).is_err());
+        assert!(serde_json::from_str::<PipelineConfig>(r#"{"dedup":{"bogus":1}}"#).is_err());
+    }
+}

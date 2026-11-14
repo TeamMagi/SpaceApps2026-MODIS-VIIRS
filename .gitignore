@@ -48,3 +48,6 @@ nasa.pdf
 
 # Frontend test output
 .test-out/
+
+# Local pipeline configuration (see pyrosync.example.toml)
+pyrosync.toml

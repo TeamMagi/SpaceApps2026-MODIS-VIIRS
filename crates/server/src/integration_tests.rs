@@ -122,6 +122,7 @@ fn app(
         archive: archive_dir.map(|dir| Arc::new(ArchiveClient::offline(dir.to_path_buf()))),
         cache: Arc::new(RwLock::new(ResponseCache::new(8 * 1024 * 1024))),
         request_timeout,
+        config: Arc::new(pyrosync_core::config::PipelineConfig::default()),
     };
     build_router(
         state,

@@ -1,14 +1,15 @@
+use crate::config::{FleetConfig, VzaConfig};
 use crate::dedup::haversine_km;
 use crate::models::{Hotspot, Sensor};
 use crate::vza;
 
 // Siblings in the VIIRS fleet pass 43-59 min apart in live FIRMS data.
-const VIIRS_FLEET_WINDOW_SECS: i64 = 3600;
+pub(crate) const VIIRS_FLEET_WINDOW_SECS: i64 = 3600;
 // Terra crosses near 10:30 local and Aqua near 13:30, and no measured Terra/Aqua
 // pair of the same fire falls within 60 min, so MODIS needs the wider window.
-const MODIS_FLEET_WINDOW_SECS: i64 = 10_800;
+pub(crate) const MODIS_FLEET_WINDOW_SECS: i64 = 10_800;
 // Matches the cross-sensor spatial matching radius.
-const FLEET_RADIUS_KM: f64 = 2.0;
+pub(crate) const FLEET_RADIUS_KM: f64 = 2.0;
 
 /// A consolidated detection across platforms of the same sensor family (MODIS or VIIRS).
 #[derive(Debug, Clone)]
@@ -23,23 +24,59 @@ pub struct FleetObservation {
 /// Consolidate near-coincident VIIRS detections (SNPP, NOAA-20, NOAA-21) into one
 /// `FleetObservation` per group, sorted by `acquired`.
 pub fn consolidate_viirs_fleet(viirs: &[Hotspot]) -> Vec<FleetObservation> {
-    consolidate_fleet(viirs, VIIRS_FLEET_WINDOW_SECS)
+    consolidate_viirs_fleet_with(viirs, &FleetConfig::default(), &VzaConfig::default())
+}
+
+/// Same as [`consolidate_viirs_fleet`] with configurable thresholds.
+pub fn consolidate_viirs_fleet_with(
+    viirs: &[Hotspot],
+    fleet: &FleetConfig,
+    vza: &VzaConfig,
+) -> Vec<FleetObservation> {
+    consolidate_viirs_fleet_indexed_with(viirs, fleet, vza).0
 }
 
 /// Same as [`consolidate_viirs_fleet`], also returning input member indices per observation.
 pub fn consolidate_viirs_fleet_indexed(viirs: &[Hotspot]) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
-    consolidate_fleet_indexed(viirs, VIIRS_FLEET_WINDOW_SECS)
+    consolidate_viirs_fleet_indexed_with(viirs, &FleetConfig::default(), &VzaConfig::default())
+}
+
+/// Same as [`consolidate_viirs_fleet_indexed`] with configurable thresholds.
+pub fn consolidate_viirs_fleet_indexed_with(
+    viirs: &[Hotspot],
+    fleet: &FleetConfig,
+    vza: &VzaConfig,
+) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
+    consolidate_fleet_indexed_with(viirs, fleet.viirs_window_secs, fleet, vza)
 }
 
 /// Consolidate near-coincident MODIS detections (Terra, Aqua) into one
 /// `FleetObservation` per group, sorted by `acquired`.
 pub fn consolidate_modis_fleet(modis: &[Hotspot]) -> Vec<FleetObservation> {
-    consolidate_fleet(modis, MODIS_FLEET_WINDOW_SECS)
+    consolidate_modis_fleet_with(modis, &FleetConfig::default(), &VzaConfig::default())
+}
+
+/// Same as [`consolidate_modis_fleet`] with configurable thresholds.
+pub fn consolidate_modis_fleet_with(
+    modis: &[Hotspot],
+    fleet: &FleetConfig,
+    vza: &VzaConfig,
+) -> Vec<FleetObservation> {
+    consolidate_modis_fleet_indexed_with(modis, fleet, vza).0
 }
 
 /// Same as [`consolidate_modis_fleet`], also returning input member indices per observation.
 pub fn consolidate_modis_fleet_indexed(modis: &[Hotspot]) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
-    consolidate_fleet_indexed(modis, MODIS_FLEET_WINDOW_SECS)
+    consolidate_modis_fleet_indexed_with(modis, &FleetConfig::default(), &VzaConfig::default())
+}
+
+/// Same as [`consolidate_modis_fleet_indexed`] with configurable thresholds.
+pub fn consolidate_modis_fleet_indexed_with(
+    modis: &[Hotspot],
+    fleet: &FleetConfig,
+    vza: &VzaConfig,
+) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
+    consolidate_fleet_indexed_with(modis, fleet.modis_window_secs, fleet, vza)
 }
 
 /// Consolidate near-coincident detections of the same fire across sibling platforms
@@ -53,6 +90,17 @@ pub fn consolidate_fleet(hotspots: &[Hotspot], window_secs: i64) -> Vec<FleetObs
 pub fn consolidate_fleet_indexed(
     hotspots: &[Hotspot],
     window_secs: i64,
+) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
+    consolidate_fleet_indexed_with(hotspots, window_secs, &FleetConfig::default(), &VzaConfig::default())
+}
+
+/// Same as [`consolidate_fleet_indexed`]; `window_secs` stays explicit because the VIIRS and
+/// MODIS windows differ, while the merge radius comes from `fleet`.
+pub fn consolidate_fleet_indexed_with(
+    hotspots: &[Hotspot],
+    window_secs: i64,
+    fleet: &FleetConfig,
+    vza_config: &VzaConfig,
 ) -> (Vec<FleetObservation>, Vec<Vec<usize>>) {
     if hotspots.is_empty() {
         return (Vec::new(), Vec::new());
@@ -97,7 +145,7 @@ pub fn consolidate_fleet_indexed(
                 continue;
             }
 
-            if haversine_km(anchor.lat, anchor.lon, cand.lat, cand.lon) <= FLEET_RADIUS_KM {
+            if haversine_km(anchor.lat, anchor.lon, cand.lat, cand.lon) <= fleet.radius_km {
                 used[q] = true;
                 group.push(cand_idx);
             }
@@ -121,7 +169,7 @@ pub fn consolidate_fleet_indexed(
             .iter()
             .map(|&idx| {
                 let member = &hotspots[idx];
-                vza::apply_vza_correction(member.frp, vza::vza_factor(member))
+                vza::apply_vza_correction(member.frp, vza::vza_factor_with(member, vza_config))
             })
             .sum::<f64>()
             / group_len;

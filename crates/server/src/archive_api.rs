@@ -18,7 +18,8 @@ use tokio::sync::{OnceCell, Semaphore};
 use tokio::task::JoinSet;
 
 use pyrosync_core::calendar::compute_anomalies;
-use pyrosync_core::harmonize::{harmonize, harmonize_with_links};
+use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::harmonize::{harmonize_with_config, harmonize_with_links_config};
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
@@ -71,6 +72,7 @@ impl ArchiveLimits {
 pub struct ArchiveState {
     client: Arc<ArchiveClient>,
     limits: ArchiveLimits,
+    config: Arc<PipelineConfig>,
     index: OnceCell<Arc<ArchiveIndex>>,
     coverage: OnceCell<Arc<Coverage>>,
     series: Mutex<HashMap<String, Arc<OnceCell<Arc<SeriesResponse>>>>>,
@@ -81,11 +83,12 @@ pub struct ArchiveState {
 }
 
 impl ArchiveState {
-    pub fn new(dir: PathBuf, limits: ArchiveLimits) -> Self {
+    pub fn new(dir: PathBuf, limits: ArchiveLimits, config: Arc<PipelineConfig>) -> Self {
         let cpus = std::thread::available_parallelism().map_or(4, |n| n.get());
         Self {
             client: Arc::new(ArchiveClient::offline(dir)),
             limits,
+            config,
             index: OnceCell::new(),
             coverage: OnceCell::new(),
             series: Mutex::new(HashMap::new()),
@@ -757,7 +760,17 @@ fn in_month(rows: &[Hotspot], month: u32) -> Vec<Hotspot> {
 }
 
 /// `observed` holds the archive coverage of every sensor that has a file for this year.
+#[cfg(test)]
 fn year_stats(year: i32, data: YearData, observed: &[DateSpan]) -> YearStats {
+    year_stats_with(year, data, observed, &PipelineConfig::default())
+}
+
+fn year_stats_with(
+    year: i32,
+    data: YearData,
+    observed: &[DateSpan],
+    config: &PipelineConfig,
+) -> YearStats {
     // Every month a contributing sensor observed gets an entry, zero fires included, so quiet
     // months count in the anomaly baselines; months outside coverage are left out. A month with
     // rows is always kept, so the raw monthly counts add up to the yearly totals.
@@ -779,7 +792,7 @@ fn year_stats(year: i32, data: YearData, observed: &[DateSpan]) -> YearStats {
                 // Each month is harmonized on its own, so matches and interscan duplicates
                 // that straddle a month boundary are not merged; the monthly harmonized counts
                 // need not add up to the yearly figure, which is harmonized over the whole year.
-                harmonized: harmonize(modis, viirs).len(),
+                harmonized: harmonize_with_config(modis, viirs, config).len(),
                 anomaly_raw: None,
                 anomaly_harmonized: None,
             })
@@ -789,7 +802,7 @@ fn year_stats(year: i32, data: YearData, observed: &[DateSpan]) -> YearStats {
     let modis_span = date_span(&data.modis);
     let viirs_span = date_span(&data.viirs);
     let (raw_modis, raw_viirs) = (data.modis.len(), data.viirs.len());
-    let linked = harmonize_with_links(data.modis, data.viirs);
+    let linked = harmonize_with_links_config(data.modis, data.viirs, config);
     let count_source = |source: HotspotSource| {
         linked
             .hotspots
@@ -860,6 +873,7 @@ async fn build_series(
         let state = state.clone();
         let region = region.clone();
         let coverage = coverage.clone();
+        let config = state.config.clone();
         tasks.spawn(async move {
             let slot = state
                 .load_slots
@@ -880,7 +894,7 @@ async fn build_series(
             .collect();
             tokio::task::spawn_blocking(move || {
                 let _slot = slot;
-                year_stats(year, data, &observed)
+                year_stats_with(year, data, &observed, &config)
             })
             .await
             .map_err(join_error)
@@ -1172,6 +1186,7 @@ async fn points(
         .await
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
+    let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
         let (modis, viirs) = match month {
@@ -1189,7 +1204,7 @@ async fn points(
             .collect();
         let bbox = extent(raw_points.iter().map(|p| (p.lat, p.lon)));
         let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
-        let linked = harmonize_with_links(modis, viirs);
+        let linked = harmonize_with_links_config(modis, viirs, &config);
 
         let links: Vec<Option<usize>> = linked
             .modis_links
@@ -1299,6 +1314,7 @@ mod tests {
                 max_region_bytes,
                 request_timeout: Duration::from_secs(30),
             },
+            Arc::new(PipelineConfig::default()),
         ))
     }
 

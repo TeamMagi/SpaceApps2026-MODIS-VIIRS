@@ -1,3 +1,4 @@
+pub mod config;
 pub mod models;
 pub mod harmonize;
 pub mod h3index;
