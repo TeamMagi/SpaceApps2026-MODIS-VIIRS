@@ -28,6 +28,23 @@ services:
     networks:
       - pyrosync
 
+  seed:
+    profiles: ["seed"]
+    build: .
+    entrypoint: ["./archive-seed"]
+    environment:
+      - ARCHIVE_CACHE_DIR=${ARCHIVE_CACHE_DIR:-/app/.cache/firms-archive}
+      - ARCHIVE_SET_FILE=${ARCHIVE_SET_FILE:-/app/data/archive-set.json}
+      - RUST_LOG=${RUST_LOG:-pyrosync=info}
+    volumes:
+      # Write into the same named volume mounted by the pyrosync service
+      - firms-archive:/app/.cache/firms-archive
+    # Country archive downloads use static unauthenticated CSVs and never need FIRMS_API_KEY;
+    # keep the API key out of the seed container to avoid unnecessary secret exposure.
+    restart: "no"
+    networks:
+      - pyrosync
+
 volumes:
   firms-archive:
 

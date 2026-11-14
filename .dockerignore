@@ -30,3 +30,5 @@ tools/
 # Use data/* instead of data/ so the negation can take effect
 data/*
 !data/sample/
+# The seed container reads the canonical archive set from the image, so it must stay in context
+!data/archive-set.json

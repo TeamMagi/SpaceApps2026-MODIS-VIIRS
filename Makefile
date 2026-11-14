@@ -1,4 +1,4 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell fetch-sample clean clean-cache help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell docker-seed fetch-sample verify-data manifest clean clean-cache help
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
@@ -73,6 +73,9 @@ docker-logs: ## Show container logs
 docker-shell: ## Open a shell inside the running container
 	docker compose exec pyrosync /bin/sh
 
+docker-seed: ## Download the full FIRMS country archive into the shared volume (~2.4 GB, first run is slow, no API key required)
+	docker compose --profile seed run --rm seed
+
 # ---- Data ----
 
 fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
@@ -81,6 +84,12 @@ fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
 		exit 1; \
 	fi
 	cargo run -p pyrosync-firms --example nrt_check -- --save-samples
+
+verify-data: ## Verify the local archive cache against data/archive-manifest.sha256
+	sh tools/verify-archive.sh verify
+
+manifest: ## Regenerate data/archive-manifest.sha256 from the local cache
+	sh tools/verify-archive.sh generate
 
 # ---- Clean ----
 
