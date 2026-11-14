@@ -173,6 +173,7 @@ struct HarmonizeParams {
     start: Option<String>,
     end: Option<String>,
     include_raw: Option<bool>,
+    format: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -598,6 +599,7 @@ fn build_router(
         .route("/compare", get(compare))
         .route("/stats", get(stats))
         .route("/calendar", get(calendar))
+        .route("/export", get(export))
         .with_state(state);
 
     if let Some(archive_api) = archive_api {
@@ -1019,6 +1021,99 @@ async fn harmonize(
         })
     })
     .await
+}
+
+#[derive(Clone, Copy)]
+enum ExportFormat {
+    Csv,
+    GeoJson,
+}
+
+impl ExportFormat {
+    fn parse(value: Option<&str>) -> Result<Self, ApiError> {
+        match value.map(str::to_ascii_lowercase).as_deref() {
+            None | Some("csv") => Ok(Self::Csv),
+            Some("geojson") => Ok(Self::GeoJson),
+            Some(other) => Err(ApiError::bad_request(format!(
+                "Invalid 'format' value '{other}': expected 'csv' or 'geojson'"
+            ))),
+        }
+    }
+
+    fn route(self) -> &'static str {
+        match self {
+            Self::Csv => "export-csv",
+            Self::GeoJson => "export-geojson",
+        }
+    }
+
+    fn content_type(self) -> &'static str {
+        match self {
+            Self::Csv => "text/csv; charset=utf-8",
+            Self::GeoJson => "application/geo+json",
+        }
+    }
+
+    fn extension(self) -> &'static str {
+        match self {
+            Self::Csv => "csv",
+            Self::GeoJson => "geojson",
+        }
+    }
+}
+
+fn export_response(
+    body: Vec<u8>,
+    format: ExportFormat,
+    bbox: &BBox,
+    cache_status: &'static str,
+) -> Result<Response, ApiError> {
+    let filename = format!(
+        "pyrosync_{}_{}_{}_{}_{}.{}",
+        bbox.west,
+        bbox.south,
+        bbox.east,
+        bbox.north,
+        Utc::now().format("%Y%m%d"),
+        format.extension()
+    );
+    let disposition = HeaderValue::from_str(&format!("attachment; filename=\"{filename}\""))
+        .map_err(|e| ApiError::internal(format!("Invalid download filename: {e}")))?;
+    Ok((
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, HeaderValue::from_static(format.content_type())),
+            (header::CONTENT_DISPOSITION, disposition),
+            (X_CACHE_HEADER, HeaderValue::from_static(cache_status)),
+        ],
+        body,
+    )
+        .into_response())
+}
+
+async fn export(
+    State(state): State<AppState>,
+    Query(params): Query<HarmonizeParams>,
+) -> Result<Response, ApiError> {
+    // Validate before consulting the cache so invalid requests never probe cache entries.
+    let format = ExportFormat::parse(params.format.as_deref())?;
+    let bbox = parse_bbox(&params)?;
+    let window = parse_time_window(&params)?;
+    let key = build_cache_key(format.route(), &bbox, &window, false);
+
+    if let Some(cached_body) = get_cached(&state.cache, &key).await {
+        return export_response(cached_body, format, &bbox, "HIT");
+    }
+
+    let run = run_pipeline_with_timeout(&state, &params).await?;
+    let body = match format {
+        ExportFormat::Csv => pyrosync_core::export::to_csv(&run.harmonized),
+        ExportFormat::GeoJson => pyrosync_core::export::to_geojson(&run.harmonized),
+    }
+    .into_bytes();
+
+    put_cached(&state.cache, key, &body, cache_ttl_for_window(&window)).await;
+    export_response(body, format, &bbox, "MISS")
 }
 
 fn build_compare_response(run: PipelineRun) -> CompareResponse {
@@ -2090,6 +2185,7 @@ mod tests {
             start: None,
             end: None,
             include_raw: Some(true),
+            format: None,
         };
         let err = compare(State(state.clone()), Query(bad_bbox))
             .await
@@ -2105,6 +2201,7 @@ mod tests {
             start: None,
             end: None,
             include_raw: Some(true),
+            format: None,
         };
         let err = stats(State(state), Query(missing_key))
             .await
@@ -2237,6 +2334,7 @@ mod tests {
             start: None,
             end: None,
             include_raw: Some(false),
+            format: None,
         };
 
         // First call fails because FIRMS_API_KEY is missing; errors must never be cached.
@@ -2271,6 +2369,7 @@ mod tests {
             start: None,
             end: None,
             include_raw: Some(false),
+            format: None,
         };
         let resp = harmonize(State(state), Query(params))
             .await
@@ -2288,6 +2387,76 @@ mod tests {
                 .and_then(|v| v.to_str().ok()),
             Some("HIT")
         );
+    }
+
+    fn export_params(format: Option<&str>, west: f64) -> HarmonizeParams {
+        HarmonizeParams {
+            west,
+            south: 36.0,
+            east: 45.0,
+            north: 42.0,
+            days: Some(2),
+            start: None,
+            end: None,
+            include_raw: None,
+            format: format.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn export_format_parser_accepts_known_values_and_rejects_others() {
+        assert!(matches!(ExportFormat::parse(None), Ok(ExportFormat::Csv)));
+        assert!(matches!(ExportFormat::parse(Some("csv")), Ok(ExportFormat::Csv)));
+        assert!(matches!(ExportFormat::parse(Some("geojson")), Ok(ExportFormat::GeoJson)));
+        assert!(matches!(ExportFormat::parse(Some("GeoJSON")), Ok(ExportFormat::GeoJson)));
+        let err = ExportFormat::parse(Some("xml")).err().expect("xml rejected");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn export_validates_before_firms_client() {
+        let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
+        let err = export(State(state.clone()), Query(export_params(Some("xml"), 26.0)))
+            .await
+            .expect_err("unknown format should fail");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+
+        let err = export(State(state), Query(export_params(Some("csv"), 50.0)))
+            .await
+            .expect_err("invalid bbox should fail");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn export_serves_cached_hit_as_csv_download() {
+        let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
+        let bbox = sample_bbox();
+        let window = TimeWindow::Days(DayRange::new(2).unwrap());
+        let key = build_cache_key("export-csv", &bbox, &window, false);
+        let cached = b"lat,lon\r\n1,2\r\n";
+        put_cached(&state.cache, key, cached, Duration::from_secs(600)).await;
+
+        let resp = export(State(state), Query(export_params(None, 26.0)))
+            .await
+            .expect("cache hit should succeed without FIRMS client");
+        assert_eq!(resp.status(), StatusCode::OK);
+        let headers = resp.headers();
+        assert_eq!(
+            headers.get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok()),
+            Some("text/csv; charset=utf-8")
+        );
+        assert_eq!(
+            headers.get(X_CACHE_HEADER).and_then(|v| v.to_str().ok()),
+            Some("HIT")
+        );
+        let disposition = headers
+            .get(header::CONTENT_DISPOSITION)
+            .and_then(|v| v.to_str().ok())
+            .expect("content-disposition");
+        assert!(disposition.starts_with("attachment; filename=\"pyrosync_"));
+        assert!(disposition.ends_with(".csv\""));
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        assert_eq!(&body[..], cached);
     }
 
     #[tokio::test]

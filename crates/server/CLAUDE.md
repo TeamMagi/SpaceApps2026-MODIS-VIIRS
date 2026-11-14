@@ -15,6 +15,7 @@
 | `/api/compare` | GET | Ham ve harmonize veri karşılaştırma istatistikleri (query params: /api/harmonize ile aynı) |
 | `/api/stats` | GET | Genel istatistikler, sensör kırılımı, pipeline metrikleri (query params: /api/harmonize ile aynı) |
 | `/api/calendar` | GET | Arşivden tarihsel aylık yanma takvimi (query params: country, from, to, opsiyonel bbox) |
+| `/api/export` | GET | Harmonize edilmiş hotspot'ları dosya olarak indirir (query params: /api/harmonize ile aynı + `format=csv\|geojson`, varsayılan csv) |
 
 ## Konfigürasyon (Env Vars)
 

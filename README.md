@@ -77,6 +77,7 @@ tools/              Utility scripts (archive verification, data fetching)
 | `GET /api/compare` | Raw versus harmonized statistics for the same query |
 | `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
 | `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox) |
+| `GET /api/export` | Download harmonized hotspots as a file (same query as `/api/harmonize` plus `format=csv\|geojson`, default `csv`) |
 
 - Responses include an `X-Cache: HIT|MISS` header.
 - Responses include a `warnings` array and an `effort.reliable` flag; if a FIRMS source fails to fetch, effort normalization is marked unreliable and surfaced in the response.

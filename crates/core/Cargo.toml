@@ -8,3 +8,4 @@ edition.workspace = true
 serde = { workspace = true }
 chrono = { workspace = true }
 h3o = { workspace = true }
+serde_json = { workspace = true }

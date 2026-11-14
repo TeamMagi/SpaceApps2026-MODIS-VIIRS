@@ -14,6 +14,7 @@
 | `vza.rs` | MODIS FRP görüş açısı düzeltmesi (kuadratik polinom) |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
+| `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
 
 ## Teknik Kısıtlar
 
