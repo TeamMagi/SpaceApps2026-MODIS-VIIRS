@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -141,6 +141,32 @@ impl ArchiveState {
             ),
         ))
     }
+
+    fn admit_year(&self, region: &RegionInfo, year: i32) -> Result<(), ApiError> {
+        let year_bytes: u64 = region
+            .files
+            .iter()
+            .filter(|f| archive_stamp_year(f) == Some(year))
+            .map(|f| f.bytes)
+            .sum();
+        if year_bytes <= self.limits.max_region_bytes {
+            return Ok(());
+        }
+        Err(ApiError::new(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            format!(
+                "Region year {year} too large for this server: ~{} detections / {:.0} MB of archive CSV; limit {:.0} MB (ARCHIVE_MAX_REGION_MB).",
+                approx_count(year_bytes / BYTES_PER_ROW_ESTIMATE),
+                megabytes(year_bytes),
+                megabytes(self.limits.max_region_bytes),
+            ),
+        ))
+    }
+}
+
+/// Extracts `<year>` from an [`ArchiveFileStamp::path`] formatted as `<slug>/<year>/<slug>_<year>_<Country>.csv`.
+fn archive_stamp_year(stamp: &ArchiveFileStamp) -> Option<i32> {
+    stamp.path.split('/').nth(1)?.parse::<i32>().ok()
 }
 
 /// Sub-router mounted under `/api` for the offline archive endpoints (`/regions`, `/series`, `/points`).
@@ -548,6 +574,7 @@ struct RegionEntry {
     noaa20_years: Option<[i32; 2]>,
     size_mb: f64,
     too_large: bool,
+    precomputed: bool,
 }
 
 fn year_span(years: &BTreeSet<i32>) -> Option<[i32; 2]> {
@@ -574,20 +601,43 @@ async fn find_region(state: &ArchiveState, region: Option<&str>) -> Result<Arc<R
 
 async fn regions(State(state): State<Arc<ArchiveState>>) -> Result<Json<RegionsResponse>, ApiError> {
     let index = load_index(&state).await?;
-    let mut entries: Vec<RegionEntry> = index
-        .regions
-        .values()
-        .map(|r| RegionEntry {
-            id: r.id.clone(),
-            name: r.name.clone(),
-            modis_years: year_span(&r.modis_years),
-            viirs_years: year_span(&r.viirs_years),
-            noaa20_years: year_span(&r.noaa20_years),
-            size_mb: round_mb(r.bytes),
-            too_large: r.bytes > state.limits.max_region_bytes,
-        })
-        .collect();
-    entries.sort_by(|a, b| a.name.cmp(&b.name));
+    let in_memory: HashSet<String> = {
+        let series = state.series.lock().expect("series cache lock");
+        series
+            .iter()
+            .filter(|(_, cell)| cell.initialized())
+            .map(|(id, _)| id.clone())
+            .collect()
+    };
+    let cache = state.derived_cache.clone();
+    let config = state.config.clone();
+    let max_region_bytes = state.limits.max_region_bytes;
+    let entries = tokio::task::spawn_blocking(move || {
+        let mut entries: Vec<RegionEntry> = index
+            .regions
+            .values()
+            .map(|r| {
+                let stamp = SeriesStamp::for_region(&config, &r.files);
+                let precomputed = cache.has_valid_series(&r.id, &stamp);
+                let series_available = precomputed || in_memory.contains(&r.id);
+                RegionEntry {
+                    id: r.id.clone(),
+                    name: r.name.clone(),
+                    modis_years: year_span(&r.modis_years),
+                    viirs_years: year_span(&r.viirs_years),
+                    noaa20_years: year_span(&r.noaa20_years),
+                    size_mb: round_mb(r.bytes),
+                    too_large: r.bytes > max_region_bytes && !series_available,
+                    precomputed,
+                }
+            })
+            .collect();
+        entries.sort_by(|a, b| a.name.cmp(&b.name));
+        entries
+    })
+    .await
+    .map_err(join_error)?;
+
     Ok(Json(RegionsResponse {
         source: "FIRMS archive country files",
         max_region_mb: round_mb(state.limits.max_region_bytes),
@@ -1472,7 +1522,6 @@ async fn points(
 ) -> Result<Json<PointsResponse>, ApiError> {
     let started = Instant::now();
     let region = find_region(&state, params.region.as_deref()).await?;
-    state.admit(&region)?;
     let id = region.id.clone();
 
     let year: i32 = parse_param("year", params.year.as_deref())?
@@ -1496,6 +1545,7 @@ async fn points(
             format!("the archive has no {id} file for {year}"),
         ));
     }
+    state.admit_year(&region, year)?;
 
     let slot = state
         .load_slots
@@ -2195,6 +2245,144 @@ mod tests {
         .unwrap();
         assert_eq!(r4.skipped(), 1);
         assert_eq!(r4.failed(), 1);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn regions_reports_precomputed_and_clears_too_large_until_invalidated() {
+        let dir = temp_archive("regions-precomputed");
+        write_file(&dir, "modis", 2015, "Small", &[(39.0, "2015-07-01", 0)]);
+        let big: Vec<(f64, &str, u8)> = (0..120)
+            .map(|i| (30.0 + f64::from(i) * 0.05, "2015-07-01", 0))
+            .collect();
+        write_file(&dir, "modis", 2015, "Big", &big);
+
+        let small_bytes = std::fs::metadata(dir.join("modis/2015/modis_2015_Small.csv"))
+            .unwrap()
+            .len();
+        let limit = small_bytes * 2;
+
+        fn find_entry<'a>(listing: &'a RegionsResponse, id: &str) -> &'a RegionEntry {
+            listing.regions.iter().find(|r| r.id == id).unwrap()
+        }
+
+        // Before precompute: Big is too_large and not precomputed; Small is admitted.
+        let s1 = state(dir.clone(), limit);
+        let Json(list1) = regions(State(s1)).await.ok().unwrap();
+        let big1 = find_entry(&list1, "Big");
+        assert!(big1.too_large);
+        assert!(!big1.precomputed);
+        let small1 = find_entry(&list1, "Small");
+        assert!(!small1.too_large);
+        assert!(!small1.precomputed);
+
+        // Precompute only Big into the disk cache.
+        let precompute_state = state(dir.clone(), limit);
+        let report = precompute_series(
+            precompute_state,
+            &PrecomputeOptions {
+                regions: vec!["Big".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+
+        // Fresh ArchiveState has empty memory cache, so /api/regions sees Big via disk metadata only.
+        let s2 = state(dir.clone(), limit);
+        let Json(list2) = regions(State(s2.clone())).await.ok().unwrap();
+        let big2 = find_entry(&list2, "Big");
+        assert!(!big2.too_large);
+        assert!(big2.precomputed);
+        let small2 = find_entry(&list2, "Small");
+        assert!(!small2.too_large);
+        assert!(!small2.precomputed);
+
+        // Loading /api/series populates memory cache; even if the disk meta disappears,
+        // /api/regions still keeps too_large=false while served from memory.
+        let (src_mem_load, _) = series_raw(&s2, "Big").await.ok().unwrap();
+        assert_eq!(src_mem_load.as_deref(), Some("disk"));
+        std::fs::remove_file(dir.join("_derived_cache/series/Big.meta.json")).unwrap();
+        let Json(list2_mem) = regions(State(s2)).await.ok().unwrap();
+        let big2_mem = find_entry(&list2_mem, "Big");
+        assert!(!big2_mem.too_large);
+        assert!(!big2_mem.precomputed);
+
+        // Appending a row to Big's CSV invalidates the stamp, restoring too_large=true, precomputed=false.
+        let csv_path = dir.join("modis/2015/modis_2015_Big.csv");
+        let mut contents = std::fs::read_to_string(&csv_path).unwrap();
+        contents.push_str("41.0,32.0,320,0.5,0.5,2015-07-02,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n");
+        std::fs::write(&csv_path, contents).unwrap();
+
+        let s3 = state(dir.clone(), limit);
+        let Json(list3) = regions(State(s3)).await.ok().unwrap();
+        let big3 = find_entry(&list3, "Big");
+        assert!(big3.too_large);
+        assert!(!big3.precomputed);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_admits_by_requested_year_not_total_region_size() {
+        let dir = temp_archive("points-year-admit");
+        // Several modest years whose sum exceeds the limit, plus one oversized year.
+        let small_rows: Vec<(f64, &str, u8)> = vec![
+            (39.0, "2018-07-01", 0),
+            (39.1, "2018-07-02", 0),
+        ];
+        write_file(&dir, "modis", 2018, "Multi", &small_rows);
+        write_file(
+            &dir,
+            "modis",
+            2019,
+            "Multi",
+            &[(39.0, "2019-07-01", 0), (39.1, "2019-07-02", 0)],
+        );
+        let big_rows: Vec<(f64, &str, u8)> = (0..120)
+            .map(|i| (30.0 + f64::from(i) * 0.05, "2020-07-01", 0))
+            .collect();
+        write_file(&dir, "modis", 2020, "Multi", &big_rows);
+
+        let year_2018_bytes = std::fs::metadata(dir.join("modis/2018/modis_2018_Multi.csv"))
+            .unwrap()
+            .len();
+        // Limit admits 2018 and 2019 individually, while total region bytes (2018+2019+2020)
+        // and 2020 alone exceed the limit.
+        let state = state(dir.clone(), year_2018_bytes * 2);
+
+        let Json(ok_pts) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Multi".into()),
+                year: Some("2018".into()),
+                month: None,
+                limit: None,
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(ok_pts.year, 2018);
+        assert_eq!(ok_pts.stages.raw_modis, 2);
+
+        let err = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Multi".into()),
+                year: Some("2020".into()),
+                month: None,
+                limit: None,
+            }),
+        )
+        .await
+        .err()
+        .unwrap();
+        assert_eq!(err.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert!(err.message.contains("2020"), "{}", err.message);
 
         let _ = std::fs::remove_dir_all(dir);
     }

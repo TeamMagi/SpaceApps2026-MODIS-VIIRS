@@ -128,9 +128,11 @@ impl DerivedCache {
         }
     }
 
-    /// Reads cached `/api/series` bytes if the stamp and body checksum match `expected`.
-    /// Read errors or corrupted files are logged, ignored, and treated as a cache miss.
-    pub fn read_series(&self, region: &str, expected: &SeriesStamp) -> Option<Bytes> {
+    fn read_matching_meta(
+        &self,
+        region: &str,
+        expected: &SeriesStamp,
+    ) -> Option<(PathBuf, SeriesMeta)> {
         let (_, body_path, meta_path) = self.series_paths(region)?;
         let meta_bytes = match fs::read(&meta_path) {
             Ok(bytes) => bytes,
@@ -167,6 +169,19 @@ impl DerivedCache {
         {
             return None;
         }
+
+        Some((body_path, meta))
+    }
+
+    /// Checks whether a cached `/api/series` metadata stamp matches `expected` without reading the body.
+    pub fn has_valid_series(&self, region: &str, expected: &SeriesStamp) -> bool {
+        self.read_matching_meta(region, expected).is_some()
+    }
+
+    /// Reads cached `/api/series` bytes if the stamp and body checksum match `expected`.
+    /// Read errors or corrupted files are logged, ignored, and treated as a cache miss.
+    pub fn read_series(&self, region: &str, expected: &SeriesStamp) -> Option<Bytes> {
+        let (body_path, meta) = self.read_matching_meta(region, expected)?;
 
         let body_bytes = match fs::read(&body_path) {
             Ok(bytes) => bytes,
