@@ -11,7 +11,7 @@ const MATCH_WINDOW_SECS: i64 = 10_800;
 
 /// Full harmonization pipeline:
 /// 1. Deduplicate interscan overlaps
-/// 2. Consolidate multi-platform VIIRS fleet detections
+/// 2. Consolidate multi-platform MODIS and VIIRS fleet detections
 /// 3. Cross-sensor spatial-temporal matching
 /// 4. Quality-priority fusion (VIIRS preferred) and non-mutating MODIS VZA correction
 ///
@@ -27,9 +27,10 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
     remove_interscan_duplicates(&mut modis);
     remove_interscan_duplicates(&mut viirs);
 
-    // Consolidate VIIRS fleet before MODIS matching so 1-to-1 matching does not leave sibling
-    // VIIRS detections to leak into the output as ViirsOnly.
-    let viirs = fleet::consolidate_fleet(&viirs);
+    // Consolidate both fleets before cross-sensor matching so sibling detections (Terra/Aqua
+    // and SNPP/NOAA-20/NOAA-21) do not leak into the output as duplicate singletons.
+    let modis = fleet::consolidate_modis_fleet(&modis);
+    let viirs = fleet::consolidate_viirs_fleet(&viirs);
 
     // Step 2 & 3: Match and fuse using H3 spatial index candidate lookup
     let index = H3Index::build(viirs.iter().map(|v| (v.hotspot.lat, v.hotspot.lon)));
@@ -37,20 +38,21 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
     let mut viirs_matched = vec![false; viirs.len()];
 
     for m in &modis {
+        let mh = &m.hotspot;
         let mut best_match: Option<(usize, f64)> = None;
 
-        for j in index.candidates(m.lat, m.lon) {
+        for j in index.candidates(mh.lat, mh.lon) {
             if viirs_matched[j] {
                 continue;
             }
 
             let vh = &viirs[j].hotspot;
-            let dt = (vh.acquired - m.acquired).num_seconds().abs();
+            let dt = (vh.acquired - mh.acquired).num_seconds().abs();
             if dt > MATCH_WINDOW_SECS {
                 continue;
             }
 
-            let dist = haversine_km(m.lat, m.lon, vh.lat, vh.lon);
+            let dist = haversine_km(mh.lat, mh.lon, vh.lat, vh.lon);
             if dist > MATCH_RADIUS_KM {
                 continue;
             }
@@ -80,10 +82,11 @@ pub fn harmonize(mut modis: Vec<Hotspot>, mut viirs: Vec<Hotspot>) -> Vec<Harmon
     result
 }
 
-fn fuse_matched(m: &Hotspot, v: &FleetObservation) -> HarmonizedHotspot {
+fn fuse_matched(m: &FleetObservation, v: &FleetObservation) -> HarmonizedHotspot {
+    let mh = &m.hotspot;
     let vh = &v.hotspot;
-    let mut platforms = Vec::with_capacity(1 + v.platforms.len());
-    platforms.push(m.sensor);
+    let mut platforms = Vec::with_capacity(m.platforms.len() + v.platforms.len());
+    platforms.extend_from_slice(&m.platforms);
     platforms.extend_from_slice(&v.platforms);
     platforms.sort();
     platforms.dedup();
@@ -93,33 +96,33 @@ fn fuse_matched(m: &Hotspot, v: &FleetObservation) -> HarmonizedHotspot {
         lat: vh.lat,
         lon: vh.lon,
         frp: vh.frp,
-        frp_corrected: v.frp_mean,
+        frp_corrected: v.frp_corrected_mean,
         vza_factor: None,
-        n_obs: 1 + v.n_obs,
+        n_obs: m.n_obs.saturating_add(v.n_obs),
         platforms,
-        confidence: higher_confidence(m.confidence, vh.confidence),
+        confidence: higher_confidence(mh.confidence, vh.confidence),
         source: HotspotSource::Matched,
         acquired: vh.acquired,
         daynight: vh.daynight,
     }
 }
 
-fn from_modis_only(m: &Hotspot) -> HarmonizedHotspot {
-    let factor = vza::vza_factor(m);
-    let frp_corrected = vza::apply_vza_correction(m.frp, factor);
+fn from_modis_only(m: &FleetObservation) -> HarmonizedHotspot {
+    let mh = &m.hotspot;
+    let factor = vza::vza_factor(mh);
 
     HarmonizedHotspot {
-        lat: m.lat,
-        lon: m.lon,
-        frp: m.frp,
-        frp_corrected,
+        lat: mh.lat,
+        lon: mh.lon,
+        frp: mh.frp,
+        frp_corrected: m.frp_corrected_mean,
         vza_factor: factor,
-        n_obs: 1,
-        platforms: vec![m.sensor],
-        confidence: m.confidence,
+        n_obs: m.n_obs,
+        platforms: m.platforms.clone(),
+        confidence: mh.confidence,
         source: HotspotSource::ModisOnly,
-        acquired: m.acquired,
-        daynight: m.daynight,
+        acquired: mh.acquired,
+        daynight: mh.daynight,
     }
 }
 
@@ -129,7 +132,7 @@ fn from_viirs_only(v: &FleetObservation) -> HarmonizedHotspot {
         lat: vh.lat,
         lon: vh.lon,
         frp: vh.frp,
-        frp_corrected: v.frp_mean,
+        frp_corrected: v.frp_corrected_mean,
         vza_factor: None,
         n_obs: v.n_obs,
         platforms: v.platforms.clone(),
@@ -192,12 +195,14 @@ mod tests {
     ) -> Vec<HarmonizedHotspot> {
         remove_interscan_duplicates(&mut modis);
         remove_interscan_duplicates(&mut viirs);
-        let viirs = fleet::consolidate_fleet(&viirs);
+        let modis = fleet::consolidate_modis_fleet(&modis);
+        let viirs = fleet::consolidate_viirs_fleet(&viirs);
 
         let mut result = Vec::new();
         let mut viirs_matched = vec![false; viirs.len()];
 
         for m in &modis {
+            let mh = &m.hotspot;
             let mut best_match: Option<(usize, f64)> = None;
 
             for (j, v) in viirs.iter().enumerate() {
@@ -206,12 +211,12 @@ mod tests {
                 }
 
                 let vh = &v.hotspot;
-                let dt = (m.acquired - vh.acquired).num_seconds().abs();
+                let dt = (mh.acquired - vh.acquired).num_seconds().abs();
                 if dt > MATCH_WINDOW_SECS {
                     continue;
                 }
 
-                let dist = haversine_km(m.lat, m.lon, vh.lat, vh.lon);
+                let dist = haversine_km(mh.lat, mh.lon, vh.lat, vh.lon);
                 if dist > MATCH_RADIUS_KM {
                     continue;
                 }
@@ -735,5 +740,36 @@ mod tests {
         assert!(out[0].platforms.contains(&Sensor::ViirsNOAA20));
         assert!(!out.iter().any(|h| h.source == HotspotSource::ModisOnly));
         assert!(!out.iter().any(|h| h.source == HotspotSource::ViirsOnly));
+    }
+
+    #[test]
+    fn terra_and_aqua_150_min_apart_consolidate_to_single_modis_only() {
+        let modis = vec![
+            make_hotspot(
+                Sensor::ModisTerra,
+                39.0,
+                32.0,
+                0,
+                50.0,
+                Confidence::Nominal,
+            ),
+            make_hotspot(
+                Sensor::ModisAqua,
+                39.0,
+                32.0,
+                150 * 60,
+                70.0,
+                Confidence::High,
+            ),
+        ];
+
+        let out = harmonize(modis, vec![]);
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].source, HotspotSource::ModisOnly);
+        assert_eq!(out[0].n_obs, 2);
+        assert_eq!(
+            out[0].platforms,
+            vec![Sensor::ModisTerra, Sensor::ModisAqua]
+        );
     }
 }
