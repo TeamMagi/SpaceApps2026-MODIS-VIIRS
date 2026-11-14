@@ -1,3 +1,4 @@
+use crate::effort::monthly_omegas;
 use crate::models::{CalendarCell, HarmonizedHotspot};
 use chrono::Datelike;
 use std::collections::HashMap;
@@ -5,11 +6,14 @@ use std::collections::HashMap;
 /// Build a burning activity calendar from harmonized hotspot data.
 ///
 /// Groups hotspots by (year, month) and computes:
-/// - count: number of detections
+/// - count: raw number of detections
+/// - effort_omega: estimated observation effort Ω relative to MODIS
+/// - count_normalized: MODIS-equivalent detections (`count / effort_omega`)
 /// - mean_frp: average harmonized fire radiative power (`frp_corrected`)
 /// - mean_frp_raw: average raw fire radiative power (`frp`)
-/// - anomaly: deviation from multi-year monthly mean (if enough data)
+/// - anomaly: deviation from multi-year normalized monthly mean (if enough data)
 pub fn build_calendar(hotspots: &[HarmonizedHotspot]) -> Vec<CalendarCell> {
+    let omegas = monthly_omegas(hotspots);
     let mut buckets: HashMap<(i32, u32), (u64, f64, f64)> = HashMap::new();
 
     for h in hotspots {
@@ -24,13 +28,22 @@ pub fn build_calendar(hotspots: &[HarmonizedHotspot]) -> Vec<CalendarCell> {
 
     let mut cells: Vec<CalendarCell> = buckets
         .into_iter()
-        .map(|((year, month), (count, sum_corrected, sum_raw))| CalendarCell {
-            year,
-            month,
-            count,
-            mean_frp: sum_corrected / count as f64,
-            mean_frp_raw: sum_raw / count as f64,
-            anomaly: None,
+        .map(|((year, month), (count, sum_corrected, sum_raw))| {
+            let effort_omega = omegas.get(&(year, month)).copied().flatten();
+            let count_normalized = effort_omega.and_then(|omega| {
+                (omega > 0.0 && omega.is_finite()).then_some(count as f64 / omega)
+            });
+
+            CalendarCell {
+                year,
+                month,
+                count,
+                count_normalized,
+                effort_omega,
+                mean_frp: sum_corrected / count as f64,
+                mean_frp_raw: sum_raw / count as f64,
+                anomaly: None,
+            }
         })
         .collect();
 
@@ -40,30 +53,32 @@ pub fn build_calendar(hotspots: &[HarmonizedHotspot]) -> Vec<CalendarCell> {
 }
 
 fn compute_anomalies(cells: &mut [CalendarCell]) {
-    let mut monthly_means: HashMap<u32, Vec<f64>> = HashMap::new();
+    let mut monthly_values: HashMap<u32, Vec<f64>> = HashMap::new();
 
     for cell in cells.iter() {
-        monthly_means
-            .entry(cell.month)
-            .or_default()
-            .push(cell.count as f64);
+        if let Some(norm) = cell.count_normalized && norm.is_finite() {
+            monthly_values.entry(cell.month).or_default().push(norm);
+        }
     }
 
-    let baselines: HashMap<u32, (f64, f64)> = monthly_means
+    let baselines: HashMap<u32, (f64, f64)> = monthly_values
         .into_iter()
-        .filter(|(_, counts)| counts.len() >= 3)
-        .map(|(month, counts)| {
-            let n = counts.len() as f64;
-            let mean = counts.iter().sum::<f64>() / n;
-            let std = (counts.iter().map(|c| (c - mean).powi(2)).sum::<f64>() / n).sqrt();
+        .filter(|(_, vals)| vals.len() >= 3)
+        .map(|(month, vals)| {
+            let n = vals.len() as f64;
+            let mean = vals.iter().sum::<f64>() / n;
+            let std = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / n).sqrt();
             (month, (mean, std))
         })
         .collect();
 
     for cell in cells.iter_mut() {
-        if let Some(&(mean, std)) = baselines.get(&cell.month) && std > 0.0 {
-            cell.anomaly = Some((cell.count as f64 - mean) / std);
-        }
+        cell.anomaly = match (cell.count_normalized, baselines.get(&cell.month)) {
+            (Some(norm), Some(&(mean, std))) if norm.is_finite() && std > 0.0 => {
+                Some((norm - mean) / std)
+            }
+            _ => None,
+        };
     }
 }
 
@@ -97,6 +112,25 @@ mod tests {
             acquired: Utc.with_ymd_and_hms(year, month, day, 12, 0, 0).unwrap(),
             daynight: DayNight::Day,
         }
+    }
+
+    fn make_with_platforms(
+        year: i32,
+        month: u32,
+        day: u32,
+        platforms: Vec<Sensor>,
+    ) -> HarmonizedHotspot {
+        let mut h = make_harmonized(year, month, day, 40.0, 40.0);
+        let has_modis = platforms.iter().any(|s| s.is_modis());
+        let has_viirs = platforms.iter().any(|s| s.is_viirs());
+        h.source = match (has_modis, has_viirs) {
+            (true, true) => HotspotSource::Matched,
+            (true, false) => HotspotSource::ModisOnly,
+            (false, true) | (false, false) => HotspotSource::ViirsOnly,
+        };
+        h.n_obs = platforms.len() as u16;
+        h.platforms = platforms;
+        h
     }
 
     #[test]
@@ -135,5 +169,132 @@ mod tests {
         assert_eq!(cells[2].year, 2025);
         assert!(cells.iter().all(|c| c.anomaly.is_some()));
         assert!(cells[2].anomaly.unwrap() > 0.0);
+    }
+
+    #[test]
+    fn modis_only_months_keep_count_normalized_equal_to_count() {
+        let hotspots = vec![
+            make_with_platforms(2010, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 6, 2, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 7, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 8, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 8, 2, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 8, 3, vec![Sensor::ModisTerra]),
+        ];
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 3);
+        for cell in &cells {
+            assert_eq!(cell.effort_omega, Some(1.0));
+            assert_eq!(cell.count_normalized, Some(cell.count as f64));
+        }
+    }
+
+    #[test]
+    fn modis_plus_snpp_months_normalize_below_raw_count() {
+        let mut hotspots = Vec::new();
+        for month in 6..=8 {
+            hotspots.push(make_with_platforms(2015, month, 1, vec![Sensor::ModisTerra]));
+            for d in 2..=4 {
+                hotspots.push(make_with_platforms(2015, month, d, vec![Sensor::ViirsSNPP]));
+            }
+        }
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 3);
+        for cell in &cells {
+            let omega = cell.effort_omega.expect("omega should be present");
+            assert!((omega - 4.0).abs() < 1e-12);
+            let norm = cell.count_normalized.expect("normalized count should be present");
+            assert!(norm < cell.count as f64);
+            assert!((norm - cell.count as f64 / omega).abs() < 1e-12);
+        }
+    }
+
+    #[test]
+    fn synthetic_sensor_transition_eliminates_artificial_jump_and_false_anomaly() {
+        let mut hotspots = Vec::new();
+        let modis_per_month = 10;
+        let viirs_extra = [(2012, 30), (2013, 31), (2014, 29)];
+
+        for year in 2009..=2011 {
+            for month in 6..=8 {
+                for i in 0..modis_per_month {
+                    let day = (i % 28) + 1;
+                    hotspots.push(make_with_platforms(year, month, day, vec![Sensor::ModisTerra]));
+                }
+            }
+        }
+
+        for &(year, extra) in &viirs_extra {
+            for month in 6..=8 {
+                for i in 0..modis_per_month {
+                    let day = (i % 28) + 1;
+                    hotspots.push(make_with_platforms(
+                        year,
+                        month,
+                        day,
+                        vec![Sensor::ModisTerra, Sensor::ViirsSNPP],
+                    ));
+                }
+                for i in 0..extra {
+                    let day = (i % 28) + 1;
+                    hotspots.push(make_with_platforms(year, month, day, vec![Sensor::ViirsSNPP]));
+                }
+            }
+        }
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 18);
+
+        let pre_july = cells.iter().find(|c| c.year == 2011 && c.month == 7).unwrap();
+        let post_july = cells.iter().find(|c| c.year == 2012 && c.month == 7).unwrap();
+
+        let raw_jump = post_july.count as f64 / pre_july.count as f64;
+        assert!((raw_jump - 4.0).abs() < 0.2);
+
+        let pre_norm_mean = cells
+            .iter()
+            .filter(|c| c.year <= 2011)
+            .map(|c| c.count_normalized.unwrap())
+            .sum::<f64>()
+            / 9.0;
+        let post_norm_mean = cells
+            .iter()
+            .filter(|c| c.year >= 2012)
+            .map(|c| c.count_normalized.unwrap())
+            .sum::<f64>()
+            / 9.0;
+
+        let rel_diff = (post_norm_mean - pre_norm_mean).abs() / pre_norm_mean;
+        assert!(rel_diff < 0.05, "post/pre normalized diff too high: {rel_diff}");
+
+        for cell in &cells {
+            let norm = cell.count_normalized.expect("every cell should normalize");
+            let cell_diff = (norm - pre_norm_mean).abs() / pre_norm_mean;
+            assert!(cell_diff < 0.05, "cell normalized diff too high: {cell_diff}");
+            if let Some(anomaly) = cell.anomaly {
+                assert!(
+                    anomaly.abs() < 2.0,
+                    "false anomaly at {}-{}: {anomaly}",
+                    cell.year,
+                    cell.month
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn single_month_leaves_count_normalized_and_anomaly_none() {
+        let hotspots = vec![
+            make_with_platforms(2024, 7, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2024, 7, 2, vec![Sensor::ViirsSNPP]),
+        ];
+
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 1);
+        assert_eq!(cells[0].effort_omega, None);
+        assert_eq!(cells[0].count_normalized, None);
+        assert_eq!(cells[0].anomaly, None);
     }
 }

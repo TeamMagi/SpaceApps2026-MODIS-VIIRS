@@ -137,6 +137,8 @@ pub struct CalendarCell {
     pub year: i32,
     pub month: u32,
     pub count: u64,
+    pub count_normalized: Option<f64>,
+    pub effort_omega: Option<f64>,
     pub mean_frp: f64,
     pub mean_frp_raw: f64,
     pub anomaly: Option<f64>,
