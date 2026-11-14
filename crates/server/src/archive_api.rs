@@ -214,6 +214,7 @@ struct RegionInfo {
     name: String,
     modis_years: BTreeSet<i32>,
     viirs_years: BTreeSet<i32>,
+    noaa20_years: BTreeSet<i32>,
     /// Total size of the region's archive CSV files on disk.
     bytes: u64,
 }
@@ -223,20 +224,36 @@ struct ArchiveIndex {
     /// Every archive file per year, across all countries.
     modis_files: BTreeMap<i32, Vec<PathBuf>>,
     viirs_files: BTreeMap<i32, Vec<PathBuf>>,
+    noaa20_files: BTreeMap<i32, Vec<PathBuf>>,
+}
+
+#[derive(Clone, Copy)]
+enum ArchiveSensorKind {
+    Modis,
+    ViirsSnpp,
+    ViirsNoaa20,
 }
 
 fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
     let modis_slug = archive_slug(Sensor::ModisTerra);
     let viirs_slug = archive_slug(Sensor::ViirsSNPP);
+    let noaa20_slug = archive_slug(Sensor::ViirsNOAA20);
     let mut regions: BTreeMap<String, Arc<RegionInfo>> = BTreeMap::new();
     let mut modis_files: BTreeMap<i32, Vec<PathBuf>> = BTreeMap::new();
     let mut viirs_files: BTreeMap<i32, Vec<PathBuf>> = BTreeMap::new();
+    let mut noaa20_files: BTreeMap<i32, Vec<PathBuf>> = BTreeMap::new();
 
     for file in scan_local_archive(dir)? {
-        let is_modis = Some(file.slug.as_str()) == modis_slug;
-        if !is_modis && Some(file.slug.as_str()) != viirs_slug {
+        let slug = Some(file.slug.as_str());
+        let kind = if slug == modis_slug {
+            ArchiveSensorKind::Modis
+        } else if slug == viirs_slug {
+            ArchiveSensorKind::ViirsSnpp
+        } else if slug == noaa20_slug {
+            ArchiveSensorKind::ViirsNoaa20
+        } else {
             continue;
-        }
+        };
         let bytes = std::fs::metadata(&file.path)?.len();
         let region = Arc::make_mut(regions.entry(file.country.clone()).or_insert_with(|| {
             Arc::new(RegionInfo {
@@ -244,14 +261,15 @@ fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
                 id: file.country.clone(),
                 modis_years: BTreeSet::new(),
                 viirs_years: BTreeSet::new(),
+                noaa20_years: BTreeSet::new(),
                 bytes: 0,
             })
         }));
         region.bytes += bytes;
-        let (years, files) = if is_modis {
-            (&mut region.modis_years, &mut modis_files)
-        } else {
-            (&mut region.viirs_years, &mut viirs_files)
+        let (years, files) = match kind {
+            ArchiveSensorKind::Modis => (&mut region.modis_years, &mut modis_files),
+            ArchiveSensorKind::ViirsSnpp => (&mut region.viirs_years, &mut viirs_files),
+            ArchiveSensorKind::ViirsNoaa20 => (&mut region.noaa20_years, &mut noaa20_files),
         };
         years.insert(file.year);
         files.entry(file.year).or_default().push(file.path);
@@ -261,6 +279,7 @@ fn build_index(dir: &Path) -> std::io::Result<ArchiveIndex> {
         regions,
         modis_files,
         viirs_files,
+        noaa20_files,
     })
 }
 
@@ -327,12 +346,25 @@ fn ymd(year: i32, month: u32, day: u32) -> NaiveDate {
 struct Coverage {
     modis: Option<DateSpan>,
     viirs: Option<DateSpan>,
+    #[serde(skip)]
+    snpp: Option<DateSpan>,
+    #[serde(skip)]
+    noaa20: Option<DateSpan>,
 }
 
 fn scan_coverage(index: &ArchiveIndex) -> std::io::Result<Coverage> {
+    let modis = sensor_span(&index.modis_files)?;
+    let snpp = sensor_span(&index.viirs_files)?;
+    let noaa20 = sensor_span(&index.noaa20_files)?;
+    let viirs = match (snpp, noaa20) {
+        (Some(a), Some(b)) => Some(a.union(b)),
+        (a, b) => a.or(b),
+    };
     Ok(Coverage {
-        modis: sensor_span(&index.modis_files)?,
-        viirs: sensor_span(&index.viirs_files)?,
+        modis,
+        viirs,
+        snpp,
+        noaa20,
     })
 }
 
@@ -459,6 +491,7 @@ struct RegionEntry {
     name: String,
     modis_years: Option<[i32; 2]>,
     viirs_years: Option<[i32; 2]>,
+    noaa20_years: Option<[i32; 2]>,
     size_mb: f64,
     too_large: bool,
 }
@@ -495,6 +528,7 @@ async fn regions(State(state): State<Arc<ArchiveState>>) -> Result<Json<RegionsR
             name: r.name.clone(),
             modis_years: year_span(&r.modis_years),
             viirs_years: year_span(&r.viirs_years),
+            noaa20_years: year_span(&r.noaa20_years),
             size_mb: round_mb(r.bytes),
             too_large: r.bytes > state.limits.max_region_bytes,
         })
@@ -605,14 +639,22 @@ async fn read_year(client: &Arc<ArchiveClient>, region: &RegionInfo, year: i32) 
             Ok(Vec::new())
         }
     };
-    let viirs = async {
+    let snpp = async {
         if region.viirs_years.contains(&year) {
             load_sensor_year(client.clone(), Sensor::ViirsSNPP, region.id.clone(), year).await
         } else {
             Ok(Vec::new())
         }
     };
-    let (modis, viirs) = tokio::try_join!(modis, viirs)?;
+    let noaa20 = async {
+        if region.noaa20_years.contains(&year) {
+            load_sensor_year(client.clone(), Sensor::ViirsNOAA20, region.id.clone(), year).await
+        } else {
+            Ok(Vec::new())
+        }
+    };
+    let (modis, mut viirs, mut noaa20) = tokio::try_join!(modis, snpp, noaa20)?;
+    viirs.append(&mut noaa20);
     Ok(YearData { modis, viirs })
 }
 
@@ -810,6 +852,7 @@ async fn build_series(
         .modis_years
         .union(&region.viirs_years)
         .copied()
+        .chain(region.noaa20_years.iter().copied())
         .collect();
 
     let mut tasks = JoinSet::new();
@@ -829,7 +872,8 @@ async fn build_series(
             let data = read_year(&state.client, &region, year).await?;
             let observed: Vec<DateSpan> = [
                 (region.modis_years.contains(&year), coverage.modis),
-                (region.viirs_years.contains(&year), coverage.viirs),
+                (region.viirs_years.contains(&year), coverage.snpp),
+                (region.noaa20_years.contains(&year), coverage.noaa20),
             ]
             .into_iter()
             .filter_map(|(contributes, span)| span.filter(|_| contributes))
@@ -863,20 +907,26 @@ async fn build_series(
         month.anomaly_harmonized = harmonized_anomaly[i];
     }
 
-    let cliff = region.viirs_years.first().and_then(|&to_year| {
-        let from = year_entries.iter().find(|y| y.year == to_year - 1)?;
-        let to = year_entries.iter().find(|y| y.year == to_year)?;
-        Some(Cliff {
-            from_year: from.year,
-            to_year: to.year,
-            raw_from: from.raw_total,
-            raw_to: to.raw_total,
-            raw_change_pct: change_pct(from.raw_total, to.raw_total),
-            harmonized_from: from.harmonized,
-            harmonized_to: to.harmonized,
-            harmonized_change_pct: change_pct(from.harmonized, to.harmonized),
-        })
-    });
+    let cliff = region
+        .viirs_years
+        .iter()
+        .chain(&region.noaa20_years)
+        .min()
+        .copied()
+        .and_then(|to_year| {
+            let from = year_entries.iter().find(|y| y.year == to_year - 1)?;
+            let to = year_entries.iter().find(|y| y.year == to_year)?;
+            Some(Cliff {
+                from_year: from.year,
+                to_year: to.year,
+                raw_from: from.raw_total,
+                raw_to: to.raw_total,
+                raw_change_pct: change_pct(from.raw_total, to.raw_total),
+                harmonized_from: from.harmonized,
+                harmonized_to: to.harmonized,
+                harmonized_change_pct: change_pct(from.harmonized, to.harmonized),
+            })
+        });
 
     Ok(SeriesResponse {
         region: region.id.clone(),
@@ -884,7 +934,7 @@ async fn build_series(
             fire_type: [0],
             confidence: "all",
             area: format!("FIRMS country archive file: {}", region.id),
-            sensors: ["MODIS Terra+Aqua (archive)", "VIIRS S-NPP (archive)"],
+            sensors: ["MODIS Terra+Aqua (archive)", "VIIRS S-NPP+NOAA-20 (archive)"],
         },
         coverage: *coverage,
         years: year_entries,
@@ -1105,7 +1155,10 @@ async fn points(
     let limit = parse_param::<usize>("limit", params.limit.as_deref())?
         .unwrap_or(DEFAULT_POINTS_LIMIT)
         .clamp(1, MAX_POINTS_LIMIT);
-    if !region.modis_years.contains(&year) && !region.viirs_years.contains(&year) {
+    if !region.modis_years.contains(&year)
+        && !region.viirs_years.contains(&year)
+        && !region.noaa20_years.contains(&year)
+    {
         return Err(ApiError::new(
             StatusCode::NOT_FOUND,
             format!("the archive has no {id} file for {year}"),
@@ -1225,10 +1278,10 @@ mod tests {
 
     /// Writes one archive file; each row is (latitude, acq_date, fire type).
     fn write_file(dir: &Path, slug: &str, year: i32, country: &str, rows: &[(f64, &str, u8)]) {
-        let (header, sat) = if slug == "modis" {
-            (MODIS_HEADER, "Terra,MODIS,80,6.2")
-        } else {
-            (VIIRS_HEADER, "N,VIIRS,n,2")
+        let (header, sat) = match slug {
+            "modis" => (MODIS_HEADER, "Terra,MODIS,80,6.2"),
+            "viirs-jpss1" => (VIIRS_HEADER, "N20,VIIRS,n,2"),
+            _ => (VIIRS_HEADER, "N,VIIRS,n,2"),
         };
         let mut csv = format!("{header}\r\n");
         for (lat, date, ty) in rows {
@@ -1481,5 +1534,66 @@ mod tests {
                 north: 41.0
             }
         );
+    }
+
+    #[tokio::test]
+    async fn noaa20_files_are_indexed_in_regions_series_and_points() {
+        let dir = temp_archive("noaa20");
+        write_file(&dir, "viirs-snpp", 2020, "Turkey", &[(39.0, "2020-07-01", 0)]);
+        write_file(
+            &dir,
+            "viirs-jpss1",
+            2020,
+            "Turkey",
+            &[(39.0, "2020-07-01", 0), (40.5, "2020-08-15", 0)],
+        );
+        // NOAA-20-only year for a second region confirms points/series work without SNPP or MODIS.
+        write_file(&dir, "viirs-jpss1", 2021, "OnlyN20", &[(38.0, "2021-06-01", 0)]);
+
+        let snpp_bytes = std::fs::metadata(dir.join("viirs-snpp/2020/viirs-snpp_2020_Turkey.csv"))
+            .unwrap()
+            .len();
+        let n20_bytes = std::fs::metadata(dir.join("viirs-jpss1/2020/viirs-jpss1_2020_Turkey.csv"))
+            .unwrap()
+            .len();
+        // Budget admits SNPP alone, but rejects Turkey once NOAA-20 bytes are included.
+        let state_tight = state(dir.clone(), snpp_bytes);
+        let Json(listing) = regions(State(state_tight)).await.ok().unwrap();
+        let turkey = listing.regions.iter().find(|r| r.id == "Turkey").unwrap();
+        assert_eq!(turkey.modis_years, None);
+        assert_eq!(turkey.viirs_years, Some([2020, 2020]));
+        assert_eq!(turkey.noaa20_years, Some([2020, 2020]));
+        assert_eq!(turkey.size_mb, round_mb(snpp_bytes + n20_bytes));
+        assert!(turkey.too_large);
+
+        let only_n20 = listing.regions.iter().find(|r| r.id == "OnlyN20").unwrap();
+        assert_eq!(only_n20.viirs_years, None);
+        assert_eq!(only_n20.noaa20_years, Some([2021, 2021]));
+
+        let state_open = state(dir.clone(), u64::MAX);
+        let series_tr = series_json(&state_open, "Turkey").await.ok().unwrap();
+        let year_2020 = &series_tr["years"][0];
+        assert_eq!(year_2020["raw_viirs"], 3);
+        // The co-located SNPP + NOAA-20 detection on 2020-07-01 merges in VIIRS fleet consolidation.
+        assert_eq!(year_2020["harmonized"], 2);
+
+        let Json(pts) = points(
+            State(state_open.clone()),
+            Query(PointsParams {
+                region: Some("OnlyN20".into()),
+                year: Some("2021".into()),
+                month: None,
+                limit: None,
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(pts.stages.raw_viirs, 1);
+        assert_eq!(pts.stages.harmonized, 1);
+        assert_eq!(pts.raw[0].sensor, "VIIRS");
+        assert!(pts.harmonized[0].hotspot.platforms.contains(&Sensor::ViirsNOAA20));
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

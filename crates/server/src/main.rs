@@ -39,14 +39,17 @@ const CACHE_TTL_ARCHIVE_SECS: u64 = 21_600;
 const X_CACHE_HEADER: HeaderName = HeaderName::from_static("x-cache");
 
 // MODIS Terra and Aqua share the same `modis` archive CSVs (tagged per-row by `satellite`).
-const ARCHIVE_FETCH_SENSORS: [Sensor; 2] = [Sensor::ModisTerra, Sensor::ViirsSNPP];
-const ARCHIVE_AVAILABLE_SENSORS: [Sensor; 3] = [
+const ARCHIVE_FETCH_SENSORS: [Sensor; 3] =
+    [Sensor::ModisTerra, Sensor::ViirsSNPP, Sensor::ViirsNOAA20];
+const ARCHIVE_AVAILABLE_SENSORS: [Sensor; 4] = [
     Sensor::ModisTerra,
     Sensor::ModisAqua,
     Sensor::ViirsSNPP,
+    Sensor::ViirsNOAA20,
 ];
-const ARCHIVE_UNAVAILABLE_SENSORS: [Sensor; 2] = [Sensor::ViirsNOAA20, Sensor::ViirsNOAA21];
-const ARCHIVE_COVERAGE_NOTE: &str = "The FIRMS country archive packages MODIS and VIIRS SNPP only; NOAA-20 and NOAA-21 are not included, so this calendar covers a smaller fleet than the near-real-time endpoints.";
+// NOAA-21 is omitted because FIRMS has no `viirs-jpss2` country archive.
+const ARCHIVE_UNAVAILABLE_SENSORS: [Sensor; 1] = [Sensor::ViirsNOAA21];
+const ARCHIVE_COVERAGE_NOTE: &str = "The FIRMS country archive packages MODIS, VIIRS SNPP and VIIRS NOAA-20; NOAA-21 is not included, so this calendar covers a smaller fleet than the near-real-time endpoints from 2023 onward.";
 
 #[derive(Clone)]
 struct AppState {
@@ -2479,17 +2482,21 @@ mod tests {
     }
 
     #[test]
-    fn calendar_coverage_marks_noaa20_and_noaa21_unavailable_and_warns_on_failures() {
+    fn calendar_coverage_includes_noaa20_marks_noaa21_unavailable_and_warns_on_failures() {
         let query = parse_calendar_params(&calendar_params("Turkey", Some(2015), Some(2020), None))
             .expect("valid query");
 
         let ok_resp = build_calendar_response(&query, 0, &[], Vec::new(), Vec::new(), Vec::new());
         assert_eq!(
             ok_resp.coverage.sensors_available,
-            vec![Sensor::ModisTerra, Sensor::ModisAqua, Sensor::ViirsSNPP]
+            vec![
+                Sensor::ModisTerra,
+                Sensor::ModisAqua,
+                Sensor::ViirsSNPP,
+                Sensor::ViirsNOAA20,
+            ]
         );
-        assert!(ok_resp.coverage.sensors_unavailable.contains(&Sensor::ViirsNOAA20));
-        assert!(ok_resp.coverage.sensors_unavailable.contains(&Sensor::ViirsNOAA21));
+        assert_eq!(ok_resp.coverage.sensors_unavailable, vec![Sensor::ViirsNOAA21]);
         assert!(ok_resp.warnings.iter().any(|w| w == ok_resp.coverage.note));
         assert!(ok_resp.effort.reliable);
 

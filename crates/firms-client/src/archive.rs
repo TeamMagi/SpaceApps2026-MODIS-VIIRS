@@ -17,7 +17,9 @@ pub fn archive_years(sensor: Sensor) -> Option<RangeInclusive<i32>> {
     match sensor {
         Sensor::ModisTerra | Sensor::ModisAqua => Some(2000..=2025),
         Sensor::ViirsSNPP => Some(2012..=2025),
-        Sensor::ViirsNOAA20 | Sensor::ViirsNOAA21 => None,
+        Sensor::ViirsNOAA20 => Some(2018..=2025),
+        // NOAA-21 (viirs-jpss2) is not packaged in the FIRMS country archive.
+        Sensor::ViirsNOAA21 => None,
     }
 }
 
@@ -25,7 +27,10 @@ pub fn archive_slug(sensor: Sensor) -> Option<&'static str> {
     match sensor {
         Sensor::ModisTerra | Sensor::ModisAqua => Some("modis"),
         Sensor::ViirsSNPP => Some("viirs-snpp"),
-        Sensor::ViirsNOAA20 | Sensor::ViirsNOAA21 => None,
+        // FIRMS packages NOAA-20 under its pre-launch name JPSS-1 (`viirs-jpss1`).
+        Sensor::ViirsNOAA20 => Some("viirs-jpss1"),
+        // No `viirs-jpss2` directory exists in the FIRMS country archive.
+        Sensor::ViirsNOAA21 => None,
     }
 }
 
@@ -261,7 +266,7 @@ pub fn scan_local_archive(cache_dir: &Path) -> std::io::Result<Vec<LocalArchiveF
         ));
     }
 
-    let mut slugs: Vec<&str> = [Sensor::ModisTerra, Sensor::ViirsSNPP]
+    let mut slugs: Vec<&str> = [Sensor::ModisTerra, Sensor::ViirsSNPP, Sensor::ViirsNOAA20]
         .into_iter()
         .filter_map(archive_slug)
         .collect();
@@ -413,6 +418,7 @@ mod tests {
             ("modis", 2012, "Turkey"),
             ("modis", 2012, "Russian_Federation"),
             ("viirs-snpp", 2012, "Turkey"),
+            ("viirs-jpss1", 2020, "Turkey"),
         ] {
             let year_dir = dir.join(slug).join(year.to_string());
             std::fs::create_dir_all(&year_dir).unwrap();
@@ -433,6 +439,7 @@ mod tests {
                 ("modis", 2012, "Russian_Federation"),
                 ("modis", 2011, "Turkey"),
                 ("modis", 2012, "Turkey"),
+                ("viirs-jpss1", 2020, "Turkey"),
                 ("viirs-snpp", 2012, "Turkey"),
             ]
         );
@@ -469,7 +476,7 @@ mod tests {
         assert_eq!(archive_years(Sensor::ModisTerra), Some(2000..=2025));
         assert_eq!(archive_years(Sensor::ModisAqua), Some(2000..=2025));
         assert_eq!(archive_years(Sensor::ViirsSNPP), Some(2012..=2025));
-        assert_eq!(archive_years(Sensor::ViirsNOAA20), None);
+        assert_eq!(archive_years(Sensor::ViirsNOAA20), Some(2018..=2025));
         assert_eq!(archive_years(Sensor::ViirsNOAA21), None);
     }
 
@@ -478,7 +485,7 @@ mod tests {
         assert_eq!(archive_slug(Sensor::ModisTerra), Some("modis"));
         assert_eq!(archive_slug(Sensor::ModisAqua), Some("modis"));
         assert_eq!(archive_slug(Sensor::ViirsSNPP), Some("viirs-snpp"));
-        assert_eq!(archive_slug(Sensor::ViirsNOAA20), None);
+        assert_eq!(archive_slug(Sensor::ViirsNOAA20), Some("viirs-jpss1"));
         assert_eq!(archive_slug(Sensor::ViirsNOAA21), None);
     }
 
@@ -503,10 +510,19 @@ mod tests {
     }
 
     #[test]
+    fn covers_enforces_noaa20_year_boundaries() {
+        let client = test_client();
+
+        assert!(!client.covers(Sensor::ViirsNOAA20, 2017));
+        assert!(client.covers(Sensor::ViirsNOAA20, 2018));
+        assert!(client.covers(Sensor::ViirsNOAA20, 2025));
+        assert!(!client.covers(Sensor::ViirsNOAA20, 2026));
+    }
+
+    #[test]
     fn covers_rejects_sensors_without_archive_files() {
         let client = test_client();
 
-        assert!(!client.covers(Sensor::ViirsNOAA20, 2020));
         assert!(!client.covers(Sensor::ViirsNOAA21, 2023));
     }
 
