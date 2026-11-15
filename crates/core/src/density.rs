@@ -127,6 +127,7 @@ mod tests {
     use crate::models::{Confidence, DayNight, FireType, HotspotSource, Sensor};
     use chrono::TimeZone;
 
+    #[allow(clippy::too_many_arguments)]
     fn raw(lat: f64, lon: f64, frp: f64, y: i32, mo: u32, d: u32, h: u32, mi: u32, s: u32) -> Hotspot {
         Hotspot {
             lat,
