@@ -1418,3 +1418,122 @@ async fn harmonize_effort_reports_no_swath_gap_outside_the_belt() {
     assert!(effort.as_object().unwrap().contains_key("tropical_swath_gap"));
     assert!(effort["tropical_swath_gap"].is_null());
 }
+
+fn sensitivity_cell(v: &Value, radius_km: f64, window_min: u64) -> Value {
+    v["cells"]
+        .as_array()
+        .expect("cells array")
+        .iter()
+        .find(|c| c["radius_km"].as_f64() == Some(radius_km) && c["window_min"] == window_min)
+        .unwrap_or_else(|| panic!("cell {radius_km}/{window_min} missing in {v}"))
+        .clone()
+}
+
+#[tokio::test]
+async fn sensitivity_matched_never_decreases_with_radius_or_window() {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+
+    let uri = format!("/api/sensitivity?{BBOX}&days=1&radius_km=0.05,0.5,2,10&window_min=30,60,180");
+    let reply = call(&app, &uri).await;
+    assert_eq!(reply.status, StatusCode::OK, "body: {}", reply.body);
+    let v = reply.json();
+    assert_eq!(v["raw_modis"], 2);
+    assert_eq!(v["raw_viirs"], 3);
+    assert_eq!(v["cells"].as_array().expect("cells").len(), 12);
+
+    let radii = [0.05, 0.5, 2.0, 10.0];
+    let windows = [30_u64, 60, 180];
+    let matched = |r: f64, w: u64| sensitivity_cell(&v, r, w)["matched"].as_u64().expect("matched");
+    for (ri, &r) in radii.iter().enumerate() {
+        for (wi, &w) in windows.iter().enumerate() {
+            if ri > 0 {
+                assert!(matched(r, w) >= matched(radii[ri - 1], w), "radius {r} window {w}");
+            }
+            if wi > 0 {
+                assert!(matched(r, w) >= matched(r, windows[wi - 1]), "radius {r} window {w}");
+            }
+        }
+    }
+    // The only pair is 0.14 km and 60 min apart.
+    assert_eq!(matched(0.05, 180), 0);
+    assert_eq!(matched(0.5, 30), 0);
+    assert_eq!(matched(0.5, 60), 1);
+    assert_eq!(matched(2.0, 180), 1);
+    let cell = sensitivity_cell(&v, 2.0, 180);
+    assert_eq!(cell["modis_only"], 1);
+    assert_eq!(cell["viirs_only"], 1);
+    assert_eq!(cell["harmonized_total"], 3);
+}
+
+#[rstest]
+#[case::radius_zero("0")]
+#[case::radius_negative("-1")]
+#[case::radius_above_max("10.001")]
+#[case::radius_nan("NaN")]
+#[case::radius_text("abc")]
+#[case::radius_one_bad_in_list("1,10.5")]
+#[tokio::test]
+async fn sensitivity_rejects_bad_radius(#[case] radius: &str) {
+    let app = app(None, None, None);
+    let reply = call(
+        &app,
+        &format!("/api/sensitivity?{BBOX}&days=1&radius_km={radius}&window_min=60"),
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "body: {}", reply.body);
+    assert!(reply.json()["error"].is_string());
+}
+
+#[rstest]
+#[case::radius_just_above_zero("0.001", "60")]
+#[case::radius_at_max("10", "60")]
+#[case::window_zero("2", "0")]
+#[case::window_at_max("2", "1440")]
+#[tokio::test]
+async fn sensitivity_accepts_boundary_values(#[case] radius: &str, #[case] window: &str) {
+    let firms = healthy_firms().await;
+    let app = app(Some(firms_client(&firms)), None, Some(Duration::from_secs(30)));
+    let reply = call(
+        &app,
+        &format!("/api/sensitivity?{BBOX}&days=1&radius_km={radius}&window_min={window}"),
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::OK, "body: {}", reply.body);
+}
+
+#[rstest]
+#[case::radius_six_values("1,2,3,4,5,6", "60")]
+#[case::window_six_values("2", "10,20,30,40,50,60")]
+#[case::window_above_max("2", "1441")]
+#[case::window_negative("2", "-5")]
+#[tokio::test]
+async fn sensitivity_rejects_oversized_grid_or_bad_window(
+    #[case] radius: &str,
+    #[case] window: &str,
+) {
+    let app = app(None, None, None);
+    let reply = call(
+        &app,
+        &format!("/api/sensitivity?{BBOX}&days=1&radius_km={radius}&window_min={window}"),
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "body: {}", reply.body);
+    assert!(reply.json()["error"].is_string());
+}
+
+#[rstest]
+#[case::no_window("/api/sensitivity?west=26&south=36&east=45&north=42&days=1&radius_km=2")]
+#[case::no_radius("/api/sensitivity?west=26&south=36&east=45&north=42&days=1&window_min=60")]
+#[case::no_bbox_part("/api/sensitivity?west=26&south=36&east=45&days=1&radius_km=2&window_min=60")]
+#[tokio::test]
+async fn sensitivity_rejects_missing_parameter(#[case] uri: &str) {
+    let app = app(None, None, None);
+    let reply = call(&app, uri).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "body: {}", reply.body);
+    assert!(reply.json()["error"].is_string());
+}
