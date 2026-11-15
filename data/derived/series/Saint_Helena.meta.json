@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2005/modis_2005_Saint_Helena.csv",
@@ -107,5 +107,5 @@
       "bytes": 208
     }
   ],
-  "body_hash": "48f8e79c1ff10108"
+  "body_hash": "047ef4b717518248"
 }

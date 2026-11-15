@@ -34,6 +34,7 @@ import MapStateOverlay from "./MapStateOverlay";
 import MapStatusBar from "./MapStatusBar";
 import PointDetail, { applyPointCardAnchor, pointCardAnchor } from "./PointDetail";
 import { useMapModel, useMapSummary, usePaletteVersion, usePointSelection } from "./useMapModel";
+import { useAppStore } from "../../store/useAppStore";
 import styles from "./HotspotMap.module.css";
 import globeStyles from "./GlobeMap.module.css";
 
@@ -95,11 +96,15 @@ export interface GlobeMapProps {
 
 function GlobeMap({ onUnsupported }: GlobeMapProps) {
   const model = useMapModel();
+  const dataMode = useAppStore((state) => state.dataMode);
   const {
     t,
     region,
     setRegion,
     points,
+    rawFrpBreaks,
+    harmonizedFrpBreaks,
+    frpBreaks,
     geo,
     geometryHarmonized,
     showDuplicateRings,
@@ -204,7 +209,14 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
     scene?.setHoverFeature(feature);
   }, [scene, highlightedFeature, geo.dataset]);
 
-  const scenePoints = useMemo(() => buildScenePoints(pointInput, LONLAT_PROJECTION), [pointInput]);
+  const scenePoints = useMemo(
+    () =>
+      buildScenePoints(pointInput, LONLAT_PROJECTION, {
+        raw: rawFrpBreaks,
+        harmonized: harmonizedFrpBreaks,
+      }),
+    [pointInput, rawFrpBreaks, harmonizedFrpBreaks],
+  );
   const globeLayers = useMemo(
     () => ({
       raw: buildGlobeLayer(scenePoints.raw, false),
@@ -753,6 +765,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
 
         {(activeDetail.rawPoint || activeDetail.harmPoint) && (
           <PointDetail
+            key={`${activeDetail.rawPoint?.id ?? ""}:${activeDetail.harmPoint?.id ?? ""}`}
             rawPoint={activeDetail.rawPoint}
             harmPoint={activeDetail.harmPoint}
             isDuplicateInRaw={activeDetail.isDuplicateInRaw}
@@ -761,12 +774,17 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
             screenY={activeDetail.screenY}
             viewportSize={size}
             onClose={handleCloseDetail}
+            rawPoints={points.raw}
             cardRef={detailCardRef}
           />
         )}
 
         <div className={styles.legendDock} data-map-ui="true">
-          <MapLegend sensorFilter={effectiveSensorFilter} onSensorFilterChange={setSensorFilter} />
+          <MapLegend
+            sensorFilter={effectiveSensorFilter}
+            onSensorFilterChange={setSensorFilter}
+            frpBreaks={frpBreaks}
+          />
         </div>
 
         <div className={globeStyles.credits}>
@@ -777,7 +795,9 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
               <span>{t("mapGlobeOrbitsNote")}</span>
             </p>
           )}
-          <p className={globeStyles.credit}>{t("mapGlobeCredit")}</p>
+          <p className={globeStyles.credit}>
+            {t(dataMode === "demo" ? "mapGlobeCreditDemo" : "mapGlobeCredit")}
+          </p>
         </div>
 
         <MapStateOverlay

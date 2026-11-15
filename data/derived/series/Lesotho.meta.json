@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2001/modis_2001_Lesotho.csv",
@@ -191,5 +191,5 @@
       "bytes": 59532
     }
   ],
-  "body_hash": "09954699235b1a24"
+  "body_hash": "00ddf28e97863057"
 }

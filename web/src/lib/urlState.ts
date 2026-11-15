@@ -1,5 +1,24 @@
-import type { Lang, MonthRef, RegionId, ViewMode } from "../types";
+import {
+  DEFAULT_FUSION_MODEL,
+  type DataMode,
+  type FusionModel,
+  type Lang,
+  type MinConfidence,
+  type MonthRef,
+  type Palette,
+  type PipelineConfig,
+  type PipelineOverrides,
+  type RegionId,
+  type ViewMode,
+} from "../types";
 import { monthKey } from "./format";
+import {
+  DEFAULT_PIPELINE_CONFIG,
+  normalizeOverrides,
+  parseBoundedNumber,
+  PIPELINE_PARAM_SPECS,
+} from "./pipelineOverrides";
+import { isRouteHash } from "./route";
 
 export const DEFAULT_REGION: RegionId = "Turkey";
 
@@ -43,7 +62,23 @@ export interface UrlState {
   mode: ViewMode;
   month: MonthRef | null;
   lang: Lang;
+  palette?: Palette;
+  data?: DataMode;
+  overrides?: PipelineOverrides;
+  minConfidence: MinConfidence;
+  fusionModel?: FusionModel;
 }
+
+const FUSION_HASH_VALUES: Readonly<Record<string, FusionModel>> = {
+  eq: "equal_weight",
+  mc: "modis_calibrated",
+};
+
+const FUSION_HASH_CODES: Readonly<Record<FusionModel, string | null>> = {
+  viirs_preferred: null,
+  equal_weight: "eq",
+  modis_calibrated: "mc",
+};
 
 function parseMonth(value: string): MonthRef | null | undefined {
   const match = /^(\d{4})-(\d{2})$/.exec(value);
@@ -59,7 +94,10 @@ function parseMonth(value: string): MonthRef | null | undefined {
   return { year, month };
 }
 
-/** Reads `#region=Turkey&mode=harmonized&month=2021-08&lang=tr`. Unknown or invalid values are ignored. */
+/**
+ * Reads `#region=Turkey&mode=harmonized&month=2021-08&lang=tr&conf=nominal`. Unknown or invalid
+ * values are ignored. A missing `conf` means the default `low`, since `serializeHash` omits it.
+ */
 export function parseHash(hash: string): Partial<UrlState> {
   const params = new URLSearchParams(hash.replace(/^#/, ""));
   const result: Partial<UrlState> = {};
@@ -82,21 +120,81 @@ export function parseHash(hash: string): Partial<UrlState> {
     const parsed = parseMonth(month);
     if (parsed !== undefined) result.month = parsed;
   }
+
+  const palette = params.get("palette");
+  if (palette === "default" || palette === "viridis" || palette === "cividis") {
+    result.palette = palette;
+  }
+
+  const data = params.get("data");
+  if (data === "demo" || data === "live") {
+    result.data = data;
+  }
+
+  const overrides: PipelineOverrides = {};
+  let hasOverrides = false;
+  for (const spec of PIPELINE_PARAM_SPECS) {
+    const parsed = parseBoundedNumber(
+      params.get(spec.hashKey),
+      spec.apiMin,
+      spec.apiMax,
+      spec.apiInteger,
+    );
+    if (parsed !== undefined) {
+      overrides[spec.key] = parsed;
+      hasOverrides = true;
+    }
+  }
+  if (hasOverrides) {
+    result.overrides = overrides;
+  }
+
+  const fm = params.get("fm");
+  result.fusionModel = fm === "eq" || fm === "mc" ? FUSION_HASH_VALUES[fm] : DEFAULT_FUSION_MODEL;
+
+  const conf = params.get("conf");
+  if (conf === null || conf === "low") result.minConfidence = "low";
+  else if (conf === "nominal") result.minConfidence = conf;
   return result;
 }
 
-export function serializeHash(state: UrlState): string {
+export function serializeHash(
+  state: UrlState,
+  defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+): string {
   const params = new URLSearchParams();
   params.set("region", state.region);
   params.set("mode", state.mode);
   if (state.month) params.set("month", monthKey(state.month));
   params.set("lang", state.lang);
+  if (state.palette && state.palette !== "default") {
+    params.set("palette", state.palette);
+  }
+  if (state.data === "demo") {
+    params.set("data", "demo");
+  }
+  const normalized = normalizeOverrides(state.overrides, defaults);
+  for (const spec of PIPELINE_PARAM_SPECS) {
+    const val = normalized[spec.key];
+    if (val !== undefined) {
+      const formatted = spec.apiInteger ? String(Math.round(val)) : String(Number(val.toFixed(4)));
+      params.set(spec.hashKey, formatted);
+    }
+  }
+  const fmCode = FUSION_HASH_CODES[state.fusionModel ?? DEFAULT_FUSION_MODEL];
+  if (fmCode) params.set("fm", fmCode);
+  if (state.minConfidence && state.minConfidence !== "low") {
+    params.set("conf", state.minConfidence);
+  }
   return `#${params.toString()}`;
 }
 
-export function syncUrlHash(state: UrlState): void {
-  if (typeof window === "undefined") return;
-  const next = serializeHash(state);
+export function syncUrlHash(
+  state: UrlState,
+  defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+): void {
+  if (typeof window === "undefined" || isRouteHash(window.location.hash)) return;
+  const next = serializeHash(state, defaults);
   if (window.location.hash !== next) {
     window.history.replaceState(
       window.history.state,

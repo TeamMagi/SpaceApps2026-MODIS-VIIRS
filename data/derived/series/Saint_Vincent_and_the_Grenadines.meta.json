@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2002/modis_2002_Saint_Vincent_and_the_Grenadines.csv",
@@ -139,5 +139,5 @@
       "bytes": 759
     }
   ],
-  "body_hash": "e0d8e990acd6725f"
+  "body_hash": "733ec7cf10d0e58d"
 }

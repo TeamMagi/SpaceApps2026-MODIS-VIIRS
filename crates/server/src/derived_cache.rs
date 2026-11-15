@@ -16,7 +16,12 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 
 /// Bump manually whenever the `/api/series` response schema or the harmonization/aggregation
 /// logic that produces it changes, so previously persisted cache entries are invalidated.
-pub const DERIVED_SCHEMA_VERSION: u32 = 2;
+// v3: YearEntry adds static-mask and SAMA counts (static_masked, sama_removed).
+// v4: MonthEntry adds mean_frp, mean_frp_lower, and mean_frp_upper.
+// v5: YearEntry adds viirs_aggregated (1 MODIS = N VIIRS matching).
+// v6: Matched FRP intervals combine summed VIIRS pixels in quadrature (monthly mean_frp_* change).
+// v7: VIIRS pass sums limited to the MODIS scan/track footprint.
+pub const DERIVED_SCHEMA_VERSION: u32 = 7;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;
@@ -42,14 +47,17 @@ pub fn bundled_dir_from_env() -> PathBuf {
     dir_from_env_or("BUNDLED_DERIVED_DIR", DEFAULT_BUNDLED_DERIVED_DIR)
 }
 
-/// Computes a deterministic 64-bit FNV-1a hash of `bytes`.
-pub fn fnv1a_64(bytes: &[u8]) -> u64 {
-    let mut hash = FNV1A_64_OFFSET_BASIS;
+fn fnv1a_64_update(mut hash: u64, bytes: &[u8]) -> u64 {
     for &b in bytes {
         hash ^= u64::from(b);
         hash = hash.wrapping_mul(FNV1A_64_PRIME);
     }
     hash
+}
+
+/// Computes a deterministic 64-bit FNV-1a hash of `bytes`.
+pub fn fnv1a_64(bytes: &[u8]) -> u64 {
+    fnv1a_64_update(FNV1A_64_OFFSET_BASIS, bytes)
 }
 
 /// Deterministic digest of the effective [`PipelineConfig`].
@@ -96,6 +104,38 @@ struct SeriesMeta {
     schema_version: u32,
     config_hash: String,
     files: Vec<ArchiveFileStamp>,
+    body_hash: String,
+}
+
+/// Validation stamp that must match exactly for a cached `coverage.json` file to be reused.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CoverageStamp {
+    pub schema_version: u32,
+    pub files_hash: String,
+}
+
+impl CoverageStamp {
+    /// Builds a machine-independent stamp from the sorted `(path, bytes)` list of archive files.
+    pub fn from_files<'a>(files: impl IntoIterator<Item = &'a ArchiveFileStamp>) -> Self {
+        let mut sorted: Vec<&ArchiveFileStamp> = files.into_iter().collect();
+        sorted.sort_by(|a, b| a.path.cmp(&b.path).then(a.bytes.cmp(&b.bytes)));
+        let mut hash = FNV1A_64_OFFSET_BASIS;
+        for file in sorted {
+            hash = fnv1a_64_update(hash, &(file.path.len() as u64).to_le_bytes());
+            hash = fnv1a_64_update(hash, file.path.as_bytes());
+            hash = fnv1a_64_update(hash, &file.bytes.to_le_bytes());
+        }
+        Self {
+            schema_version: DERIVED_SCHEMA_VERSION,
+            files_hash: format!("{hash:016x}"),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CoverageMeta {
+    schema_version: u32,
+    files_hash: String,
     body_hash: String,
 }
 
@@ -343,6 +383,156 @@ impl DerivedCache {
         Some(Bytes::from(body_bytes))
     }
 
+    fn coverage_paths(&self) -> (PathBuf, PathBuf) {
+        (
+            self.dir.join("coverage.json"),
+            self.dir.join("coverage.meta.json"),
+        )
+    }
+
+    fn write_atomic_pair(
+        &self,
+        parent_dir: &Path,
+        stem: &str,
+        body_path: &Path,
+        meta_path: &Path,
+        body: &[u8],
+        meta_bytes: &[u8],
+    ) -> io::Result<()> {
+        if let Err(err) = fs::create_dir_all(parent_dir) {
+            self.warn_unwritable_once(&err);
+            return Err(err);
+        }
+
+        let seq = NEXT_TMP_ID.fetch_add(1, Ordering::Relaxed);
+        let pid = std::process::id();
+        let tmp_body = parent_dir.join(format!(".{stem}.json.tmp.{pid}.{seq}"));
+        let tmp_meta = parent_dir.join(format!(".{stem}.meta.json.tmp.{pid}.{seq}"));
+
+        let write_result = (|| -> io::Result<()> {
+            fs::write(&tmp_body, body)?;
+            fs::write(&tmp_meta, meta_bytes)?;
+            // Persist the body before the stamp so readers never observe a new stamp with an old body.
+            fs::rename(&tmp_body, body_path)?;
+            fs::rename(&tmp_meta, meta_path)?;
+            Ok(())
+        })();
+
+        if let Err(err) = write_result {
+            let _ = fs::remove_file(&tmp_body);
+            let _ = fs::remove_file(&tmp_meta);
+            self.warn_unwritable_once(&err);
+            return Err(err);
+        }
+
+        Ok(())
+    }
+
+    /// Reads cached `coverage.json` bytes if the stamp and body checksum match `expected`.
+    /// Read errors, stamp mismatches, or corrupted files are logged, ignored, and treated as a miss.
+    pub fn read_coverage(&self, expected: &CoverageStamp) -> Option<Bytes> {
+        let (body_path, meta_path) = self.coverage_paths();
+        let meta_bytes = match fs::read(&meta_path) {
+            Ok(bytes) => bytes,
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return None,
+            Err(err) => {
+                if self.should_warn("coverage") {
+                    tracing::warn!(
+                        target: "pyrosync::derived_cache",
+                        path = %meta_path.display(),
+                        error = %err,
+                        "failed to read derived coverage metadata; ignoring cache"
+                    );
+                }
+                return None;
+            }
+        };
+
+        let meta: CoverageMeta = match serde_json::from_slice(&meta_bytes) {
+            Ok(meta) => meta,
+            Err(err) => {
+                if self.should_warn("coverage") {
+                    tracing::warn!(
+                        target: "pyrosync::derived_cache",
+                        path = %meta_path.display(),
+                        error = %err,
+                        "corrupt derived coverage metadata; ignoring cache"
+                    );
+                }
+                return None;
+            }
+        };
+
+        if meta.schema_version != expected.schema_version || meta.files_hash != expected.files_hash
+        {
+            if self.should_warn("coverage") {
+                tracing::warn!(
+                    target: "pyrosync::derived_cache",
+                    path = %meta_path.display(),
+                    found_schema = meta.schema_version,
+                    expected_schema = expected.schema_version,
+                    "derived coverage stamp mismatch; ignoring cache"
+                );
+            }
+            return None;
+        }
+
+        let body_bytes = match fs::read(&body_path) {
+            Ok(bytes) => bytes,
+            Err(err) => {
+                if self.should_warn("coverage") {
+                    tracing::warn!(
+                        target: "pyrosync::derived_cache",
+                        path = %body_path.display(),
+                        error = %err,
+                        "failed to read derived coverage body; ignoring cache"
+                    );
+                }
+                return None;
+            }
+        };
+
+        if format!("{:016x}", fnv1a_64(&body_bytes)) != meta.body_hash {
+            if self.should_warn("coverage") {
+                tracing::warn!(
+                    target: "pyrosync::derived_cache",
+                    path = %body_path.display(),
+                    "corrupt derived coverage body (checksum mismatch); ignoring cache"
+                );
+            }
+            return None;
+        }
+
+        Some(Bytes::from(body_bytes))
+    }
+
+    /// Atomically persists `coverage.json` and its stamp to disk.
+    pub fn write_coverage(&self, stamp: &CoverageStamp, body: &[u8]) -> io::Result<()> {
+        if self.read_only {
+            return Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "bundled derived cache is read-only",
+            ));
+        }
+        let (body_path, meta_path) = self.coverage_paths();
+        let meta = CoverageMeta {
+            schema_version: stamp.schema_version,
+            files_hash: stamp.files_hash.clone(),
+            body_hash: format!("{:016x}", fnv1a_64(body)),
+        };
+        let meta_bytes = serde_json::to_vec_pretty(&meta)
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+
+        self.write_atomic_pair(
+            &self.dir,
+            "coverage",
+            &body_path,
+            &meta_path,
+            body,
+            &meta_bytes,
+        )
+    }
+
     /// Atomically persists the `/api/series` JSON body and its stamp to disk.
     pub fn write_series(
         &self,
@@ -363,11 +553,6 @@ impl DerivedCache {
             ));
         };
 
-        if let Err(err) = fs::create_dir_all(&series_dir) {
-            self.warn_unwritable_once(&err);
-            return Err(err);
-        }
-
         let meta = SeriesMeta {
             schema_version: stamp.schema_version,
             config_hash: stamp.config_hash.clone(),
@@ -377,26 +562,7 @@ impl DerivedCache {
         let meta_bytes = serde_json::to_vec_pretty(&meta)
             .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
 
-        let seq = NEXT_TMP_ID.fetch_add(1, Ordering::Relaxed);
-        let pid = std::process::id();
-        let tmp_body = series_dir.join(format!(".{region}.json.tmp.{pid}.{seq}"));
-        let tmp_meta = series_dir.join(format!(".{region}.meta.json.tmp.{pid}.{seq}"));
-
-        let write_result = (|| -> io::Result<()> {
-            fs::write(&tmp_body, body)?;
-            fs::write(&tmp_meta, &meta_bytes)?;
-            // Persist the body before the stamp so readers never observe a new stamp with an old body.
-            fs::rename(&tmp_body, &body_path)?;
-            fs::rename(&tmp_meta, &meta_path)?;
-            Ok(())
-        })();
-
-        if let Err(err) = write_result {
-            let _ = fs::remove_file(&tmp_body);
-            let _ = fs::remove_file(&tmp_meta);
-            self.warn_unwritable_once(&err);
-            return Err(err);
-        }
+        self.write_atomic_pair(&series_dir, region, &body_path, &meta_path, body, &meta_bytes)?;
 
         self.validity_cache
             .lock()
@@ -461,6 +627,48 @@ mod tests {
         // Restoring valid body via write_series invalidates the cached `false` entry.
         cache.write_series("Test", &stamp, body).unwrap();
         assert!(cache.has_valid_series("Test", &stamp));
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn coverage_roundtrip_and_stamp_validation() {
+        let dir = std::env::temp_dir().join(format!(
+            "pyrosync-derived-coverage-test-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        let cache = DerivedCache::new(dir.clone());
+        let files_a = [
+            ArchiveFileStamp {
+                path: "viirs-snpp/2020/viirs-snpp_2020_Test.csv".to_string(),
+                bytes: 200,
+            },
+            ArchiveFileStamp {
+                path: "modis/2020/modis_2020_Test.csv".to_string(),
+                bytes: 100,
+            },
+        ];
+        // Stamp must be order-independent.
+        let stamp_a = CoverageStamp::from_files(files_a.iter());
+        let stamp_b = CoverageStamp::from_files(files_a.iter().rev());
+        assert_eq!(stamp_a, stamp_b);
+
+        let body = br#"{"modis":{"first":"2020-01-01","last":"2020-12-31"}}"#;
+        cache.write_coverage(&stamp_a, body).unwrap();
+        assert_eq!(cache.read_coverage(&stamp_a).as_deref(), Some(&body[..]));
+
+        // Any file size change invalidates the stamp.
+        let mut files_changed = files_a.clone();
+        files_changed[1].bytes += 1;
+        let stamp_changed = CoverageStamp::from_files(files_changed.iter());
+        assert_ne!(stamp_a, stamp_changed);
+        assert!(cache.read_coverage(&stamp_changed).is_none());
+
+        // Corrupt body triggers checksum mismatch -> cache miss.
+        let (body_path, _) = cache.coverage_paths();
+        fs::write(&body_path, b"{corrupt").unwrap();
+        assert!(cache.read_coverage(&stamp_a).is_none());
 
         let _ = fs::remove_dir_all(&dir);
     }

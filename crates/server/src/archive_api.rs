@@ -18,21 +18,25 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::{OnceCell, Semaphore};
 use tokio::task::JoinSet;
 
-use pyrosync_core::calendar::compute_anomalies;
+use pyrosync_core::calendar::{compute_anomalies, mean_frp_with_uncertainty};
 use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::density::{ALLOWED_CELL_DEGREES, aggregate_density};
+use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap};
 use pyrosync_core::events::{
     EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
 };
-use pyrosync_core::harmonize::{harmonize_with_config, harmonize_with_links_config};
+use pyrosync_core::fusion::{FusionModel, apply_fusion_model};
+use pyrosync_core::harmonize::harmonize_with_links_masked;
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
+use pyrosync_core::static_mask::StaticMask;
 use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_slug, scan_local_archive};
 use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
 
-use crate::derived_cache::{ArchiveFileStamp, DerivedCache, SeriesStamp};
+use crate::derived_cache::{ArchiveFileStamp, CoverageStamp, DerivedCache, SeriesStamp};
+use crate::{ConfidenceFilter, MinConfidence};
 
 const X_SERIES_SOURCE_HEADER: HeaderName = HeaderName::from_static("x-series-source");
 pub const DEFAULT_PRECOMPUTE_CONCURRENCY: usize = 2;
@@ -87,6 +91,8 @@ pub struct ArchiveState {
     bundled_cache: Arc<DerivedCache>,
     index: OnceCell<Arc<ArchiveIndex>>,
     coverage: OnceCell<Arc<Coverage>>,
+    #[cfg(test)]
+    coverage_scans: std::sync::atomic::AtomicUsize,
     series: Mutex<HashMap<String, Arc<OnceCell<Bytes>>>>,
     years: Mutex<YearCache>,
     /// Each slot holds one parsed year plus its harmonize working set until its stats are
@@ -105,6 +111,8 @@ impl ArchiveState {
             bundled_cache: Arc::new(DerivedCache::bundled_from_env()),
             index: OnceCell::new(),
             coverage: OnceCell::new(),
+            #[cfg(test)]
+            coverage_scans: std::sync::atomic::AtomicUsize::new(0),
             series: Mutex::new(HashMap::new()),
             years: Mutex::new(YearCache::default()),
             load_slots: Arc::new(Semaphore::new((cpus / 2).clamp(2, 8))),
@@ -121,6 +129,11 @@ impl ArchiveState {
     pub fn with_bundled_cache_dir(mut self, dir: PathBuf) -> Self {
         self.bundled_cache = Arc::new(DerivedCache::read_only(dir));
         self
+    }
+
+    #[cfg(test)]
+    pub fn coverage_scans(&self) -> usize {
+        self.coverage_scans.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub fn with_year_concurrency(mut self, concurrency: usize) -> Self {
@@ -380,6 +393,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
     state
         .index
         .get_or_try_init(|| async {
+            let started = Instant::now();
             let dir = state.dir().to_path_buf();
             let index = tokio::task::spawn_blocking(move || build_index(&dir))
                 .await
@@ -393,6 +407,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
             tracing::info!(
                 regions = index.regions.len(),
                 dir = %state.dir().display(),
+                elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
                 "scanned FIRMS archive"
             );
             Ok(Arc::new(index))
@@ -401,7 +416,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
         .cloned()
 }
 
-#[derive(Serialize, Clone, Copy, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 struct DateSpan {
     first: NaiveDate,
     last: NaiveDate,
@@ -543,21 +558,117 @@ fn file_date_span(path: &Path) -> std::io::Result<Option<DateSpan>> {
     }))
 }
 
+/// Persistent disk representation of [`Coverage`], preserving `snpp` and `noaa20` which are
+/// skipped in `/api/series` JSON responses.
+#[derive(Serialize, Deserialize)]
+struct CachedCoverage {
+    modis: Option<DateSpan>,
+    viirs: Option<DateSpan>,
+    snpp: Option<DateSpan>,
+    noaa20: Option<DateSpan>,
+}
+
+impl From<&Coverage> for CachedCoverage {
+    fn from(c: &Coverage) -> Self {
+        Self {
+            modis: c.modis,
+            viirs: c.viirs,
+            snpp: c.snpp,
+            noaa20: c.noaa20,
+        }
+    }
+}
+
+impl From<CachedCoverage> for Coverage {
+    fn from(c: CachedCoverage) -> Self {
+        Self {
+            modis: c.modis,
+            viirs: c.viirs,
+            snpp: c.snpp,
+            noaa20: c.noaa20,
+        }
+    }
+}
+
+fn coverage_stamp(index: &ArchiveIndex) -> CoverageStamp {
+    CoverageStamp::from_files(index.regions.values().flat_map(|r| r.files.iter()))
+}
+
+fn serialize_coverage(coverage: &Coverage) -> Vec<u8> {
+    serde_json::to_vec_pretty(&CachedCoverage::from(coverage))
+        .expect("Coverage serialization cannot fail")
+}
+
+fn deserialize_coverage(bytes: &[u8], source: &str) -> Option<Coverage> {
+    match serde_json::from_slice::<CachedCoverage>(bytes) {
+        Ok(cached) => Some(Coverage::from(cached)),
+        Err(err) => {
+            tracing::warn!(
+                source,
+                error = %err,
+                "corrupt derived coverage JSON; ignoring cache"
+            );
+            None
+        }
+    }
+}
+
 async fn load_coverage(state: &ArchiveState) -> Result<Arc<Coverage>, ApiError> {
     let index = load_index(state).await?;
     state
         .coverage
         .get_or_try_init(|| async move {
             let started = Instant::now();
-            let coverage = tokio::task::spawn_blocking(move || scan_coverage(&index))
-                .await
-                .map_err(join_error)?
-                .map_err(|err| {
-                    ApiError::new(
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("failed to read sensor coverage from the archive: {err}"),
-                    )
-                })?;
+            let stamp = coverage_stamp(&index);
+            let cache = state.derived_cache.clone();
+            let bundled = state.bundled_cache.clone();
+            let check_stamp = stamp.clone();
+
+            if let Some((coverage, source)) = tokio::task::spawn_blocking(move || {
+                if let Some(bytes) = cache.read_coverage(&check_stamp)
+                    && let Some(coverage) = deserialize_coverage(&bytes, "disk")
+                {
+                    return Some((coverage, "disk"));
+                }
+                if let Some(bytes) = bundled.read_coverage(&check_stamp)
+                    && let Some(coverage) = deserialize_coverage(&bytes, "bundled")
+                {
+                    return Some((coverage, "bundled"));
+                }
+                None
+            })
+            .await
+            .map_err(join_error)?
+            {
+                tracing::info!(
+                    ?coverage,
+                    source,
+                    elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+                    "loaded sensor coverage from cache"
+                );
+                return Ok(Arc::new(coverage));
+            }
+
+            #[cfg(test)]
+            state
+                .coverage_scans
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+            let cache = state.derived_cache.clone();
+            let coverage = tokio::task::spawn_blocking(move || {
+                let coverage = scan_coverage(&index)?;
+                let bytes = serialize_coverage(&coverage);
+                let _ = cache.write_coverage(&stamp, &bytes);
+                Ok::<_, std::io::Error>(coverage)
+            })
+            .await
+            .map_err(join_error)?
+            .map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to read sensor coverage from the archive: {err}"),
+                )
+            })?;
             tracing::info!(
                 ?coverage,
                 elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
@@ -809,8 +920,11 @@ struct YearEntry {
     raw_total: usize,
     harmonized: usize,
     matched: usize,
+    viirs_aggregated: usize,
     modis_only: usize,
     viirs_only: usize,
+    static_masked: usize,
+    sama_removed: usize,
     interscan_removed: usize,
     fleet_merged: usize,
     first_date: Option<NaiveDate>,
@@ -824,6 +938,7 @@ struct YearEntry {
 }
 
 #[derive(Serialize)]
+#[cfg_attr(test, derive(Deserialize))]
 struct MonthEntry {
     year: i32,
     month: u32,
@@ -831,6 +946,9 @@ struct MonthEntry {
     raw_viirs: usize,
     raw_total: usize,
     harmonized: usize,
+    mean_frp: Option<f64>,
+    mean_frp_lower: Option<f64>,
+    mean_frp_upper: Option<f64>,
     anomaly_raw: Option<f64>,
     anomaly_harmonized: Option<f64>,
 }
@@ -887,6 +1005,12 @@ fn year_stats_with(
     observed: &[DateSpan],
     config: &PipelineConfig,
 ) -> YearStats {
+    // The static mask is judged on the whole year and shared with the monthly runs, which alone
+    // could never reach its month threshold.
+    let mask = config
+        .static_mask
+        .enabled
+        .then(|| StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask));
     // Every month a contributing sensor observed gets an entry, zero fires included, so quiet
     // months count in the anomaly baselines; months outside coverage are left out. A month with
     // rows is always kept, so the raw monthly counts add up to the yearly totals.
@@ -899,16 +1023,26 @@ fn year_stats_with(
                 return None;
             }
             let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
+            // Each month is harmonized on its own, so matches and interscan duplicates
+            // that straddle a month boundary are not merged; the monthly harmonized counts
+            // need not add up to the yearly figure, which is harmonized over the whole year.
+            let harmonized_hotspots =
+                harmonize_with_links_masked(modis, viirs, config, mask.as_ref()).hotspots;
+            let (mean_frp, mean_frp_lower, mean_frp_upper) =
+                match mean_frp_with_uncertainty(&harmonized_hotspots, &config.uncertainty) {
+                    Some((mean, lower, upper)) => (Some(mean), Some(lower), Some(upper)),
+                    None => (None, None, None),
+                };
             Some(MonthEntry {
                 year,
                 month,
                 raw_modis,
                 raw_viirs,
                 raw_total: raw_modis + raw_viirs,
-                // Each month is harmonized on its own, so matches and interscan duplicates
-                // that straddle a month boundary are not merged; the monthly harmonized counts
-                // need not add up to the yearly figure, which is harmonized over the whole year.
-                harmonized: harmonize_with_config(modis, viirs, config).len(),
+                harmonized: harmonized_hotspots.len(),
+                mean_frp,
+                mean_frp_lower,
+                mean_frp_upper,
                 anomaly_raw: None,
                 anomaly_harmonized: None,
             })
@@ -918,7 +1052,7 @@ fn year_stats_with(
     let modis_span = date_span(&data.modis);
     let viirs_span = date_span(&data.viirs);
     let (raw_modis, raw_viirs) = (data.modis.len(), data.viirs.len());
-    let linked = harmonize_with_links_config(data.modis, data.viirs, config);
+    let linked = harmonize_with_links_masked(data.modis, data.viirs, config, mask.as_ref());
     let count_source = |source: HotspotSource| {
         linked
             .hotspots
@@ -934,8 +1068,11 @@ fn year_stats_with(
         raw_total: raw_modis + raw_viirs,
         harmonized: linked.hotspots.len(),
         matched: count_source(HotspotSource::Matched),
+        viirs_aggregated: linked.viirs_aggregated,
         modis_only: count_source(HotspotSource::ModisOnly),
         viirs_only: count_source(HotspotSource::ViirsOnly),
+        static_masked: linked.static_masked,
+        sama_removed: linked.sama_removed,
         interscan_removed: linked.interscan_removed,
         fleet_merged: linked.fleet_merged,
         first_date: [modis_span, viirs_span].iter().flatten().map(|s| s.0).min(),
@@ -969,6 +1106,8 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
+            quality_flags: Vec::new(),
+            conformal: None,
         })
         .collect();
     compute_anomalies(&mut cells);
@@ -1313,7 +1452,43 @@ pub async fn precompute_series(
 ) -> Result<PrecomputeReport, ApiError> {
     let total_started = Instant::now();
     let index = load_index(&state).await?;
-    let coverage = load_coverage(&state).await?;
+    let coverage = if opts.force {
+        let started = Instant::now();
+        #[cfg(test)]
+        state
+            .coverage_scans
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let stamp = coverage_stamp(&index);
+        let scan_index = index.clone();
+        let cache = state.derived_cache.clone();
+        let coverage = tokio::task::spawn_blocking(move || {
+            let coverage = scan_coverage(&scan_index).map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to read sensor coverage from the archive: {err}"),
+                )
+            })?;
+            let bytes = serialize_coverage(&coverage);
+            cache.write_coverage(&stamp, &bytes).map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to write derived coverage cache: {err}"),
+                )
+            })?;
+            Ok::<_, ApiError>(Arc::new(coverage))
+        })
+        .await
+        .map_err(join_error)??;
+        let _ = state.coverage.set(coverage.clone());
+        tracing::info!(
+            ?coverage,
+            elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+            "computed sensor coverage from the archive"
+        );
+        coverage
+    } else {
+        load_coverage(&state).await?
+    };
 
     let targets: Vec<String> = if opts.regions.is_empty() {
         index.regions.keys().cloned().collect()
@@ -1415,12 +1590,19 @@ pub async fn precompute_series(
 
 // ---------- points ----------
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default, Clone)]
 struct PointsParams {
     region: Option<String>,
     year: Option<String>,
     month: Option<String>,
     limit: Option<String>,
+    dedup_time_secs: Option<String>,
+    dedup_overlap: Option<String>,
+    match_radius_km: Option<String>,
+    match_window_secs: Option<String>,
+    fleet_radius_km: Option<String>,
+    min_confidence: Option<String>,
+    fusion_model: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -1463,12 +1645,33 @@ struct HarmonizedPoint {
 }
 
 #[derive(Serialize)]
+struct FusionComparison {
+    model: FusionModel,
+    baseline_count: usize,
+    baseline_total_frp: f64,
+    count: usize,
+    total_frp: f64,
+    dropped_below_modis_limit: usize,
+}
+
+fn total_frp(hotspots: &[HarmonizedHotspot]) -> f64 {
+    hotspots
+        .iter()
+        .map(|h| h.frp_corrected)
+        .filter(|v| v.is_finite())
+        .sum()
+}
+
+#[derive(Serialize)]
 struct Stages {
     raw_modis: usize,
     raw_viirs: usize,
+    static_masked: usize,
+    sama_removed: usize,
     interscan_removed: usize,
     fleet_merged: usize,
     matched_pairs: usize,
+    viirs_aggregated: usize,
     harmonized: usize,
 }
 
@@ -1564,8 +1767,16 @@ struct PointsResponse {
     harmonized: Vec<HarmonizedPoint>,
     stages: Stages,
     bbox: Option<Extent>,
+    filters: ConfidenceFilter,
+    /// Effort metadata for the region. The `/api/series` body is precomputed without any
+    /// geometry, so the flag is computed here at serve time from the year's detection extent.
+    tropical_swath_gap: Option<TropicalSwathGap>,
     events: EventsMeta,
     no_detection_days: Vec<NoDetectionDay>,
+    config: PipelineConfig,
+    config_overridden: bool,
+    fusion_model: FusionModel,
+    fusion_comparison: Option<FusionComparison>,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1695,12 +1906,57 @@ fn sample_links(
     (k_start.max(2), keep_out, keep_raw)
 }
 
-async fn points(
-    State(state): State<Arc<ArchiveState>>,
-    Query(params): Query<PointsParams>,
-) -> Result<Json<PointsResponse>, ApiError> {
-    let started = Instant::now();
-    let region = find_region(&state, params.region.as_deref()).await?;
+fn resolve_points_config(
+    base: &PipelineConfig,
+    params: &PointsParams,
+) -> Result<(PipelineConfig, bool), ApiError> {
+    let mut config = base.clone();
+    let mut overridden = false;
+    if let Some(v) = parse_param::<i64>("dedup_time_secs", params.dedup_time_secs.as_deref())? {
+        config.dedup.max_time_diff_secs = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("dedup_overlap", params.dedup_overlap.as_deref())? {
+        config.dedup.min_overlap_ratio = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("match_radius_km", params.match_radius_km.as_deref())? {
+        config.matching.radius_km = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<i64>("match_window_secs", params.match_window_secs.as_deref())? {
+        config.matching.window_secs = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("fleet_radius_km", params.fleet_radius_km.as_deref())? {
+        config.fleet.radius_km = v;
+        overridden = true;
+    }
+    config
+        .validate()
+        .map_err(|msg| ApiError::new(StatusCode::BAD_REQUEST, msg))?;
+    Ok((config, overridden))
+}
+
+/// Validated request shared by `/api/points` and the archive mode of `/api/export`.
+struct PeriodRequest {
+    region: Arc<RegionInfo>,
+    year: i32,
+    month: Option<u32>,
+    config: PipelineConfig,
+    config_overridden: bool,
+    min_confidence: MinConfidence,
+    fusion_model: FusionModel,
+}
+
+/// `own_checks` runs after the region, year and month checks and before the threshold
+/// overrides, so callers validate their own parameters in the order `/api/points` always has.
+async fn resolve_period(
+    state: &ArchiveState,
+    params: &PointsParams,
+    own_checks: impl FnOnce() -> Result<(), ApiError>,
+) -> Result<PeriodRequest, ApiError> {
+    let region = find_region(state, params.region.as_deref()).await?;
     let id = region.id.clone();
 
     let year: i32 = parse_param("year", params.year.as_deref())?
@@ -1712,15 +1968,15 @@ async fn points(
             "'month' must be within 1..=12",
         ));
     }
-    let limit = match parse_param::<usize>("limit", params.limit.as_deref())? {
-        Some(0) => {
-            return Err(ApiError::new(
-                StatusCode::BAD_REQUEST,
-                "'limit' must be at least 1",
-            ));
-        }
-        Some(n) => n.min(MAX_POINTS_LIMIT),
-        None => DEFAULT_POINTS_LIMIT,
+    own_checks()?;
+    let (config, config_overridden) = resolve_points_config(&state.config, params)?;
+    let min_confidence = MinConfidence::parse(params.min_confidence.as_deref())
+        .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?;
+    let fusion_model = match params.fusion_model.as_deref().map(str::trim) {
+        None | Some("") => FusionModel::default(),
+        Some(v) => v
+            .parse::<FusionModel>()
+            .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?,
     };
     if !region.modis_years.contains(&year)
         && !region.viirs_years.contains(&year)
@@ -1732,6 +1988,46 @@ async fn points(
         ));
     }
     state.admit_year(&region, year)?;
+    Ok(PeriodRequest {
+        region,
+        year,
+        month,
+        config,
+        config_overridden,
+        min_confidence,
+        fusion_model,
+    })
+}
+
+async fn points(
+    State(state): State<Arc<ArchiveState>>,
+    Query(params): Query<PointsParams>,
+) -> Result<Json<PointsResponse>, ApiError> {
+    let started = Instant::now();
+    let mut limit = DEFAULT_POINTS_LIMIT;
+    let PeriodRequest {
+        region,
+        year,
+        month,
+        config,
+        config_overridden,
+        min_confidence,
+        fusion_model,
+    } = resolve_period(&state, &params, || {
+        limit = match parse_param::<usize>("limit", params.limit.as_deref())? {
+            Some(0) => {
+                return Err(ApiError::new(
+                    StatusCode::BAD_REQUEST,
+                    "'limit' must be at least 1",
+                ));
+            }
+            Some(n) => n.min(MAX_POINTS_LIMIT),
+            None => DEFAULT_POINTS_LIMIT,
+        };
+        Ok(())
+    })
+    .await?;
+    let id = region.id.clone();
 
     let slot = state
         .load_slots
@@ -1741,16 +2037,36 @@ async fn points(
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
     let coverage = load_coverage(&state).await?;
-    let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
-        let (modis, viirs) = match month {
+        // Judged on the whole year so a single-month request masks the same cells as /api/series.
+        let mask = config.static_mask.enabled.then(|| {
+            StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
+        });
+        // Measured on the whole year so the flag stays put while the user steps through months.
+        let tropical_swath_gap = extent(
+            data.modis
+                .iter()
+                .chain(&data.viirs)
+                .map(|h| (h.lat, h.lon)),
+        )
+        .and_then(|e| {
+            flag_tropical_swath_gap(
+                e.south,
+                e.north,
+                SwathGapBasis::Detections,
+                config.uncertainty.tropical_swath_gap_compensation,
+            )
+        });
+        let (mut modis, mut viirs) = match month {
             Some(m) => (in_month(&data.modis, m), in_month(&data.viirs, m)),
             None => Arc::try_unwrap(data).map_or_else(
                 |shared| (shared.modis.clone(), shared.viirs.clone()),
                 |owned| (owned.modis, owned.viirs),
             ),
         };
+        // Filtered before harmonization so dropped detections never reach dedup or matching.
+        let excluded_detections = min_confidence.retain(&mut modis) + min_confidence.retain(&mut viirs);
 
         let raw_points: Vec<RawPoint> = modis
             .iter()
@@ -1763,10 +2079,47 @@ async fn points(
             modis.iter().map(|h| h.acquired.date_naive()).collect();
         let viirs_days: BTreeSet<NaiveDate> =
             viirs.iter().map(|h| h.acquired.date_naive()).collect();
-        let linked = harmonize_with_links_config(modis, viirs, &config);
+        let fusion_inputs = (fusion_model != FusionModel::ViirsPreferred)
+            .then(|| (modis.clone(), viirs.clone()));
+        let mut linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+        let (hotspots, links, fusion_comparison) = match fusion_inputs {
+            None => {
+                let links: Vec<Option<usize>> = linked
+                    .modis_links
+                    .iter()
+                    .chain(&linked.viirs_links)
+                    .copied()
+                    .collect();
+                (std::mem::take(&mut linked.hotspots), links, None)
+            }
+            Some((fusion_modis, fusion_viirs)) => {
+                let fused = apply_fusion_model(
+                    &linked,
+                    &fusion_modis,
+                    &fusion_viirs,
+                    fusion_model,
+                    &config,
+                );
+                let links: Vec<Option<usize>> = linked
+                    .modis_links
+                    .iter()
+                    .chain(&linked.viirs_links)
+                    .map(|link| link.and_then(|o| fused.index_map[o]))
+                    .collect();
+                let comparison = FusionComparison {
+                    model: fusion_model,
+                    baseline_count: linked.hotspots.len(),
+                    baseline_total_frp: total_frp(&linked.hotspots),
+                    count: fused.hotspots.len(),
+                    total_frp: total_frp(&fused.hotspots),
+                    dropped_below_modis_limit: fused.dropped_below_modis_limit,
+                };
+                (fused.hotspots, links, Some(comparison))
+            }
+        };
 
         let event_params = EventParams::default();
-        let clustering = cluster_events(&linked.hotspots, &event_params);
+        let clustering = cluster_events(&hotspots, &event_params);
         let events = events_meta(&clustering, &event_params);
         let (modis_cov, viirs_cov) = family_coverage(&region, year, &coverage);
         let gaps = no_detection_days(
@@ -1777,14 +2130,7 @@ async fn points(
             viirs_cov,
         );
 
-        let links: Vec<Option<usize>> = linked
-            .modis_links
-            .iter()
-            .chain(&linked.viirs_links)
-            .copied()
-            .collect();
-
-        let (k, keep_out, keep_raw) = sample_links(&links, linked.hotspots.len(), limit);
+        let (k, keep_out, keep_raw) = sample_links(&links, hotspots.len(), limit);
 
         let raw: Vec<RawPoint> = raw_points
             .into_iter()
@@ -1801,13 +2147,15 @@ async fn points(
         let stages = Stages {
             raw_modis,
             raw_viirs,
+            static_masked: linked.static_masked,
+            sama_removed: linked.sama_removed,
             interscan_removed: linked.interscan_removed,
             fleet_merged: linked.fleet_merged,
             matched_pairs: linked.matched_pairs,
-            harmonized: linked.hotspots.len(),
+            viirs_aggregated: linked.viirs_aggregated,
+            harmonized: hotspots.len(),
         };
-        let harmonized: Vec<HarmonizedPoint> = linked
-            .hotspots
+        let harmonized: Vec<HarmonizedPoint> = hotspots
             .into_iter()
             .enumerate()
             .filter(|(i, _)| keep_out[*i])
@@ -1829,8 +2177,17 @@ async fn points(
             harmonized,
             stages,
             bbox,
+            filters: ConfidenceFilter {
+                min_confidence,
+                excluded_detections,
+            },
+            tropical_swath_gap,
             events,
             no_detection_days: gaps,
+            config,
+            config_overridden,
+            fusion_model,
+            fusion_comparison,
         }
     })
     .await
@@ -1851,11 +2208,25 @@ async fn points(
 
 const DEFAULT_DENSITY_CELL_DEG: f64 = 0.25;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 struct DensityParams {
     region: Option<String>,
     year: Option<String>,
     cell: Option<String>,
+    min_confidence: Option<String>,
+    fusion_model: Option<String>,
+}
+
+impl DensityParams {
+    fn points_params(&self) -> PointsParams {
+        PointsParams {
+            region: self.region.clone(),
+            year: self.year.clone(),
+            min_confidence: self.min_confidence.clone(),
+            fusion_model: self.fusion_model.clone(),
+            ..PointsParams::default()
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -1906,28 +2277,28 @@ async fn density(
     Query(params): Query<DensityParams>,
 ) -> Result<Json<DensityResponse>, ApiError> {
     let started = Instant::now();
-    let region = find_region(&state, params.region.as_deref()).await?;
+    let mut cell_deg = DEFAULT_DENSITY_CELL_DEG;
+    let PeriodRequest {
+        region,
+        year,
+        config,
+        min_confidence,
+        fusion_model,
+        ..
+    } = resolve_period(&state, &params.points_params(), || {
+        if let Some(cell) = parse_param::<f64>("cell", params.cell.as_deref())? {
+            cell_deg = cell;
+        }
+        if !ALLOWED_CELL_DEGREES.contains(&cell_deg) {
+            return Err(ApiError::new(
+                StatusCode::BAD_REQUEST,
+                "'cell' must be one of 0.1, 0.25, 0.5, 1.0",
+            ));
+        }
+        Ok(())
+    })
+    .await?;
     let id = region.id.clone();
-
-    let year: i32 = parse_param("year", params.year.as_deref())?
-        .ok_or_else(|| ApiError::new(StatusCode::BAD_REQUEST, "missing 'year' parameter"))?;
-    let cell_deg = parse_param::<f64>("cell", params.cell.as_deref())?.unwrap_or(DEFAULT_DENSITY_CELL_DEG);
-    if !ALLOWED_CELL_DEGREES.contains(&cell_deg) {
-        return Err(ApiError::new(
-            StatusCode::BAD_REQUEST,
-            "'cell' must be one of 0.1, 0.25, 0.5, 1.0",
-        ));
-    }
-    if !region.modis_years.contains(&year)
-        && !region.viirs_years.contains(&year)
-        && !region.noaa20_years.contains(&year)
-    {
-        return Err(ApiError::new(
-            StatusCode::NOT_FOUND,
-            format!("the archive has no {id} file for {year}"),
-        ));
-    }
-    state.admit_year(&region, year)?;
 
     let slot = state
         .load_slots
@@ -1937,12 +2308,30 @@ async fn density(
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
     let coverage = load_coverage(&state).await?;
-    let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
-        let bbox = extent(data.modis.iter().chain(&data.viirs).map(|h| (h.lat, h.lon)));
-        let linked = harmonize_with_links_config(data.modis.clone(), data.viirs.clone(), &config);
-        let merged = aggregate_density(data.modis.iter().chain(&data.viirs), &linked.hotspots, cell_deg);
+        // Same input path as /api/points: whole-year static mask, confidence filter before
+        // harmonization, then the selected fusion model.
+        let mask = config.static_mask.enabled.then(|| {
+            StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
+        });
+        let (mut modis, mut viirs) = (data.modis.clone(), data.viirs.clone());
+        drop(data);
+        min_confidence.retain(&mut modis);
+        min_confidence.retain(&mut viirs);
+        let bbox = extent(modis.iter().chain(&viirs).map(|h| (h.lat, h.lon)));
+        let fusion_inputs = (fusion_model != FusionModel::ViirsPreferred)
+            .then(|| (modis.clone(), viirs.clone()));
+        let raw: Vec<Hotspot> = modis.iter().chain(&viirs).cloned().collect();
+        let mut linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+        let hotspots = match fusion_inputs {
+            None => std::mem::take(&mut linked.hotspots),
+            Some((fusion_modis, fusion_viirs)) => {
+                apply_fusion_model(&linked, &fusion_modis, &fusion_viirs, fusion_model, &config)
+                    .hotspots
+            }
+        };
+        let merged = aggregate_density(&raw, &hotspots, cell_deg);
 
         DensityResponse {
             region: id,
@@ -1987,6 +2376,227 @@ async fn density(
         "served /api/density"
     );
     Ok(Json(response))
+}
+
+// ---------- export (archive mode of /api/export) ----------
+
+/// Guards memory: the export materialises every record of the period in one response body.
+const MAX_EXPORT_RECORDS: usize = 500_000;
+const CSV_BOM: &[u8] = b"\xEF\xBB\xBF";
+
+#[derive(Deserialize, Default, Clone)]
+struct ArchiveExportParams {
+    region: Option<String>,
+    year: Option<String>,
+    month: Option<String>,
+    format: Option<String>,
+    view: Option<String>,
+    dedup_time_secs: Option<String>,
+    dedup_overlap: Option<String>,
+    match_radius_km: Option<String>,
+    match_window_secs: Option<String>,
+    fleet_radius_km: Option<String>,
+    min_confidence: Option<String>,
+    fusion_model: Option<String>,
+}
+
+impl ArchiveExportParams {
+    fn points_params(&self) -> PointsParams {
+        PointsParams {
+            region: self.region.clone(),
+            year: self.year.clone(),
+            month: self.month.clone(),
+            limit: None,
+            dedup_time_secs: self.dedup_time_secs.clone(),
+            dedup_overlap: self.dedup_overlap.clone(),
+            match_radius_km: self.match_radius_km.clone(),
+            match_window_secs: self.match_window_secs.clone(),
+            fleet_radius_km: self.fleet_radius_km.clone(),
+            min_confidence: self.min_confidence.clone(),
+            fusion_model: self.fusion_model.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ExportView {
+    Harmonized,
+    Raw,
+}
+
+impl ExportView {
+    fn parse(value: Option<&str>) -> Result<Self, ApiError> {
+        match value.map(str::to_ascii_lowercase).as_deref() {
+            None | Some("harmonized") => Ok(Self::Harmonized),
+            Some("raw") => Ok(Self::Raw),
+            Some(other) => Err(ApiError::new(
+                StatusCode::BAD_REQUEST,
+                format!("Invalid 'view' value '{other}': expected 'harmonized' or 'raw'"),
+            )),
+        }
+    }
+}
+
+/// Lowercase ASCII file-name stem of a region id (`Korea, South` -> `korea_south`).
+fn region_slug(id: &str) -> String {
+    let mut slug = String::new();
+    for c in id.chars() {
+        if c.is_ascii_alphanumeric() {
+            slug.push(c.to_ascii_lowercase());
+        } else if !slug.is_empty() && !slug.ends_with('_') {
+            slug.push('_');
+        }
+    }
+    let slug = slug.trim_end_matches('_');
+    if slug.is_empty() { "region".to_string() } else { slug.to_string() }
+}
+
+fn export_filename(
+    region_id: &str,
+    year: i32,
+    month: Option<u32>,
+    view: ExportView,
+    extension: &str,
+) -> String {
+    let period = match month {
+        Some(m) => format!("{year:04}-{m:02}"),
+        None => format!("{year:04}"),
+    };
+    let suffix = if view == ExportView::Raw { "_raw" } else { "" };
+    format!("pyrosync_{}_{period}{suffix}.{extension}", region_slug(region_id))
+}
+
+async fn export_archive(
+    state: Arc<ArchiveState>,
+    params: ArchiveExportParams,
+) -> Result<Response, ApiError> {
+    let format = crate::ExportFormat::parse(params.format.as_deref())
+        .map_err(|e| ApiError::new(e.status, e.message))?;
+    let view = ExportView::parse(params.view.as_deref())?;
+    let PeriodRequest {
+        region,
+        year,
+        month,
+        config,
+        min_confidence,
+        fusion_model,
+        ..
+    } = resolve_period(&state, &params.points_params(), || Ok(())).await?;
+
+    let slot = state
+        .load_slots
+        .clone()
+        .acquire_owned()
+        .await
+        .expect("semaphore is never closed");
+    let data = load_year(&state, &region, year).await?;
+    let body = tokio::task::spawn_blocking(move || {
+        let _slot = slot;
+        let mask = config.static_mask.enabled.then(|| {
+            StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
+        });
+        let (mut modis, mut viirs) = match month {
+            Some(m) => (in_month(&data.modis, m), in_month(&data.viirs, m)),
+            None => (data.modis.clone(), data.viirs.clone()),
+        };
+        drop(data);
+        min_confidence.retain(&mut modis);
+        min_confidence.retain(&mut viirs);
+        if modis.len() + viirs.len() > MAX_EXPORT_RECORDS {
+            return Err(ApiError::new(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                format!(
+                    "the period holds {} detections, above the export limit of {MAX_EXPORT_RECORDS}; request a single month or raise 'min_confidence'",
+                    modis.len() + viirs.len()
+                ),
+            ));
+        }
+
+        let text = if view == ExportView::Raw {
+            let raw: Vec<Hotspot> = modis.into_iter().chain(viirs).collect();
+            match format {
+                crate::ExportFormat::Csv => pyrosync_core::export::raw_to_csv(&raw),
+                crate::ExportFormat::GeoJson => pyrosync_core::export::raw_to_geojson(&raw),
+            }
+        } else {
+            let fusion_inputs = (fusion_model != FusionModel::ViirsPreferred)
+                .then(|| (modis.clone(), viirs.clone()));
+            let mut linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+            let hotspots = match fusion_inputs {
+                None => std::mem::take(&mut linked.hotspots),
+                Some((fusion_modis, fusion_viirs)) => {
+                    apply_fusion_model(&linked, &fusion_modis, &fusion_viirs, fusion_model, &config)
+                        .hotspots
+                }
+            };
+            match format {
+                crate::ExportFormat::Csv => pyrosync_core::export::to_csv(&hotspots),
+                crate::ExportFormat::GeoJson => pyrosync_core::export::to_geojson(&hotspots),
+            }
+        };
+        let mut body = Vec::with_capacity(text.len() + CSV_BOM.len());
+        if matches!(format, crate::ExportFormat::Csv) {
+            body.extend_from_slice(CSV_BOM);
+        }
+        body.extend_from_slice(text.as_bytes());
+        Ok(body)
+    })
+    .await
+    .map_err(join_error)??;
+
+    let filename = export_filename(&region.id, year, month, view, format.extension());
+    let disposition = HeaderValue::from_str(&format!("attachment; filename=\"{filename}\""))
+        .map_err(|e| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok((
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, HeaderValue::from_static(format.content_type())),
+            (header::CONTENT_DISPOSITION, disposition),
+        ],
+        body,
+    )
+        .into_response())
+}
+
+/// Route layer of `/api/export`: a `region` query parameter switches to the archive export,
+/// every other request continues to the live FIRMS handler untouched.
+pub async fn export_dispatch(
+    State(archive): State<Option<Arc<ArchiveState>>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    #[derive(Deserialize)]
+    struct Probe {
+        region: Option<String>,
+    }
+    let archive_mode = Query::<Probe>::try_from_uri(request.uri())
+        .is_ok_and(|Query(probe)| probe.region.is_some());
+    if !archive_mode {
+        return next.run(request).await;
+    }
+    let Some(state) = archive else {
+        return ApiError::new(StatusCode::SERVICE_UNAVAILABLE, "the archive is not available")
+            .into_response();
+    };
+    let params = match Query::<ArchiveExportParams>::try_from_uri(request.uri()) {
+        Ok(Query(params)) => params,
+        Err(rejection) => {
+            return ApiError::new(StatusCode::BAD_REQUEST, rejection.body_text()).into_response();
+        }
+    };
+    let limit = state.limits.request_timeout;
+    match tokio::time::timeout(limit, export_archive(state, params)).await {
+        Ok(Ok(response)) => response,
+        Ok(Err(err)) => err.into_response(),
+        Err(_) => ApiError::new(
+            StatusCode::GATEWAY_TIMEOUT,
+            format!(
+                "archive request timed out after {} s (ARCHIVE_REQUEST_TIMEOUT_SECS)",
+                limit.as_secs()
+            ),
+        )
+        .into_response(),
+    }
 }
 
 #[cfg(test)]
@@ -2122,6 +2732,7 @@ mod tests {
                 year: Some("2010".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2240,6 +2851,78 @@ mod tests {
         let sum: usize = stats.months.iter().map(|m| m.raw_total).sum();
         assert_eq!(sum, stats.entry.raw_total);
         assert_eq!(stats.months[2].raw_modis, 2);
+    }
+
+    #[test]
+    fn year_stats_counts_viirs_pixels_absorbed_into_one_matched_record() {
+        let modis = parse_csv(
+            &format!("{MODIS_HEADER}
+36.0,32.0,320,1,1,2015-08-11,1200,Terra,MODIS,80,6.2,290,10,D,0"),
+            "MODIS_SP",
+        )
+        .unwrap();
+        let viirs_rows: String = [36.0, 36.003, 36.006]
+            .iter()
+            .map(|lat| format!("
+{lat},32.0,330,0.375,0.375,2015-08-11,1210,N,VIIRS,n,2,290,5,D,0"))
+            .collect();
+        let viirs = parse_csv(&format!("{VIIRS_HEADER}{viirs_rows}"), "VIIRS_SNPP_SP").unwrap();
+        let span = DateSpan {
+            first: d(2000, 11, 1),
+            last: d(2025, 12, 31),
+        };
+        let stats = year_stats(2015, YearData { modis, viirs }, &[span]);
+        let e = &stats.entry;
+        assert_eq!(e.matched, 1);
+        assert_eq!(e.viirs_aggregated, 2);
+        assert_eq!(e.viirs_only, 0);
+        assert_eq!(
+            e.raw_total
+                - e.static_masked
+                - e.sama_removed
+                - e.interscan_removed
+                - e.fleet_merged
+                - e.matched
+                - e.viirs_aggregated,
+            e.harmonized
+        );
+    }
+
+    #[test]
+    fn year_stats_reports_static_mask_and_applies_it_to_every_month() {
+        // One VIIRS detection at the same spot on the 5th of every month: a year-round source.
+        let csv: String = std::iter::once(VIIRS_HEADER.to_string())
+            .chain((1..=12).map(|m| {
+                format!("31.0,47.5,320,0.5,0.5,2015-{m:02}-05,1200,N,VIIRS,n,2,290,10,N,0")
+            }))
+            .chain(std::iter::once(
+                "36.0,32.0,320,0.5,0.5,2015-08-11,1200,N,VIIRS,n,2,290,10,D,0".to_string(),
+            ))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let viirs = parse_csv(&csv, "VIIRS_SNPP_SP").unwrap();
+        let span = DateSpan {
+            first: d(2012, 1, 20),
+            last: d(2025, 12, 31),
+        };
+        let data = || YearData {
+            modis: Vec::new(),
+            viirs: viirs.clone(),
+        };
+
+        let stats = year_stats(2015, data(), &[span]);
+        assert_eq!(stats.entry.static_masked, 12);
+        assert_eq!(stats.entry.sama_removed, 0);
+        assert_eq!(stats.entry.harmonized, 1);
+        assert_eq!(stats.entry.raw_viirs, 13);
+        let monthly: usize = stats.months.iter().map(|m| m.harmonized).sum();
+        assert_eq!(monthly, 1, "the yearly mask must reach the monthly runs");
+
+        let mut off = PipelineConfig::default();
+        off.static_mask.enabled = false;
+        let stats = year_stats_with(2015, data(), &[span], &off);
+        assert_eq!(stats.entry.static_masked, 0);
+        assert_eq!(stats.entry.harmonized, 13);
     }
 
     #[test]
@@ -2403,6 +3086,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("0".into()),
+                ..Default::default()
             }),
         )
         .await
@@ -2420,6 +3104,7 @@ mod tests {
                     year: Some("2021".into()),
                     month: None,
                     limit: Some("1".into()),
+                    ..Default::default()
                 }),
             ),
         )
@@ -2464,6 +3149,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("1".into()),
+                ..Default::default()
             }),
         )
         .await
@@ -2487,6 +3173,232 @@ mod tests {
         assert_eq!(pts.no_detection_days[0].date, ymd(2021, 7, 4));
 
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_fusion_model_defaults_to_identity_and_reports_comparison_otherwise() {
+        let dir = temp_archive("points-fusion");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (36.5, "2021-07-02", 0)],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        let request = |model: Option<&str>| PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            fusion_model: model.map(Into::into),
+            ..Default::default()
+        };
+
+        let Json(default) = points(State(state.clone()), Query(request(None)))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(default.fusion_model, FusionModel::ViirsPreferred);
+        assert!(default.fusion_comparison.is_none());
+        let body = serde_json::to_value(&default).unwrap();
+        assert_eq!(body["fusion_model"], "viirs_preferred");
+        assert!(body["fusion_comparison"].is_null());
+
+        let Json(calibrated) = points(State(state.clone()), Query(request(Some("modis_calibrated"))))
+            .await
+            .ok()
+            .unwrap();
+        let comparison = calibrated.fusion_comparison.as_ref().expect("comparison");
+        assert_eq!(calibrated.fusion_model, FusionModel::ModisCalibrated);
+        assert!(comparison.count <= comparison.baseline_count);
+        assert_eq!(comparison.baseline_count, default.stages.harmonized);
+        assert_eq!(calibrated.stages.harmonized, comparison.count);
+        assert!(!calibrated.config_overridden);
+
+        let err = points(State(state), Query(request(Some("bogus"))))
+            .await
+            .err()
+            .unwrap();
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(err.message.contains("fusion_model") && err.message.contains("equal_weight"));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    async fn export_request(
+        state: &Arc<ArchiveState>,
+        query: &str,
+    ) -> (StatusCode, axum::http::HeaderMap, Vec<u8>) {
+        use tower::ServiceExt;
+
+        let app = Router::new().route(
+            "/export",
+            get(|| async { "live" }).route_layer(middleware::from_fn_with_state(
+                Some(state.clone()),
+                export_dispatch,
+            )),
+        );
+        let request = axum::http::Request::get(format!("/export?{query}"))
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = app.oneshot(request).await.unwrap();
+        let status = response.status();
+        let headers = response.headers().clone();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap()
+            .to_vec();
+        (status, headers, body)
+    }
+
+    fn export_fixture(name: &str) -> (PathBuf, Arc<ArchiveState>) {
+        let dir = temp_archive(name);
+        write_file(
+            &dir,
+            "modis",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (35.95, "2021-08-03", 0)],
+        );
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (36.5, "2021-07-02", 0)],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        (dir, state)
+    }
+
+    fn header_str(headers: &axum::http::HeaderMap, name: header::HeaderName) -> String {
+        headers.get(name).unwrap().to_str().unwrap().to_string()
+    }
+
+    #[tokio::test]
+    async fn export_archive_csv_matches_points_harmonized_count() {
+        let (dir, state) = export_fixture("export-csv");
+        let Json(points) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: Some("7".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        let (status, headers, body) = export_request(&state, "region=Malta&year=2021&month=7").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(header_str(&headers, header::CONTENT_TYPE), "text/csv; charset=utf-8");
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021-07.csv\""
+        );
+        assert!(body.starts_with(CSV_BOM));
+        let text = std::str::from_utf8(&body[CSV_BOM.len()..]).unwrap();
+        let mut lines = text.trim_end_matches("\r\n").split("\r\n");
+        assert_eq!(lines.next(), Some(pyrosync_core::export::CSV_HEADER));
+        assert_eq!(lines.count(), points.stages.harmonized);
+
+        let (_, headers, _) = export_request(&state, "region=Malta&year=2021").await;
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021.csv\""
+        );
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_geojson_and_raw_views() {
+        let (dir, state) = export_fixture("export-geojson-raw");
+        let (status, headers, body) =
+            export_request(&state, "region=Malta&year=2021&month=7&format=geojson").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(header_str(&headers, header::CONTENT_TYPE), "application/geo+json");
+        assert!(!body.starts_with(CSV_BOM));
+        let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(parsed["type"], "FeatureCollection");
+        let features = parsed["features"].as_array().unwrap();
+        assert!(!features.is_empty());
+        assert_eq!(features[0]["geometry"]["type"], "Point");
+
+        let (status, headers, body) =
+            export_request(&state, "region=Malta&year=2021&month=7&view=raw").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021-07_raw.csv\""
+        );
+        let text = std::str::from_utf8(&body[CSV_BOM.len()..]).unwrap();
+        let lines: Vec<&str> = text.trim_end_matches("\r\n").split("\r\n").collect();
+        assert_eq!(lines[0], pyrosync_core::export::RAW_CSV_HEADER);
+        assert_eq!(lines.len() - 1, 3);
+
+        let (status, headers, body) =
+            export_request(&state, "region=Malta&year=2021&view=raw&format=geojson").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021_raw.geojson\""
+        );
+        let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(parsed["features"].as_array().unwrap().len(), 4);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_rejects_bad_params_and_keeps_points_errors() {
+        let (dir, state) = export_fixture("export-errors");
+        for (query, expected) in [
+            ("region=Malta&year=2021&format=xml", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&view=bogus", StatusCode::BAD_REQUEST),
+            ("region=Malta", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&month=13", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&fusion_model=bogus", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=1990", StatusCode::NOT_FOUND),
+            ("region=Atlantis&year=2021", StatusCode::NOT_FOUND),
+        ] {
+            let (status, _, body) = export_request(&state, query).await;
+            assert_eq!(status, expected, "query={query}");
+            let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert!(json["error"].as_str().is_some_and(|s| !s.is_empty()), "query={query}");
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_honours_fusion_model_and_live_requests_pass_through() {
+        let (dir, state) = export_fixture("export-fusion");
+        let rows = |body: &[u8]| {
+            std::str::from_utf8(&body[CSV_BOM.len()..])
+                .unwrap()
+                .trim_end_matches("\r\n")
+                .split("\r\n")
+                .count()
+                - 1
+        };
+        let (_, _, default) = export_request(&state, "region=Malta&year=2021").await;
+        let (status, _, calibrated) =
+            export_request(&state, "region=Malta&year=2021&fusion_model=modis_calibrated").await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(rows(&calibrated) <= rows(&default));
+
+        let (status, _, body) = export_request(&state, "west=26&south=36&east=45&north=42").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body, b"live");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn region_slug_is_lowercase_ascii() {
+        assert_eq!(region_slug("Turkey"), "turkey");
+        assert_eq!(region_slug("Korea, South"), "korea_south");
+        assert_eq!(region_slug("Côte_d_Ivoire"), "c_te_d_ivoire");
+        assert_eq!(region_slug("!!"), "region");
     }
 
     #[test]
@@ -2612,6 +3524,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2968,6 +3881,7 @@ mod tests {
                 region: Some("Malta".into()),
                 year: year.map(Into::into),
                 cell: cell.map(Into::into),
+                ..DensityParams::default()
             })
         };
 
@@ -2998,8 +3912,7 @@ mod tests {
             Query(PointsParams {
                 region: Some("Malta".into()),
                 year: Some("2021".into()),
-                month: None,
-                limit: None,
+                ..PointsParams::default()
             }),
         )
         .await
@@ -3029,7 +3942,140 @@ mod tests {
         );
         assert!(!d.covered_months.is_empty() || d.months.iter().any(|m| m.raw_total > 0));
 
+        // Overrides must flow through the same path as /api/points.
+        for (min_confidence, fusion_model) in [("high", None), ("low", Some("modis_calibrated"))] {
+            let Json(d) = density(
+                State(state.clone()),
+                Query(DensityParams {
+                    region: Some("Malta".into()),
+                    year: Some("2021".into()),
+                    min_confidence: Some(min_confidence.into()),
+                    fusion_model: fusion_model.map(Into::into),
+                    ..DensityParams::default()
+                }),
+            )
+            .await
+            .ok()
+            .unwrap();
+            let Json(p) = points(
+                State(state.clone()),
+                Query(PointsParams {
+                    region: Some("Malta".into()),
+                    year: Some("2021".into()),
+                    min_confidence: Some(min_confidence.into()),
+                    fusion_model: fusion_model.map(Into::into),
+                    ..PointsParams::default()
+                }),
+            )
+            .await
+            .ok()
+            .unwrap();
+            assert_eq!(
+                d.months.iter().map(|m| m.raw_total).sum::<u64>() as usize,
+                p.stages.raw_modis + p.stages.raw_viirs
+            );
+            assert_eq!(
+                d.months.iter().map(|m| m.harmonized_total).sum::<u64>() as usize,
+                p.stages.harmonized
+            );
+        }
+
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_min_confidence_drops_low_rows_before_harmonizing() {
+        let dir = temp_archive("points-min-confidence");
+        let path = dir.join("viirs-snpp").join("2021");
+        std::fs::create_dir_all(&path).unwrap();
+        let mut csv = format!("{VIIRS_HEADER}\r\n");
+        for (lat, date, conf) in [
+            (39.0, "2021-07-01", "n"),
+            (39.5, "2021-07-02", "h"),
+            (40.0, "2021-07-03", "l"),
+            (40.5, "2021-07-04", "l"),
+        ] {
+            csv.push_str(&format!(
+                "{lat},32.0,320,0.5,0.5,{date},1200,N,VIIRS,{conf},2,290,10,D,0\r\n"
+            ));
+        }
+        std::fs::write(path.join("viirs-snpp_2021_Malta.csv"), csv).unwrap();
+        let state = state(dir.clone(), u64::MAX);
+
+        let query = |min_confidence: Option<&str>| PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            month: None,
+            limit: None,
+            min_confidence: min_confidence.map(str::to_string),
+            ..Default::default()
+        };
+
+        let Json(all) = points(State(state.clone()), Query(query(None))).await.ok().unwrap();
+        assert_eq!(all.stages.raw_viirs, 4);
+        assert_eq!(all.stages.harmonized, 4);
+        assert_eq!(all.filters.min_confidence, MinConfidence::Low);
+        assert_eq!(all.filters.excluded_detections, 0);
+
+        let Json(nominal) = points(State(state.clone()), Query(query(Some("nominal"))))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(nominal.stages.raw_viirs, 2);
+        assert_eq!(nominal.stages.harmonized, 2);
+        assert_eq!(nominal.raw.len(), 2);
+        assert!(nominal.raw.iter().all(|p| p.confidence != Confidence::Low));
+        assert_eq!(nominal.filters.min_confidence, MinConfidence::Nominal);
+        assert_eq!(nominal.filters.excluded_detections, 2);
+
+        let err = points(State(state), Query(query(Some("medium"))))
+            .await
+            .err()
+            .expect("unknown min_confidence must fail with 400");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(err.message.contains("min_confidence"), "{}", err.message);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn points_flag_tropical_swath_gap_from_the_whole_year_extent() {
+        let dir = temp_archive("points-swath-gap");
+        // July sits outside the belt; August reaches into it, so the yearly extent is 25..35.
+        write_file(
+            &dir,
+            "modis",
+            2010,
+            "Savanna",
+            &[(35.0, "2010-07-01", 0), (34.0, "2010-07-02", 0), (25.0, "2010-08-01", 0)],
+        );
+        write_file(&dir, "modis", 2010, "Steppe", &[(45.0, "2010-07-01", 0)]);
+        let state = state(dir.clone(), u64::MAX);
+        let query = |region: &str| PointsParams {
+            region: Some(region.into()),
+            year: Some("2010".into()),
+            month: Some("7".into()),
+            limit: None,
+            ..Default::default()
+        };
+
+        let Json(tropical) = points(State(state.clone()), Query(query("Savanna"))).await.ok().unwrap();
+        let json = serde_json::to_value(&tropical).unwrap();
+        let flag = &json["tropical_swath_gap"];
+        assert_eq!(flag["basis"], "detections");
+        assert_eq!(flag["missed_frp_low_pct"], 10.7);
+        assert_eq!(flag["missed_frp_high_pct"], 12.5);
+        assert!(flag["compensation"].is_null());
+        let share = flag["belt_share"].as_f64().unwrap();
+        let expected = pyrosync_core::effort::tropical_belt_share(25.0, 35.0);
+        assert!((share - expected).abs() < 1e-12, "{share} vs {expected}");
+
+        let Json(steppe) = points(State(state), Query(query("Steppe"))).await.ok().unwrap();
+        let json = serde_json::to_value(&steppe).unwrap();
+        assert!(json["tropical_swath_gap"].is_null());
+        assert!(json.as_object().unwrap().contains_key("tropical_swath_gap"));
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[tokio::test]
@@ -3067,6 +4113,7 @@ mod tests {
                 year: Some("2018".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3082,6 +4129,7 @@ mod tests {
                 year: Some("2020".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3312,6 +4360,14 @@ mod tests {
         let _ = std::fs::remove_dir_all(dir);
     }
 
+    /// Copies `coverage.{json,meta.json}` from `src` to `dst`.
+    fn copy_coverage_files(src: &Path, dst: &Path) {
+        std::fs::create_dir_all(dst).unwrap();
+        for name in ["coverage.json", "coverage.meta.json"] {
+            std::fs::copy(src.join(name), dst.join(name)).unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn precompute_skips_valid_bundled_region_and_force_writes_to_disk() {
         let dir = temp_archive("precompute-bundled");
@@ -3339,6 +4395,7 @@ mod tests {
         .unwrap();
         assert_eq!(r_stage.computed(), 1);
         copy_series_files(&staging_dir, &bundled_dir, "Samos");
+        copy_coverage_files(&staging_dir, &bundled_dir);
 
         let r_skip = precompute_series(
             state_with_caches(
@@ -3380,6 +4437,8 @@ mod tests {
         assert_eq!(r_force.computed(), 1);
         assert_eq!(r_force.skipped(), 0);
         assert_eq!(r_force.failed(), 0);
+        assert!(writable_dir.join("coverage.json").is_file());
+        assert!(writable_dir.join("coverage.meta.json").is_file());
         assert!(writable_dir.join("series/Samos.json").is_file());
         assert!(writable_dir.join("series/Samos.meta.json").is_file());
 
@@ -3442,6 +4501,119 @@ mod tests {
             Some(u64::from(crate::derived_cache::DERIVED_SCHEMA_VERSION))
         );
         assert!(refreshed_meta["files"][0].get("mtime_secs").is_none());
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_treats_v3_schema_as_stale_and_recomputes() {
+        let dir = temp_archive("schema-v3-stale");
+        write_file(&dir, "modis", 2015, "Chios", &[(38.4, "2015-07-01", 0)]);
+
+        let writable_dir = dir.join("_writable");
+        let bundled_dir = dir.join("_bundled");
+
+        let seed_state = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir.clone(),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (_, real_body) = series_raw(&seed_state, "Chios").await.ok().unwrap();
+
+        let csv_path = dir.join("modis/2015/modis_2015_Chios.csv");
+        let csv_bytes = std::fs::metadata(&csv_path).unwrap().len();
+        let v3_meta = serde_json::json!({
+            "schema_version": 3,
+            "config_hash": crate::derived_cache::config_digest(&PipelineConfig::default()),
+            "files": [{
+                "path": "modis/2015/modis_2015_Chios.csv",
+                "bytes": csv_bytes,
+            }],
+            "body_hash": format!("{:016x}", crate::derived_cache::fnv1a_64(&real_body)),
+        });
+        let v3_meta_bytes = serde_json::to_vec_pretty(&v3_meta).unwrap();
+
+        std::fs::create_dir_all(bundled_dir.join("series")).unwrap();
+        std::fs::write(bundled_dir.join("series/Chios.json"), &real_body).unwrap();
+        std::fs::write(bundled_dir.join("series/Chios.meta.json"), &v3_meta_bytes).unwrap();
+        std::fs::write(writable_dir.join("series/Chios.meta.json"), &v3_meta_bytes).unwrap();
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, body) = series_raw(&s, "Chios").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("computed"));
+        assert_eq!(body, real_body);
+
+        let refreshed_meta: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(writable_dir.join("series/Chios.meta.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            refreshed_meta["schema_version"].as_u64(),
+            Some(u64::from(crate::derived_cache::DERIVED_SCHEMA_VERSION))
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_month_mean_frp_and_uncertainty_round_trips() {
+        let dir = temp_archive("month-mean-frp");
+        write_file(
+            &dir,
+            "modis",
+            2015,
+            "FrpLand",
+            &[(39.0, "2015-06-01", 0), (39.5, "2015-08-01", 0)],
+        );
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2015,
+            "FrpLand",
+            &[(39.0, "2015-06-01", 0)],
+        );
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let (src1, body1) = series_raw(&s1, "FrpLand").await.ok().unwrap();
+        assert_eq!(src1.as_deref(), Some("computed"));
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let (src2, body2) = series_raw(&s2, "FrpLand").await.ok().unwrap();
+        assert_eq!(src2.as_deref(), Some("disk"));
+        assert_eq!(body1, body2);
+
+        let json: serde_json::Value = serde_json::from_slice(&body2).unwrap();
+        let months = json["months"].as_array().unwrap();
+        let listed: Vec<u64> = months.iter().map(|m| m["month"].as_u64().unwrap()).collect();
+        // Uncovered months (1..=5, 9..=12) are omitted; covered empty month 7 stays with None.
+        assert_eq!(listed, [6, 7, 8]);
+
+        for m in [6u64, 8u64] {
+            let entry = months.iter().find(|e| e["month"] == m).unwrap();
+            let mean = entry["mean_frp"].as_f64().expect("mean_frp must be present");
+            let lower = entry["mean_frp_lower"].as_f64().expect("mean_frp_lower must be present");
+            let upper = entry["mean_frp_upper"].as_f64().expect("mean_frp_upper must be present");
+            assert!(0.0 <= lower && lower <= mean && mean <= upper);
+        }
+
+        let empty_july = months.iter().find(|e| e["month"] == 7).unwrap();
+        assert_eq!(empty_july["harmonized"], 0);
+        assert_eq!(empty_july.get("mean_frp"), Some(&serde_json::Value::Null));
+        assert_eq!(empty_july.get("mean_frp_lower"), Some(&serde_json::Value::Null));
+        assert_eq!(empty_july.get("mean_frp_upper"), Some(&serde_json::Value::Null));
+
+        let round_tripped: Vec<MonthEntry> =
+            serde_json::from_value(json["months"].clone()).unwrap();
+        let reserialized = serde_json::to_value(&round_tripped).unwrap();
+        assert_eq!(reserialized, json["months"]);
 
         let _ = std::fs::remove_dir_all(dir);
     }
@@ -3622,5 +4794,428 @@ mod tests {
         let logs = String::from_utf8(buf.0.lock().unwrap().clone()).unwrap();
         assert!(logs.contains("/api/slow"), "missing path in logs: {logs}");
         assert!(logs.contains("WARN"), "missing WARN level in logs: {logs}");
+    }
+
+    #[tokio::test]
+    async fn points_default_config_echoes_server_config_and_not_overridden() {
+        let dir = temp_archive("points-config-default");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+
+        let mut server_config = PipelineConfig::default();
+        server_config.matching.window_secs = 7200;
+        let state = state_with_config(
+            dir.clone(),
+            dir.join("_derived_cache"),
+            u64::MAX,
+            server_config.clone(),
+        );
+
+        let Json(pts) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        assert!(!pts.config_overridden);
+        assert_eq!(pts.config, server_config);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_disk_cache_roundtrip_avoids_rescan_and_preserves_all_sensors() {
+        let dir = temp_archive("coverage-disk-roundtrip");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        write_file(&dir, "viirs-snpp", 2021, "Malta", &[(35.9, "2021-07-02", 0)]);
+        write_file(
+            &dir,
+            "viirs-jpss1",
+            2021,
+            "Malta",
+            &[(36.0, "2021-07-05", 0)],
+        );
+
+        let s1 = state_with_config(dir.clone(), derived.clone(), u64::MAX, PipelineConfig::default());
+        let cov1 = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+        assert!(derived.join("coverage.json").is_file());
+        assert!(derived.join("coverage.meta.json").is_file());
+        assert_eq!(
+            cov1.snpp,
+            Some(DateSpan {
+                first: d(2021, 7, 2),
+                last: d(2021, 7, 2),
+            })
+        );
+        assert_eq!(
+            cov1.noaa20,
+            Some(DateSpan {
+                first: d(2021, 7, 5),
+                last: d(2021, 7, 5),
+            })
+        );
+
+        // Fresh state simulates a restart: must read coverage from disk without rescanning.
+        let s2 = state_with_config(dir.clone(), derived.clone(), u64::MAX, PipelineConfig::default());
+        let cov2 = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+        assert_eq!(cov2, cov1);
+
+        // /api/points must also work with the cached coverage (including snpp/noaa20 spans).
+        let Json(pts) = points(
+            State(s2.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: Some("7".into()),
+                limit: None,
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+        assert!(!pts.no_detection_days.is_empty());
+
+        // Coverage does not depend on PipelineConfig, so changing config must keep the cache valid.
+        let mut alt_cfg = PipelineConfig::default();
+        alt_cfg.matching.window_secs += 60;
+        let s3 = state_with_config(dir.clone(), derived, u64::MAX, alt_cfg);
+        let cov3 = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(cov3, cov1);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_threshold_overrides_change_matching_and_echo_effective_config() {
+        let dir = temp_archive("points-config-override");
+        let modis_dir = dir.join("modis/2021");
+        let viirs_dir = dir.join("viirs-snpp/2021");
+        std::fs::create_dir_all(&modis_dir).unwrap();
+        std::fs::create_dir_all(&viirs_dir).unwrap();
+        // Same location, 1 hour apart: matched under default 10800s window, unmatched under 60s.
+        std::fs::write(
+            modis_dir.join("modis_2021_Malta.csv"),
+            format!(
+                "{MODIS_HEADER}\r\n35.9,32.0,320,0.5,0.5,2021-07-01,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n"
+            ),
+        )
+        .unwrap();
+        std::fs::write(
+            viirs_dir.join("viirs-snpp_2021_Malta.csv"),
+            format!(
+                "{VIIRS_HEADER}\r\n35.9,32.0,320,0.5,0.5,2021-07-01,1300,N,VIIRS,n,2,290,10,D,0\r\n"
+            ),
+        )
+        .unwrap();
+
+        let state = state(dir.clone(), u64::MAX);
+
+        let Json(baseline) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(!baseline.config_overridden);
+        assert_eq!(baseline.config, PipelineConfig::default());
+        assert_eq!(baseline.stages.matched_pairs, 1);
+        assert_eq!(baseline.stages.harmonized, 1);
+
+        let Json(narrow) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                match_window_secs: Some("60".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(narrow.config_overridden);
+        assert_eq!(narrow.config.matching.window_secs, 60);
+        assert_eq!(narrow.stages.matched_pairs, 0);
+        assert_eq!(narrow.stages.harmonized, 2);
+
+        let Json(all_overrides) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                dedup_time_secs: Some("12".into()),
+                dedup_overlap: Some("0.5".into()),
+                match_radius_km: Some("5.5".into()),
+                match_window_secs: Some("120".into()),
+                fleet_radius_km: Some("3.5".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(all_overrides.config_overridden);
+        assert_eq!(all_overrides.config.dedup.max_time_diff_secs, 12);
+        assert_eq!(all_overrides.config.dedup.min_overlap_ratio, 0.5);
+        assert_eq!(all_overrides.config.matching.radius_km, 5.5);
+        assert_eq!(all_overrides.config.matching.window_secs, 120);
+        assert_eq!(all_overrides.config.fleet.radius_km, 3.5);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_reads_from_bundled_without_writing_writable_dir() {
+        let dir = temp_archive("coverage-bundled");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+        write_file(&dir, "viirs-snpp", 2020, "Cyprus", &[(35.1, "2020-07-10", 0)]);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let staging_state = state_with_caches(
+            dir.clone(),
+            staging_dir.clone(),
+            dir.join("_unused_bundled"),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let expected = load_coverage(&staging_state).await.ok().unwrap();
+        assert_eq!(staging_state.coverage_scans(), 1);
+        copy_coverage_files(&staging_dir, &bundled_dir);
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let loaded = load_coverage(&s).await.ok().unwrap();
+        assert_eq!(s.coverage_scans(), 0);
+        assert_eq!(loaded, expected);
+        assert!(
+            !writable_dir.exists(),
+            "reading coverage from bundled must not create or write to the writable cache"
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_rejects_out_of_range_and_non_numeric_threshold_overrides() {
+        let dir = temp_archive("points-config-invalid");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        let state = state(dir.clone(), u64::MAX);
+
+        let base = PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            ..Default::default()
+        };
+
+        let range_cases = [
+            (
+                PointsParams {
+                    match_radius_km: Some("50".into()),
+                    ..base.clone()
+                },
+                "matching.radius_km",
+            ),
+            (
+                PointsParams {
+                    dedup_overlap: Some("1.5".into()),
+                    ..base.clone()
+                },
+                "dedup.min_overlap_ratio",
+            ),
+            (
+                PointsParams {
+                    dedup_time_secs: Some("-1".into()),
+                    ..base.clone()
+                },
+                "dedup.max_time_diff_secs",
+            ),
+            (
+                PointsParams {
+                    match_window_secs: Some("-5".into()),
+                    ..base.clone()
+                },
+                "matching.window_secs",
+            ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("-1".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km",
+            ),
+        ];
+
+        for (params, field) in range_cases {
+            let err = points(State(state.clone()), Query(params))
+                .await
+                .err()
+                .expect("out-of-range threshold must fail with 400");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+            assert!(
+                err.message.contains(field),
+                "error `{}` does not name `{field}`",
+                err.message
+            );
+        }
+
+        let parse_cases = [
+            PointsParams {
+                match_radius_km: Some("abc".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                dedup_time_secs: Some("1.5".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                dedup_overlap: Some("nope".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                match_window_secs: Some("xyz".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                fleet_radius_km: Some("bad".into()),
+                ..base
+            },
+        ];
+
+        for params in parse_cases {
+            let err = points(State(state.clone()), Query(params))
+                .await
+                .err()
+                .expect("non-numeric threshold must fail with 400");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        }
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_disk_cache_invalidates_on_file_size_change_and_survives_mtime() {
+        let dir = temp_archive("coverage-invalidate");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let cov1 = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+        assert_eq!(cov1.modis.unwrap().last, d(2020, 7, 1));
+
+        // Changing mtime without changing size keeps the stamp valid.
+        let csv_path = dir.join("modis/2020/modis_2020_Cyprus.csv");
+        let past = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000_000);
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&csv_path)
+            .unwrap()
+            .set_modified(past)
+            .unwrap();
+        let s_mtime = state(dir.clone(), u64::MAX);
+        let _ = load_coverage(&s_mtime).await.ok().unwrap();
+        assert_eq!(s_mtime.coverage_scans(), 0);
+
+        // Changing file byte size invalidates the stamp and triggers a rescan.
+        let mut contents = std::fs::read_to_string(&csv_path).unwrap();
+        contents.push_str("35.2,32.0,320,0.5,0.5,2020-08-15,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n");
+        std::fs::write(&csv_path, contents).unwrap();
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let cov2 = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 1);
+        assert_eq!(cov2.modis.unwrap().last, d(2020, 8, 15));
+
+        // Subsequent restart reads the updated cache without rescanning.
+        let s3 = state(dir.clone(), u64::MAX);
+        let cov3 = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(cov3, cov2);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_ignores_corrupt_files_and_rescans_without_error() {
+        let dir = temp_archive("coverage-corrupt");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let expected = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+
+        // Corrupt coverage.json -> must fall back to scan with no error and repair disk cache.
+        std::fs::write(derived.join("coverage.json"), b"{corrupt").unwrap();
+        let s2 = state(dir.clone(), u64::MAX);
+        let repaired = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 1);
+        assert_eq!(repaired, expected);
+
+        let s3 = state(dir.clone(), u64::MAX);
+        let after_repair = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(after_repair, expected);
+
+        // Corrupt coverage.meta.json -> must also fall back to scan with no error.
+        std::fs::write(derived.join("coverage.meta.json"), b"not-json").unwrap();
+        let s4 = state(dir.clone(), u64::MAX);
+        let after_meta_corrupt = load_coverage(&s4).await.ok().unwrap();
+        assert_eq!(s4.coverage_scans(), 1);
+        assert_eq!(after_meta_corrupt, expected);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn precompute_persists_coverage_to_writable_disk() {
+        let dir = temp_archive("precompute-coverage");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let report = precompute_series(
+            s1.clone(),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+        assert_eq!(s1.coverage_scans(), 1);
+        assert!(derived.join("coverage.json").is_file());
+        assert!(derived.join("coverage.meta.json").is_file());
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let _ = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

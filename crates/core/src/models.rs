@@ -1,3 +1,4 @@
+use crate::quality::QualityFlag;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -166,6 +167,12 @@ pub struct CalendarCell {
     /// Blended robust z-score of `count_normalized`: `(x - median) / (0.65 * 1.4826 * MAD + 0.35 * sigma)`; same pool as `anomaly`.
     #[serde(default)]
     pub sfai: Option<f64>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub quality_flags: Vec<QualityFlag>,
+    /// Mondrian split conformal band for `total_frp` (sensor reproducibility, not ground truth);
+    /// present only when a calibrated table is supplied and the cell is eligible.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conformal: Option<crate::conformal::ConformalBand>,
 }
 
 /// How months are grouped into seasons for [`SeasonalityYear`].

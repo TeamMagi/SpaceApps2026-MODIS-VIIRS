@@ -119,7 +119,8 @@ cmd_verify() {
     echo "Archive files: actual=$actual_count expected=$expected_count missing=$missing_count"
 
     checksum_ok=1
-    if ! $SHA_CHECK "$manifest_abs"; then
+    # Strip CR so a manifest checked out with CRLF (core.autocrlf=true) still resolves file names.
+    if ! tr -d '\r' < "$manifest_abs" | $SHA_CHECK -; then
         checksum_ok=0
     fi
 

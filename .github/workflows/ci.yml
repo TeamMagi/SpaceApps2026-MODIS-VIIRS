@@ -20,10 +20,13 @@ env:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      # Pinned to the local dev image's Rust (1.100) so a new stable cannot break clippy -D warnings; bump together with the Dockerfile.
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: "1.100"
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - name: cargo check
@@ -35,18 +38,23 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      # Pinned to the local dev image's Rust (1.100); bump together with the Dockerfile.
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: "1.100"
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@cargo-llvm-cov
-      # Quality gate: 80% line coverage. Branch coverage is not gated because
-      # `cargo llvm-cov --branch` requires a nightly toolchain.
+      # Quality gate: 90% line coverage (measured total is 92.7%). The gate sits a few
+      # points under the measured value so real decay turns CI red. Branch coverage is
+      # not gated because `cargo llvm-cov --branch` requires a nightly toolchain.
       - name: Coverage gate
-        run: cargo llvm-cov --workspace --locked --fail-under-lines 80 --lcov --output-path lcov.info
+        run: cargo llvm-cov --workspace --locked --fail-under-lines 90 --lcov --output-path lcov.info
       - name: Coverage summary
+        if: always()
         run: cargo llvm-cov report --summary-only
       - uses: actions/upload-artifact@v4
         with:
@@ -55,6 +63,7 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: web

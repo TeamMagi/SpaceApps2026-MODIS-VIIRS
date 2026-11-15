@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Venezuela.csv",
@@ -195,5 +195,5 @@
       "bytes": 18421390
     }
   ],
-  "body_hash": "365ea0baf5ec002e"
+  "body_hash": "8615b77bc83ec3fc"
 }

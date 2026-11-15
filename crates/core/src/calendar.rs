@@ -1,10 +1,15 @@
 use crate::calibration::calibration_for;
+use crate::conformal::{ConformalEra, ConformalTable, conformal_interval};
 use crate::config::CalibrationConfig;
-use crate::effort::monthly_omegas;
-use crate::models::{CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear};
+use crate::effort::{
+    FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
+    swath_gap_compensation,
+};
+use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
+use crate::quality::month_quality_flags;
 use crate::uncertainty::{
-    SensorFamily, UncertaintyParams, mean_frp_uncertainty, relative_uncertainty_for_obs,
-    total_frp_uncertainty,
+    SensorFamily, UncertaintyParams, combine_factors, mean_frp_uncertainty,
+    relative_uncertainty_for_obs, total_frp_uncertainty,
 };
 use chrono::Datelike;
 use std::collections::HashMap;
@@ -22,8 +27,67 @@ struct MonthBucket {
     sum_corrected: f64,
     sum_raw: f64,
     has_viirs: bool,
+    platforms: Vec<Sensor>,
     records: Vec<BucketRecord>,
     mean_uncertainty_items: Vec<(f64, f64, f64)>,
+}
+
+fn mean_frp_uncertainty_item(
+    h: &HarmonizedHotspot,
+    uncertainty: &UncertaintyParams,
+) -> (f64, f64, f64) {
+    let sensor_family = SensorFamily::from(h.source);
+    // Native-pixel `mean_frp` never includes completeness k_c, so its systematic uncertainty
+    // comes solely from `modis_scale_sigma` (on ModisOnly) without `ratio_sigma`.
+    let mean_rel = relative_uncertainty_for_obs(
+        h.vza_factor,
+        sensor_family,
+        None,
+        h.n_obs,
+        uncertainty,
+    );
+    (h.frp_corrected, mean_rel.random, mean_rel.systematic)
+}
+
+fn mean_frp_bounds_from_items(
+    sum_corrected: f64,
+    items: &[(f64, f64, f64)],
+    uncertainty: &UncertaintyParams,
+) -> Option<(f64, f64, f64)> {
+    if items.is_empty() {
+        return None;
+    }
+    let mean = sum_corrected / items.len() as f64;
+    let est = mean_frp_uncertainty(items, uncertainty)?;
+    if !mean.is_finite()
+        || !est.lower.is_finite()
+        || !est.upper.is_finite()
+        || est.lower < 0.0
+        || est.lower > mean
+        || mean > est.upper
+    {
+        return None;
+    }
+    Some((mean, est.lower, est.upper))
+}
+
+/// Compute `(mean_frp, mean_frp_lower, mean_frp_upper)` for a slice of harmonized hotspots using
+/// the same native-pixel formula as [`build_calendar_with`]. Returns `None` when `hotspots` is
+/// empty or any bound is non-finite.
+pub fn mean_frp_with_uncertainty(
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+) -> Option<(f64, f64, f64)> {
+    if hotspots.is_empty() {
+        return None;
+    }
+    let mut sum_corrected = 0.0_f64;
+    let mut items = Vec::with_capacity(hotspots.len());
+    for h in hotspots {
+        sum_corrected += h.frp_corrected;
+        items.push(mean_frp_uncertainty_item(h, uncertainty));
+    }
+    mean_frp_bounds_from_items(sum_corrected, &items, uncertainty)
 }
 
 /// Build a burning activity calendar from harmonized hotspot data using default uncertainty and calibration configs.
@@ -36,6 +100,7 @@ struct MonthBucket {
 /// - mean_frp_raw: average raw fire radiative power (`frp`)
 /// - mean_frp_lower / mean_frp_upper: combined analytical confidence bounds for `mean_frp`
 /// - total_frp: monthly total `frp_corrected`, scaled by `k_c(lat)` in VIIRS-less cells when enabled
+///   (and, only if `tropical_swath_gap_compensation` is on, by the swath-gap factor for |lat| <= 30°)
 /// - total_frp_lower / total_frp_upper: combined analytical confidence bounds for `total_frp`
 /// - frp_per_detection_eq: MODIS-equivalent FRP per normalized detection (`total_frp / count_normalized`)
 /// - anomaly: deviation from multi-year normalized monthly mean (if enough data)
@@ -53,6 +118,18 @@ pub fn build_calendar_with(
     uncertainty: &UncertaintyParams,
     calibration: &CalibrationConfig,
 ) -> Vec<CalendarCell> {
+    build_calendar_with_conformal(hotspots, uncertainty, calibration, None)
+}
+
+/// Same as [`build_calendar_with`], additionally attaching `conformal` bands when a table is
+/// given. Era: a cell with VIIRS is `Viirs`, a VIIRS-less cell is `PreViirs`, and Terra-only
+/// months (before 2002-07) get no band.
+pub fn build_calendar_with_conformal(
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+    calibration: &CalibrationConfig,
+    conformal: Option<&ConformalTable>,
+) -> Vec<CalendarCell> {
     let omegas = monthly_omegas(hotspots);
     let mut buckets: HashMap<(i32, u32), MonthBucket> = HashMap::new();
 
@@ -65,6 +142,7 @@ pub fn build_calendar_with(
                 sum_corrected: 0.0,
                 sum_raw: 0.0,
                 has_viirs: false,
+                platforms: Vec::new(),
                 records: Vec::new(),
                 mean_uncertainty_items: Vec::new(),
             });
@@ -74,20 +152,16 @@ pub fn build_calendar_with(
         if h.platforms.iter().any(|s| s.is_viirs()) {
             entry.has_viirs = true;
         }
+        for &sensor in &h.platforms {
+            if !entry.platforms.contains(&sensor) {
+                entry.platforms.push(sensor);
+            }
+        }
 
         let sensor_family = SensorFamily::from(h.source);
-        // Native-pixel `mean_frp` never includes completeness k_c, so its systematic uncertainty
-        // comes solely from `modis_scale_sigma` (on ModisOnly) without `ratio_sigma`.
-        let mean_rel = relative_uncertainty_for_obs(
-            h.vza_factor,
-            sensor_family,
-            None,
-            h.n_obs,
-            uncertainty,
-        );
         entry
             .mean_uncertainty_items
-            .push((h.frp_corrected, mean_rel.random, mean_rel.systematic));
+            .push(mean_frp_uncertainty_item(h, uncertainty));
         entry.records.push(BucketRecord {
             lat: h.lat,
             frp_corrected: h.frp_corrected,
@@ -104,7 +178,11 @@ pub fn build_calendar_with(
             let count_normalized = effort_omega.and_then(|omega| {
                 (omega > 0.0 && omega.is_finite()).then_some(bucket.count as f64 / omega)
             });
-            let mean_estimate = mean_frp_uncertainty(&bucket.mean_uncertainty_items, uncertainty);
+            let mean_bounds = mean_frp_bounds_from_items(
+                bucket.sum_corrected,
+                &bucket.mean_uncertainty_items,
+                uncertainty,
+            );
 
             // Apply empirical pre-VIIRS completeness k_c(lat) to `total_frp` ONLY when the cell
             // has no VIIRS detections at all (pre-2012 MODIS-only era). Once VIIRS is present,
@@ -113,17 +191,33 @@ pub fn build_calendar_with(
             // suppresses k_c for the whole cell, and k_c is a zonal mean ratio rather than a
             // per-fire sub-pixel reconstruction.
             let apply_completeness = calibration.enabled && !bucket.has_viirs;
-            let (total_frp, total_estimate) = if apply_completeness {
+            // Optional tropical swath-gap compensation, gated exactly like k_c. It never double
+            // counts with k_c: `calibration_grid_check` measures k_c only on 1°×1° cell-days that
+            // BOTH Aqua MODIS and S-NPP observed within 20 min, so a cell-day inside a MODIS
+            // inter-orbit gap (no MODIS rows) never enters the ratio; k_c is within-swath
+            // small-fire completeness and the gap loss [14, Sec. 4.4] is disjoint from it, so the
+            // product k_c × g applies each loss once. Cells with VIIRS get neither factor because
+            // their ViirsOnly detections already fill the gaps, and Ω/counts are never touched
+            // (see `effort::flag_tropical_swath_gap`).
+            let apply_swath_gap = uncertainty.tropical_swath_gap_compensation && !bucket.has_viirs;
+            let (total_frp, total_estimate) = if apply_completeness || apply_swath_gap {
+                let gap = swath_gap_compensation();
                 let mut sum = 0.0_f64;
                 let mut total_items = Vec::with_capacity(bucket.records.len());
                 for rec in &bucket.records {
                     let cal = calibration_for(rec.lat, calibration);
-                    let contrib = rec.frp_corrected * cal.ratio;
+                    let completeness = (cal.ratio, cal.ratio_sigma);
+                    let factor = if apply_swath_gap && in_tropical_belt(rec.lat) {
+                        combine_factors(completeness, (gap.factor, gap.factor_sigma))
+                    } else {
+                        completeness
+                    };
+                    let contrib = rec.frp_corrected * factor.0;
                     sum += contrib;
                     let rel = relative_uncertainty_for_obs(
                         rec.vza_factor,
                         rec.sensor_family,
-                        Some((cal.ratio, cal.ratio_sigma)),
+                        Some(factor),
                         rec.n_obs,
                         uncertainty,
                     );
@@ -141,22 +235,35 @@ pub fn build_calendar_with(
                 .filter(|&c| c > 0.0 && c.is_finite())
                 .map(|c| total_frp / c);
 
+            let era = if (year, month) < FIRST_TERRA_AQUA_MONTH {
+                None
+            } else if bucket.has_viirs {
+                Some(ConformalEra::Viirs)
+            } else {
+                Some(ConformalEra::PreViirs)
+            };
+            let conformal_band = conformal
+                .zip(era)
+                .and_then(|(table, era)| conformal_interval(table, era, total_frp));
+
             CalendarCell {
                 year,
                 month,
                 count: bucket.count,
                 count_normalized,
                 effort_omega,
-                mean_frp: bucket.sum_corrected / bucket.count as f64,
+                mean_frp: mean_bounds.map_or(bucket.sum_corrected / bucket.count as f64, |(m, _, _)| m),
                 mean_frp_raw: bucket.sum_raw / bucket.count as f64,
-                mean_frp_lower: mean_estimate.map(|e| e.lower),
-                mean_frp_upper: mean_estimate.map(|e| e.upper),
+                mean_frp_lower: mean_bounds.map(|(_, lower, _)| lower),
+                mean_frp_upper: mean_bounds.map(|(_, _, upper)| upper),
                 total_frp,
                 total_frp_lower: total_estimate.map(|e| e.lower),
                 total_frp_upper: total_estimate.map(|e| e.upper),
                 frp_per_detection_eq,
                 anomaly: None,
                 sfai: None,
+                quality_flags: month_quality_flags(year, month, &bucket.platforms),
+                conformal: conformal_band,
             }
         })
         .collect();
@@ -164,6 +271,29 @@ pub fn build_calendar_with(
     compute_anomalies(&mut cells);
     cells.sort_by_key(|a| (a.year, a.month));
     cells
+}
+
+/// Calendar `tropical_swath_gap` metadata: the belt share is taken from the query `bbox` when
+/// given, otherwise from the latitude extent of `hotspots`; `None` when the region has no area
+/// in 30°S-30°N. The compensation it reports matches what [`build_calendar_with`] applied with
+/// the same `uncertainty` params.
+pub fn calendar_swath_gap(
+    bbox: Option<&BBox>,
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+) -> Option<TropicalSwathGap> {
+    let compensate = uncertainty.tropical_swath_gap_compensation;
+    if let Some(b) = bbox {
+        return flag_tropical_swath_gap(b.south, b.north, SwathGapBasis::Bbox, compensate);
+    }
+    let (south, north) = hotspots
+        .iter()
+        .map(|h| h.lat)
+        .filter(|lat| lat.is_finite())
+        .fold(None, |acc: Option<(f64, f64)>, lat| {
+            Some(acc.map_or((lat, lat), |(s, n)| (s.min(lat), n.max(lat))))
+        })?;
+    flag_tropical_swath_gap(south, north, SwathGapBasis::Detections, compensate)
 }
 
 /// Fill `anomaly` with the z-score of each cell's `count_normalized` against the same
@@ -322,7 +452,8 @@ pub fn seasonality(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Confidence, DayNight, HotspotSource, Sensor};
+    use crate::models::{Confidence, DayNight, HotspotSource};
+    use crate::quality::QualityFlag;
     use chrono::{TimeZone, Utc};
 
     fn count_cell(year: i32, month: u32, count: u64, norm: Option<f64>) -> CalendarCell {
@@ -342,6 +473,8 @@ mod tests {
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
+            quality_flags: Vec::new(),
+            conformal: None,
         }
     }
 
@@ -983,5 +1116,331 @@ mod tests {
         let era_cells = build_calendar(&[terra_2001, terra_2003]);
         assert!(era_cells[0].count_normalized.is_none());
         assert!(era_cells[0].frp_per_detection_eq.is_none());
+    }
+
+    #[test]
+    fn mean_frp_with_uncertainty_matches_calendar_cell_and_handles_edge_cases() {
+        let params = UncertaintyParams::default();
+        assert_eq!(mean_frp_with_uncertainty(&[], &params), None);
+
+        let mut modis = make_harmonized(2021, 7, 1, 60.0, 72.0);
+        modis.vza_factor = Some(1.2);
+        let mut viirs = make_harmonized(2021, 7, 2, 24.0, 24.0);
+        viirs.platforms = vec![Sensor::ViirsSNPP];
+        viirs.source = HotspotSource::ViirsOnly;
+        viirs.vza_factor = None;
+
+        let hotspots = [modis.clone(), viirs];
+        let cells = build_calendar_with(&hotspots, &params, &CalibrationConfig::default());
+        assert_eq!(cells.len(), 1);
+
+        let (mean, lower, upper) = mean_frp_with_uncertainty(&hotspots, &params).unwrap();
+        assert_eq!(mean, cells[0].mean_frp);
+        assert_eq!(Some(lower), cells[0].mean_frp_lower);
+        assert_eq!(Some(upper), cells[0].mean_frp_upper);
+        assert!(0.0 <= lower && lower <= mean && mean <= upper);
+
+        let nan_frp = make_harmonized(2021, 7, 3, 10.0, f64::NAN);
+        assert_eq!(mean_frp_with_uncertainty(&[nan_frp], &params), None);
+
+        let neg_frp = make_harmonized(2021, 7, 3, -5.0, -5.0);
+        assert_eq!(mean_frp_with_uncertainty(&[neg_frp], &params), None);
+    }
+
+    #[test]
+    fn empty_quality_flags_omitted_when_serialized() {
+        let cell = count_cell(2015, 7, 3, Some(3.0));
+        let json = serde_json::to_value(&cell).unwrap();
+        assert!(json.get("quality_flags").is_none());
+
+        let mut flagged = cell;
+        flagged.quality_flags = vec![QualityFlag::TerraEarlyRecord];
+        let flagged_json = serde_json::to_value(&flagged).unwrap();
+        assert_eq!(
+            flagged_json["quality_flags"],
+            serde_json::json!(["terra_early_record"])
+        );
+    }
+
+    #[test]
+    fn build_calendar_attaches_quality_flags_to_affected_months() {
+        let terra_outage_month = make_harmonized(2000, 8, 20, 50.0, 50.0);
+        let clean_modis = make_harmonized(2008, 7, 15, 50.0, 50.0);
+        let mut snpp_early = make_harmonized(2012, 4, 20, 30.0, 30.0);
+        snpp_early.platforms = vec![Sensor::ViirsSNPP];
+        snpp_early.source = HotspotSource::ViirsOnly;
+        let mut aqua_drift = make_harmonized(2021, 1, 10, 40.0, 40.0);
+        aqua_drift.platforms = vec![Sensor::ModisAqua];
+
+        let cells = build_calendar(&[terra_outage_month, clean_modis, snpp_early, aqua_drift]);
+        assert_eq!(cells.len(), 4);
+        assert_eq!(
+            cells[0].quality_flags,
+            vec![QualityFlag::TerraEarlyRecord, QualityFlag::TerraOutage]
+        );
+        assert!(cells[1].quality_flags.is_empty());
+        assert_eq!(
+            cells[2].quality_flags,
+            vec![
+                QualityFlag::SnppEarlyCalibration,
+                QualityFlag::SnppSpuriousScanLines,
+            ]
+        );
+        assert_eq!(cells[3].quality_flags, vec![QualityFlag::ModisOrbitalDrift]);
+    }
+
+    /// Three VIIRS-less months (tropics, belt edge, mid-latitude) plus one tropical VIIRS month.
+    fn swath_gap_series() -> Vec<HarmonizedHotspot> {
+        let at = |year, month, lat: f64| {
+            let mut h = make_harmonized(year, month, 1, 100.0, 100.0);
+            h.lat = lat;
+            h
+        };
+        let mut viirs = at(2014, 7, 10.0);
+        viirs.platforms = vec![Sensor::ViirsSNPP];
+        viirs.source = HotspotSource::ViirsOnly;
+        vec![
+            at(2010, 7, 10.0),
+            at(2010, 8, -30.0),
+            at(2010, 9, 40.0),
+            at(2014, 7, 10.0),
+            viirs,
+        ]
+    }
+
+    fn compensation_on() -> UncertaintyParams {
+        UncertaintyParams {
+            tropical_swath_gap_compensation: true,
+            ..UncertaintyParams::default()
+        }
+    }
+
+    #[test]
+    fn swath_gap_compensation_off_keeps_totals_and_bands_identical_to_k_c_only() {
+        let hotspots = swath_gap_series();
+        let default_cells = build_calendar(&hotspots);
+        let explicit_off = build_calendar_with(
+            &hotspots,
+            &UncertaintyParams {
+                tropical_swath_gap_compensation: false,
+                ..UncertaintyParams::default()
+            },
+            &CalibrationConfig::default(),
+        );
+        assert_eq!(
+            serde_json::to_string(&default_cells).unwrap(),
+            serde_json::to_string(&explicit_off).unwrap()
+        );
+
+        // Pin the k_c-only arithmetic exactly (bitwise): 100 × 1.11 with the k_c sigma alone.
+        let p = UncertaintyParams::default();
+        let rel = relative_uncertainty_for_obs(None, SensorFamily::Modis, Some((1.11, 0.08)), 1, &p);
+        let expected = total_frp_uncertainty(&[(100.0 * 1.11, rel.random, rel.systematic)], &p).unwrap();
+        let trop = &default_cells[0];
+        assert_eq!(trop.total_frp, 100.0 * 1.11);
+        assert_eq!(trop.total_frp_lower, Some(expected.lower));
+        assert_eq!(trop.total_frp_upper, Some(expected.upper));
+        // VIIRS month: plain sum, no factor at all.
+        assert_eq!(default_cells[3].total_frp, 200.0);
+    }
+
+    #[test]
+    fn swath_gap_compensation_on_applies_factor_once_in_belt_and_widens_band() {
+        let hotspots = swath_gap_series();
+        let off = build_calendar(&hotspots);
+        let on = build_calendar_with(&hotspots, &compensation_on(), &CalibrationConfig::default());
+        let g = swath_gap_compensation();
+        assert_eq!(on.len(), off.len());
+
+        // Tropics and the inclusive -30° edge: k_c × g, applied exactly once.
+        for i in [0, 1] {
+            let expected = off[i].total_frp * g.factor;
+            assert!((on[i].total_frp - expected).abs() < 1e-9, "{i}: {}", on[i].total_frp);
+            let rel_w = |c: &CalendarCell| {
+                (c.total_frp_upper.unwrap() - c.total_frp_lower.unwrap()) / c.total_frp
+            };
+            assert!(rel_w(&on[i]) > rel_w(&off[i]), "band must widen at {i}");
+            assert!(on[i].total_frp_lower.unwrap() < on[i].total_frp);
+            assert!(on[i].total_frp_upper.unwrap() > on[i].total_frp);
+        }
+        assert!((on[0].total_frp - 100.0 * 1.11 * g.factor).abs() < 1e-9);
+
+        // Outside the belt and in the VIIRS month nothing changes, bit for bit.
+        for i in [2, 3] {
+            assert_eq!(on[i].total_frp, off[i].total_frp);
+            assert_eq!(on[i].total_frp_lower, off[i].total_frp_lower);
+            assert_eq!(on[i].total_frp_upper, off[i].total_frp_upper);
+        }
+
+        // Counts, Ω, native-pixel means and anomalies are never compensated.
+        for (a, b) in on.iter().zip(&off) {
+            assert_eq!(a.count, b.count);
+            assert_eq!(a.effort_omega, b.effort_omega);
+            assert_eq!(a.count_normalized, b.count_normalized);
+            assert_eq!(a.mean_frp, b.mean_frp);
+            assert_eq!(a.mean_frp_lower, b.mean_frp_lower);
+            assert_eq!(a.anomaly, b.anomaly);
+        }
+
+        // With k_c disabled the gap factor alone applies, still once.
+        let no_kc = CalibrationConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let gap_only = build_calendar_with(&hotspots, &compensation_on(), &no_kc);
+        assert!((gap_only[0].total_frp - 100.0 * g.factor).abs() < 1e-9);
+        assert_eq!(gap_only[2].total_frp, 100.0);
+    }
+
+    #[test]
+    fn belt_edge_detection_is_inclusive_at_30_degrees_only() {
+        let at = |month, lat: f64| {
+            let mut h = make_harmonized(2010, month, 1, 100.0, 100.0);
+            h.lat = lat;
+            h
+        };
+        let hotspots = [at(6, 30.0), at(7, 30.0001), at(8, 29.9999)];
+        let cal_off = CalibrationConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let cells = build_calendar_with(&hotspots, &compensation_on(), &cal_off);
+        let g = swath_gap_compensation().factor;
+        assert!((cells[0].total_frp - 100.0 * g).abs() < 1e-9);
+        assert_eq!(cells[1].total_frp, 100.0);
+        assert!((cells[2].total_frp - 100.0 * g).abs() < 1e-9);
+    }
+
+    #[test]
+    fn calendar_swath_gap_uses_bbox_then_detection_extent() {
+        let off = UncertaintyParams::default();
+        let bbox = |south, north| BBox {
+            west: -60.0,
+            south,
+            east: -40.0,
+            north,
+        };
+
+        let brazil = calendar_swath_gap(Some(&bbox(-34.0, 6.0)), &[], &off).unwrap();
+        assert_eq!(brazil.basis, SwathGapBasis::Bbox);
+        assert!(brazil.belt_share > 0.9 && brazil.belt_share < 1.0);
+        assert_eq!(brazil.compensation, None);
+        assert_eq!((brazil.missed_frp_low_pct, brazil.missed_frp_high_pct), (10.7, 12.5));
+
+        // The bbox wins over detections that would say otherwise.
+        let tropical_rows = swath_gap_series();
+        assert!(calendar_swath_gap(Some(&bbox(36.0, 42.0)), &tropical_rows, &off).is_none());
+
+        // Without a bbox the detections' latitude span is used.
+        let from_rows = calendar_swath_gap(None, &tropical_rows, &off).unwrap();
+        assert_eq!(from_rows.basis, SwathGapBasis::Detections);
+        let expected = crate::effort::tropical_belt_share(-30.0, 40.0);
+        assert!((from_rows.belt_share - expected).abs() < 1e-12);
+
+        let turkey = make_harmonized(2010, 7, 1, 10.0, 10.0);
+        assert!(calendar_swath_gap(None, &[turkey], &off).is_none());
+        assert!(calendar_swath_gap(None, &[], &off).is_none());
+
+        let on = calendar_swath_gap(Some(&bbox(-10.0, 5.0)), &[], &compensation_on()).unwrap();
+        assert_eq!(on.belt_share, 1.0);
+        assert_eq!(on.compensation, Some(swath_gap_compensation()));
+    }
+
+    fn unit_conformal_table() -> ConformalTable {
+        use crate::conformal::ConformalEntry;
+        let entry = |era| ConformalEntry {
+            era,
+            bin: 0,
+            mu_lo: None,
+            mu_hi: None,
+            cal_mu_min: 0.0,
+            cal_mu_max: 1e9,
+            n_cal: 100,
+            q68_lower: Some(-0.1),
+            q68_upper: Some(0.1),
+            q90_lower: Some(-0.2),
+            q90_upper: Some(0.2),
+        };
+        ConformalTable {
+            schema_version: 1,
+            calibration_fingerprint: "test".into(),
+            entries: vec![entry(ConformalEra::PreViirs), entry(ConformalEra::Viirs)],
+            coverage: None,
+            notes: None,
+        }
+    }
+
+    fn conformal_cells(hotspots: &[HarmonizedHotspot], table: Option<&ConformalTable>) -> Vec<CalendarCell> {
+        build_calendar_with_conformal(
+            hotspots,
+            &UncertaintyParams::default(),
+            &CalibrationConfig::default(),
+            table,
+        )
+    }
+
+    #[test]
+    fn conformal_era_follows_viirs_presence_and_terra_only_gets_none() {
+        let hotspots = vec![
+            make_with_platforms(2001, 3, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 6, 2, vec![Sensor::ModisAqua]),
+            make_with_platforms(2015, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2015, 6, 2, vec![Sensor::ViirsSNPP]),
+        ];
+        let table = unit_conformal_table();
+        let cells = conformal_cells(&hotspots, Some(&table));
+        let cell = |y: i32| cells.iter().find(|c| c.year == y).unwrap();
+
+        assert!(cell(2001).conformal.is_none(), "Terra-only month");
+        let pre = cell(2010).conformal.expect("pre-VIIRS band");
+        assert_eq!(pre.era, ConformalEra::PreViirs);
+        assert!((pre.p68_lower - cell(2010).total_frp * 0.9).abs() < 1e-9);
+        assert!((pre.p90_upper - cell(2010).total_frp * 1.2).abs() < 1e-9);
+        let viirs = cell(2015).conformal.expect("VIIRS band");
+        assert_eq!(viirs.era, ConformalEra::Viirs);
+        assert!((viirs.p68_upper - cell(2015).total_frp * 1.1).abs() < 1e-9);
+    }
+
+    #[test]
+    fn terra_only_series_before_aqua_gets_no_conformal_band() {
+        let hotspots = vec![make_with_platforms(2001, 3, 1, vec![Sensor::ModisTerra])];
+        let cells = conformal_cells(&hotspots, Some(&unit_conformal_table()));
+        assert_eq!(cells.len(), 1);
+        assert!(cells[0].conformal.is_none());
+    }
+
+    #[test]
+    fn without_a_table_there_is_no_conformal_field_and_values_are_unchanged() {
+        let hotspots = vec![
+            make_with_platforms(2010, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2015, 6, 2, vec![Sensor::ViirsSNPP]),
+        ];
+        let plain = build_calendar(&hotspots);
+        let none = conformal_cells(&hotspots, None);
+        assert_eq!(
+            serde_json::to_string(&plain).unwrap(),
+            serde_json::to_string(&none).unwrap()
+        );
+        assert!(plain.iter().all(|c| c.conformal.is_none()));
+        assert!(!serde_json::to_string(&plain).unwrap().contains("conformal"));
+    }
+
+    #[test]
+    fn conformal_band_round_trips_through_cell_json() {
+        let hotspots = vec![make_with_platforms(2015, 6, 2, vec![Sensor::ViirsSNPP])];
+        let cells = conformal_cells(&hotspots, Some(&unit_conformal_table()));
+        let json = serde_json::to_string(&cells[0]).unwrap();
+        assert!(json.contains("\"conformal\""));
+        assert!(json.contains("\"era\":\"viirs\""));
+        let back: CalendarCell = serde_json::from_str(&json).unwrap();
+        let (b, a) = (back.conformal.unwrap(), cells[0].conformal.unwrap());
+        assert_eq!((b.era, b.bin, b.n_cal, b.extrapolated), (a.era, a.bin, a.n_cal, a.extrapolated));
+        assert!((b.p90_upper - a.p90_upper).abs() < 1e-9);
+        let legacy: CalendarCell = serde_json::from_str(
+            &json.replace(&format!(",\"conformal\":{}", serde_json::to_string(&cells[0].conformal).unwrap()), ""),
+        )
+        .unwrap();
+        assert!(legacy.conformal.is_none());
     }
 }

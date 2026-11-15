@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2004/modis_2004_Kiribati.csv",
@@ -87,5 +87,5 @@
       "bytes": 1478
     }
   ],
-  "body_hash": "83605a87027b3173"
+  "body_hash": "f8e42946d4e1a84b"
 }

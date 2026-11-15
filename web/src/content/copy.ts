@@ -18,6 +18,10 @@ import { mapCopyEn, mapCopyTr } from "./copyMap";
 import { regionCopyEn, regionCopyTr } from "./copyRegion";
 import { stateCopyEn, stateCopyTr } from "./copyState";
 import { analyticsCopyEn, analyticsCopyTr } from "./copyAnalytics";
+import { methodsPageCopyEn, methodsPageCopyTr } from "./copyMethods";
+import { tourCopyEn, tourCopyTr } from "./copyTour";
+import { fusionCopyEn, fusionCopyTr } from "./copyFusion";
+import { briefingCopyEn, briefingCopyTr } from "./copyBriefing";
 
 export const TR_REGION_NAMES: Readonly<Record<string, string>> = {
   Turkey: "Türkiye",
@@ -84,12 +88,21 @@ const enBase = {
 
   // Header
   navMethods: "Methods",
+  navSettings: "Settings",
   modeBadgeArchive: "FIRMS archive",
   modeBadgeArchiveYears: "FIRMS archive · {first}–{last}",
+  modeBadgeDemo: "Demo data (synthetic)",
+  modeBadgeToDemoAria: "Switch to synthetic demo data",
+  modeBadgeToLiveAria: "Try switching to live server",
+  modeBadgeChecking: "Checking server…",
+  modeBadgeStayDemoNotice: "Server not reachable, staying on demo data",
+  demoSourceShort: "Synthetic demo data",
 
   // Correction receipt
   receiptTitle: "From raw to harmonized detections",
   receiptRaw: "Raw detections",
+  receiptStaticMasked: "Static sources / gas flares removed",
+  receiptSamaRemoved: "SAMA night noise removed",
   receiptDedup: "− Duplicate detections removed",
   receiptUnique: "= Harmonized detections",
   receiptAngle: "FRP corrected for angle",
@@ -146,6 +159,10 @@ const enBase = {
   mapLegendViirs: "VIIRS ({first}–{last})",
   mapLegendViirsShort: "VIIRS",
   mapLegendFrp: "Fire Radiative Power (MW)",
+  mapLegendScaleQuantile: "Quantile",
+  mapLegendScaleFixed: "Fixed",
+  mapLegendFrpRange: "{min}–{max} MW",
+  mapLegendFrpRangePlus: "{min}+ MW",
   mapLegendDuplicate: "Counted twice",
   mapMonthFilter: "Filtered: {month}",
   mapMonthFilterClear: "Clear",
@@ -186,9 +203,18 @@ const enBase = {
   calendarBelowNormalShort: "below normal",
   calendarAboveNormalShort: "above normal",
   calendarSliceHint: "Click a month to show it on the map",
+  calendarSwathGapNote:
+    "Tropical swath gap: {share}% of this region lies within 30°S–30°N, where gaps between MODIS orbits ({km} km at the equator) miss about {low}–{high}% of VIIRS fire energy ({low}% annual, {high}% monthly). Years with VIIRS fill those gaps; MODIS-only years before 2012 are not corrected for it.",
+  calendarSwathGapNoteCompensated:
+    "Tropical swath gap: {share}% of this region lies within 30°S–30°N, where gaps between MODIS orbits ({km} km at the equator) miss about {low}–{high}% of VIIRS fire energy ({low}% annual, {high}% monthly). Years with VIIRS fill those gaps; MODIS-only fire energy before 2012 is scaled up by {scale}% for it, with a wider uncertainty band.",
   calendarTooltip: "{date} · {count} detections · {anomaly} ({sigma})",
   calendarNoAnomalyCell: "{date} · {count} detections",
   calendarEmptyCell: "{month} · 0 detections",
+  calendarFrpEq: "{value} MW per detection (MODIS-equivalent)",
+  calendarFrpTotal: "total FRP {value} MW",
+  calendarFrpTotalBand: "total FRP {value} MW (likely {low}–{high})",
+  calendarFrpNative: "native-pixel mean {value} MW",
+  calendarFrpNativeBand: "native-pixel mean {value} MW (likely {low}–{high})",
   calendarNoRecord: "{month} · no satellite record",
   calendarSelectHint: "Select a month to filter the map",
   calendarLegendBelow: "Below normal",
@@ -230,9 +256,14 @@ const enBase = {
   disclaimer: "Harmonized values are model estimates, not ground truth.",
   disclaimerLink: "See how we calculate them →",
   exportCsv: "Download this view (CSV)",
-  exportCsvShort: "Download CSV",
+  exportCsvShort: "CSV",
   exportCsvDescription: "Downloads {file}",
   briefMe: "Brief me on this region",
+  confidenceFilterOff: "Exclude low-confidence",
+  confidenceFilterOn: "Low-confidence excluded",
+  confidenceFilterDescription:
+    "Drops FIRMS low-confidence detections before harmonizing. Applies to the map, the CSV and the live counts; the yearly series is precomputed and stays unfiltered.",
+  confidenceFilterExcluded: "{count} removed from this view",
 
   // Methods drawer
   methodsTitle: "How three satellites' detections are harmonized",
@@ -248,11 +279,31 @@ const enBase = {
   methodsStepMatch: "When MODIS and VIIRS see the same fire at about the same time, we count it once.",
   methodsStepFuse: "From each matched pair we keep the sharpest observation.",
   methodsStepCalendar: "Harmonized detections are counted per month across the archive.",
+  uncertaintyConfidenceLabel: "±1σ (~68% confidence interval)",
+  uncertaintyWideTitle: "Wide interval",
+  uncertaintyWideBody: "Wide interval = large sensor viewing angle or limited calibration data.",
+  uncertaintyRawNote: "Raw observation: no harmonization model interval applies.",
+  uncertaintyModelCaveat:
+    "Harmonized values are model estimates, not ground truth. Default sensor noise and viewing-angle weights are modeling assumptions.",
   methodsLimitsTitle: "Limits",
+  methodsAtmosphereNote:
+    "Smoke and cloud can only push FRP down. FIRMS carries no smoke optical depth or cloud fraction, so FRP may be underestimated by roughly 7–22%: thin smoke dims the signal, and clouds hide about 22% (MODIS) and 12% (VIIRS) of fire energy globally, about 7% in regional studies. This one-sided bias is not part of the uncertainty bands.",
+  methodsLowConfidenceNote:
+    "Low-confidence detections include false alarms, such as up to 40% on bright roofs in eastern China and 10% at a South African power plant. “Exclude low-confidence” in the bottom bar drops them before harmonizing; the yearly series stays unfiltered.",
   methodsSettingsTitle: "Display",
   themeLabel: "Theme",
   themeDark: "Dark",
   themeLight: "Light",
+  paletteLabel: "Colour palette",
+  paletteDefault: "Inferno (Default)",
+  paletteDefaultDesc: "High-contrast thermal ramp",
+  paletteViridis: "Viridis (Colorblind-safe)",
+  paletteViridisDesc: "Perceptually uniform purple-to-yellow",
+  paletteCividis: "Cividis (High CVD-safe)",
+  paletteCividisDesc: "Optimized for red-green & achromatopsia",
+  paletteNameDefault: "Inferno",
+  paletteNameViridis: "Viridis",
+  paletteNameCividis: "Cividis",
   presentationMode: "Presentation mode",
   presentationModeHint: "Press P to turn it on or off",
   angleDegrees: "{value}°",
@@ -261,6 +312,34 @@ const enBase = {
     "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP ({viirsFirst}–{viirsLast})",
   methodsSourceCitationModis: "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast})",
   methodsSourceCitationFallback: "NASA FIRMS archive · MODIS C6.1 / VIIRS S-NPP",
+  methodsSourceCitationDemo:
+    "Synthetic demo data · 2021 Mediterranean cluster + 2000–2025 synthetic series (not NASA FIRMS data)",
+
+  // Settings
+  settingsTitle: "Settings",
+  settingsNote:
+    "Adjustments recompute the selected month’s map points and stage counts. The yearly chart and calendar always use server defaults.",
+  settingsDedupTimeLabel: "Dedup time window",
+  settingsDedupOverlapLabel: "Dedup overlap ratio",
+  settingsMatchRadiusLabel: "Cross-sensor match radius",
+  settingsMatchWindowLabel: "Cross-sensor match window",
+  settingsFleetRadiusLabel: "Fleet merge radius",
+  settingsHintSec: "Default {default} s · Range {min}–{max} s",
+  settingsHintPct: "Default {default}% · Range {min}–{max}%",
+  settingsHintKm: "Default {default} km · Range {min}–{max} km",
+  settingsHintMin: "Default {default} min · Range {min}–{max} min",
+  settingsUnitSec: "s",
+  settingsUnitPct: "%",
+  settingsUnitKm: "km",
+  settingsUnitMin: "min",
+  settingsValueSec: "{value} s",
+  settingsValuePct: "{value}%",
+  settingsValueKm: "{value} km",
+  settingsValueMin: "{value} min",
+  settingsNumberInputAria: "{label} ({unit})",
+  settingsReset: "Reset to defaults",
+  settingsCustomBadge: "Custom thresholds",
+  settingsCustomBadgeAria: "Custom thresholds active. Open settings",
 
   // Briefing
   briefingTitle: "Regional briefing",
@@ -277,11 +356,16 @@ const enBase = {
   briefingPrint: "Print this briefing",
   briefingCopyLink: "Copy link to this view",
   briefingLinkCopied: "Link copied",
+  briefingSourceLive: "Source: {source}",
+  briefingSourceDemo:
+    "Source: Synthetic demo data (2021 Mediterranean cluster + 2000–2025 synthetic series; not NASA FIRMS data)",
   nrtLiveSummary: "Live: {raw} → {harmonized}",
+  nrtDemoUnavailable: "Live feed: not available in demo mode",
+  nrtVzaAdjustment: "view-angle correction: mean FRP {pct}",
   nrtTransactions: "{n} API calls",
 } as const;
 
-const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn } as const;
+const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn, ...tourCopyEn, ...fusionCopyEn, ...briefingCopyEn } as const;
 
 export type CopyKey = keyof typeof en;
 export type CopyDictionary = { readonly [K in CopyKey]: string };
@@ -324,11 +408,20 @@ const trBase = {
   countOpenReceipt: "Bu sayıya nasıl ulaştığımızı göster",
 
   navMethods: "Yöntemler",
+  navSettings: "Ayarlar",
   modeBadgeArchive: "FIRMS arşivi",
   modeBadgeArchiveYears: "FIRMS arşivi · {first}–{last}",
+  modeBadgeDemo: "Demo veri (sentetik)",
+  modeBadgeToDemoAria: "Sentetik demo veriye geç",
+  modeBadgeToLiveAria: "Canlı sunucuya geçmeyi dene",
+  modeBadgeChecking: "Sunucu kontrol ediliyor…",
+  modeBadgeStayDemoNotice: "Sunucuya ulaşılamıyor, demo veride kalınıyor",
+  demoSourceShort: "Sentetik demo verisi",
 
   receiptTitle: "Ham tespitten harmonize tespite",
   receiptRaw: "Ham tespitler",
+  receiptStaticMasked: "Sabit kaynaklar / gaz meşaleleri çıkarıldı",
+  receiptSamaRemoved: "SAMA gece gürültüsü çıkarıldı",
   receiptDedup: "− Ayıklanan mükerrer tespitler",
   receiptUnique: "= Harmonize tespit",
   receiptAngle: "Bakış açısına göre düzeltilmiş FRP",
@@ -383,6 +476,10 @@ const trBase = {
   mapLegendViirs: "VIIRS ({first}–{last})",
   mapLegendViirsShort: "VIIRS",
   mapLegendFrp: "Yangın Işınım Gücü (MW)",
+  mapLegendScaleQuantile: "Kuantil",
+  mapLegendScaleFixed: "Sabit",
+  mapLegendFrpRange: "{min}–{max} MW",
+  mapLegendFrpRangePlus: "{min}+ MW",
   mapLegendDuplicate: "İki kez sayılan",
   mapMonthFilter: "Filtre: {month}",
   mapMonthFilterClear: "Temizle",
@@ -422,9 +519,18 @@ const trBase = {
   calendarBelowNormalShort: "normal altı",
   calendarAboveNormalShort: "normal üstü",
   calendarSliceHint: "Haritada görmek için bir aya tıkla",
+  calendarSwathGapNote:
+    "Tropikal swath boşluğu: Bu bölgenin %{share|poss} 30°G–30°K kuşağında; burada MODIS yörüngeleri arasındaki boşluklar (ekvatorda {km} km) VIIRS yangın enerjisinde yaklaşık %{low}–{high} (yıllık %{low}, aylık %{high}) kayba yol açar. VIIRS'li yıllar bu boşlukları doldurur; 2012 öncesi yalnız MODIS yılları bunun için düzeltilmez.",
+  calendarSwathGapNoteCompensated:
+    "Tropikal swath boşluğu: Bu bölgenin %{share|poss} 30°G–30°K kuşağında; burada MODIS yörüngeleri arasındaki boşluklar (ekvatorda {km} km) VIIRS yangın enerjisinde yaklaşık %{low}–{high} (yıllık %{low}, aylık %{high}) kayba yol açar. VIIRS'li yıllar bu boşlukları doldurur; 2012 öncesi yalnız MODIS yangın enerjisi bunun için %{scale} artırılır ve belirsizlik bandı genişletilir.",
   calendarTooltip: "{date} · {count} tespit · {anomaly} ({sigma})",
   calendarNoAnomalyCell: "{date} · {count} tespit",
   calendarEmptyCell: "{month} · 0 tespit",
+  calendarFrpEq: "tespit başına {value} MW (MODIS eşdeğeri)",
+  calendarFrpTotal: "toplam FRP {value} MW",
+  calendarFrpTotalBand: "toplam FRP {value} MW (olası aralık {low}–{high})",
+  calendarFrpNative: "yerel piksel ortalaması {value} MW",
+  calendarFrpNativeBand: "yerel piksel ortalaması {value} MW (olası aralık {low}–{high})",
   calendarNoRecord: "{month} · uydu kaydı yok",
   calendarSelectHint: "Haritayı süzmek için bir ay seç",
   calendarLegendBelow: "Normalin altında",
@@ -463,9 +569,14 @@ const trBase = {
   disclaimer: "Harmonize değerler model tahminidir, yer gerçeği değildir.",
   disclaimerLink: "Nasıl hesapladığımızı gör →",
   exportCsv: "Bu görünümü indir (CSV)",
-  exportCsvShort: "CSV indir",
+  exportCsvShort: "CSV",
   exportCsvDescription: "{file} dosyasını indirir",
   briefMe: "Bu bölgeyi özetle",
+  confidenceFilterOff: "Düşük güveni hariç tut",
+  confidenceFilterOn: "Düşük güven hariç",
+  confidenceFilterDescription:
+    "FIRMS düşük güvenli tespitlerini harmonizasyondan önce çıkarır. Haritaya, CSV'ye ve canlı sayılara uygulanır; yıllık seri önceden hesaplandığı için filtresiz kalır.",
+  confidenceFilterExcluded: "Bu görünümden {count} tespit çıkarıldı",
 
   methodsTitle: "Üç uydunun tespitleri nasıl harmonize edilir",
   methodsCliffDef:
@@ -480,11 +591,31 @@ const trBase = {
   methodsStepMatch: "MODIS ve VIIRS aynı yangını yaklaşık aynı anda görürse onu bir kez sayarız.",
   methodsStepFuse: "Eşleşen her çiftten en net gözlemi tutarız.",
   methodsStepCalendar: "Harmonize tespitler arşiv boyunca ay ay toplanır.",
+  uncertaintyConfidenceLabel: "±1σ (~%68 güven aralığı)",
+  uncertaintyWideTitle: "Geniş aralık",
+  uncertaintyWideBody: "Geniş aralık = sensör açısı büyük veya kalibrasyon verisi az.",
+  uncertaintyRawNote: "Ham gözlem: uyumlaştırma modeli aralığı uygulanmaz.",
+  uncertaintyModelCaveat:
+    "Harmonize değerler model tahminidir, yer gerçeği değildir. Varsayılan sensör gürültüsü ve bakış açısı ağırlıkları modelleme varsayımlarıdır.",
   methodsLimitsTitle: "Sınırlar",
+  methodsAtmosphereNote:
+    "Duman ve bulut FRP'yi yalnızca aşağı çekebilir. FIRMS duman optik derinliği veya bulut kesri taşımadığından FRP kabaca %7–22 düşük tahmin edilebilir: ince duman sinyali zayıflatır, bulutlar küresel ölçekte yangın enerjisinin yaklaşık %22'sini (MODIS) ve %12'sini (VIIRS), bölgesel çalışmalarda yaklaşık %7'sini gizler. Bu tek yönlü sapma belirsizlik bantlarına dahil değildir.",
+  methodsLowConfidenceNote:
+    "Düşük güvenli tespitler yanlış alarmlar içerir: Doğu Çin'deki parlak çatılarda %40'a, Güney Afrika'daki bir termik santralde %10'a varan oranlarda. Alt çubuktaki “Düşük güveni hariç tut” bunları harmonizasyondan önce çıkarır; yıllık seri filtresiz kalır.",
   methodsSettingsTitle: "Görünüm",
   themeLabel: "Tema",
   themeDark: "Koyu",
   themeLight: "Açık",
+  paletteLabel: "Renk paleti",
+  paletteDefault: "Inferno (Varsayılan)",
+  paletteDefaultDesc: "Yüksek kontrastlı ısıl rampa",
+  paletteViridis: "Viridis (Renk Körlüğü Uyumlu)",
+  paletteViridisDesc: "Algısal olarak eşit mor–sarı rampa",
+  paletteCividis: "Cividis (Yüksek CVD Uyumlu)",
+  paletteCividisDesc: "Kırmızı-yeşil ve akromatopsi için optimize",
+  paletteNameDefault: "Inferno",
+  paletteNameViridis: "Viridis",
+  paletteNameCividis: "Cividis",
   presentationMode: "Sunum modu",
   presentationModeHint: "Açıp kapatmak için P'ye bas",
   angleDegrees: "{value}°",
@@ -493,6 +624,33 @@ const trBase = {
     "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP ({viirsFirst}–{viirsLast})",
   methodsSourceCitationModis: "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast})",
   methodsSourceCitationFallback: "NASA FIRMS arşivi · MODIS C6.1 / VIIRS S-NPP",
+  methodsSourceCitationDemo:
+    "Sentetik demo verisi · 2021 Akdeniz kümesi + 2000–2025 sentetik seri (NASA FIRMS verisi değildir)",
+
+  settingsTitle: "Ayarlar",
+  settingsNote:
+    "Değişiklikler seçili ayın harita noktalarını ve aşama sayılarını yeniden hesaplar. Yıllık grafik ve takvim her zaman sunucu varsayılanlarını kullanır.",
+  settingsDedupTimeLabel: "Çakışma zaman penceresi",
+  settingsDedupOverlapLabel: "Çakışma örtüşme oranı",
+  settingsMatchRadiusLabel: "Sensörler arası eşleme yarıçapı",
+  settingsMatchWindowLabel: "Sensörler arası eşleme penceresi",
+  settingsFleetRadiusLabel: "Filo birleştirme yarıçapı",
+  settingsHintSec: "Varsayılan {default} sn · Aralık {min}–{max} sn",
+  settingsHintPct: "Varsayılan %{default} · Aralık %{min}–%{max}",
+  settingsHintKm: "Varsayılan {default} km · Aralık {min}–{max} km",
+  settingsHintMin: "Varsayılan {default} dk · Aralık {min}–{max} dk",
+  settingsUnitSec: "sn",
+  settingsUnitPct: "%",
+  settingsUnitKm: "km",
+  settingsUnitMin: "dk",
+  settingsValueSec: "{value} sn",
+  settingsValuePct: "%{value}",
+  settingsValueKm: "{value} km",
+  settingsValueMin: "{value} dk",
+  settingsNumberInputAria: "{label} ({unit})",
+  settingsReset: "Varsayılana dön",
+  settingsCustomBadge: "Özel eşikler",
+  settingsCustomBadgeAria: "Özel eşikler etkin. Ayarları aç",
 
   briefingTitle: "Bölge brifingi",
   briefingFinding: "{region} bölgesinde ham tespitlerin {pct|poss} mükerrer tespitti ({raw} tespitten {removed}).",
@@ -508,11 +666,16 @@ const trBase = {
   briefingPrint: "Bu brifingi yazdır",
   briefingCopyLink: "Bu görünümün bağlantısını kopyala",
   briefingLinkCopied: "Bağlantı kopyalandı",
+  briefingSourceLive: "Kaynak: {source}",
+  briefingSourceDemo:
+    "Kaynak: Sentetik demo verisi (2021 Akdeniz kümesi + 2000–2025 sentetik seri; NASA FIRMS verisi değildir)",
   nrtLiveSummary: "Canlı: {raw} → {harmonized}",
+  nrtDemoUnavailable: "Canlı akış: demo modunda kullanılamıyor",
+  nrtVzaAdjustment: "bakış açısı düzeltmesi: ortalama FRP {pct}",
   nrtTransactions: "{n} API çağrısı",
 } as const;
 
-const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr };
+const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr, ...tourCopyTr, ...fusionCopyTr, ...briefingCopyTr };
 
 export const copy: Readonly<Record<Lang, CopyDictionary>> = { en, tr };
 

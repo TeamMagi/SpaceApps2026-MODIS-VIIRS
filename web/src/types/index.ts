@@ -25,6 +25,46 @@ export enum Sensor {
 
 export type ViewMode = "raw" | "harmonized";
 
+/** Lowest FIRMS confidence class kept before harmonizing (`min_confidence`); `low` keeps everything. */
+export type MinConfidence = "low" | "nominal" | "high";
+
+/** Harmonization model for matched MODIS+VIIRS records (`fusion_model`); `viirs_preferred` is the standard one. */
+export type FusionModel = "viirs_preferred" | "equal_weight" | "modis_calibrated";
+
+export const DEFAULT_FUSION_MODEL: FusionModel = "viirs_preferred";
+
+/** Non-default model versus the standard one for the same period; null/absent for the standard model. */
+export interface FusionComparison {
+  model: FusionModel;
+  baselineCount: number;
+  baselineTotalFrp: number;
+  count: number;
+  totalFrp: number;
+  droppedBelowModisLimit: number;
+}
+
+/** Echo of the server-side confidence filter, so a filtered response can label itself. */
+export interface ConfidenceFilterInfo {
+  minConfidence: MinConfidence;
+  excludedDetections: number;
+}
+
+/** One-sided atmospheric (smoke / cloud) FRP bias note; informational, not applied to the numbers. */
+export interface AtmosphericBias {
+  direction: "downward";
+  lowPct: number;
+  highPct: number;
+  applied: boolean;
+  note: string;
+  refs: string[];
+}
+
+export interface UncertaintyInfo {
+  confidence: number;
+  note: string;
+  atmosphericBias: AtmosphericBias | null;
+}
+
 /** Display input for summary cards; every value must describe the same scope. */
 export interface AnalyticsSnapshot {
   scope: { region: string; year: number; month: number | null };
@@ -39,6 +79,9 @@ export interface AnalyticsSnapshot {
 
 export type Lang = "en" | "tr";
 export type Theme = "dark" | "light";
+export type Palette = "default" | "viridis" | "cividis";
+export type DataMode = "live" | "demo";
+export type DataModeSource = "auto" | "manual";
 
 /** Phase of the Raw <-> Harmonized choreography. See hooks/useHarmonizeTransition. */
 export type Phase = "idle" | "detect" | "merge" | "settle";
@@ -49,7 +92,46 @@ export type ActivePhase = Exclude<Phase, "idle">;
 export type PhaseDurations = Readonly<Record<ActivePhase, number>>;
 
 /** Overlay panels. `receipt` is the correction receipt popover under the count. */
-export type DrawerId = "methods" | "briefing" | "receipt";
+export type DrawerId = "methods" | "settings" | "briefing" | "receipt";
+
+export interface PipelineDedupConfig {
+  maxTimeDiffSecs: number;
+  minOverlapRatio: number;
+}
+
+export interface PipelineFleetConfig {
+  viirsWindowSecs: number;
+  modisWindowSecs: number;
+  radiusKm: number;
+}
+
+export interface PipelineMatchingConfig {
+  radiusKm: number;
+  windowSecs: number;
+}
+
+export interface PipelineVzaConfig {
+  a: number;
+  b: number;
+  c: number;
+}
+
+export interface PipelineConfig {
+  dedup: PipelineDedupConfig;
+  fleet: PipelineFleetConfig;
+  matching: PipelineMatchingConfig;
+  vza?: PipelineVzaConfig;
+}
+
+export interface PipelineOverrides {
+  dedupTimeSecs?: number;
+  dedupOverlap?: number;
+  matchRadiusKm?: number;
+  matchWindowSecs?: number;
+  fleetRadiusKm?: number;
+}
+
+export type PipelineOverrideKey = keyof PipelineOverrides;
 
 /** Async fetch status exposed by data hooks. */
 export type AsyncStatus = "loading" | "ready" | "empty" | "error";
@@ -135,14 +217,19 @@ export interface HarmonizedPoint {
   vzaFactor: number | null;
   nObs: number;
   platforms: string[];
+  frpLower: number | null;
+  frpUpper: number | null;
 }
 
 export interface PointStages {
   rawModis: number;
   rawViirs: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   matchedPairs: number;
+  viirsAggregated: number;
   harmonized: number;
 }
 
@@ -161,6 +248,11 @@ export interface MapPointSet {
   truncated: boolean;
   limit: number;
   frpAngleCorrectionPct: number | null;
+  filters: ConfidenceFilterInfo;
+  fusionModel?: FusionModel;
+  fusionComparison?: FusionComparison | null;
+  /** From `/api/points`, measured on the period's whole year; null outside the tropical belt. */
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 export interface MonthCell {
@@ -175,6 +267,9 @@ export interface MonthCell {
   /** z-score against the same calendar month in other years; null when fewer than 3 years or sd == 0. */
   anomalyRaw: number | null;
   anomalyHarmonized: number | null;
+  meanFrp: number | null;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
 }
 
 export interface YearlyPoint {
@@ -184,8 +279,11 @@ export interface YearlyPoint {
   rawViirs: number;
   harmonized: number;
   matched: number;
+  viirsAggregated: number;
   modisOnly: number;
   viirsOnly: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   firstDate: string | null;
@@ -215,9 +313,12 @@ export interface RegionTotals {
   viirs: number;
   raw: number;
   harmonized: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   matched: number;
+  viirsAggregated: number;
   doubleCounts: number;
   /** doubleCounts / raw, as a ratio. */
   doubleCountShare: number;
@@ -282,9 +383,17 @@ export interface CalendarCell {
   count: number;
   countNormalized: number | null;
   effortOmega: number | null;
+  // Native-pixel mean: drops at the 2012 VIIRS transition due to pixel size; use frpPerDetectionEq as the headline metric.
   meanFrp: number;
   meanFrpRaw: number;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
+  totalFrp: number;
+  totalFrpLower: number | null;
+  totalFrpUpper: number | null;
+  frpPerDetectionEq: number | null;
   anomaly: number | null;
+  qualityFlags: readonly string[];
 }
 
 export interface EffortFactor {
@@ -295,12 +404,33 @@ export interface EffortFactor {
   total: number;
   modisObservable: number;
   omega: number | null;
+  totalHighIntensity?: number;
+  modisObservableHighIntensity?: number;
+  omegaHighIntensity?: number | null;
+  snppAquaHighIntensityRatio?: number | null;
+}
+
+/**
+ * MODIS equatorial swath-gap flag (effort metadata): the region has area inside 30°S–30°N, where
+ * gaps between MODIS orbits miss ~10.7–12.5% of monthly VIIRS FRP. Informational unless
+ * `compensation` is set, in which case VIIRS-less tropical totals were scaled by `factor` once.
+ */
+export interface TropicalSwathGapInfo {
+  beltAbsLat: number;
+  /** Area-weighted share of the region inside the belt, 0 < share <= 1. */
+  beltShare: number;
+  basis: "bbox" | "detections";
+  swathGapKm: number;
+  missedFrpLowPct: number;
+  missedFrpHighPct: number;
+  compensation: { factor: number; factorSigma: number } | null;
 }
 
 export interface EffortInfo {
   reliable: boolean;
   reason: string | null;
   factors: EffortFactor[];
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 export interface ReportInfo {
@@ -348,6 +478,8 @@ export interface HarmonizeResponse {
   };
   calendar: CalendarCell[];
   effort: EffortInfo;
+  uncertainty: UncertaintyInfo | null;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -391,7 +523,7 @@ export interface CompareVza {
   recordsWithCorrection: number;
   meanFactor: number | null;
   maxFactor: number | null;
-  meanFrpReductionPct: number | null;
+  meanFrpAdjustmentPct: number | null;
 }
 
 export interface CompareResponse {
@@ -399,6 +531,7 @@ export interface CompareResponse {
   frp: CompareFrp;
   merging: CompareMerging;
   vza: CompareVza;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -455,6 +588,7 @@ export interface StatsResponse {
   frp: StatsFrp;
   temporal: StatsTemporal;
   pipeline: StatsPipeline;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -502,6 +636,8 @@ export interface CalendarApiResponse {
   counts: CalendarCounts;
   calendar: CalendarCell[];
   effort: EffortInfo;
+  uncertainty: UncertaintyInfo | null;
+  filters: ConfidenceFilterInfo;
   fetch: ArchiveFetchSummary;
   warnings: string[];
 }

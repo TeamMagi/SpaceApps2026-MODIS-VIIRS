@@ -15,6 +15,7 @@ make docker-up              # http://localhost:3001
 ## 1. Ön koşullar
 
 - **Git**
+- **Git LFS**: küre dokuları (`web/public/globe/`, 129 dosya) Git LFS ile tutuluyor; Git for Windows çoğunlukla içerir. Kontrol: `git lfs version`; yoksa `git lfs install` (kurulum: https://git-lfs.com). LFS olmadan klonlanırsa dokular birkaç satırlık işaretçi dosyası olarak gelir; düzeltmek için `git lfs install && git lfs pull`.
 - **Docker Desktop**: kurulu ve çalışır durumda olmalı.
 - **make**: Windows'ta varsayılan gelmez. Bir kez kurmak için:
 
@@ -97,6 +98,14 @@ make docker-up
 
 Arşiv indirilmemişse komut bir uyarı yazar; canlı endpoint'ler yine de çalışır.
 
+Kurulumu doğrulamak için:
+
+```bash
+make smoke
+```
+
+Tüm kontroller `PASS` olmalıdır.
+
 ## Güncelleme
 
 Kod değiştiğinde (sonraki günlerde):
@@ -133,4 +142,5 @@ make docker-up
 | `make precompute` | `/api/series` önbelleğini yeniden hesaplar (yalnızca ayar değişince) |
 | `make bundle-derived` | Hesaplanan `/api/series` sonuçlarını `data/derived/series` altına kopyalar (bakımcı) |
 | `make test` | Tüm testleri çalıştırır (yerel Rust ve Node gerektirir) |
+| `make smoke` | Çalışan sunucuya karşı uçtan uca duman testlerini çalıştırır |
 | `make help` | Tüm komutları listeler |

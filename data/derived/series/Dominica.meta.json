@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2001/modis_2001_Dominica.csv",
@@ -135,5 +135,5 @@
       "bytes": 1001
     }
   ],
-  "body_hash": "60bb6df985fc1edf"
+  "body_hash": "c1d34fa09c6038e3"
 }

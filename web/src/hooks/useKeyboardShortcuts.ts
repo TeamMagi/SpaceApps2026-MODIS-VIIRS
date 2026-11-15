@@ -11,9 +11,10 @@ function isEditable(target: EventTarget | null): boolean {
  * Global shortcuts. Mount once (App does).
  * - H: toggle Raw/Harmonized.
  * - P: presentation mode on/off (it hides the header, so this is also the way back out).
- *   H and P are ignored with Ctrl/Meta/Alt, on key repeat, while typing, and while any drawer or
+ * - T: start the 60-second guided tour, or end it when one is running.
+ *   H, P and T are ignored with Ctrl/Meta/Alt, on key repeat, while typing, and while any drawer or
  *   the receipt is open (the keypress belongs to that panel then).
- * - Escape: close the open drawer/receipt. Panels that handle Escape themselves call
+ * - Escape: close the open drawer/receipt; with none open, end a running guided tour. Panels that handle Escape themselves call
  *   preventDefault, which this listener respects.
  */
 export function useKeyboardShortcuts(): void {
@@ -26,18 +27,23 @@ export function useKeyboardShortcuts(): void {
         if (state.openDrawer !== null) {
           event.preventDefault();
           state.closeDrawer();
+        } else if (state.tourStep !== null) {
+          event.preventDefault();
+          state.endTour();
         }
         return;
       }
 
       if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
       const key = event.key.toLowerCase();
-      if (key !== "h" && key !== "p") return;
+      if (key !== "h" && key !== "p" && key !== "t") return;
       if (isEditable(event.target) || state.openDrawer !== null) return;
 
       event.preventDefault();
       if (key === "h") state.toggleMode();
-      else state.togglePresentation();
+      else if (key === "p") state.togglePresentation();
+      else if (state.tourStep === null) state.startTour();
+      else state.endTour();
     };
 
     window.addEventListener("keydown", onKeyDown);

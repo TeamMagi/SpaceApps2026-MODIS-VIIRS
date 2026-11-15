@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Lao_PDR.csv",
@@ -195,5 +195,5 @@
       "bytes": 9726635
     }
   ],
-  "body_hash": "c0355ed439a62b6a"
+  "body_hash": "9ee32a28f83a598d"
 }

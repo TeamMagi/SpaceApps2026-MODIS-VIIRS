@@ -6,22 +6,15 @@ Bu rapor `web/src/styles/tokens.css` içindeki renklerin renk körlüğü altın
 
 **Yöntem:** Protanopi, deuteranopi ve tritanopi, Machado, Oliveira & Fernandes (2009) matrisleriyle (şiddet 1.0) doğrusal RGB üzerinde simüle edilir (sRGB gama çözme/kodlama dahil). Akromatopsi, yalnızca parlaklığa indirgenmiş gri tondur (baskı/gri kontrol). Renk farkı CIEDE2000 (ΔE00), kontrast WCAG 2.x göreli parlaklık oranıdır. Eşikler: kategorik ΔE00 >= 10 (WARN 6-10), sıralı komşu adım ΔE00 >= 5 (WARN 3-5), grafik/UI kontrastı >= 3:1. Akromatopsi kategorik ve sapma çiftlerinde yalnızca bilgi amaçlıdır (bu setler ton ile kodlanır; durum rengi her zaman metinle, sensör ise şekille (MODIS içi boş daire, VIIRS dolu kare, `docs/TASARIM_SISTEMI.md`) eşlenir); sıralı skalada her durumda sayılır.
 
-**Özet (mevcut token'lar):** 7 FAIL, 5 WARN, 36 PASS. Aday paletler (viridis/cividis) sayıma girmez.
+**Özet (mevcut token'lar):** 2 FAIL, 3 WARN, 43 PASS. Aday paletler (viridis/cividis) sayıma girmez.
 
 | Tema | Grup | Öğe | Durum | Ayrıntı |
 |---|---|---|---|---|
-| dark | Kategorik: harita sensörleri | map-modis / map-duplicate-ring | **FAIL** | dE00: normal 3.5, protanopi 3.5, deuteranopi 3.9, tritanopi 3.6, akromatopsi 2.5 |
-| dark | Kategorik: durum | color-status-live / color-status-error | **FAIL** | dE00: normal 39.1, protanopi 8.7, deuteranopi 4.7, tritanopi 44.5, akromatopsi 5.1 |
-| dark | Kategorik: durum | color-status-demo / color-status-error | **FAIL** | dE00: normal 20.0, protanopi 6.7, deuteranopi 3.3, tritanopi 11.1, akromatopsi 0.8 |
 | dark | Sıralı FRP | contrast vs map-land (>=3 desired) | **FAIL** | min 1.20; max 13.47; below 3:1: 1=1.20, 2=1.64, 3=2.27 |
-| light | Kategorik: durum | color-status-demo / color-status-error | **FAIL** | dE00: normal 26.7, protanopi 11.2, deuteranopi 3.8, tritanopi 14.1, akromatopsi 4.6 |
 | light | Sıralı FRP | contrast vs map-land (>=3 desired) | **FAIL** | min 1.13; max 13.46; below 3:1: 1=1.13, 2=1.42, 3=1.98, 4=2.98 |
-| light | Sapma (anomali) | anom-0 vs anom-none (>=10) | **FAIL** | dE00: normal 2.9, protanopi 2.9, deuteranopi 2.9, tritanopi 2.8, akromatopsi 2.5 |
 | dark | Kategorik: sensör UI | color-sensor-modis / color-duplicate-ring | **WARN** | dE00: normal 6.2, protanopi 6.2, deuteranopi 6.5, tritanopi 6.3, akromatopsi 5.7 |
-| dark | Kategorik: durum | color-status-live / color-status-demo | **WARN** | dE00: normal 20.1, protanopi 6.8, deuteranopi 7.4, tritanopi 35.5, akromatopsi 4.3 |
-| dark | Sapma (anomali) | anom-0 vs anom-none (>=10) | **WARN** | dE00: normal 7.7, protanopi 7.9, deuteranopi 7.7, tritanopi 7.6, akromatopsi 7.2 |
-| light | Kategorik: durum | color-status-live / color-status-demo | **WARN** | dE00: normal 27.6, protanopi 8.5, deuteranopi 11.3, tritanopi 42.1, akromatopsi 0.8 |
-| light | Kategorik: durum | color-status-live / color-status-error | **WARN** | dE00: normal 52.4, protanopi 10.5, deuteranopi 8.4, tritanopi 56.3, akromatopsi 3.8 |
+| light | Kategorik: durum | color-status-demo / color-status-error | **WARN** | dE00: normal 27.2, protanopi 24.0, deuteranopi 16.2, tritanopi 9.6, akromatopsi 11.3 |
+| light | Sapma (anomali) | anom-0 vs anom-none (>=10) | **WARN** | dE00: normal 6.6, protanopi 6.5, deuteranopi 6.9, tritanopi 6.6, akromatopsi 5.3 |
 
 ## Tema: dark
 
@@ -47,11 +40,11 @@ Zemin: color-bg `#0d0f13`, color-surface `#14171d`, map-land `#151922`, map-wate
 | `anom-neg-3` | `#6a51a3` | `#3360a6` | `#395ea1` | `#5d6172` | `#606060` |
 | `anom-neg-2` | `#8c7cc0` | `#6a87c3` | `#6c85be` | `#818895` | `#868686` |
 | `anom-neg-1` | `#b8afd8` | `#a6b5da` | `#a7b4d7` | `#b2b5bd` | `#b4b4b4` |
-| `anom-0` | `#2a2f3a` | `#2c303b` | `#2a2e3a` | `#263133` | `#2f2f2f` |
+| `anom-0` | `#333b4d` | `#353c4e` | `#333a4d` | `#2c3f41` | `#3b3b3b` |
 | `anom-pos-1` | `#f6c27a` | `#d5c474` | `#e2d07c` | `#ffb4b0` | `#cbcbcb` |
 | `anom-pos-2` | `#e68a2a` | `#a69318` | `#bca82b` | `#fc7578` | `#a0a0a0` |
 | `anom-pos-3` | `#b85a0d` | `#766700` | `#8c7c09` | `#ca444d` | `#747474` |
-| `anom-none` | `#15181e` | `#16181e` | `#15181e` | `#13191a` | `#181818` |
+| `anom-none` | `#161a24` | `#171b24` | `#161a24` | `#121c1d` | `#1a1a1a` |
 
 ### Kategorik: sensör UI
 
@@ -66,16 +59,16 @@ Zemin: color-bg `#0d0f13`, color-surface `#14171d`, map-land `#151922`, map-wate
 | Öğe | Durum | Ayrıntı |
 |---|---|---|
 | map-modis / map-viirs | PASS | dE00: normal 18.6, protanopi 18.1, deuteranopi 18.8, tritanopi 18.4, akromatopsi 18.1 |
-| map-modis / map-duplicate-ring | FAIL | dE00: normal 3.5, protanopi 3.5, deuteranopi 3.9, tritanopi 3.6, akromatopsi 2.5 |
-| map-viirs / map-duplicate-ring | PASS | dE00: normal 21.7, protanopi 21.2, deuteranopi 22.2, tritanopi 21.6, akromatopsi 20.6 |
+| map-modis / map-duplicate-ring | PASS | dE00: normal 21.2, protanopi 21.0, deuteranopi 22.2, tritanopi 24.1, akromatopsi 3.8 |
+| map-viirs / map-duplicate-ring | PASS | dE00: normal 29.2, protanopi 28.8, deuteranopi 32.0, tritanopi 33.6, akromatopsi 14.3 |
 
 ### Kategorik: durum
 
 | Öğe | Durum | Ayrıntı |
 |---|---|---|
-| color-status-live / color-status-demo | WARN | dE00: normal 20.1, protanopi 6.8, deuteranopi 7.4, tritanopi 35.5, akromatopsi 4.3 |
-| color-status-live / color-status-error | FAIL | dE00: normal 39.1, protanopi 8.7, deuteranopi 4.7, tritanopi 44.5, akromatopsi 5.1 |
-| color-status-demo / color-status-error | FAIL | dE00: normal 20.0, protanopi 6.7, deuteranopi 3.3, tritanopi 11.1, akromatopsi 0.8 |
+| color-status-live / color-status-demo | PASS | dE00: normal 41.8, protanopi 25.7, deuteranopi 34.8, tritanopi 51.6, akromatopsi 2.5 |
+| color-status-live / color-status-error | PASS | dE00: normal 66.2, protanopi 17.1, deuteranopi 20.8, tritanopi 68.5, akromatopsi 9.1 |
+| color-status-demo / color-status-error | PASS | dE00: normal 46.2, protanopi 30.1, deuteranopi 19.9, tritanopi 17.0, akromatopsi 11.6 |
 
 ### Sıralı FRP
 
@@ -94,8 +87,8 @@ Zemin: color-bg `#0d0f13`, color-surface `#14171d`, map-land `#151922`, map-wate
 | neg-1 vs pos-1 (>=10) | PASS | dE00: normal 38.5, protanopi 39.1, deuteranopi 39.4, tritanopi 23.1, akromatopsi 6.0 |
 | neg-2 vs pos-2 (>=10) | PASS | dE00: normal 46.9, protanopi 50.4, deuteranopi 51.4, tritanopi 30.9, akromatopsi 8.6 |
 | neg-3 vs pos-3 (>=10) | PASS | dE00: normal 45.8, protanopi 51.0, deuteranopi 53.2, tritanopi 30.3, akromatopsi 7.7 |
-| anom-0 vs anom-none (>=10) | WARN | dE00: normal 7.7, protanopi 7.9, deuteranopi 7.7, tritanopi 7.6, akromatopsi 7.2 |
-| centre lightness note | PASS | anom-0 L* 19; neg-1 73, pos-1 82 (centre is the 'quiet' end against the map; arms are checked from step 1) |
+| anom-0 vs anom-none (>=10) | PASS | dE00: normal 10.9, protanopi 11.2, deuteranopi 10.8, tritanopi 11.1, akromatopsi 10.5 |
+| centre lightness note | PASS | anom-0 L* 25; neg-1 73, pos-1 82 (centre is the 'quiet' end against the map; arms are checked from step 1) |
 
 ### Metin/UI kontrastı
 
@@ -103,9 +96,9 @@ Zemin: color-bg `#0d0f13`, color-surface `#14171d`, map-land `#151922`, map-wate
 |---|---|---|
 | color-accent | PASS | vs color-bg 9.78, vs color-surface 9.16 (>=3:1) |
 | color-accent-strong | PASS | vs color-bg 11.94, vs color-surface 11.17 (>=3:1) |
-| color-status-live | PASS | vs color-bg 11.80, vs color-surface 11.05 (>=3:1) |
-| color-status-demo | PASS | vs color-bg 9.88, vs color-surface 9.25 (>=3:1) |
-| color-status-error | PASS | vs color-bg 9.51, vs color-surface 8.90 (>=3:1) |
+| color-status-live | PASS | vs color-bg 10.30, vs color-surface 9.64 (>=3:1) |
+| color-status-demo | PASS | vs color-bg 11.49, vs color-surface 10.75 (>=3:1) |
+| color-status-error | PASS | vs color-bg 7.13, vs color-surface 6.67 (>=3:1) |
 
 ## Tema: light
 
@@ -131,7 +124,7 @@ Zemin: color-bg `#f6f7f9`, color-surface `#ffffff`, map-land `#f3f5f8`, map-wate
 | `anom-neg-3` | `#542788` | `#00408b` | `#003f86` | `#493e54` | `#404040` |
 | `anom-neg-2` | `#8073ac` | `#657cae` | `#667aaa` | `#777d88` | `#7b7b7b` |
 | `anom-neg-1` | `#c7c2e0` | `#bcc6e1` | `#bcc5df` | `#c2c6cc` | `#c5c5c5` |
-| `anom-0` | `#eceef2` | `#edeef2` | `#eceef2` | `#ebefef` | `#eeeeee` |
+| `anom-0` | `#dce1ea` | `#dee1ea` | `#dde0ea` | `#d9e3e4` | `#e1e1e1` |
 | `anom-pos-1` | `#fdc983` | `#dccb7d` | `#e9d785` | `#ffbcb8` | `#d2d2d2` |
 | `anom-pos-2` | `#e08214` | `#9f8c00` | `#b5a215` | `#f66c6f` | `#999999` |
 | `anom-pos-3` | `#a14e05` | `#665900` | `#7a6c02` | `#b13b42` | `#656565` |
@@ -157,9 +150,9 @@ Zemin: color-bg `#f6f7f9`, color-surface `#ffffff`, map-land `#f3f5f8`, map-wate
 
 | Öğe | Durum | Ayrıntı |
 |---|---|---|
-| color-status-live / color-status-demo | WARN | dE00: normal 27.6, protanopi 8.5, deuteranopi 11.3, tritanopi 42.1, akromatopsi 0.8 |
-| color-status-live / color-status-error | WARN | dE00: normal 52.4, protanopi 10.5, deuteranopi 8.4, tritanopi 56.3, akromatopsi 3.8 |
-| color-status-demo / color-status-error | FAIL | dE00: normal 26.7, protanopi 11.2, deuteranopi 3.8, tritanopi 14.1, akromatopsi 4.6 |
+| color-status-live / color-status-demo | PASS | dE00: normal 45.6, protanopi 23.4, deuteranopi 32.2, tritanopi 55.1, akromatopsi 2.3 |
+| color-status-live / color-status-error | PASS | dE00: normal 56.7, protanopi 17.4, deuteranopi 22.0, tritanopi 56.7, akromatopsi 9.0 |
+| color-status-demo / color-status-error | WARN | dE00: normal 27.2, protanopi 24.0, deuteranopi 16.2, tritanopi 9.6, akromatopsi 11.3 |
 
 ### Sıralı FRP
 
@@ -178,8 +171,8 @@ Zemin: color-bg `#f6f7f9`, color-surface `#ffffff`, map-land `#f3f5f8`, map-wate
 | neg-1 vs pos-1 (>=10) | PASS | dE00: normal 34.4, protanopi 35.0, deuteranopi 35.4, tritanopi 22.2, akromatopsi 3.2 |
 | neg-2 vs pos-2 (>=10) | PASS | dE00: normal 46.3, protanopi 48.6, deuteranopi 50.6, tritanopi 31.2, akromatopsi 10.6 |
 | neg-3 vs pos-3 (>=10) | PASS | dE00: normal 47.9, protanopi 52.6, deuteranopi 55.2, tritanopi 27.6, akromatopsi 12.9 |
-| anom-0 vs anom-none (>=10) | FAIL | dE00: normal 2.9, protanopi 2.9, deuteranopi 2.9, tritanopi 2.8, akromatopsi 2.5 |
-| centre lightness note | PASS | anom-0 L* 94; neg-1 80, pos-1 84 (centre is the 'quiet' end against the map; arms are checked from step 1) |
+| anom-0 vs anom-none (>=10) | WARN | dE00: normal 6.6, protanopi 6.5, deuteranopi 6.9, tritanopi 6.6, akromatopsi 5.3 |
+| centre lightness note | PASS | anom-0 L* 89; neg-1 80, pos-1 84 (centre is the 'quiet' end against the map; arms are checked from step 1) |
 
 ### Metin/UI kontrastı
 
@@ -187,9 +180,9 @@ Zemin: color-bg `#f6f7f9`, color-surface `#ffffff`, map-land `#f3f5f8`, map-wate
 |---|---|---|
 | color-accent | PASS | vs color-bg 5.23, vs color-surface 5.60 (>=3:1) |
 | color-accent-strong | PASS | vs color-bg 7.49, vs color-surface 8.03 (>=3:1) |
-| color-status-live | PASS | vs color-bg 4.72, vs color-surface 5.06 (>=3:1) |
-| color-status-demo | PASS | vs color-bg 4.57, vs color-surface 4.90 (>=3:1) |
-| color-status-error | PASS | vs color-bg 5.47, vs color-surface 5.87 (>=3:1) |
+| color-status-live | PASS | vs color-bg 5.11, vs color-surface 5.47 (>=3:1) |
+| color-status-demo | PASS | vs color-bg 4.68, vs color-surface 5.02 (>=3:1) |
+| color-status-error | PASS | vs color-bg 7.48, vs color-surface 8.02 (>=3:1) |
 
 ## Aday sıralı paletler (K4 renk körlüğü dostu seçenek)
 

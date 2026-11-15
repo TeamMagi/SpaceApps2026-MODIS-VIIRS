@@ -19,6 +19,17 @@
   transform: translate(-50%, var(--space-1));
 }
 
+.frpLine,
+.wideHint {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+}
+
+.frpLine {
+  font-variant-numeric: tabular-nums;
+}
+
 .arrow {
   position: absolute;
   bottom: -4px;
@@ -52,4 +63,13 @@
   .tooltip {
     animation: none;
   }
+}
+
+.frpLine,
+.nativeLine {
+  display: block;
+}
+
+.nativeLine {
+  color: var(--color-text-muted);
 }

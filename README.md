@@ -21,9 +21,9 @@ PyroSync implements a seven-stage harmonization pipeline built in **Rust** for p
 2. **Intra-Sensor Interscan Deduplication** — Remove overlapping adjacent scans per sensor using temporal and spatial overlap criteria
 3. **MODIS Fleet Consolidation** — Merge Terra/Aqua observations of the same fire within a **180-minute** window
 4. **VIIRS Fleet Consolidation** — Merge SNPP/NOAA-20/NOAA-21 observations within a **60-minute** window
-5. **H3-Indexed Cross-Sensor Matching** — Index detections onto **H3 resolution 8** hexagons and match MODIS/VIIRS pairs within 2 km (k-ring 3 lookup) and **180 minutes** (across 26,505 co-located live pairs, zero fell below 30 min; min 34 min, median ~158 min). `Matched` means dual-sensor observation of the same fire event, not simultaneous overpass
-6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events, retain unmatched detections from both sensors, and apply per-record VZA normalization to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA); polynomial coefficients remain uncalibrated placeholders (no simultaneous MODIS/VIIRS calibration pairs exist in FIRMS), so correction magnitude is **indicative**
-7. **Monthly Calendar & Effort Normalization (Ω)** — Aggregate detections into a monthly activity calendar and normalize counts against the MODIS reference channel using an empirically measured effort factor **Ω**
+5. **H3-Indexed Cross-Sensor Matching** — Index detections onto **H3 resolution 8** hexagons and match MODIS and VIIRS within 2 km (k-ring 3 lookup) and **180 minutes** (in live NRT samples from 4 regions, 26,505 co-located pairs had zero below 30 min; min 34 min, median ~158 min; the 2000–2025 FIRMS country archive has plentiful Aqua/S-NPP pairs within 20 min, since both cross the equator around 13:30; Terra at ~10:30 does not coincide with VIIRS, and S-NPP/NOAA-20 are ~50 min apart, so the wider window is still needed). Every VIIRS pixel is assigned to its nearest MODIS footprint, and all VIIRS pixels of one pass inside that footprint are summed into a single `Matched` record (1 MODIS = N VIIRS, FRP adds up). `Matched` means dual-sensor observation of the same fire event; its `simultaneous_matched` subset (|dt| <= `matching.simultaneous_window_secs`, default 1200 s) is kept for radiometric comparisons, and the completeness factor `k_c` was measured from the same kind of near-simultaneous Aqua/S-NPP pairs. The VZA curve (Zheng et al. 2026) and provisional VIIRS sigma 0.08 are not re-fitted; archive pairs allow a diagnostic check that is not performed in code
+6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events by default (see [Harmonization Models](#harmonization-models) for the alternatives), retain unmatched detections from both sensors, and apply a per-record VZA correction to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA). MODIS FRP is **multiplied** by the nadir-normalized ratio of Zheng et al. (2026), `R_rel(θ) = 0.2017θ² + 0.0168θ + 1.0` (θ in radians), so the correction raises off-nadir FRP rather than lowering it
+7. **Monthly Calendar & Effort Normalization (Ω)** — Aggregate detections into a monthly activity calendar and normalize counts against the MODIS reference channel using an empirically measured effort factor **Ω**. Each month also reports `total_frp` and `frp_per_detection_eq` (MODIS-equivalent FRP per normalized detection), the metric that stays continuous across the 2012 VIIRS transition. Before VIIRS, cell totals are scaled by a measured latitude-band completeness factor `k_c` (1.11 / 1.18 / 1.28)
 
 ### Effort Normalization (Ω)
 
@@ -34,6 +34,39 @@ As the satellite fleet expands (SNPP in 2012, NOAA-20 in 2018, NOAA-21 in 2023),
 ### Raw ↔ Harmonized Toggle
 
 The key demo feature: users can switch between raw multi-sensor data (showing the sensor cliff and biases) and the harmonized view (showing a consistent timeline) — making the problem and solution visible in a single action.
+
+In harmonized mode, the burning calendar tooltip leads with `frp_per_detection_eq` (MODIS-equivalent FRP per detection) and shows total FRP with its likely range. The native-pixel `mean_frp` is shown only as a secondary detail, because it drops at the 2012 VIIRS transition.
+
+### Harmonization Models
+
+The Settings drawer lets users compare three ways of fusing a matched MODIS/VIIRS record:
+
+- **Standard (VIIRS-preferred)**: the default pipeline. Matched records take the VIIRS FRP.
+- **Equal-weight**: matched records average the VZA-corrected MODIS FRP and the record's VIIRS FRP (the pass sum), and sit at the midpoint of the two positions.
+- **MODIS-calibrated**: MODIS is the reference sensor. Matched records take the VZA-corrected MODIS FRP and position. VIIRS-only detections below the MODIS nadir 50% detection limit are dropped, because MODIS could not have seen them.
+
+The drawer shows how the selected model differs from Standard (record count, total FRP and dropped detections). The choice is kept in the URL hash (`fm=eq|mc`), so shared links reopen with the same model, and "Reset to defaults" clears it. The model is applied after harmonization as a view option. It is not part of the pipeline configuration, so precomputed results stay valid. Like the threshold overrides, it changes only the selected month's map points and stage counts. The yearly chart and calendar stay on the Standard model. Demo mode applies the same models to the synthetic data on the client.
+
+### Export and Regional Briefing
+
+The bottom bar and the briefing drawer have separate **CSV** and **GeoJSON** buttons. They download the current view (Harmonized or Raw) through `/api/export` and show a loading state while the file is prepared. In demo mode the file is built in the browser and labelled as synthetic.
+
+The **regional briefing** lists the detection totals and the removed duplicates, the sensor-cliff change, the peak month and the VZA adjustment. It also shows the last 7 days of the period, the deviation from the historical mean for the same month, the most active sensor and platform, and the trend over the last five complete years. Raw mode shows only the metrics based on raw counts. When Türkiye is selected, a **2021 Mediterranean fires case study** card shows the Antalya, Muğla and Mediterranean anomalies from the S7 data set (`data/case-study/turkey/stats.json`). The briefing can be printed.
+
+### 60-Second Guided Tour
+
+The "60-s tour" button in the bottom bar (or the `T` key) starts a four-step guided tour that follows the jury demo script. Each step lasts 15 seconds and highlights the related panels:
+
+1. **Raw ↔ Harmonized**: the app opens in Raw, then switches to Harmonized after 5 seconds.
+2. **Footprint Lens**: explains how one MODIS pixel contains many VIIRS pixels, and how their detection thresholds differ.
+3. **Policy case**: switches to China in 2018 for the straw-burning ban case study (`docs/VAKA_CIN_ANIZ.md`).
+4. **Live validation**: opens `#/methods/limits` with the placebo and leave-one-year-out results (`docs/DOGRULAMA_PAKETI.md`).
+
+The tour advances on its own and can be paused, stepped back or forward with the arrow keys, or closed with `Esc`.
+
+### Methods Page
+
+`#/methods` explains the pipeline inside the app. It shows the seven stages as a keyboard-navigable accordion (what, why, parameters, input → output) with live values from `GET /api/config`. When the backend is unreachable it falls back to the documented defaults. The page also has the `R_rel(θ)` VZA curve with its uncertainty band, an H3 grid figure, the reference list and the model-estimate disclaimer. Sections can be linked directly as `#/methods/{pipeline|vza|h3|references|limits}`. The page uses hash routing so links still work when the server has no SPA fallback.
 
 ## Architecture
 
@@ -77,13 +110,16 @@ tools/              Utility scripts (archive verification, data fetching)
 | `GET /api/config` | Effective pipeline configuration (thresholds used by the harmonization) as JSON |
 | `GET /api/availability` | Date coverage per FIRMS source |
 | `GET /api/harmonize` | Harmonized hotspots, calendar and effort factors (`west`, `south`, `east`, `north`, and either `days` or `start`+`end`; optional `include_raw=true`) |
-| `GET /api/compare` | Raw versus harmonized statistics for the same query |
+| `GET /api/compare` | Raw versus harmonized statistics for the same query; `vza.mean_frp_adjustment_pct` is the mean VZA change to MODIS FRP (positive = increase) |
 | `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
-| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox) |
-| `GET /api/export` | Download harmonized hotspots as a file (same query as `/api/harmonize` plus `format=csv\|geojson`, default `csv`) |
+| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox); cells carry `total_frp`, `frp_per_detection_eq`, `mean_frp` and their `_lower`/`_upper` bounds |
+| `GET /api/points` | Raw and harmonized points of one archive region and period (`region`, `year`, optional `month`, `limit`, `min_confidence`, threshold overrides, and `fusion_model=viirs_preferred\|equal_weight\|modis_calibrated`); non-default models add a `fusion_comparison` against Standard. Details in `docs/API.md` |
+| `GET /api/export` | Download hotspots as a CSV (UTF-8 BOM, opens in Excel) or GeoJSON file (`format=csv\|geojson`, default `csv`). Live mode takes the same query as `/api/harmonize`. Archive mode starts when `region` is given: `region`, `year`, optional `month`, `view=harmonized\|raw`, plus the same filters as `/api/points`. It needs no API key and returns every record of the period as `pyrosync_{region}_{period}[_raw].{csv\|geojson}` |
 
 - Responses include an `X-Cache: HIT|MISS` header.
 - Responses include a `warnings` array and an `effort.reliable` flag; if a FIRMS source fails to fetch, effort normalization is marked unreliable and surfaced in the response.
+- `/api/compare` still returns `vza.mean_frp_reduction_pct` for backward compatibility, but it is now negative because the VZA correction increases FRP; use `mean_frp_adjustment_pct`.
+- In `/api/calendar`, `mean_frp` is the native-pixel mean and drops at the 2012 VIIRS transition because VIIRS pixels are smaller; use `frp_per_detection_eq` as the headline FRP metric.
 - `/api/calendar` reads from the local archive and requires **no API key**, though it covers a smaller satellite fleet than live endpoints because the country archive includes MODIS, VIIRS SNPP, and VIIRS NOAA-20 (`viirs-jpss1`) and does not include NOAA-21.
 
 ## Configuration

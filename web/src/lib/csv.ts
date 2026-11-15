@@ -1,4 +1,5 @@
 import type { MapPointSet } from "../types";
+import { EXPORT_MIME } from "./export";
 
 type Cell = string | number | null;
 
@@ -16,10 +17,13 @@ export function toCsv(header: readonly string[], rows: readonly (readonly Cell[]
  * CSV of what the map currently shows: raw detections, or harmonized detections once the answer is
  * revealed. The raw file leaves out the merge links, which would give the answer away.
  */
-export function mapPointsToCsv(points: MapPointSet, harmonized: boolean): string {
+export function mapPointsToCsv(points: MapPointSet, harmonized: boolean, isDemo = false): string {
+  const sourceHeader = isDemo ? ["data_source"] : [];
+  const sourceValue = isDemo ? ["synthetic_demo"] : [];
+
   if (harmonized) {
     return toCsv(
-      ["id", "lat", "lon", "frp_mw", "frp_corrected_mw", "source", "confidence", "daynight", "acquired_utc"],
+      ["id", "lat", "lon", "frp_mw", "frp_corrected_mw", "source", "confidence", "daynight", "acquired_utc", ...sourceHeader],
       points.harmonized.map((p) => [
         p.id,
         p.lat,
@@ -30,18 +34,17 @@ export function mapPointsToCsv(points: MapPointSet, harmonized: boolean): string
         p.confidence,
         p.daynight,
         p.acquired,
+        ...sourceValue,
       ]),
     );
   }
   return toCsv(
-    ["id", "lat", "lon", "sensor", "frp_mw", "confidence", "daynight", "acquired_utc"],
-    points.raw.map((p) => [p.id, p.lat, p.lon, p.sensor, p.frp, p.confidence, p.daynight, p.acquired]),
+    ["id", "lat", "lon", "sensor", "frp_mw", "confidence", "daynight", "acquired_utc", ...sourceHeader],
+    points.raw.map((p) => [p.id, p.lat, p.lon, p.sensor, p.frp, p.confidence, p.daynight, p.acquired, ...sourceValue]),
   );
 }
 
-export function downloadTextFile(fileName: string, text: string, mimeType = "text/csv;charset=utf-8"): void {
-  // BOM so spreadsheet apps read Turkish characters as UTF-8.
-  const blob = new Blob(["\uFEFF", text], { type: mimeType });
+export function downloadBlob(fileName: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -50,4 +53,10 @@ export function downloadTextFile(fileName: string, text: string, mimeType = "tex
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export function downloadTextFile(fileName: string, text: string, mimeType = EXPORT_MIME.csv): void {
+  // BOM only for CSV, so spreadsheet apps read Turkish characters as UTF-8; JSON must not start with one.
+  const parts = mimeType.startsWith("text/csv") ? ["﻿", text] : [text];
+  downloadBlob(fileName, new Blob(parts, { type: mimeType }));
 }

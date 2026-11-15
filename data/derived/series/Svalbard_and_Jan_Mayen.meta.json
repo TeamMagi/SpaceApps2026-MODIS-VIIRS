@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2014/modis_2014_Svalbard_and_Jan_Mayen.csv",
@@ -67,5 +67,5 @@
       "bytes": 207
     }
   ],
-  "body_hash": "9864bcf32d5501e9"
+  "body_hash": "0115217bc31334f0"
 }

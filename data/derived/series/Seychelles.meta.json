@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2005/modis_2005_Seychelles.csv",
@@ -87,5 +87,5 @@
       "bytes": 522
     }
   ],
-  "body_hash": "62c7895400d59a78"
+  "body_hash": "9ae009ef83f46714"
 }

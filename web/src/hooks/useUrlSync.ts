@@ -1,20 +1,33 @@
 import { useEffect } from "react";
+import { DEFAULT_PIPELINE_CONFIG } from "../lib/pipelineOverrides";
+import { isRouteHash } from "../lib/route";
 import { parseHash, serializeHash, syncUrlHash, type UrlState } from "../lib/urlState";
 import { useAppStore, type AppState } from "../store/useAppStore";
 
 function urlStateOf(state: AppState): UrlState {
-  return { region: state.region, mode: state.mode, month: state.selectedMonth, lang: state.lang };
+  return {
+    region: state.region,
+    mode: state.mode,
+    month: state.selectedMonth,
+    lang: state.lang,
+    palette: state.palette,
+    data: state.dataMode === "demo" && state.dataModeSource === "manual" ? "demo" : undefined,
+    overrides: state.pipelineOverrides,
+    minConfidence: state.minConfidence,
+    fusionModel: state.fusionModel,
+  };
 }
 
 /**
- * Keeps region, committed mode, selected month and language in `location.hash` so any view is a
- * shareable link. The store reads the hash once at load; this hook writes on change
- * (replaceState, so toggling does not flood the back button) and applies manual hash edits.
- * Mount once (App does).
+ * Keeps region, committed mode, selected month, language, palette, pipeline overrides, harmonization
+ * model, manual demo flag and the confidence filter in `location.hash` so any view is a shareable link. The
+ * store reads the hash once at load; this hook writes on change (replaceState, so toggling does
+ * not flood the back button) and applies manual hash edits. Mount once (App does).
  */
 export function useUrlSync(): void {
   useEffect(() => {
-    const write = (state: AppState) => syncUrlHash(urlStateOf(state));
+    const write = (state: AppState) =>
+      syncUrlHash(urlStateOf(state), state.serverConfig ?? DEFAULT_PIPELINE_CONFIG);
 
     write(useAppStore.getState());
 
@@ -23,7 +36,14 @@ export function useUrlSync(): void {
         state.region !== prev.region ||
         state.mode !== prev.mode ||
         state.selectedMonth !== prev.selectedMonth ||
-        state.lang !== prev.lang
+        state.lang !== prev.lang ||
+        state.palette !== prev.palette ||
+        state.dataMode !== prev.dataMode ||
+        state.dataModeSource !== prev.dataModeSource ||
+        state.pipelineOverrides !== prev.pipelineOverrides ||
+        state.serverConfig !== prev.serverConfig ||
+        state.minConfidence !== prev.minConfidence ||
+        state.fusionModel !== prev.fusionModel
       ) {
         // Read fresh state: the transition clock sets state from inside listeners, so `state`
         // may already be stale by the time this listener runs.
@@ -32,8 +52,10 @@ export function useUrlSync(): void {
     });
 
     const onHashChange = () => {
+      if (isRouteHash(window.location.hash)) return;
       const state = useAppStore.getState();
-      if (window.location.hash === serializeHash(urlStateOf(state))) return;
+      const defaults = state.serverConfig ?? DEFAULT_PIPELINE_CONFIG;
+      if (window.location.hash === serializeHash(urlStateOf(state), defaults)) return;
       state.applyUrlState(parseHash(window.location.hash));
       write(useAppStore.getState());
     };

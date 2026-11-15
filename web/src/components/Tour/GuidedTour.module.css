@@ -1,0 +1,164 @@
+/* Mobile first: full width with 16px gutters, above the docked bottom toggle. */
+.card {
+  position: fixed;
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: calc(var(--toggle-h) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text);
+  max-height: 60dvh;
+  overflow-y: auto;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.close {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+.close:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.body {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal, 1.5);
+}
+
+.track {
+  height: 4px;
+  background: var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.fill {
+  width: 100%;
+  height: 100%;
+  background: var(--color-accent);
+  transform-origin: left center;
+  /* Duration mirrors TOUR_STEP_MS in lib/tour.ts. */
+  animation: tour-progress 15s linear forwards;
+}
+
+.fill[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+@keyframes tour-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.button,
+.primary {
+  flex: 1 1 0;
+  min-height: 32px;
+  padding: var(--space-half) var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  transition:
+    background-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+.button:hover:not(:disabled),
+.primary:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.button:disabled {
+  color: var(--color-text-disabled);
+}
+
+.button[aria-pressed="true"] {
+  background: var(--color-active);
+  color: var(--color-text);
+}
+
+.primary {
+  background: var(--color-active);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (pointer: coarse) {
+  .button,
+  .primary,
+  .close {
+    min-height: 44px;
+  }
+
+  .close {
+    min-width: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    animation: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .card {
+    left: 50%;
+    right: auto;
+    width: min(420px, calc(100vw - var(--space-4)));
+    transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    bottom: calc(var(--h-bottom) + var(--space-2));
+  }
+}

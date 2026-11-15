@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2015/modis_2015_Sint_Maarten.csv",
@@ -63,5 +63,5 @@
       "bytes": 287
     }
   ],
-  "body_hash": "20a16b95d56b3800"
+  "body_hash": "559d3a895701d27e"
 }

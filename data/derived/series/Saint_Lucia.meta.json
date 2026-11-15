@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2001/modis_2001_Saint_Lucia.csv",
@@ -163,5 +163,5 @@
       "bytes": 444
     }
   ],
-  "body_hash": "16262408277707d6"
+  "body_hash": "bd5e0409d9085bf1"
 }

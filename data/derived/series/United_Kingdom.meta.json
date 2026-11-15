@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_United_Kingdom.csv",
@@ -195,5 +195,5 @@
       "bytes": 583467
     }
   ],
-  "body_hash": "b403d069fd3f8730"
+  "body_hash": "f766fa4e67cd4fdf"
 }

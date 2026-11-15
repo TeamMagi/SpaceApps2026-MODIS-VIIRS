@@ -19,9 +19,18 @@ radius_km = 2.0
 [matching]
 # Maximum MODIS-to-VIIRS distance in km for a cross-sensor match (at most 10).
 radius_km = 2.0
-# Maximum MODIS-to-VIIRS time difference in seconds (180 minutes: same-fire MODIS/VIIRS
-# overpasses are at least 34 minutes apart in FIRMS data, so a narrow window finds no matches).
+# Maximum MODIS-to-VIIRS time difference in seconds (180 minutes for same-fire matching).
+# In 4 live NRT regions (G2), co-located pairs were at least 34 min apart (median ~158 min).
+# The 2000-2025 FIRMS country archive has plentiful Aqua/S-NPP pairs within 20 min
+# (both cross the equator around 13:30); Terra (~10:30) does not coincide with VIIRS,
+# and S-NPP/NOAA-20 are ~50 min apart, so the wider matching window is still needed.
 window_secs = 10800
+# Matched records with a MODIS-to-VIIRS time difference within this many seconds form the
+# simultaneous_matched subset, reserved for radiometric comparisons (k_c itself was measured
+# separately from near-simultaneous Aqua/S-NPP cell-day pairs).
+# Archive pairs allow a diagnostic check, not performed in code; the Zheng et al. (2026)
+# VZA curve and provisional VIIRS sigma 0.08 are not re-fitted.
+simultaneous_window_secs = 1200
 
 [vza]
 # MODIS viewing-zenith correction ratio R_rel(theta) = a*theta^2 + b*theta + c (theta in radians),
@@ -60,9 +69,31 @@ ratio_sigma = 0.11
 [uncertainty]
 # Analytical FRP confidence bounds combining sensor noise, VZA correction error, and
 # MODIS scale/completeness uncertainty. Parameters below are model assumptions, not published values.
-modis_sensor_sigma = 0.12
+modis_sensor_sigma = 0.266
 viirs_sensor_sigma = 0.08
 vza_error_coeff = 0.05
 modis_scale_sigma = 0.10
 # Gaussian z-multiplier (z = 1.0 gives ~68.27% two-sided confidence).
 z = 1.0
+# 30°G–30°K tropikal MODIS swath boşluğu telafisi (varsayılan kapalı).
+tropical_swath_gap_compensation = false
+
+[static_mask]
+# Drops type-0 detections in H3 resolution-7 cells (~5 km2) that hold a detection in at least
+# min_active_months distinct months of the same calendar year (gas flares, industry). Each year
+# is judged on its own, so windows shorter than min_active_months months are never masked.
+# 10 is the smallest value at which >= 80% of dropped rows lie in cells FIRMS itself flags as
+# static (type 1/2) in every country sampled (static_mask_check example, 2013-2024).
+enabled = true
+min_active_months = 10
+
+[sama]
+# Drops nighttime VIIRS detections inside the South Atlantic Magnetic Anomaly box (VFIRE375
+# SPA User's Guide v1.9: 110W-11E, 55S-7N). Off by default: Collection 2 already removes the
+# SAMA low-confidence pixels and the archive shows no excess isolated night detections there,
+# so the box would mostly remove real South American night fires (22-36% of VIIRS rows).
+enabled = false
+west = -110.0
+east = 11.0
+south = -55.0
+north = 7.0

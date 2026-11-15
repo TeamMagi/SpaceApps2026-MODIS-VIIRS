@@ -37,6 +37,30 @@
   text-align: right;
 }
 
+.caseStudy {
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.caseStudyTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.caseStudy .metrics {
+  margin-top: var(--space-1);
+}
+
+.caseStudyNote {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
 .action,
 .primaryAction {
   min-height: 32px;
@@ -64,6 +88,15 @@
   font-size: var(--font-size-sm);
 }
 
+.sourceLine {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
 @media print {
   .findingCard {
     background: #fff !important;
@@ -73,6 +106,20 @@
 
   .finding {
     color: #000 !important;
+  }
+
+  .caseStudy {
+    background: #fff !important;
+    border: 1pt solid #000 !important;
+    break-inside: avoid;
+  }
+
+  .caseStudyTitle {
+    color: #000 !important;
+  }
+
+  .caseStudyNote {
+    color: #333 !important;
   }
 
   .metric {
@@ -85,5 +132,10 @@
 
   .metric dd {
     color: #000 !important;
+  }
+
+  .sourceLine {
+    border-top-color: #ccc !important;
+    color: #333 !important;
   }
 }

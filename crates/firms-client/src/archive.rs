@@ -340,6 +340,51 @@ pub fn filter_bbox(hotspots: Vec<Hotspot>, bbox: &BBox) -> Vec<Hotspot> {
         .collect()
 }
 
+/// Split a FIRMS country CSV into its header line and the data rows inside the inclusive
+/// bounding box, borrowing from `csv_text`. Unlike [`filter_bbox`] it keeps the original text
+/// of each row, so a caller can write a region cut-out with every FIRMS column intact.
+pub fn csv_rows_in_bbox<'a>(
+    csv_text: &'a str,
+    bbox: &BBox,
+) -> anyhow::Result<(&'a str, Vec<&'a str>)> {
+    let mut lines = csv_text.lines();
+    let header = lines
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("archive CSV is empty"))?;
+    let column = |name: &str| {
+        header
+            .split(',')
+            .position(|c| c.trim() == name)
+            .ok_or_else(|| anyhow::anyhow!("archive CSV has no `{name}` column"))
+    };
+    let lat_idx = column("latitude")?;
+    let lon_idx = column("longitude")?;
+
+    let mut rows = Vec::new();
+    for (index, line) in lines.enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let lat = csv_number(line, lat_idx, "latitude", index + 1)?;
+        let lon = csv_number(line, lon_idx, "longitude", index + 1)?;
+        if lon >= bbox.west && lon <= bbox.east && lat >= bbox.south && lat <= bbox.north {
+            rows.push(line);
+        }
+    }
+    Ok((header, rows))
+}
+
+fn csv_number(line: &str, idx: usize, name: &str, row: usize) -> anyhow::Result<f64> {
+    let value = line
+        .split(',')
+        .nth(idx)
+        .ok_or_else(|| anyhow::anyhow!("CSV data row {row}: missing `{name}` field"))?;
+    value
+        .trim()
+        .parse()
+        .map_err(|_| anyhow::anyhow!("CSV data row {row}: invalid `{name}` value {value:?}"))
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ArchiveError {
     #[error("archive has no data for {sensor:?} {year}")]
@@ -593,5 +638,180 @@ mod tests {
         assert!(!client.sensor_year_complete(Sensor::ViirsNOAA21, 2023));
 
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    fn write_archive_file(dir: &Path, slug: &str, year: i32, country: &str, csv: &str) {
+        let year_dir = dir.join(slug).join(year.to_string());
+        std::fs::create_dir_all(&year_dir).unwrap();
+        std::fs::write(year_dir.join(format!("{slug}_{year}_{country}.csv")), csv).unwrap();
+    }
+
+    #[tokio::test]
+    async fn unsupported_sensor_or_year_is_rejected_before_touching_the_disk() {
+        let dir = temp_archive("unsupported");
+        let client = ArchiveClient::offline(dir.clone());
+        // EP: no archive for the sensor, year before, year after the packaged range.
+        for (sensor, year) in [
+            (Sensor::ViirsNOAA21, 2023),
+            (Sensor::ViirsSNPP, 2011),
+            (Sensor::ModisTerra, 2026),
+        ] {
+            let err = client.fetch_country_year_csv(sensor, "Turkey", year).await.unwrap_err();
+            assert!(matches!(err, ArchiveError::UnsupportedYear { .. }), "{sensor:?} {year}");
+            assert!(err.to_string().contains(&year.to_string()));
+        }
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn garbage_csv_surfaces_as_a_parse_error() {
+        let dir = temp_archive("garbage");
+        write_archive_file(&dir, "modis", 2011, "Turkey", "<html>not a csv</html>\nstill not\n");
+        let client = ArchiveClient::offline(dir.clone());
+        let err = client
+            .fetch_country_year(Sensor::ModisTerra, "Turkey", 2011)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, ArchiveError::Parse(_)), "{err:?}");
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn fetch_many_collects_hotspots_and_reports_each_missing_file_as_a_failure() {
+        let dir = temp_archive("fetch-many");
+        write_archive_file(&dir, "modis", 2011, "Turkey", MODIS_CSV);
+        let client = ArchiveClient::offline(dir.clone());
+        let countries = vec!["Turkey".to_string(), "Atlantis".to_string()];
+
+        // concurrency 0 is coerced to 1 and must not deadlock.
+        let (hotspots, mut failures) =
+            client.fetch_many(Sensor::ModisTerra, &countries, 2011..=2012, 0).await;
+
+        assert_eq!(hotspots.len(), 2);
+        failures.sort();
+        let keys: Vec<(&str, i32)> = failures.iter().map(|(c, y, _)| (c.as_str(), *y)).collect();
+        assert_eq!(keys, vec![("Atlantis", 2011), ("Atlantis", 2012), ("Turkey", 2012)]);
+        assert!(failures.iter().all(|(_, _, msg)| msg.contains("not in the local archive")));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn fetch_many_with_no_countries_or_unsupported_sensor() {
+        let client = ArchiveClient::offline(temp_archive("fetch-many-empty"));
+        let (hotspots, failures) = client.fetch_many(Sensor::ModisTerra, &[], 2011..=2012, 4).await;
+        assert!(hotspots.is_empty() && failures.is_empty());
+
+        let countries = vec!["Turkey".to_string()];
+        let (hotspots, failures) =
+            client.fetch_many(Sensor::ViirsNOAA21, &countries, 2023..=2023, 1).await;
+        assert!(hotspots.is_empty());
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].2.contains("no data"));
+        std::fs::remove_dir_all(client.cache_dir()).unwrap();
+    }
+
+    #[test]
+    fn scan_local_archive_ignores_stray_entries_and_empty_directories() {
+        let dir = temp_archive("scan-stray");
+        assert!(scan_local_archive(&dir).unwrap().is_empty());
+
+        write_archive_file(&dir, "modis", 2012, "Turkey", "x");
+        // Name prefix for the wrong year, empty country, wrong extension, non-numeric year dir.
+        let year_dir = dir.join("modis").join("2012");
+        std::fs::write(year_dir.join("modis_2011_Turkey.csv"), "x").unwrap();
+        std::fs::write(year_dir.join("modis_2012_.csv"), "x").unwrap();
+        std::fs::write(year_dir.join("modis_2012_Turkey.csv.part"), "x").unwrap();
+        std::fs::create_dir_all(dir.join("modis").join("latest")).unwrap();
+        std::fs::write(dir.join("modis").join("2013"), "a file named like a year").unwrap();
+
+        let files = scan_local_archive(&dir).unwrap();
+        assert_eq!(files.len(), 1);
+        assert_eq!((files[0].year, files[0].country.as_str()), (2012, "Turkey"));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn new_creates_the_cache_directory_and_is_online() {
+        let dir = temp_archive("new-client").join("nested").join("cache");
+        let client = ArchiveClient::new(dir.clone()).unwrap();
+        assert!(dir.is_dir());
+        assert!(!client.is_offline());
+        assert_eq!(client.cache_dir(), dir.as_path());
+        std::fs::remove_dir_all(dir.parent().unwrap().parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn filter_bbox_handles_empty_input_and_a_degenerate_box() {
+        let bbox = BBox { west: 1.0, south: 2.0, east: 1.0, north: 2.0 };
+        assert!(filter_bbox(Vec::new(), &bbox).is_empty());
+        let kept = filter_bbox(vec![hotspot(2.0, 1.0), hotspot(2.0, 1.0001)], &bbox);
+        assert_eq!(kept.len(), 1);
+    }
+
+    const BBOX_CSV: &str = concat!(
+        "latitude,longitude,brightness,acq_date,type
+",
+        "38.0,28.0,300,2021-08-01,0
+",
+        "36.0,26.0,300,2021-08-02,0
+",
+        "37.0,30.0,300,2021-08-03,2
+",
+        "42.0001,30.0,300,2021-08-04,0
+",
+        "37.0,45.5,300,2021-08-05,0
+",
+    );
+
+    #[test]
+    fn csv_rows_in_bbox_keeps_inclusive_boundary_rows_verbatim() {
+        let bbox = BBox { west: 26.0, south: 36.0, east: 45.0, north: 42.0 };
+        let (header, rows) = csv_rows_in_bbox(BBOX_CSV, &bbox).unwrap();
+        assert_eq!(header, "latitude,longitude,brightness,acq_date,type");
+        assert_eq!(
+            rows,
+            ["38.0,28.0,300,2021-08-01,0", "36.0,26.0,300,2021-08-02,0", "37.0,30.0,300,2021-08-03,2"]
+        );
+    }
+
+    #[test]
+    fn csv_rows_in_bbox_handles_crlf_blank_lines_and_a_header_only_file() {
+        let bbox = BBox { west: 0.0, south: 0.0, east: 10.0, north: 10.0 };
+        let (_, rows) = csv_rows_in_bbox("latitude,longitude
+1,1
+
+20,1
+", &bbox).unwrap();
+        assert_eq!(rows, ["1,1"]);
+        let (header, rows) = csv_rows_in_bbox("latitude,longitude
+", &bbox).unwrap();
+        assert_eq!(header, "latitude,longitude");
+        assert!(rows.is_empty());
+    }
+
+    #[test]
+    fn csv_rows_in_bbox_rejects_malformed_input() {
+        let bbox = BBox { west: 0.0, south: 0.0, east: 10.0, north: 10.0 };
+        assert!(csv_rows_in_bbox("", &bbox).is_err());
+        let no_lon = csv_rows_in_bbox("latitude,frp
+1,2
+", &bbox).unwrap_err();
+        assert!(no_lon.to_string().contains("longitude"));
+        let bad = csv_rows_in_bbox("latitude,longitude
+1,abc
+", &bbox).unwrap_err();
+        assert!(bad.to_string().contains("row 1") && bad.to_string().contains("longitude"));
+        let short = csv_rows_in_bbox("frp,latitude,longitude
+1,2
+", &bbox).unwrap_err();
+        assert!(short.to_string().contains("missing"));
+    }
+
+    #[test]
+    fn error_messages_name_the_failing_resource() {
+        let http = ArchiveError::Http { status: 503, url: "https://example.test/x.csv".into() };
+        assert_eq!(http.to_string(), "http 503 fetching https://example.test/x.csv");
+        let missing = ArchiveError::NotFound { country: "Atlantis".into(), year: 2015 };
+        assert!(missing.to_string().contains("Atlantis") && missing.to_string().contains("2015"));
     }
 }

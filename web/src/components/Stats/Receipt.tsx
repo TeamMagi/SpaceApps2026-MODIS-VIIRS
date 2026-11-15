@@ -8,6 +8,10 @@ import { motion, useReducedMotion } from "motion/react";
 import { formatApiError, PIPELINE_COPY } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
+import { DEFAULT_FUSION_MODEL } from "../../types";
+import { FUSION_LABEL_KEY } from "../../lib/fusionModels";
+import { DEFAULT_PIPELINE_CONFIG, hasPipelineOverrides } from "../../lib/pipelineOverrides";
+import { summarizePointStages } from "../../lib/receiptCounts";
 import { useAppStore } from "../../store/useAppStore";
 import styles from "./Receipt.module.css";
 
@@ -16,11 +20,38 @@ export interface ReceiptProps {
   id: string;
 }
 
+function MaskRows({ staticMasked, samaRemoved }: { staticMasked: number; samaRemoved: number }) {
+  const { t, fmt } = useCopy();
+  return (
+    <>
+      {staticMasked > 0 && (
+        <div className={styles.row}>
+          <dt>{t("receiptStaticMasked")}</dt>
+          <dd>{fmt.signed(-staticMasked)}</dd>
+        </div>
+      )}
+      {samaRemoved > 0 && (
+        <div className={styles.row}>
+          <dt>{t("receiptSamaRemoved")}</dt>
+          <dd>{fmt.signed(-samaRemoved)}</dd>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function Receipt({ id }: ReceiptProps) {
   const { t, fmt } = useCopy();
   const { status, hasData, error, retry, totals, stages } = useRegionData();
   const points = useMapPoints();
   const closeDrawer = useAppStore((state) => state.closeDrawer);
+  const pipelineOverrides = useAppStore((state) => state.pipelineOverrides);
+  const fusionModel = useAppStore((state) => state.fusionModel);
+  const serverConfig = useAppStore((state) => state.serverConfig);
+  const customThresholds = hasPipelineOverrides(
+    pipelineOverrides,
+    serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+  );
   const reduceMotion = useReducedMotion();
   const slideY = reduceMotion ? 0 : -6;
 
@@ -30,7 +61,7 @@ export default function Receipt({ id }: ReceiptProps) {
       : points.period.month === null
         ? String(points.period.year)
         : fmt.monthYear({ year: points.period.year, month: points.period.month }, "long");
-  const periodRawTotal = points.stages.rawModis + points.stages.rawViirs;
+  const periodCounts = summarizePointStages(points.stages);
 
   return (
     <motion.section
@@ -70,6 +101,7 @@ export default function Receipt({ id }: ReceiptProps) {
               <dt>{t("receiptRaw")}</dt>
               <dd>{fmt.number(totals.raw)}</dd>
             </div>
+            <MaskRows staticMasked={totals.staticMasked} samaRemoved={totals.samaRemoved} />
             <div className={styles.row}>
               <dt>{t("receiptDedup")}</dt>
               <dd>{fmt.signed(-totals.doubleCounts)}</dd>
@@ -81,6 +113,7 @@ export default function Receipt({ id }: ReceiptProps) {
           </dl>
           <h3 className={styles.subtitle}>{t("receiptStagesTitle")}</h3>
           <dl className={styles.lines}>
+            <MaskRows staticMasked={totals.staticMasked} samaRemoved={totals.samaRemoved} />
             {stages
               .filter((stage) => stage.removed !== undefined)
               .map((stage) => (
@@ -92,27 +125,43 @@ export default function Receipt({ id }: ReceiptProps) {
           </dl>
           {points.status === "ready" && points.hasData && (
             <>
-              <h3 className={styles.subtitle}>{t("receiptPeriodTitle", { period: periodLabel })}</h3>
+              <div className={styles.subtitleRow}>
+                <h3 className={styles.subtitle}>{t("receiptPeriodTitle", { period: periodLabel })}</h3>
+                <span className={styles.badges}>
+                  {customThresholds && (
+                    <span className={styles.customBadge}>{t("settingsCustomBadge")}</span>
+                  )}
+                  {fusionModel !== DEFAULT_FUSION_MODEL && (
+                    <span className={styles.customBadge}>
+                      {t("fusionBadge", { model: t(FUSION_LABEL_KEY[fusionModel]) })}
+                    </span>
+                  )}
+                </span>
+              </div>
               <dl className={styles.lines}>
                 <div className={styles.row}>
                   <dt>{t("receiptRaw")}</dt>
-                  <dd>{fmt.number(periodRawTotal)}</dd>
+                  <dd>{fmt.number(periodCounts.raw)}</dd>
                 </div>
+                <MaskRows
+                  staticMasked={periodCounts.staticMasked}
+                  samaRemoved={periodCounts.samaRemoved}
+                />
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.dedup.name)}</dt>
-                  <dd>{fmt.signed(-points.stages.interscanRemoved)}</dd>
+                  <dd>{fmt.signed(-periodCounts.interscanRemoved)}</dd>
                 </div>
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.fleet.name)}</dt>
-                  <dd>{fmt.signed(-points.stages.fleetMerged)}</dd>
+                  <dd>{fmt.signed(-periodCounts.fleetMerged)}</dd>
                 </div>
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.match.name)}</dt>
-                  <dd>{fmt.signed(-points.stages.matchedPairs)}</dd>
+                  <dd>{fmt.signed(-(periodCounts.matchedPairs + periodCounts.viirsAggregated))}</dd>
                 </div>
                 <div className={styles.totalRow}>
                   <dt>{t("receiptUnique")}</dt>
-                  <dd>{fmt.number(points.stages.harmonized)}</dd>
+                  <dd>{fmt.number(periodCounts.harmonized)}</dd>
                 </div>
                 {points.frpAngleCorrectionPct !== null && (
                   <div className={styles.row}>

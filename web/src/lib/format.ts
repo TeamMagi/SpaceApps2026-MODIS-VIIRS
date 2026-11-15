@@ -61,6 +61,53 @@ export function formatMw(lang: Lang, value: number): string {
   return `${formatNumber(lang, value, 1)} MW`;
 }
 
+export const WIDE_UNCERTAINTY_THRESHOLD = 0.30;
+
+export function relativeUncertaintyWidth(
+  lower: number | null | undefined,
+  upper: number | null | undefined,
+  estimate: number | null | undefined,
+): number | null {
+  if (
+    lower == null ||
+    upper == null ||
+    estimate == null ||
+    !Number.isFinite(lower) ||
+    !Number.isFinite(upper) ||
+    !Number.isFinite(estimate) ||
+    estimate <= 0
+  ) {
+    return null;
+  }
+  return (upper - lower) / estimate;
+}
+
+/**
+ * Format harmonized FRP with an optional +/-1 sigma interval:
+ * full: "45.2 MW (likely 38.7–51.8)" / "45,2 MW (olası aralık 38,7–51,8)"
+ * compact: "45.2 MW (38.7–51.8)" / "45,2 MW (38,7–51,8)"
+ * Uses a non-breaking space before MW and falls back to the plain value when bounds are missing.
+ */
+export function formatFrpInterval(
+  value: number,
+  lower: number | null | undefined,
+  upper: number | null | undefined,
+  lang: Lang,
+  compact = false,
+): string {
+  const base = `${formatNumber(lang, value, 1)}\u00A0MW`;
+  if (lower == null || upper == null || !Number.isFinite(lower) || !Number.isFinite(upper)) {
+    return base;
+  }
+  const lo = formatNumber(lang, lower, 1);
+  const hi = formatNumber(lang, upper, 1);
+  if (compact) {
+    return `${base} (${lo}\u2013${hi})`;
+  }
+  const label = lang === "tr" ? "olası aralık" : "likely";
+  return `${base} (${label} ${lo}\u2013${hi})`;
+}
+
 // en-US, not en-GB: en-GB abbreviates September as "Sept".
 const DATE_LOCALE: Record<Lang, string> = { en: "en-US", tr: "tr-TR" };
 const monthCache = new Map<string, readonly string[]>();
@@ -112,15 +159,38 @@ export function monthKey(ref: MonthRef): string {
   return `${ref.year}-${String(ref.month).padStart(2, "0")}`;
 }
 
-/** "pyrosync_turkey_2021-08.csv"; whole-year views use the year alone. */
-export function csvFileName(regionSlug: string, period: MapPeriod): string {
+/**
+ * "pyrosync_turkey_2021-08.csv"; demo exports include "_demo_", whole-year views use the year alone,
+ * raw-view exports end in "_raw" (same as the backend's Content-Disposition names).
+ */
+export function exportFileName(
+  regionSlug: string,
+  period: MapPeriod,
+  extension: string,
+  isDemo = false,
+  raw = false,
+): string {
   const suffix =
     period.year === null
       ? "archive"
       : period.month === null
         ? String(period.year)
         : monthKey({ year: period.year, month: period.month });
-  return `pyrosync_${regionSlug}_${suffix}.csv`;
+  const demoTag = isDemo ? "_demo" : "";
+  return `pyrosync_${regionSlug}${demoTag}_${suffix}${raw ? "_raw" : ""}.${extension}`;
+}
+
+export function csvFileName(regionSlug: string, period: MapPeriod, isDemo = false): string {
+  return exportFileName(regionSlug, period, "csv", isDemo);
+}
+
+/** "25–31 Aug 2021", "28 Aug – 3 Sep 2021", "28 Dec 2021 – 3 Jan 2022" from two ISO dates (YYYY-MM-DD, UTC). */
+export function formatDayRange(lang: Lang, startIso: string, endIso: string): string {
+  const [sy, sm, sd] = startIso.split("-").map(Number);
+  const [ey, em, ed] = endIso.split("-").map(Number);
+  if (sy === ey && sm === em) return `${sd}–${ed} ${monthName(lang, em)} ${ey}`;
+  if (sy === ey) return `${sd} ${monthName(lang, sm)} – ${ed} ${monthName(lang, em)} ${ey}`;
+  return `${sd} ${monthName(lang, sm)} ${sy} – ${ed} ${monthName(lang, em)} ${ey}`;
 }
 
 export interface Formatter {

@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Cote_d_Ivoire.csv",
@@ -195,5 +195,5 @@
       "bytes": 5091907
     }
   ],
-  "body_hash": "bebfd213c573ef6b"
+  "body_hash": "7670f4da2b0c3158"
 }

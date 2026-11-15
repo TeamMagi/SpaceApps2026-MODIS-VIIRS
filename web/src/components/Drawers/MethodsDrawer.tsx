@@ -4,7 +4,8 @@
  * Built on Drawer (id "methods"). Sections in order:
  *   1. methodsCliffDef — the ONLY place "sensor cliff" is defined; methodsSensors.
  *   2. methodsStepsTitle — the 6 applied steps + 1 planned step (H3 grid).
- *   3. methodsLimitsTitle — disclaimer (the honest limit, said once) + archive source citation.
+ *   3. methodsLimitsTitle — disclaimer (the honest limit, said once), the one-sided smoke/cloud
+ *      FRP bias, why low-confidence detections can be excluded, and the archive source citation.
  *   4. methodsSettingsTitle — theme (themeDark/themeLight → store.setTheme) and presentationMode
  *      (store.setPresentation).
  */
@@ -16,17 +17,31 @@ import { useCopy } from "../../hooks/useCopy";
 import { isPlannedStage, PIPELINE_ORDER } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
 import { useAppStore } from "../../store/useAppStore";
-import type { PipelineStageKey, Theme } from "../../types";
+import type { Palette, PipelineStageKey, Theme } from "../../types";
+import MethodsLink from "../Methods/MethodsLink";
 import Drawer from "./Drawer";
 import styles from "./MethodsDrawer.module.css";
 
 const THEMES: readonly Theme[] = ["dark", "light"];
 
+const PALETTES: ReadonlyArray<{
+  readonly id: Palette;
+  readonly labelKey: "paletteDefault" | "paletteViridis" | "paletteCividis";
+  readonly descKey: "paletteDefaultDesc" | "paletteViridisDesc" | "paletteCividisDesc";
+}> = [
+  { id: "default", labelKey: "paletteDefault", descKey: "paletteDefaultDesc" },
+  { id: "viridis", labelKey: "paletteViridis", descKey: "paletteViridisDesc" },
+  { id: "cividis", labelKey: "paletteCividis", descKey: "paletteCividisDesc" },
+];
+
 export default function MethodsDrawer() {
   const { t } = useCopy();
   const { coverage } = useRegionData();
+  const dataMode = useAppStore((state) => state.dataMode);
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
+  const palette = useAppStore((state) => state.palette);
+  const setPalette = useAppStore((state) => state.setPalette);
   const presentation = useAppStore((state) => state.presentation);
   const setPresentation = useAppStore((state) => state.setPresentation);
   const reduceMotion = useReducedMotion();
@@ -37,23 +52,29 @@ export default function MethodsDrawer() {
     setOpenSteps((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const sourceCitation = coverage.modis
-    ? coverage.viirs
-      ? t("methodsSourceCitation", {
-          modisFirst: String(coverage.modis.first),
-          modisLast: String(coverage.modis.last),
-          viirsFirst: String(coverage.viirs.first),
-          viirsLast: String(coverage.viirs.last),
-        })
-      : t("methodsSourceCitationModis", {
-          modisFirst: String(coverage.modis.first),
-          modisLast: String(coverage.modis.last),
-        })
-    : t("methodsSourceCitationFallback");
+  const sourceCitation =
+    dataMode === "demo"
+      ? t("methodsSourceCitationDemo")
+      : coverage.modis
+        ? coverage.viirs
+          ? t("methodsSourceCitation", {
+              modisFirst: String(coverage.modis.first),
+              modisLast: String(coverage.modis.last),
+              viirsFirst: String(coverage.viirs.first),
+              viirsLast: String(coverage.viirs.last),
+            })
+          : t("methodsSourceCitationModis", {
+              modisFirst: String(coverage.modis.first),
+              modisLast: String(coverage.modis.last),
+            })
+        : t("methodsSourceCitationFallback");
 
   return (
     <Drawer id="methods" title={t("methodsTitle")} description={t("methodsCliffDef")}>
       <p className={styles.lead}>{t("methodsSensors")}</p>
+      <p className={styles.fullPage}>
+        <MethodsLink className={styles.fullPageLink}>{t("methodsFullPageLink")}</MethodsLink>
+      </p>
 
       <h3 className={styles.heading}>{t("methodsStepsTitle")}</h3>
       <ol className={styles.steps} role="list">
@@ -156,6 +177,12 @@ export default function MethodsDrawer() {
 
       <h3 className={styles.heading}>{t("methodsLimitsTitle")}</h3>
       <p className={styles.bodyText}>{t("disclaimer")}</p>
+      <p className={styles.bodyText}>
+        {t("uncertaintyConfidenceLabel")}. {t("uncertaintyWideBody")}
+      </p>
+      <p className={styles.bodyText}>{t("uncertaintyModelCaveat")}</p>
+      <p className={styles.bodyText}>{t("methodsAtmosphereNote")}</p>
+      <p className={styles.bodyText}>{t("methodsLowConfidenceNote")}</p>
 
       <div className={styles.references} aria-label={t("methodsSensors")}>
         <p className={styles.refSource}>{sourceCitation}</p>
@@ -178,6 +205,34 @@ export default function MethodsDrawer() {
           ))}
         </div>
       </div>
+      <fieldset className={styles.paletteFieldset}>
+        <legend className={styles.settingLabel}>{t("paletteLabel")}</legend>
+        <div className={styles.paletteList}>
+          {PALETTES.map((option) => {
+            const selected = palette === option.id;
+            return (
+              <label
+                key={option.id}
+                className={styles.paletteOption}
+                data-selected={selected ? "true" : undefined}
+              >
+                <input
+                  type="radio"
+                  name={`${baseId}-palette`}
+                  value={option.id}
+                  checked={selected}
+                  onChange={() => setPalette(option.id)}
+                  className={styles.paletteRadio}
+                />
+                <span className={styles.paletteText}>
+                  <span className={styles.paletteTitle}>{t(option.labelKey)}</span>
+                  <span className={styles.paletteDesc}>{t(option.descKey)}</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
       <label className={`${styles.setting} ${styles.settingInline}`}>
         <input type="checkbox" checked={presentation} onChange={(event) => setPresentation(event.target.checked)} />
         <span>{t("presentationMode")}</span>

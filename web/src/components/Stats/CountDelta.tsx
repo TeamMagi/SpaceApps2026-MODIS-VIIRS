@@ -132,13 +132,18 @@ export default function CountDelta() {
         </span>
       </button>
       <AnimatePresence>{receiptOpen && <Receipt key="receipt" id={receiptId} />}</AnimatePresence>
-      {nrt.status === "ready" && nrt.compare && (
+      {nrt.status === "ready" && nrt.compare ? (
         <p className={styles.nrtLine}>
           {t("nrtLiveSummary", {
             raw: fmt.number(nrt.compare.counts.rawTotal),
             harmonized: fmt.number(nrt.compare.counts.harmonizedTotal),
           })}
+          {nrt.compare.vza.meanFrpAdjustmentPct !== null &&
+            ` · ${t("nrtVzaAdjustment", { pct: `${fmt.signed(nrt.compare.vza.meanFrpAdjustmentPct, 1)}%` })}`}
         </p>
+      ) : (
+        nrt.status === "empty" &&
+        nrt.unavailableReason && <p className={styles.nrtLine}>{nrt.unavailableReason}</p>
       )}
     </div>
   );

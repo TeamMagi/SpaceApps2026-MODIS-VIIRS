@@ -14,6 +14,7 @@ import type {
   BBox,
   CompareResponse,
   HarmonizeResponse,
+  MinConfidence,
   StatsResponse,
 } from "../types";
 
@@ -74,8 +75,8 @@ let nrtCache: NrtCacheState = {
 let nrtToken = 0;
 let subscriberCount = 0;
 
-function bboxKey(bbox: BBox, days: number): string {
-  return `${bbox.west},${bbox.south},${bbox.east},${bbox.north}:${days}`;
+function bboxKey(bbox: BBox, days: number, minConfidence: MinConfidence): string {
+  return `${bbox.west},${bbox.south},${bbox.east},${bbox.north}:${days}:${minConfidence}`;
 }
 
 function toStoredError(err: unknown): StoredError {
@@ -100,8 +101,8 @@ function formatNrtError(err: StoredError | null, lang: "en" | "tr"): ApiErrorInf
   return { kind: "server", message };
 }
 
-function startNrtFetch(bbox: BBox, days: number): void {
-  const key = bboxKey(bbox, days);
+function startNrtFetch(bbox: BBox, days: number, minConfidence: MinConfidence): void {
+  const key = bboxKey(bbox, days, minConfidence);
   if (nrtCache.bboxKey === key && nrtCache.harmonize.status !== "error") {
     return;
   }
@@ -111,12 +112,13 @@ function startNrtFetch(bbox: BBox, days: number): void {
   const controller = new AbortController();
   const signal = controller.signal;
 
-  const params: { west: number; south: number; east: number; north: number; days: number } = {
+  const params = {
     west: bbox.west,
     south: bbox.south,
     east: bbox.east,
     north: bbox.north,
     days,
+    minConfidence,
   };
 
   nrtCache = {
@@ -192,6 +194,7 @@ function abortNrt(): void {
 export interface NrtData {
   status: AsyncStatus;
   error: ApiErrorInfo | null;
+  unavailableReason: string | null;
   retry: () => void;
   harmonize: HarmonizeResponse | null;
   compare: CompareResponse | null;
@@ -202,11 +205,18 @@ export function useNrtData(bbox: BBox | null): NrtData {
   useSyncExternalStore(subscribeNrt, getSnapshotVersion, getSnapshotVersion);
   const lang = useAppStore((state) => state.lang);
   const nrtDays = useAppStore((state) => state.nrtDays);
+  const dataMode = useAppStore((state) => state.dataMode);
+  const isDemo = dataMode === "demo";
+  const minConfidence = useAppStore((state) => state.minConfidence);
 
   useEffect(() => {
+    if (isDemo) {
+      abortNrt();
+      return;
+    }
     subscriberCount += 1;
     if (bbox) {
-      startNrtFetch(bbox, nrtDays);
+      startNrtFetch(bbox, nrtDays, minConfidence);
     } else {
       abortNrt();
     }
@@ -217,40 +227,44 @@ export function useNrtData(bbox: BBox | null): NrtData {
         abortNrt();
       }
     };
-  }, [bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays]);
+  }, [isDemo, bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays, minConfidence]);
 
   const retry = useCallback(() => {
+    if (isDemo) return;
     if (bbox) {
       nrtCache.controller?.abort();
       nrtCache = { ...nrtCache, bboxKey: null, controller: null };
-      startNrtFetch(bbox, nrtDays);
+      startNrtFetch(bbox, nrtDays, minConfidence);
     }
-  }, [bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays]);
+  }, [isDemo, bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays, minConfidence]);
 
   const { harmonize, compare, stats } = nrtCache;
 
   const mergedStatus: AsyncStatus = useMemo(() => {
+    if (isDemo) return "empty";
     if (!bbox) return "loading";
     const statuses = [harmonize.status, compare.status, stats.status];
     if (statuses.some((s) => s === "error")) return "error";
     if (statuses.some((s) => s === "loading")) return "loading";
     if (statuses.every((s) => s === "empty")) return "empty";
     return "ready";
-  }, [bbox, harmonize.status, compare.status, stats.status]);
+  }, [isDemo, bbox, harmonize.status, compare.status, stats.status]);
 
   const rawError =
     harmonize.error ?? compare.error ?? stats.error ?? null;
-  const error = useMemo(() => formatNrtError(rawError, lang), [rawError, lang]);
+  const error = useMemo(() => (isDemo ? null : formatNrtError(rawError, lang)), [isDemo, rawError, lang]);
+  const unavailableReason = isDemo ? t(lang, "nrtDemoUnavailable") : null;
 
   return useMemo<NrtData>(
     () => ({
       status: mergedStatus,
       error,
+      unavailableReason,
       retry,
-      harmonize: harmonize.data,
-      compare: compare.data,
-      stats: stats.data,
+      harmonize: isDemo ? null : harmonize.data,
+      compare: isDemo ? null : compare.data,
+      stats: isDemo ? null : stats.data,
     }),
-    [mergedStatus, error, retry, harmonize.data, compare.data, stats.data],
+    [mergedStatus, error, unavailableReason, retry, isDemo, harmonize.data, compare.data, stats.data],
   );
 }

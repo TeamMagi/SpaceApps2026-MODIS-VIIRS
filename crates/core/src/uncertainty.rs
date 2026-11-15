@@ -4,14 +4,20 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{HotspotSource, Sensor};
 
-/// Varsayım: `academic-papers/*_ANALYSIS.md` özetlerinde tek piksel MODIS radyometrik 1σ rastgele
-/// gürültüsü doğrudan raporlanmadığından başlangıç varsayımı (1 km piksel ve yüksek tespit eşiği
-/// nedeniyle VIIRS'ten yüksek; bkz. `02_ANALYSIS.md`, `06_07_08_COMBINED_ANALYSIS.md`).
-pub const DEFAULT_MODIS_SENSOR_SIGMA: f64 = 0.12;
+pub use crate::conformal::{
+    ConformalBand, ConformalEra, ConformalSample, ConformalTable, calibration_fingerprint,
+    conformal_interval, fit_mondrian,
+};
 
-/// Varsayım: `academic-papers/*_ANALYSIS.md` özetlerinde tek piksel VIIRS radyometrik 1σ rastgele
-/// gürültüsü doğrudan raporlanmadığından başlangıç varsayımı (375 m I-band çözünürlüğü ve
-/// 0.4–3.7 MW düşük tespit tabanı nedeniyle MODIS'ten düşük; bkz. `02_ANALYSIS.md`, `06_07_08`).
+/// Yayımlanmış değer: Freeborn et al. 2014a alt-piksel yerleşim belirsizliği, tek piksel MODIS
+/// göreli FRP 1σ = 0.266 (`docs/REFERANS_ANALIZI.md` `[12, Bölüm 5.1]`). Radyometrik gürültüyü
+/// değil, pikselin içinde yangının konumundan doğan FRP belirsizliğini yansıtır.
+pub const DEFAULT_MODIS_SENSOR_SIGMA: f64 = 0.266;
+
+/// Varsayım (geçici): 375 m VIIRS tek-piksel 1σ literatürde tablo olarak yoktur (`metinde yok`).
+/// Geçici üst sınır `[05, Bölüm 3.4]` MIR ±%30; 375 m çözünürlük nedeniyle MODIS'ten düşük
+/// varsayılır. Arşiv ölçümü (`tools/viirs_sigma.py`, SNPP×NOAA-20, |Δt| ≤ 5 dk, FRP > 40 MW,
+/// A_p < 0.3 km²) yetersiz çift verdiği için değer değiştirilmedi.
 pub const DEFAULT_VIIRS_SENSOR_SIGMA: f64 = 0.08;
 
 /// Türetilmiş tahmin / varsayım: VZA düzeltmesi arttıkça (`factor - 1.0`) eklenen göreli 1σ hata
@@ -62,6 +68,13 @@ pub struct UncertaintyParams {
     pub vza_error_coeff: f64,
     pub modis_scale_sigma: f64,
     pub z: f64,
+    /// Optional tropical MODIS swath-gap compensation (default off). When on, VIIRS-less
+    /// `total_frp` from detections within 30°S-30°N is scaled by
+    /// [`crate::effort::swath_gap_compensation`] and its spread joins the systematic term.
+    /// Lives here rather than in `PipelineConfig` so it reuses the `[uncertainty]` TOML table;
+    /// skipped when false so the config digest (and every precomputed series stamp) is unchanged.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub tropical_swath_gap_compensation: bool,
 }
 
 impl Default for UncertaintyParams {
@@ -72,6 +85,7 @@ impl Default for UncertaintyParams {
             vza_error_coeff: DEFAULT_VZA_ERROR_COEFF,
             modis_scale_sigma: DEFAULT_MODIS_SCALE_SIGMA,
             z: DEFAULT_Z,
+            tropical_swath_gap_compensation: false,
         }
     }
 }
@@ -178,6 +192,23 @@ pub fn relative_uncertainty(
     }
 }
 
+/// İki bağımsız çarpımsal katsayıyı (`ratio`, `ratio_sigma`) tek katsayıya birleştirir: oranlar
+/// çarpılır, göreli 1σ'lar karesel toplanır (`modis_scale_sigma ⊕ cal_sigma` ile aynı kural).
+///
+/// Takvimde `k_c` ile tropikal swath-gap telafisini birleştirmek için kullanılır; böylece
+/// `relative_uncertainty` sistematik bileşeni her iki yayılımı da tek seferde taşır.
+pub fn combine_factors(a: (f64, f64), b: (f64, f64)) -> (f64, f64) {
+    let rel = |(ratio, sigma): (f64, f64)| {
+        if ratio.is_finite() && ratio > 0.0 {
+            sanitized_non_neg(sigma) / ratio
+        } else {
+            0.0
+        }
+    };
+    let ratio = a.0 * b.0;
+    (ratio, ratio * rel(a).hypot(rel(b)))
+}
+
 /// Tek bir harmonize FRP gözlemi için analitik güven aralığı üretir.
 pub fn frp_uncertainty(
     frp: f64,
@@ -234,6 +265,40 @@ pub fn frp_uncertainty_for_obs(
         upper: frp * (1.0 + half_rel),
         confidence,
     }
+}
+
+/// Birden çok pikselin FRP toplamından oluşan kayıt için güven aralığı üretir.
+///
+/// Eşit olmayan piksellerin toplamında göreli rastgele hata `1/√n` gibi küçülmez
+/// (`√(Σ f_i²) / Σ f_i`); bu yüzden her üye kendi `n_obs` belirsizliğiyle karesel birleştirilir.
+pub fn frp_uncertainty_for_sum(
+    parts: &[(f64, u16)],
+    sensor_family: SensorFamily,
+    params: &UncertaintyParams,
+) -> UncertaintyEstimate {
+    let confidence = confidence_from_z(params.z);
+    let total_frp: f64 = parts.iter().map(|&(frp, _)| frp).sum();
+    if parts.is_empty() || !total_frp.is_finite() || total_frp <= 0.0 {
+        return UncertaintyEstimate {
+            lower: 0.0,
+            upper: 0.0,
+            confidence,
+        };
+    }
+
+    let items: Vec<(f64, f64, f64)> = parts
+        .iter()
+        .map(|&(frp, n_obs)| {
+            let rel = relative_uncertainty_for_obs(None, sensor_family, None, n_obs, params);
+            (frp, rel.random, rel.systematic)
+        })
+        .collect();
+
+    aggregate_uncertainty(&items, 1.0, params).unwrap_or(UncertaintyEstimate {
+        lower: 0.0,
+        upper: 0.0,
+        confidence,
+    })
 }
 
 fn aggregate_uncertainty(
@@ -612,6 +677,45 @@ mod tests {
     }
 
     #[test]
+    fn combine_factors_multiplies_ratios_and_adds_relative_sigmas_in_quadrature() {
+        let (ratio, sigma) = combine_factors((1.11, 0.08), (1.13, 0.0113));
+        assert!((ratio - 1.11 * 1.13).abs() < 1e-12);
+        let rel = (0.08_f64 / 1.11).hypot(0.0113 / 1.13);
+        assert!((sigma / ratio - rel).abs() < 1e-12);
+
+        // Identity on either side leaves the other factor untouched.
+        assert_eq!(combine_factors((1.0, 0.0), (1.2, 0.06)), (1.2, 1.2 * (0.06 / 1.2)));
+        let (r, s) = combine_factors((1.11, 0.08), (1.0, 0.0));
+        assert!((r - 1.11).abs() < 1e-12 && (s - 0.08).abs() < 1e-12);
+
+        // The combined systematic term is wider than k_c alone, so the band widens.
+        let p = UncertaintyParams::default();
+        let kc_only = relative_uncertainty(None, SensorFamily::Modis, Some((1.11, 0.08)), &p);
+        let both = relative_uncertainty(
+            None,
+            SensorFamily::Modis,
+            Some(combine_factors((1.11, 0.08), (1.13, 0.0113))),
+            &p,
+        );
+        assert!(both.systematic > kc_only.systematic);
+        assert_eq!(both.random, kc_only.random);
+    }
+
+    #[test]
+    fn swath_gap_compensation_flag_defaults_off_and_is_omitted_from_serialization() {
+        let default = UncertaintyParams::default();
+        assert!(!default.tropical_swath_gap_compensation);
+        let json = serde_json::to_string(&default).unwrap();
+        assert!(!json.contains("tropical_swath_gap_compensation"), "{json}");
+
+        let on: UncertaintyParams =
+            serde_json::from_str(r#"{"tropical_swath_gap_compensation":true}"#).unwrap();
+        assert!(on.tropical_swath_gap_compensation);
+        assert_eq!(on.validate(), Ok(()));
+        assert!(serde_json::to_string(&on).unwrap().contains("\"tropical_swath_gap_compensation\":true"));
+    }
+
+    #[test]
     fn total_is_quadrature_of_random_and_systematic() {
         let rel = RelativeUncertainty { random: 0.3, systematic: 0.4 };
         assert!((rel.total() - 0.5).abs() < 1e-12);
@@ -666,5 +770,103 @@ mod tests {
         let junk = [(f64::NAN, 0.1, 0.1), (-5.0, 0.1, 0.1)];
         let e = total_frp_uncertainty(&junk, &p).unwrap();
         assert_eq!((e.lower, e.upper), (0.0, 0.0));
+    }
+
+    // A silent change to a documented model assumption must fail a test.
+    #[test]
+    fn default_params_are_pinned_to_documented_values() {
+        let p = UncertaintyParams::default();
+        assert_eq!(p.modis_sensor_sigma, 0.266);
+        assert_eq!(p.viirs_sensor_sigma, 0.08);
+        assert_eq!(p.vza_error_coeff, 0.05);
+        assert_eq!(p.modis_scale_sigma, 0.10);
+        assert_eq!(p.z, 1.0);
+    }
+
+    #[test]
+    fn sum_uncertainty_single_part_matches_obs_uncertainty() {
+        let params = UncertaintyParams::default();
+        for family in FAMILIES {
+            for frp in [0.4, 30.0, 106.0, 500.0] {
+                for n in [0, 1, 2, 4] {
+                    let sum_est = frp_uncertainty_for_sum(&[(frp, n)], family, &params);
+                    let obs_est = frp_uncertainty_for_obs(frp, None, family, None, n, &params);
+                    assert!(
+                        (sum_est.lower - obs_est.lower).abs() <= 1e-9 * frp,
+                        "{family:?} frp={frp} n={n}: {sum_est:?} vs {obs_est:?}"
+                    );
+                    assert!(
+                        (sum_est.upper - obs_est.upper).abs() <= 1e-9 * frp,
+                        "{family:?} frp={frp} n={n}: {sum_est:?} vs {obs_est:?}"
+                    );
+                    assert_eq!(sum_est.confidence, obs_est.confidence);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sum_uncertainty_three_equal_parts_matches_n_three_relative_width() {
+        let params = UncertaintyParams::default();
+        for family in FAMILIES {
+            let sum_est =
+                frp_uncertainty_for_sum(&[(10.0, 1), (10.0, 1), (10.0, 1)], family, &params);
+            let obs_est = frp_uncertainty_for_obs(30.0, None, family, None, 3, &params);
+            let sum_half_rel = (sum_est.upper - sum_est.lower) / (2.0 * 30.0);
+            let obs_half_rel = (obs_est.upper - obs_est.lower) / (2.0 * 30.0);
+            assert!(
+                (sum_half_rel - obs_half_rel).abs() <= 1e-9,
+                "{family:?}: {sum_half_rel} vs {obs_half_rel}"
+            );
+        }
+    }
+
+    #[test]
+    fn sum_uncertainty_unequal_parts_exceeds_sqrt_n_and_matches_quadrature() {
+        let params = UncertaintyParams::default();
+        let parts = [(100.0, 1), (2.0, 1), (2.0, 1), (2.0, 1)];
+        let sum_frp = 106.0;
+        let sum_est = frp_uncertainty_for_sum(&parts, SensorFamily::Viirs, &params);
+        let naive_est =
+            frp_uncertainty_for_obs(sum_frp, None, SensorFamily::Viirs, None, 4, &params);
+
+        let sum_half_rel = (sum_est.upper - sum_est.lower) / (2.0 * sum_frp);
+        let naive_half_rel = (naive_est.upper - naive_est.lower) / (2.0 * sum_frp);
+        assert!(
+            sum_half_rel > naive_half_rel,
+            "expected {sum_half_rel} > {naive_half_rel}"
+        );
+
+        let sigma =
+            relative_uncertainty_for_obs(None, SensorFamily::Viirs, None, 1, &params).random;
+        let expected_rand_rel =
+            sigma * (100.0_f64.powi(2) + 3.0 * 2.0_f64.powi(2)).sqrt() / sum_frp;
+        let actual_rand_rel = (sum_est.upper - sum_frp) / (sum_frp * params.z);
+        assert!(
+            (actual_rand_rel - expected_rand_rel).abs() <= 1e-9,
+            "expected {expected_rand_rel}, got {actual_rand_rel}"
+        );
+    }
+
+    #[test]
+    fn sum_uncertainty_empty_or_non_positive_returns_zero_bounds() {
+        let params = UncertaintyParams {
+            z: 2.0,
+            ..UncertaintyParams::default()
+        };
+        let expected_conf = confidence_from_z(params.z);
+        for parts in [
+            &[][..],
+            &[(0.0, 1)][..],
+            &[(0.0, 1), (0.0, 2)][..],
+            &[(-5.0, 1)][..],
+            &[(10.0, 1), (f64::NAN, 1)][..],
+            &[(10.0, 1), (f64::INFINITY, 1)][..],
+        ] {
+            let est = frp_uncertainty_for_sum(parts, SensorFamily::Viirs, &params);
+            assert_eq!(est.lower, 0.0);
+            assert_eq!(est.upper, 0.0);
+            assert!((est.confidence - expected_conf).abs() < 1e-12);
+        }
     }
 }
