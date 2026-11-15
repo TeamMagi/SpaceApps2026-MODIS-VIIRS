@@ -24,6 +24,7 @@ use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath
 use pyrosync_core::events::{
     EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
 };
+use pyrosync_core::fusion::{FusionModel, apply_fusion_model};
 use pyrosync_core::harmonize::harmonize_with_links_masked;
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
@@ -1596,6 +1597,7 @@ struct PointsParams {
     match_window_secs: Option<String>,
     fleet_radius_km: Option<String>,
     min_confidence: Option<String>,
+    fusion_model: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -1635,6 +1637,24 @@ struct HarmonizedPoint {
     event_id: Option<usize>,
     #[serde(flatten)]
     hotspot: HarmonizedHotspot,
+}
+
+#[derive(Serialize)]
+struct FusionComparison {
+    model: FusionModel,
+    baseline_count: usize,
+    baseline_total_frp: f64,
+    count: usize,
+    total_frp: f64,
+    dropped_below_modis_limit: usize,
+}
+
+fn total_frp(hotspots: &[HarmonizedHotspot]) -> f64 {
+    hotspots
+        .iter()
+        .map(|h| h.frp_corrected)
+        .filter(|v| v.is_finite())
+        .sum()
 }
 
 #[derive(Serialize)]
@@ -1749,6 +1769,8 @@ struct PointsResponse {
     no_detection_days: Vec<NoDetectionDay>,
     config: PipelineConfig,
     config_overridden: bool,
+    fusion_model: FusionModel,
+    fusion_comparison: Option<FusionComparison>,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1940,6 +1962,12 @@ async fn points(
     let (config, config_overridden) = resolve_points_config(&state.config, &params)?;
     let min_confidence = MinConfidence::parse(params.min_confidence.as_deref())
         .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?;
+    let fusion_model = match params.fusion_model.as_deref().map(str::trim) {
+        None | Some("") => FusionModel::default(),
+        Some(v) => v
+            .parse::<FusionModel>()
+            .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?,
+    };
     if !region.modis_years.contains(&year)
         && !region.viirs_years.contains(&year)
         && !region.noaa20_years.contains(&year)
@@ -2001,10 +2029,47 @@ async fn points(
             modis.iter().map(|h| h.acquired.date_naive()).collect();
         let viirs_days: BTreeSet<NaiveDate> =
             viirs.iter().map(|h| h.acquired.date_naive()).collect();
-        let linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+        let fusion_inputs = (fusion_model != FusionModel::ViirsPreferred)
+            .then(|| (modis.clone(), viirs.clone()));
+        let mut linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+        let (hotspots, links, fusion_comparison) = match fusion_inputs {
+            None => {
+                let links: Vec<Option<usize>> = linked
+                    .modis_links
+                    .iter()
+                    .chain(&linked.viirs_links)
+                    .copied()
+                    .collect();
+                (std::mem::take(&mut linked.hotspots), links, None)
+            }
+            Some((fusion_modis, fusion_viirs)) => {
+                let fused = apply_fusion_model(
+                    &linked,
+                    &fusion_modis,
+                    &fusion_viirs,
+                    fusion_model,
+                    &config,
+                );
+                let links: Vec<Option<usize>> = linked
+                    .modis_links
+                    .iter()
+                    .chain(&linked.viirs_links)
+                    .map(|link| link.and_then(|o| fused.index_map[o]))
+                    .collect();
+                let comparison = FusionComparison {
+                    model: fusion_model,
+                    baseline_count: linked.hotspots.len(),
+                    baseline_total_frp: total_frp(&linked.hotspots),
+                    count: fused.hotspots.len(),
+                    total_frp: total_frp(&fused.hotspots),
+                    dropped_below_modis_limit: fused.dropped_below_modis_limit,
+                };
+                (fused.hotspots, links, Some(comparison))
+            }
+        };
 
         let event_params = EventParams::default();
-        let clustering = cluster_events(&linked.hotspots, &event_params);
+        let clustering = cluster_events(&hotspots, &event_params);
         let events = events_meta(&clustering, &event_params);
         let (modis_cov, viirs_cov) = family_coverage(&region, year, &coverage);
         let gaps = no_detection_days(
@@ -2015,14 +2080,7 @@ async fn points(
             viirs_cov,
         );
 
-        let links: Vec<Option<usize>> = linked
-            .modis_links
-            .iter()
-            .chain(&linked.viirs_links)
-            .copied()
-            .collect();
-
-        let (k, keep_out, keep_raw) = sample_links(&links, linked.hotspots.len(), limit);
+        let (k, keep_out, keep_raw) = sample_links(&links, hotspots.len(), limit);
 
         let raw: Vec<RawPoint> = raw_points
             .into_iter()
@@ -2044,10 +2102,9 @@ async fn points(
             interscan_removed: linked.interscan_removed,
             fleet_merged: linked.fleet_merged,
             matched_pairs: linked.matched_pairs,
-            harmonized: linked.hotspots.len(),
+            harmonized: hotspots.len(),
         };
-        let harmonized: Vec<HarmonizedPoint> = linked
-            .hotspots
+        let harmonized: Vec<HarmonizedPoint> = hotspots
             .into_iter()
             .enumerate()
             .filter(|(i, _)| keep_out[*i])
@@ -2078,6 +2135,8 @@ async fn points(
             no_detection_days: gaps,
             config,
             config_overridden,
+            fusion_model,
+            fusion_comparison,
         }
     })
     .await
@@ -2631,6 +2690,56 @@ mod tests {
         assert!(pts.no_detection_days.iter().all(|d| d.family == pyrosync_core::uncertainty::SensorFamily::Viirs
             && !d.other_family_detected));
         assert_eq!(pts.no_detection_days[0].date, ymd(2021, 7, 4));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_fusion_model_defaults_to_identity_and_reports_comparison_otherwise() {
+        let dir = temp_archive("points-fusion");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (36.5, "2021-07-02", 0)],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        let request = |model: Option<&str>| PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            fusion_model: model.map(Into::into),
+            ..Default::default()
+        };
+
+        let Json(default) = points(State(state.clone()), Query(request(None)))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(default.fusion_model, FusionModel::ViirsPreferred);
+        assert!(default.fusion_comparison.is_none());
+        let body = serde_json::to_value(&default).unwrap();
+        assert_eq!(body["fusion_model"], "viirs_preferred");
+        assert!(body["fusion_comparison"].is_null());
+
+        let Json(calibrated) = points(State(state.clone()), Query(request(Some("modis_calibrated"))))
+            .await
+            .ok()
+            .unwrap();
+        let comparison = calibrated.fusion_comparison.as_ref().expect("comparison");
+        assert_eq!(calibrated.fusion_model, FusionModel::ModisCalibrated);
+        assert!(comparison.count <= comparison.baseline_count);
+        assert_eq!(comparison.baseline_count, default.stages.harmonized);
+        assert_eq!(calibrated.stages.harmonized, comparison.count);
+        assert!(!calibrated.config_overridden);
+
+        let err = points(State(state), Query(request(Some("bogus"))))
+            .await
+            .err()
+            .unwrap();
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(err.message.contains("fusion_model") && err.message.contains("equal_weight"));
 
         let _ = std::fs::remove_dir_all(dir);
     }

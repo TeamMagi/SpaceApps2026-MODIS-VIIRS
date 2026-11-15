@@ -2133,6 +2133,7 @@ Bir bölgenin tek bir yılına (opsiyonel olarak tek bir ayına) ait ham ve harm
 | `match_window_secs` | integer | Hayır | Sunucu yapılandırması (`10800`) | `>= 0` (`matching.window_secs` değerini bu istek için ezer) |
 | `fleet_radius_km` | number | Hayır | Sunucu yapılandırması (`2.0`) | `> 0.0`, sonlu (`fleet.radius_km` değerini bu istek için ezer) |
 | `min_confidence` | string | Hayır | `low` | `low`, `nominal` veya `high`. Seçilen yıl/ayda harmonizasyondan ve örneklemeden önce uygulanır; `stages` filtrelenmiş girdiye göredir. Bkz. "Güven filtresi" |
+| `fusion_model` | string | Hayır | `viirs_preferred` | `viirs_preferred`, `equal_weight` veya `modis_calibrated`. Harmonizasyondan **sonra** uygulanan bir görünüm seçeneğidir (`PipelineConfig`'i ve `config_overridden`'ı değiştirmez; `/api/series` ve `/api/calendar` etkilenmez). `equal_weight`: eşleşen kayıtta MODIS (VZA düzeltmeli) ve VIIRS grup FRP ortalamalarının aritmetik ortalaması, konum iki grup ortalamasının orta noktası. `modis_calibrated`: eşleşen kayıt MODIS grup değerini alır; MODIS nadir %50 tespit limitinin (gündüz/gece) altındaki `ViirsOnly` kayıtlar çıkarılır. Geçersiz değer 400 döner |
 
 ### Örnek istek
 
@@ -2357,6 +2358,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `no_detection_days` | array | Bir sensör ailesinin hiç tespit döndürmediği günler (aşağıda) |
 | `config` | object | Bu yanıt üretilirken kullanılan etkin `PipelineConfig` (varsayılan sunucu yapılandırması + istek geçersiz kılmaları; şema `/api/config` ile aynıdır) |
 | `config_overridden` | boolean | İstek bazlı eşik parametrelerinden en az biri verildiyse `true`, aksi halde `false` |
+| `fusion_model` | string | Uygulanan füzyon modeli; her zaman bulunur |
+| `fusion_comparison` | object \| null | `viirs_preferred` için `null`. Aksi halde `{ model, baseline_count, baseline_total_frp, count, total_frp, dropped_below_modis_limit }`: harmonize kayıt sayısı ve `frp_corrected` toplamı (MW, sonlu değerler); seçilen model ve `viirs_preferred` taban çizgisi için, `limit` örneklemesinden önce tüm istenen dönem üzerinden. `dropped_below_modis_limit`, `modis_calibrated` ile çıkarılan kayıt sayısıdır. `raw[]`, `harmonized[]`, `events` ve `stages` seçilen modele göredir |
 
 `raw[]` öğeleri:
 
