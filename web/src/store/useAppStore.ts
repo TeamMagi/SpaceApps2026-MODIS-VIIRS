@@ -6,6 +6,7 @@ import type {
   Lang,
   MonthCell,
   MonthRef,
+  Palette,
   Phase,
   PhaseDurations,
   RegionId,
@@ -84,6 +85,7 @@ export interface AppState {
 
   lang: Lang;
   theme: Theme;
+  palette: Palette;
   selectedMonth: MonthRef | null;
   calendarYear: number | null;
   yearPlaying: boolean;
@@ -96,6 +98,7 @@ export interface AppState {
   toggleMode: () => void;
   setLang: (lang: Lang) => void;
   setTheme: (theme: Theme) => void;
+  setPalette: (palette: Palette) => void;
   selectMonth: (month: MonthRef | null) => void;
   /** Selects the month, or clears the selection when it is already selected. */
   toggleMonth: (month: MonthRef) => void;
@@ -120,6 +123,7 @@ export interface AppState {
 }
 
 const THEME_KEY = "pyrosync.theme";
+const PALETTE_KEY = "pyrosync.palette";
 
 function readStoredTheme(): Theme {
   try {
@@ -135,6 +139,23 @@ export function storeTheme(theme: Theme): void {
     window.localStorage.setItem(THEME_KEY, theme);
   } catch {
     // Storage can be unavailable (private mode); the theme then lasts for this visit only.
+  }
+}
+
+function readStoredPalette(): Palette {
+  try {
+    const value = window.localStorage.getItem(PALETTE_KEY);
+    return value === "default" || value === "viridis" || value === "cividis" ? value : "default";
+  } catch {
+    return "default";
+  }
+}
+
+export function storePalette(palette: Palette): void {
+  try {
+    window.localStorage.setItem(PALETTE_KEY, palette);
+  } catch {
+    // Storage can be unavailable (private mode); the palette then lasts for this visit only.
   }
 }
 
@@ -168,6 +189,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   lang: initialUrl.lang ?? "en",
   theme: typeof window === "undefined" ? "dark" : readStoredTheme(),
+  palette: initialUrl.palette ?? (typeof window === "undefined" ? "default" : readStoredPalette()),
   selectedMonth: initialUrl.month ?? null,
   calendarYear: initialUrl.month?.year ?? null,
   yearPlaying: false,
@@ -187,6 +209,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({ lang, ...snapped(state) });
   },
   setTheme: (theme) => set({ theme }),
+  setPalette: (palette) => set({ palette }),
   selectMonth: (month) =>
     set((s) => ({
       selectedMonth: month,
@@ -234,6 +257,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({
       region: nextRegion,
       lang: url.lang ?? state.lang,
+      palette: url.palette ?? state.palette,
       selectedMonth: nextSelectedMonth,
       calendarYear: nextCalendarYear,
       yearPlaying: regionChanged ? false : state.yearPlaying,

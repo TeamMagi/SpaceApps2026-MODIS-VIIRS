@@ -1,6 +1,6 @@
 import { projectRing, type RegionProjection } from "../../../lib/geo/projection";
 import type { GeoDataset, GeoFeature } from "../../../lib/geo/types";
-import { frpBucket } from "../../../lib/scales";
+import { FRP_BREAKS, frpBucketFor } from "../../../lib/scales";
 import { HotspotSource, type HarmonizedPoint, type RawPoint, type Theme } from "../../../types";
 import { LOD_SPAN_DIVISORS, pickLodLevel, simplifyRing } from "./lod";
 import { buildIndex } from "./pointIndex";
@@ -132,7 +132,7 @@ function buildPaletteSignature(target: HTMLElement | null): string {
   const root =
     typeof document !== "undefined" ? document.documentElement : null;
   const rootSig = root
-    ? `${root.dataset.theme ?? ""}|${root.className}|${root.getAttribute("style") ?? ""}`
+    ? `${root.dataset.theme ?? ""}|${root.dataset.palette ?? ""}|${root.className}|${root.getAttribute("style") ?? ""}`
     : "";
   if (!target) {
     return `${rootSig}||disconnected`;
@@ -140,7 +140,7 @@ function buildPaletteSignature(target: HTMLElement | null): string {
   const targetSig =
     target === root
       ? "root"
-      : `${target.dataset.theme ?? ""}|${target.className}|${target.getAttribute("style") ?? ""}`;
+      : `${target.dataset.theme ?? ""}|${target.dataset.palette ?? ""}|${target.className}|${target.getAttribute("style") ?? ""}`;
   return `${rootSig}||${targetSig}|${target.isConnected ? "1" : "0"}`;
 }
 
@@ -339,6 +339,7 @@ function buildRawLayer(
   rawCountByHarmId: ReadonlyMap<string, number>,
   matchedHarmIds: ReadonlySet<string>,
   projection: RegionProjection,
+  frpBreaks: readonly number[] = FRP_BREAKS,
 ): ScenePointLayer {
   const count = rawPoints.length;
   if (count === 0) return emptyPointLayer();
@@ -358,7 +359,7 @@ function buildRawLayer(
     xs[i] = px;
     ys[i] = py;
     frp[i] = p.frp;
-    buckets[i] = frpBucket(p.frp);
+    buckets[i] = frpBucketFor(p.frp, frpBreaks);
     shapes[i] = p.sensor === "MODIS" ? PointShape.HollowCircle : PointShape.Square;
 
     let flag = p.sensor === "MODIS" ? PointFlag.Modis : PointFlag.Viirs;
@@ -396,6 +397,7 @@ function buildHarmonizedLayer(
   harmPoints: readonly HarmonizedPoint[],
   rawCountByHarmId: ReadonlyMap<string, number>,
   projection: RegionProjection,
+  frpBreaks: readonly number[] = FRP_BREAKS,
 ): ScenePointLayer {
   const count = harmPoints.length;
   if (count === 0) return emptyPointLayer();
@@ -415,7 +417,7 @@ function buildHarmonizedLayer(
     xs[i] = px;
     ys[i] = py;
     frp[i] = p.frpCorrected;
-    buckets[i] = frpBucket(p.frpCorrected);
+    buckets[i] = frpBucketFor(p.frpCorrected, frpBreaks);
     shapes[i] = PointShape.Circle;
 
     let flag =
@@ -616,9 +618,15 @@ export function buildSceneGeometry(
   };
 }
 
+export interface ScenePointBreaks {
+  readonly raw?: readonly number[];
+  readonly harmonized?: readonly number[];
+}
+
 export function buildScenePoints(
   points: ScenePointInput | null | undefined,
   projection: RegionProjection | null | undefined,
+  breaks?: ScenePointBreaks,
 ): ScenePoints {
   if (!projection) {
     const empty = emptyPointLayer();
@@ -627,6 +635,8 @@ export function buildScenePoints(
 
   const rawPoints = points?.raw ?? [];
   const harmPoints = points?.harmonized ?? [];
+  const rawBreaks = breaks?.raw ?? FRP_BREAKS;
+  const harmBreaks = breaks?.harmonized ?? FRP_BREAKS;
 
   const rawCountByHarmId = new Map<string, number>();
   for (let i = 0; i < rawPoints.length; i++) {
@@ -644,8 +654,8 @@ export function buildScenePoints(
   }
 
   return {
-    raw: buildRawLayer(rawPoints, rawCountByHarmId, matchedHarmIds, projection),
-    harmonized: buildHarmonizedLayer(harmPoints, rawCountByHarmId, projection),
+    raw: buildRawLayer(rawPoints, rawCountByHarmId, matchedHarmIds, projection, rawBreaks),
+    harmonized: buildHarmonizedLayer(harmPoints, rawCountByHarmId, projection, harmBreaks),
   };
 }
 

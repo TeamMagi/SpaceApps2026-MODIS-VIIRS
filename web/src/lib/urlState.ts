@@ -1,4 +1,4 @@
-import type { Lang, MonthRef, RegionId, ViewMode } from "../types";
+import type { Lang, MonthRef, Palette, RegionId, ViewMode } from "../types";
 import { monthKey } from "./format";
 
 export const DEFAULT_REGION: RegionId = "Turkey";
@@ -43,6 +43,7 @@ export interface UrlState {
   mode: ViewMode;
   month: MonthRef | null;
   lang: Lang;
+  palette?: Palette;
 }
 
 function parseMonth(value: string): MonthRef | null | undefined {
@@ -82,6 +83,11 @@ export function parseHash(hash: string): Partial<UrlState> {
     const parsed = parseMonth(month);
     if (parsed !== undefined) result.month = parsed;
   }
+
+  const palette = params.get("palette");
+  if (palette === "default" || palette === "viridis" || palette === "cividis") {
+    result.palette = palette;
+  }
   return result;
 }
 
@@ -91,6 +97,9 @@ export function serializeHash(state: UrlState): string {
   params.set("mode", state.mode);
   if (state.month) params.set("month", monthKey(state.month));
   params.set("lang", state.lang);
+  if (state.palette && state.palette !== "default") {
+    params.set("palette", state.palette);
+  }
   return `#${params.toString()}`;
 }
 

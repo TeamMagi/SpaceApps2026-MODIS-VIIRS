@@ -16,17 +16,29 @@ import { useCopy } from "../../hooks/useCopy";
 import { isPlannedStage, PIPELINE_ORDER } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
 import { useAppStore } from "../../store/useAppStore";
-import type { PipelineStageKey, Theme } from "../../types";
+import type { Palette, PipelineStageKey, Theme } from "../../types";
 import Drawer from "./Drawer";
 import styles from "./MethodsDrawer.module.css";
 
 const THEMES: readonly Theme[] = ["dark", "light"];
+
+const PALETTES: ReadonlyArray<{
+  readonly id: Palette;
+  readonly labelKey: "paletteDefault" | "paletteViridis" | "paletteCividis";
+  readonly descKey: "paletteDefaultDesc" | "paletteViridisDesc" | "paletteCividisDesc";
+}> = [
+  { id: "default", labelKey: "paletteDefault", descKey: "paletteDefaultDesc" },
+  { id: "viridis", labelKey: "paletteViridis", descKey: "paletteViridisDesc" },
+  { id: "cividis", labelKey: "paletteCividis", descKey: "paletteCividisDesc" },
+];
 
 export default function MethodsDrawer() {
   const { t } = useCopy();
   const { coverage } = useRegionData();
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
+  const palette = useAppStore((state) => state.palette);
+  const setPalette = useAppStore((state) => state.setPalette);
   const presentation = useAppStore((state) => state.presentation);
   const setPresentation = useAppStore((state) => state.setPresentation);
   const reduceMotion = useReducedMotion();
@@ -178,6 +190,34 @@ export default function MethodsDrawer() {
           ))}
         </div>
       </div>
+      <fieldset className={styles.paletteFieldset}>
+        <legend className={styles.settingLabel}>{t("paletteLabel")}</legend>
+        <div className={styles.paletteList}>
+          {PALETTES.map((option) => {
+            const selected = palette === option.id;
+            return (
+              <label
+                key={option.id}
+                className={styles.paletteOption}
+                data-selected={selected ? "true" : undefined}
+              >
+                <input
+                  type="radio"
+                  name={`${baseId}-palette`}
+                  value={option.id}
+                  checked={selected}
+                  onChange={() => setPalette(option.id)}
+                  className={styles.paletteRadio}
+                />
+                <span className={styles.paletteText}>
+                  <span className={styles.paletteTitle}>{t(option.labelKey)}</span>
+                  <span className={styles.paletteDesc}>{t(option.descKey)}</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
       <label className={`${styles.setting} ${styles.settingInline}`}>
         <input type="checkbox" checked={presentation} onChange={(event) => setPresentation(event.target.checked)} />
         <span>{t("presentationMode")}</span>

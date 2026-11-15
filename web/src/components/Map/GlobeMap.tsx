@@ -100,6 +100,9 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
     region,
     setRegion,
     points,
+    rawFrpBreaks,
+    harmonizedFrpBreaks,
+    frpBreaks,
     geo,
     geometryHarmonized,
     showDuplicateRings,
@@ -204,7 +207,14 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
     scene?.setHoverFeature(feature);
   }, [scene, highlightedFeature, geo.dataset]);
 
-  const scenePoints = useMemo(() => buildScenePoints(pointInput, LONLAT_PROJECTION), [pointInput]);
+  const scenePoints = useMemo(
+    () =>
+      buildScenePoints(pointInput, LONLAT_PROJECTION, {
+        raw: rawFrpBreaks,
+        harmonized: harmonizedFrpBreaks,
+      }),
+    [pointInput, rawFrpBreaks, harmonizedFrpBreaks],
+  );
   const globeLayers = useMemo(
     () => ({
       raw: buildGlobeLayer(scenePoints.raw, false),
@@ -766,7 +776,11 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
         )}
 
         <div className={styles.legendDock} data-map-ui="true">
-          <MapLegend sensorFilter={effectiveSensorFilter} onSensorFilterChange={setSensorFilter} />
+          <MapLegend
+            sensorFilter={effectiveSensorFilter}
+            onSensorFilterChange={setSensorFilter}
+            frpBreaks={frpBreaks}
+          />
         </div>
 
         <div className={globeStyles.credits}>
