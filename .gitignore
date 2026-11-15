@@ -4,6 +4,18 @@ academic-papers/
 CHALLENGE_INFO.md
 STRATEGY.md
 
+# Internal planning, assistant instructions, analysis and handoff notes
+GOREVLER.md
+CLAUDE.md
+docs/FRONTEND_STACK_ONERISI.md
+docs/G6_TESLIM.md
+docs/REFERANS_ANALIZI.md
+docs/TASARIM_*.md
+docs/UI-UX-KONSEPT.md
+docs/UX_YAZIM.md
+docs/YUSUF_UYGULAMA_REHBERI.md
+docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md
+
 # Rust
 target/
 **/*.rs.bk
