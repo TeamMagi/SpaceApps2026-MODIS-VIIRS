@@ -259,7 +259,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
-| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [ ] (C5 bekliyor) |
+| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [X] |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
@@ -1027,7 +1027,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - **2021 Akdeniz anomalisi belirgin:** Antalya Temmuz z=3.60, Ağustos z=3.60; Muğla Ağustos z=3.95; Akdeniz Temmuz z=3.72, Ağustos z=3.98 — tüm bölgelerde rank=1 veya rank=2 (152 aylık seri içinde).
 > - **R7 başlayabilir:** `calendar/*.json` ve `stats.json` doğrudan frontend brifingi component'i için hazır.
 
-### [ ] S8 — Bilimsel referans ve disclaimer içerik
+### [X] S8 — Bilimsel referans ve disclaimer içerik
 - **Bekler:** C5 · **Açar:** —
 - Methods sayfası için bilimsel içerik hazırlığı:
   - Her pipeline aşaması için 2–3 cümle açıklama (teknik ama anlaşılır)
@@ -1036,6 +1036,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Disclaimer metni: sınırlamalar, model varsayımları, veri kaynağı güvenilirliği
   - `docs/REFERENCES.md` dosyası olarak depoya
 - **Bitti sayılır:** `docs/REFERENCES.md` depoda; en az 5 makale referanslanmış; her pipeline aşaması en az bir referansla desteklenmiş; disclaimer metni net ve dürüst.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+> - **`docs/REFERENCES.md` eksiksiz oluşturuldu:**
+>   - **Disclaimer ve Model Varsayımları:** VZA normalizasyonu ($R_{\text{rel}}$ nadir=1.0), Terra geometrik vekili ($\sigma_{\text{scale}}=0.10$), sensör gürültüleri ($\sigma_{\text{modis}}=0.266, \sigma_{\text{viirs}}=0.08$), duman/bulut asimetrik eksik tahmini (küresel %12–22), sahte alarmlar, 2020+ yörünge sürüklenmesi ve pre-VIIRS $k_c$ çarpanı ile yerel piksel `mean_frp` süreksizliği "sakin bilim insanı" üslubuyla belgelendi.
+>   - **Pipeline Aşama Açıklamaları (EN & TR):** 7 aşama (Topla, Çift Sayımı Ayıkla & Filo, VZA Açısı, H3 Izgarası, Eşleştirme 1:N, Füzyon & Belirsizlik, Takvim & Anomali) için 2–3 cümlelik sakin ve teknik açıklamalar yazıldı.
+>   - **Aşama ↔ Referans Eşleme Tablosu:** Her 7 aşama koddaki dosya/parametre dayanağı ve doğrulanmış APA 7 akademik kaynaklarıyla eşlendi (19 tam künye).
+>   - **32 Makalelik Envanter ve Doğrulanması Gereken İddialar:** Makale 04 bulguları dahil güncellendi.
+> - **Frontend entegrasyonu (`web/src/content/references.ts`):** Tüm referanslar doğrulanmış APA 7 künyeleri ve DOI bağlantılarıyla `complete: true` olarak frontend'e aktarıldı, typecheck ve 42 test suite'i başarıyla geçti.
 
 ---
 
@@ -1298,6 +1306,6 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 8 (`S1–S4, S6, S7, S9–S11, S13`) | 5 (`S5, S8, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Samet | 13 (S1–S13) | 9 (`S1–S4, S6–S11, S13`) | 4 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
