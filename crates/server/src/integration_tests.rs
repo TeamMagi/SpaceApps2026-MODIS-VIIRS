@@ -1010,3 +1010,220 @@ async fn calendar_without_archive_directory_returns_500() {
         "FIRMS archive cache directory is unavailable"
     );
 }
+
+const SP_DATE: &str = "2024-07-01";
+const SP_SOURCES: [&str; 4] = [
+    "MODIS_SP",
+    "VIIRS_SNPP_SP",
+    "VIIRS_NOAA20_SP",
+    "VIIRS_NOAA21_SP",
+];
+
+fn sp_availability_csv() -> &'static str {
+    "data_id,min_date,max_date\n\
+     MODIS_SP,2024-01-01,2024-12-31\n\
+     VIIRS_SNPP_SP,2024-01-01,2024-12-31\n\
+     VIIRS_NOAA20_SP,2024-01-01,2024-12-31\n\
+     VIIRS_NOAA21_SP,2024-01-01,2024-12-31\n"
+}
+
+async fn healthy_sp_firms() -> MockServer {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path(format!("/api/data_availability/csv/{KEY}/ALL")))
+        .respond_with(ResponseTemplate::new(200).set_body_string(sp_availability_csv()))
+        .mount(&server)
+        .await;
+
+    mount_area(
+        &server,
+        "MODIS_SP",
+        ResponseTemplate::new(200).set_body_string(modis_csv(SP_DATE)),
+    )
+    .await;
+    mount_area(
+        &server,
+        "VIIRS_SNPP_SP",
+        ResponseTemplate::new(200).set_body_string(viirs_snpp_csv(SP_DATE)),
+    )
+    .await;
+    mount_area(
+        &server,
+        "VIIRS_NOAA20_SP",
+        ResponseTemplate::new(200).set_body_string(format!("{VIIRS_HEADER}\n")),
+    )
+    .await;
+    mount_area(
+        &server,
+        "VIIRS_NOAA21_SP",
+        ResponseTemplate::new(200).set_body_string(format!("{VIIRS_HEADER}\n")),
+    )
+    .await;
+
+    server
+}
+
+fn cached_firms_client(api_root: impl Into<String>, cache_dir: &Path) -> FirmsClient {
+    FirmsClient::new(KEY.to_string())
+        .expect("client builds")
+        .with_api_root(api_root)
+        .with_area_cache(AreaCache::new(
+            cache_dir.to_path_buf(),
+            Duration::from_secs(600),
+        ))
+}
+
+#[tokio::test]
+async fn area_cache_makes_second_identical_range_free() {
+    let firms = healthy_sp_firms().await;
+    let cache_dir = tempfile::tempdir().expect("temp dir");
+    let uri = format!("/api/harmonize?{BBOX}&start={SP_DATE}&end={SP_DATE}");
+
+    let app1 = app(
+        Some(cached_firms_client(firms.uri(), cache_dir.path())),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let first = call(&app1, &uri).await;
+    assert_eq!(first.status, StatusCode::OK, "body: {}", first.body);
+    assert_eq!(first.x_cache.as_deref(), Some("MISS"));
+
+    let first_json = first.json();
+    let first_count = first_json["harmonized"]["count"]
+        .as_u64()
+        .expect("harmonized count");
+    assert_eq!(first_count, 3);
+    let first_spent = first_json["report"]["transactions_spent"]
+        .as_u64()
+        .expect("transactions_spent");
+    assert!(first_spent > 0, "expected transactions > 0, got {first_spent}");
+    for source in SP_SOURCES {
+        assert_eq!(area_requests(&firms, source).await, 1, "source {source}");
+    }
+
+    // Separate router instance so the in-memory ResponseCache cannot satisfy the second call.
+    let app2 = app(
+        Some(cached_firms_client(firms.uri(), cache_dir.path())),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let second = call(&app2, &uri).await;
+    assert_eq!(second.status, StatusCode::OK, "body: {}", second.body);
+    assert_eq!(second.x_cache.as_deref(), Some("MISS"));
+
+    let second_json = second.json();
+    assert_eq!(second_json["report"]["transactions_spent"], 0);
+    assert_eq!(second_json["harmonized"]["count"], first_count);
+    for source in SP_SOURCES {
+        assert_eq!(
+            area_requests(&firms, source).await,
+            1,
+            "second call should not hit area endpoint for {source}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn area_cache_serves_cached_range_when_firms_is_unreachable() {
+    let firms = healthy_sp_firms().await;
+    let live_uri = firms.uri();
+    let cache_dir = tempfile::tempdir().expect("temp dir");
+    let uri = format!("/api/harmonize?{BBOX}&start={SP_DATE}&end={SP_DATE}");
+
+    let app1 = app(
+        Some(cached_firms_client(&live_uri, cache_dir.path())),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let first = call(&app1, &uri).await;
+    assert_eq!(first.status, StatusCode::OK, "body: {}", first.body);
+    let first_json = first.json();
+    let first_count = first_json["harmonized"]["count"]
+        .as_u64()
+        .expect("harmonized count");
+    assert_eq!(first_count, 3);
+    assert!(
+        first_json["report"]["transactions_spent"]
+            .as_u64()
+            .unwrap_or(0)
+            > 0
+    );
+
+    drop(firms);
+
+    // wiremock pools its servers, so the dropped mock's port can be handed to another test
+    // running in parallel; point the second client at a port that nothing listens on instead.
+    let closed_port = std::net::TcpListener::bind("127.0.0.1:0")
+        .expect("bind ephemeral port")
+        .local_addr()
+        .expect("local addr")
+        .port();
+    let dead_uri = format!("http://127.0.0.1:{closed_port}");
+
+    let app2 = app(
+        Some(cached_firms_client(&dead_uri, cache_dir.path())),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let second = call(&app2, &uri).await;
+    assert_eq!(second.status, StatusCode::OK, "body: {}", second.body);
+    assert_eq!(second.x_cache.as_deref(), Some("MISS"));
+
+    let second_json = second.json();
+    assert_eq!(second_json["harmonized"]["count"], first_count);
+    assert_eq!(second_json["report"]["transactions_spent"], 0);
+}
+
+#[tokio::test]
+async fn area_cache_does_not_store_failed_windows() {
+    let firms = healthy_sp_firms().await;
+    // Four SP sources each issue one unretried area request before falling through to the 200 mocks.
+    Mock::given(method("GET"))
+        .and(path_regex(format!("^/api/area/csv/{KEY}/")))
+        .respond_with(
+            ResponseTemplate::new(400).set_body_string("Exceeding allowed transaction limit"),
+        )
+        .up_to_n_times(4)
+        .with_priority(1)
+        .mount(&firms)
+        .await;
+
+    let cache_dir = tempfile::tempdir().expect("temp dir");
+    let uri = format!("/api/harmonize?{BBOX}&start={SP_DATE}&end={SP_DATE}");
+
+    let app1 = app(
+        Some(cached_firms_client(firms.uri(), cache_dir.path())),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let first = call(&app1, &uri).await;
+    assert_eq!(first.status, StatusCode::BAD_GATEWAY, "body: {}", first.body);
+    assert!(
+        error_text(&first).contains("Exceeding allowed transaction limit"),
+        "error: {}",
+        first.body
+    );
+
+    let app2 = app(
+        Some(cached_firms_client(firms.uri(), cache_dir.path())),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let second = call(&app2, &uri).await;
+    assert_eq!(second.status, StatusCode::OK, "body: {}", second.body);
+
+    let second_json = second.json();
+    assert_eq!(second_json["harmonized"]["count"], 3);
+    assert_eq!(second_json["report"]["failures"], json!([]));
+    let second_spent = second_json["report"]["transactions_spent"]
+        .as_u64()
+        .expect("transactions_spent");
+    assert!(
+        second_spent > 0,
+        "expected transactions > 0, got {second_spent}"
+    );
+    for source in SP_SOURCES {
+        assert_eq!(area_requests(&firms, source).await, 2, "source {source}");
+    }
+}
