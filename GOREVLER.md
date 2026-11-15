@@ -973,6 +973,12 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` Makale Envanteri (01–32) & Doğrulanması Gereken İddialar §1–3
 - **Bitti sayılır:** `academic-papers/04` doğru *Vadrevu & Lasko (2018)* PDF'i ile değiştirildi; 32 makalelik envanter ve açık boşluklar bölümü `S8` içeriğine hazırlandı.
 
+> **Durum notu (Samet, 2026-11-15):** `docs/REFERENCES.md` taslağı eklendi: 32 makalelik envanter, 6 referans proje, "doğrulanması gereken iddialar ve açık boşluklar" bölümü ve pipeline aşaması → kaynak tablosu. Disclaimer metni S8 kapsamında yazılacak.
+>
+> - **Makale 04 künyesi Crossref ile doğrulandı:** Vadrevu & Lasko (2018), *Remote Sens.* 10(7), 978, DOI `10.3390/rs10070978`. Aranan makale doğru; "10(6)" / `rs10060978` yok (doi.org 404).
+> - **Kutu bu yüzden işaretlenmedi:** Doğru PDF MDPI'den otomatik indirilemedi (403) ve `academic-papers/` gitignore'da, bu makinede yok. PDF elle indirilip `academic-papers/04` yerine konunca görev kapanır.
+> - Envanterde yazar, yayın yeri ve DOI çoğu makale için yok (`—`); PDF'lerden doğrulanmalı. Ayrıca [18] "Zhang2014" aslında Remy & Kaiser (2014), [07] yılı 2025 değil 2026.
+
 ### [ ] S7 — Türkiye/Akdeniz case study veri seti
 - **Bekler:** G1 · **Açar:** R7
 - Demo ve sunum için hazır Türkiye yangın verisi:
