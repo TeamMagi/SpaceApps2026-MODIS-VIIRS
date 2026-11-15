@@ -27,7 +27,7 @@ export function useRoute(): Route {
  */
 export function useLeaveMethods(): () => void {
   return useCallback(() => {
-    const { region, mode, selectedMonth, lang } = useAppStore.getState();
-    window.location.hash = serializeHash({ region, mode, month: selectedMonth, lang });
+    const { region, mode, selectedMonth, lang, minConfidence } = useAppStore.getState();
+    window.location.hash = serializeHash({ region, mode, month: selectedMonth, lang, minConfidence });
   }, []);
 }

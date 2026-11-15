@@ -24,6 +24,9 @@ export const mockPoints: PointsResponse = {
     source: enumValue(Object.values(HotspotSource), point.source),
     platforms: point.platforms.map(value => enumValue(Object.values(Sensor), value)),
   })),
+  stages: { ...pointsJson.stages, staticMasked: 0, samaRemoved: 0 },
+  filters: { minConfidence: 'low', excludedDetections: 0 },
+  tropicalSwathGap: null,
 };
 
 function snapshot(value: typeof statsJson.annual): AnalyticsSnapshot {
@@ -31,7 +34,10 @@ function snapshot(value: typeof statsJson.annual): AnalyticsSnapshot {
 }
 
 const { frpMonths, ...seriesOnly } = seriesJson;
-export const mockSeries: SeriesResponse = seriesOnly;
+export const mockSeries: SeriesResponse = {
+  ...seriesOnly,
+  years: seriesOnly.years.map(year => ({ ...year, staticMasked: 0, samaRemoved: 0 })),
+};
 export const mockFrpMonthly: readonly FrpMonthlyPoint[] = frpMonths;
 export const mockAnnualStats = snapshot(statsJson.annual);
 export const mockMonthlyStats: readonly AnalyticsSnapshot[] = statsJson.months.map(value => ({

@@ -2555,6 +2555,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("1".into()),
+                min_confidence: None,
             }),
         )
         .await
@@ -3784,6 +3785,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: Some("7".into()),
                 limit: None,
+                min_confidence: None,
             }),
         )
         .await
