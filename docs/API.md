@@ -115,7 +115,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `mean_frp_lower`, `mean_frp_upper` | number \| null | `mean_frp` için analitik güven sınırları |
 | `total_frp` | number | Aylık toplam `frp_corrected` (MW). VIIRS tespiti olmayan hücrelerde (kalibrasyon açıksa) `k_c(lat)` ile çarpılır |
 | `total_frp_lower`, `total_frp_upper` | number \| null | `total_frp` için analitik güven sınırları |
-| `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`) |
+| `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
@@ -878,8 +878,8 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
 | `merging.platform_combinations[]` | array | `platforms` (Sensor dizisi) ve `records` (kayıt sayısı). Kayıt sayısına göre azalan sıralanır |
 | `vza.records_with_correction` | integer | VZA düzeltmesi uygulanan kayıt sayısı |
 | `vza.mean_factor`, `vza.max_factor` | number \| null | Düzeltme faktörlerinin ortalaması ve en büyüğü. Düzeltme yoksa `null` |
-| `vza.mean_frp_reduction_pct` | number \| null | Düzeltme uygulanan kayıtlarda ortalama VZA-only FRP azalması (%) |
-| `vza.mean_frp_adjustment_pct` | number \| null | Aynı kayıtlarda ortalama VZA-only FRP değişimi (%, azalma negatif değil, yönlü fark) |
+| `vza.mean_frp_adjustment_pct` | number \| null | Düzeltme uygulanan kayıtlarda yalnız VZA düzeltmesinin FRP'yi ortalama değiştirme oranı: `100 * (vza_only_frp / frp - 1)`. VZA düzeltmesi MODIS FRP'yi çarparak artırdığı için normalde pozitiftir (pozitif = artış). `frp <= 0` kayıtlar ortalamaya `0` olarak girer |
+| `vza.mean_frp_reduction_pct` | number \| null | **Eski alan, geriye uyumluluk için duruyor.** `-mean_frp_adjustment_pct` değerine eşittir, bu yüzden artık normalde negatiftir (negatif = artış). Yeni istemciler `mean_frp_adjustment_pct` kullanmalı |
 | `warnings` | array of string | Bkz. "warnings" |
 | `report` | object | Bkz. "report" |
 
