@@ -1010,3 +1010,221 @@ async fn calendar_without_archive_directory_returns_500() {
         "FIRMS archive cache directory is unavailable"
     );
 }
+
+// ---------- C12: min_confidence filter and atmospheric bias note ----------
+
+#[tokio::test]
+async fn default_min_confidence_keeps_every_detection_and_echoes_low() {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+
+    let implicit = call(&app, &format!("/api/harmonize?{BBOX}&days=1")).await;
+    assert_eq!(implicit.status, StatusCode::OK, "body: {}", implicit.body);
+    let v = implicit.json();
+    assert_eq!(v["raw"]["total_raw"], 5);
+    assert_eq!(v["harmonized"]["count"], 3);
+    assert_eq!(
+        v["filters"],
+        json!({"min_confidence": "low", "excluded_detections": 0})
+    );
+
+    // `low` is the default, so the explicit form shares the cache entry with the implicit one.
+    let explicit = call(&app, &format!("/api/harmonize?{BBOX}&days=1&min_confidence=low")).await;
+    assert_eq!(explicit.status, StatusCode::OK, "body: {}", explicit.body);
+    assert_eq!(explicit.x_cache.as_deref(), Some("HIT"));
+    assert_eq!(explicit.body, implicit.body);
+}
+
+#[tokio::test]
+async fn nominal_min_confidence_drops_low_detections_before_harmonizing() {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+
+    let unfiltered = call(&app, &format!("/api/harmonize?{BBOX}&days=1")).await;
+    assert_eq!(unfiltered.status, StatusCode::OK, "body: {}", unfiltered.body);
+
+    // VIIRS row 3 is the only `l` detection (and the only ViirsOnly record).
+    let reply = call(
+        &app,
+        &format!("/api/harmonize?{BBOX}&days=1&include_raw=true&min_confidence=nominal"),
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::OK, "body: {}", reply.body);
+    assert_eq!(
+        reply.x_cache.as_deref(),
+        Some("MISS"),
+        "a filtered request must not reuse the unfiltered cache entry"
+    );
+    let v = reply.json();
+    assert_eq!(v["raw"]["modis_count"], 2);
+    assert_eq!(v["raw"]["viirs_count"], 2);
+    assert_eq!(v["raw"]["total_raw"], 4);
+    assert_eq!(v["raw"]["hotspots"].as_array().map(Vec::len), Some(4));
+    assert_eq!(v["harmonized"]["count"], 2);
+    let mut sources: Vec<&str> = v["harmonized"]["hotspots"]
+        .as_array()
+        .expect("hotspots array")
+        .iter()
+        .map(|h| h["source"].as_str().expect("source"))
+        .collect();
+    sources.sort_unstable();
+    assert_eq!(sources, vec!["Matched", "ModisOnly"]);
+    assert_eq!(
+        v["filters"],
+        json!({"min_confidence": "nominal", "excluded_detections": 1})
+    );
+
+    let compare = call(&app, &format!("/api/compare?{BBOX}&days=1&min_confidence=nominal")).await;
+    assert_eq!(compare.status, StatusCode::OK, "body: {}", compare.body);
+    let c = compare.json();
+    assert_eq!(c["counts"]["raw_total"], 4);
+    assert_eq!(c["counts"]["raw_viirs"], 2);
+    assert_eq!(c["counts"]["harmonized_total"], 2);
+    assert_eq!(
+        c["counts"]["by_source"],
+        json!({"modis_only": 1, "viirs_only": 0, "matched": 1})
+    );
+    assert_eq!(c["filters"]["min_confidence"], "nominal");
+    assert_eq!(c["filters"]["excluded_detections"], 1);
+
+    let stats = call(&app, &format!("/api/stats?{BBOX}&days=1&min_confidence=nominal")).await;
+    assert_eq!(stats.status, StatusCode::OK, "body: {}", stats.body);
+    let s = stats.json();
+    assert_eq!(s["totals"]["raw_detections"], 4);
+    assert_eq!(s["totals"]["harmonized_records"], 2);
+    assert_eq!(s["confidence_breakdown"]["low"], 0);
+    assert_eq!(s["filters"]["excluded_detections"], 1);
+
+    let export = call(&app, &format!("/api/export?{BBOX}&days=1&min_confidence=nominal")).await;
+    assert_eq!(export.status, StatusCode::OK, "body: {}", export.body);
+    let rows = export.body.lines().filter(|line| !line.is_empty()).count();
+    assert_eq!(rows, 1 + 2, "header plus two harmonized rows: {}", export.body);
+    let unfiltered_export = call(&app, &format!("/api/export?{BBOX}&days=1")).await;
+    assert_eq!(unfiltered_export.status, StatusCode::OK);
+    assert_eq!(unfiltered_export.x_cache.as_deref(), Some("MISS"));
+    let unfiltered_rows = unfiltered_export.body.lines().filter(|line| !line.is_empty()).count();
+    assert_eq!(unfiltered_rows, 1 + 3);
+}
+
+#[tokio::test]
+async fn high_min_confidence_keeps_only_high_detections() {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+
+    // MODIS 80 and VIIRS `h` are High; MODIS 60, VIIRS `n` and `l` are dropped.
+    let reply = call(&app, &format!("/api/compare?{BBOX}&days=1&min_confidence=high")).await;
+    assert_eq!(reply.status, StatusCode::OK, "body: {}", reply.body);
+    let v = reply.json();
+    assert_eq!(v["counts"]["raw_modis"], 1);
+    assert_eq!(v["counts"]["raw_viirs"], 1);
+    assert_eq!(v["counts"]["harmonized_total"], 1);
+    assert_eq!(
+        v["filters"],
+        json!({"min_confidence": "high", "excluded_detections": 3})
+    );
+}
+
+#[rstest]
+#[case::harmonize("/api/harmonize")]
+#[case::compare("/api/compare")]
+#[case::stats("/api/stats")]
+#[case::export("/api/export")]
+#[tokio::test]
+async fn invalid_min_confidence_is_rejected_before_reaching_firms(#[case] route: &str) {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+
+    let reply = call(&app, &format!("{route}?{BBOX}&days=1&min_confidence=medium")).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "body: {}", reply.body);
+    assert_eq!(
+        error_text(&reply),
+        "Invalid 'min_confidence' value 'medium': expected 'low', 'nominal' or 'high'"
+    );
+    let paths = upstream_paths(&firms).await;
+    assert!(paths.is_empty(), "{route} should not reach FIRMS, got {paths:?}");
+}
+
+#[tokio::test]
+async fn harmonize_uncertainty_carries_one_sided_atmospheric_bias_note() {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+
+    let reply = call(&app, &format!("/api/harmonize?{BBOX}&days=1")).await;
+    assert_eq!(reply.status, StatusCode::OK, "body: {}", reply.body);
+    let bias = &reply.json()["uncertainty"]["atmospheric_bias"];
+    assert_eq!(bias["direction"], "downward");
+    assert_eq!(bias["low_pct"], 7);
+    assert_eq!(bias["high_pct"], 22);
+    assert_eq!(bias["applied"], false);
+    let note = bias["note"].as_str().expect("note string");
+    assert!(note.contains("tau_4") && note.contains("7-22%"), "note: {note}");
+    let refs = bias["refs"].as_array().expect("refs array");
+    assert_eq!(refs.len(), 3);
+    assert!(refs.iter().all(|r| r.as_str().is_some_and(|r| r.starts_with('['))));
+}
+
+#[tokio::test]
+async fn calendar_min_confidence_filters_archive_rows_and_keeps_bias_note() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    seed_archive(dir.path());
+    // MODIS confidence 20 parses as Low.
+    let low_rows: Vec<String> = (1..=3u32)
+        .map(|day| {
+            archive_row(&format!("2011-07-{day:02}"), 37.0 + f64::from(day) * 0.1, 0)
+                .replace(",MODIS,80,", ",MODIS,20,")
+        })
+        .collect();
+    write_archive_year(dir.path(), 2011, &low_rows);
+    let app = app(None, Some(dir.path()), Some(Duration::from_secs(30)));
+
+    let all = call(&app, "/api/calendar?country=Testland&from=2010&to=2011").await;
+    assert_eq!(all.status, StatusCode::OK, "body: {}", all.body);
+    let v = all.json();
+    assert_eq!(v["counts"]["raw_detections"], 7 + 3);
+    assert_eq!(v["filters"]["min_confidence"], "low");
+    assert_eq!(v["uncertainty"]["atmospheric_bias"]["direction"], "downward");
+
+    let nominal = call(
+        &app,
+        "/api/calendar?country=Testland&from=2010&to=2011&min_confidence=nominal",
+    )
+    .await;
+    assert_eq!(nominal.status, StatusCode::OK, "body: {}", nominal.body);
+    assert_eq!(nominal.x_cache.as_deref(), Some("MISS"));
+    let n = nominal.json();
+    assert_eq!(n["counts"]["raw_detections"], 7);
+    assert_eq!(
+        n["filters"],
+        json!({"min_confidence": "nominal", "excluded_detections": 3})
+    );
+    let years: Vec<i64> = n["calendar"]
+        .as_array()
+        .expect("calendar array")
+        .iter()
+        .map(|cell| cell["year"].as_i64().expect("year"))
+        .collect();
+    assert!(!years.contains(&2011), "2011 held only Low rows: {years:?}");
+
+    let bad = call(&app, "/api/calendar?country=Testland&min_confidence=x").await;
+    assert_eq!(bad.status, StatusCode::BAD_REQUEST, "body: {}", bad.body);
+}

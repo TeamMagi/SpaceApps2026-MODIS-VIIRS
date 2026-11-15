@@ -4,6 +4,7 @@ import type {
   ActivePhase,
   DrawerId,
   Lang,
+  MinConfidence,
   MonthCell,
   MonthRef,
   Phase,
@@ -90,6 +91,8 @@ export interface AppState {
   openDrawer: DrawerId | null;
   presentation: boolean;
   nrtDays: number;
+  /** Lowest FIRMS confidence class sent as `min_confidence`; `low` keeps every detection. */
+  minConfidence: MinConfidence;
 
   setRegion: (region: RegionId) => void;
   /** The single user-facing mode action (button click, H key). */
@@ -108,6 +111,7 @@ export interface AppState {
   setPresentation: (on: boolean) => void;
   togglePresentation: () => void;
   setNrtDays: (days: number) => void;
+  setMinConfidence: (minConfidence: MinConfidence) => void;
   /** Applies a parsed URL hash; mode changes snap without animation. */
   applyUrlState: (url: Partial<UrlState>) => void;
   /** Jumps to the final state of the current target, cancelling any run. */
@@ -174,6 +178,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   openDrawer: null,
   presentation: false,
   nrtDays: 2,
+  minConfidence: initialUrl.minConfidence ?? "low",
 
   setRegion: (region) => {
     const state = get();
@@ -211,6 +216,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
   setPresentation: (presentation) => set({ presentation }),
   togglePresentation: () => set((s) => ({ presentation: !s.presentation })),
   setNrtDays: (days) => set({ nrtDays: Math.max(1, Math.min(5, Math.round(days))) }),
+  setMinConfidence: (minConfidence) => {
+    if (get().minConfidence !== minConfidence) set({ minConfidence });
+  },
   applyUrlState: (url) => {
     const state = get();
     const nextRegion = url.region ?? state.region;
@@ -234,6 +242,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set({
       region: nextRegion,
       lang: url.lang ?? state.lang,
+      minConfidence: url.minConfidence ?? state.minConfidence,
       selectedMonth: nextSelectedMonth,
       calendarYear: nextCalendarYear,
       yearPlaying: regionChanged ? false : state.yearPlaying,

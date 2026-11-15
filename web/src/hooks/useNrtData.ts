@@ -14,6 +14,7 @@ import type {
   BBox,
   CompareResponse,
   HarmonizeResponse,
+  MinConfidence,
   StatsResponse,
 } from "../types";
 
@@ -74,8 +75,8 @@ let nrtCache: NrtCacheState = {
 let nrtToken = 0;
 let subscriberCount = 0;
 
-function bboxKey(bbox: BBox, days: number): string {
-  return `${bbox.west},${bbox.south},${bbox.east},${bbox.north}:${days}`;
+function bboxKey(bbox: BBox, days: number, minConfidence: MinConfidence): string {
+  return `${bbox.west},${bbox.south},${bbox.east},${bbox.north}:${days}:${minConfidence}`;
 }
 
 function toStoredError(err: unknown): StoredError {
@@ -100,8 +101,8 @@ function formatNrtError(err: StoredError | null, lang: "en" | "tr"): ApiErrorInf
   return { kind: "server", message };
 }
 
-function startNrtFetch(bbox: BBox, days: number): void {
-  const key = bboxKey(bbox, days);
+function startNrtFetch(bbox: BBox, days: number, minConfidence: MinConfidence): void {
+  const key = bboxKey(bbox, days, minConfidence);
   if (nrtCache.bboxKey === key && nrtCache.harmonize.status !== "error") {
     return;
   }
@@ -111,12 +112,13 @@ function startNrtFetch(bbox: BBox, days: number): void {
   const controller = new AbortController();
   const signal = controller.signal;
 
-  const params: { west: number; south: number; east: number; north: number; days: number } = {
+  const params = {
     west: bbox.west,
     south: bbox.south,
     east: bbox.east,
     north: bbox.north,
     days,
+    minConfidence,
   };
 
   nrtCache = {
@@ -202,11 +204,12 @@ export function useNrtData(bbox: BBox | null): NrtData {
   useSyncExternalStore(subscribeNrt, getSnapshotVersion, getSnapshotVersion);
   const lang = useAppStore((state) => state.lang);
   const nrtDays = useAppStore((state) => state.nrtDays);
+  const minConfidence = useAppStore((state) => state.minConfidence);
 
   useEffect(() => {
     subscriberCount += 1;
     if (bbox) {
-      startNrtFetch(bbox, nrtDays);
+      startNrtFetch(bbox, nrtDays, minConfidence);
     } else {
       abortNrt();
     }
@@ -217,15 +220,15 @@ export function useNrtData(bbox: BBox | null): NrtData {
         abortNrt();
       }
     };
-  }, [bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays]);
+  }, [bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays, minConfidence]);
 
   const retry = useCallback(() => {
     if (bbox) {
       nrtCache.controller?.abort();
       nrtCache = { ...nrtCache, bboxKey: null, controller: null };
-      startNrtFetch(bbox, nrtDays);
+      startNrtFetch(bbox, nrtDays, minConfidence);
     }
-  }, [bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays]);
+  }, [bbox?.west, bbox?.south, bbox?.east, bbox?.north, nrtDays, minConfidence]);
 
   const { harmonize, compare, stats } = nrtCache;
 

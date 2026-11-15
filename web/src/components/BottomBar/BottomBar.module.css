@@ -62,9 +62,20 @@
   color: var(--color-text-disabled);
 }
 
-.action[data-copied="true"] {
+.action[data-copied="true"],
+.action[aria-pressed="true"] {
   background: var(--color-active);
   color: var(--color-text);
+}
+
+.action[aria-pressed="true"] {
+  border-color: var(--color-border-strong);
+}
+
+.filterNote {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-align: center;
 }
 
 .primary {

@@ -25,6 +25,31 @@ export enum Sensor {
 
 export type ViewMode = "raw" | "harmonized";
 
+/** Lowest FIRMS confidence class kept before harmonizing (`min_confidence`); `low` keeps everything. */
+export type MinConfidence = "low" | "nominal" | "high";
+
+/** Echo of the server-side confidence filter, so a filtered response can label itself. */
+export interface ConfidenceFilterInfo {
+  minConfidence: MinConfidence;
+  excludedDetections: number;
+}
+
+/** One-sided atmospheric (smoke / cloud) FRP bias note; informational, not applied to the numbers. */
+export interface AtmosphericBias {
+  direction: "downward";
+  lowPct: number;
+  highPct: number;
+  applied: boolean;
+  note: string;
+  refs: string[];
+}
+
+export interface UncertaintyInfo {
+  confidence: number;
+  note: string;
+  atmosphericBias: AtmosphericBias | null;
+}
+
 export type Lang = "en" | "tr";
 export type Theme = "dark" | "light";
 
@@ -149,6 +174,7 @@ export interface MapPointSet {
   truncated: boolean;
   limit: number;
   frpAngleCorrectionPct: number | null;
+  filters: ConfidenceFilterInfo;
 }
 
 export interface MonthCell {
@@ -336,6 +362,8 @@ export interface HarmonizeResponse {
   };
   calendar: CalendarCell[];
   effort: EffortInfo;
+  uncertainty: UncertaintyInfo | null;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -387,6 +415,7 @@ export interface CompareResponse {
   frp: CompareFrp;
   merging: CompareMerging;
   vza: CompareVza;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -443,6 +472,7 @@ export interface StatsResponse {
   frp: StatsFrp;
   temporal: StatsTemporal;
   pipeline: StatsPipeline;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -490,6 +520,8 @@ export interface CalendarApiResponse {
   counts: CalendarCounts;
   calendar: CalendarCell[];
   effort: EffortInfo;
+  uncertainty: UncertaintyInfo | null;
+  filters: ConfidenceFilterInfo;
   fetch: ArchiveFetchSummary;
   warnings: string[];
 }

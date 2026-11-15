@@ -29,6 +29,7 @@ use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
 
 use crate::derived_cache::{ArchiveFileStamp, DerivedCache, SeriesStamp};
+use crate::{ConfidenceFilter, MinConfidence};
 
 const X_SERIES_SOURCE_HEADER: HeaderName = HeaderName::from_static("x-series-source");
 pub const DEFAULT_PRECOMPUTE_CONCURRENCY: usize = 2;
@@ -1415,6 +1416,7 @@ struct PointsParams {
     year: Option<String>,
     month: Option<String>,
     limit: Option<String>,
+    min_confidence: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -1485,6 +1487,7 @@ struct PointsResponse {
     harmonized: Vec<HarmonizedPoint>,
     stages: Stages,
     bbox: Option<Extent>,
+    filters: ConfidenceFilter,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1641,6 +1644,8 @@ async fn points(
         Some(n) => n.min(MAX_POINTS_LIMIT),
         None => DEFAULT_POINTS_LIMIT,
     };
+    let min_confidence = MinConfidence::parse(params.min_confidence.as_deref())
+        .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?;
     if !region.modis_years.contains(&year)
         && !region.viirs_years.contains(&year)
         && !region.noaa20_years.contains(&year)
@@ -1662,13 +1667,15 @@ async fn points(
     let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
-        let (modis, viirs) = match month {
+        let (mut modis, mut viirs) = match month {
             Some(m) => (in_month(&data.modis, m), in_month(&data.viirs, m)),
             None => Arc::try_unwrap(data).map_or_else(
                 |shared| (shared.modis.clone(), shared.viirs.clone()),
                 |owned| (owned.modis, owned.viirs),
             ),
         };
+        // Filtered before harmonization so dropped detections never reach dedup or matching.
+        let excluded_detections = min_confidence.retain(&mut modis) + min_confidence.retain(&mut viirs);
 
         let raw_points: Vec<RawPoint> = modis
             .iter()
@@ -1730,6 +1737,10 @@ async fn points(
             harmonized,
             stages,
             bbox,
+            filters: ConfidenceFilter {
+                min_confidence,
+                excluded_detections,
+            },
         }
     })
     .await
@@ -1879,6 +1890,7 @@ mod tests {
                 year: Some("2010".into()),
                 month: None,
                 limit: None,
+                min_confidence: None,
             }),
         )
         .await
@@ -2160,6 +2172,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("0".into()),
+                min_confidence: None,
             }),
         )
         .await
@@ -2177,6 +2190,7 @@ mod tests {
                     year: Some("2021".into()),
                     month: None,
                     limit: Some("1".into()),
+                    min_confidence: None,
                 }),
             ),
         )
@@ -2267,6 +2281,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: None,
+                min_confidence: None,
             }),
         )
         .await
@@ -2601,6 +2616,60 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn points_min_confidence_drops_low_rows_before_harmonizing() {
+        let dir = temp_archive("points-min-confidence");
+        let path = dir.join("viirs-snpp").join("2021");
+        std::fs::create_dir_all(&path).unwrap();
+        let mut csv = format!("{VIIRS_HEADER}\r\n");
+        for (lat, date, conf) in [
+            (39.0, "2021-07-01", "n"),
+            (39.5, "2021-07-02", "h"),
+            (40.0, "2021-07-03", "l"),
+            (40.5, "2021-07-04", "l"),
+        ] {
+            csv.push_str(&format!(
+                "{lat},32.0,320,0.5,0.5,{date},1200,N,VIIRS,{conf},2,290,10,D,0\r\n"
+            ));
+        }
+        std::fs::write(path.join("viirs-snpp_2021_Malta.csv"), csv).unwrap();
+        let state = state(dir.clone(), u64::MAX);
+
+        let query = |min_confidence: Option<&str>| PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            month: None,
+            limit: None,
+            min_confidence: min_confidence.map(str::to_string),
+        };
+
+        let Json(all) = points(State(state.clone()), Query(query(None))).await.ok().unwrap();
+        assert_eq!(all.stages.raw_viirs, 4);
+        assert_eq!(all.stages.harmonized, 4);
+        assert_eq!(all.filters.min_confidence, MinConfidence::Low);
+        assert_eq!(all.filters.excluded_detections, 0);
+
+        let Json(nominal) = points(State(state.clone()), Query(query(Some("nominal"))))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(nominal.stages.raw_viirs, 2);
+        assert_eq!(nominal.stages.harmonized, 2);
+        assert_eq!(nominal.raw.len(), 2);
+        assert!(nominal.raw.iter().all(|p| p.confidence != Confidence::Low));
+        assert_eq!(nominal.filters.min_confidence, MinConfidence::Nominal);
+        assert_eq!(nominal.filters.excluded_detections, 2);
+
+        let err = points(State(state), Query(query(Some("medium"))))
+            .await
+            .err()
+            .expect("unknown min_confidence must fail with 400");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(err.message.contains("min_confidence"), "{}", err.message);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
     async fn points_admits_by_requested_year_not_total_region_size() {
         let dir = temp_archive("points-year-admit");
         // Several modest years whose sum exceeds the limit, plus one oversized year.
@@ -2635,6 +2704,7 @@ mod tests {
                 year: Some("2018".into()),
                 month: None,
                 limit: None,
+                min_confidence: None,
             }),
         )
         .await
@@ -2650,6 +2720,7 @@ mod tests {
                 year: Some("2020".into()),
                 month: None,
                 limit: None,
+                min_confidence: None,
             }),
         )
         .await

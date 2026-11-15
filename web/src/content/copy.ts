@@ -232,6 +232,11 @@ const enBase = {
   exportCsvShort: "Download CSV",
   exportCsvDescription: "Downloads {file}",
   briefMe: "Brief me on this region",
+  confidenceFilterOff: "Exclude low-confidence",
+  confidenceFilterOn: "Low-confidence excluded",
+  confidenceFilterDescription:
+    "Drops FIRMS low-confidence detections before harmonizing. Applies to the map, the CSV and the live counts; the yearly series is precomputed and stays unfiltered.",
+  confidenceFilterExcluded: "{count} removed from this view",
 
   // Methods drawer
   methodsTitle: "How three satellites' detections are harmonized",
@@ -248,6 +253,10 @@ const enBase = {
   methodsStepFuse: "From each matched pair we keep the sharpest observation.",
   methodsStepCalendar: "Harmonized detections are counted per month across the archive.",
   methodsLimitsTitle: "Limits",
+  methodsAtmosphereNote:
+    "Smoke and cloud can only push FRP down. FIRMS carries no smoke optical depth or cloud fraction, so FRP may be underestimated by roughly 7–22%: thin smoke dims the signal, and clouds hide about 22% (MODIS) and 12% (VIIRS) of fire energy globally, about 7% in regional studies. This one-sided bias is not part of the uncertainty bands.",
+  methodsLowConfidenceNote:
+    "Low-confidence detections include false alarms, such as up to 40% on bright roofs in eastern China and 10% at a South African power plant. “Exclude low-confidence” in the bottom bar drops them before harmonizing; the yearly series stays unfiltered.",
   methodsSettingsTitle: "Display",
   themeLabel: "Theme",
   themeDark: "Dark",
@@ -465,6 +474,11 @@ const trBase = {
   exportCsvShort: "CSV indir",
   exportCsvDescription: "{file} dosyasını indirir",
   briefMe: "Bu bölgeyi özetle",
+  confidenceFilterOff: "Düşük güveni hariç tut",
+  confidenceFilterOn: "Düşük güven hariç",
+  confidenceFilterDescription:
+    "FIRMS düşük güvenli tespitlerini harmonizasyondan önce çıkarır. Haritaya, CSV'ye ve canlı sayılara uygulanır; yıllık seri önceden hesaplandığı için filtresiz kalır.",
+  confidenceFilterExcluded: "Bu görünümden {count} tespit çıkarıldı",
 
   methodsTitle: "Üç uydunun tespitleri nasıl harmonize edilir",
   methodsCliffDef:
@@ -480,6 +494,10 @@ const trBase = {
   methodsStepFuse: "Eşleşen her çiftten en net gözlemi tutarız.",
   methodsStepCalendar: "Harmonize tespitler arşiv boyunca ay ay toplanır.",
   methodsLimitsTitle: "Sınırlar",
+  methodsAtmosphereNote:
+    "Duman ve bulut FRP'yi yalnızca aşağı çekebilir. FIRMS duman optik derinliği veya bulut kesri taşımadığından FRP kabaca %7–22 düşük tahmin edilebilir: ince duman sinyali zayıflatır, bulutlar küresel ölçekte yangın enerjisinin yaklaşık %22'sini (MODIS) ve %12'sini (VIIRS), bölgesel çalışmalarda yaklaşık %7'sini gizler. Bu tek yönlü sapma belirsizlik bantlarına dahil değildir.",
+  methodsLowConfidenceNote:
+    "Düşük güvenli tespitler yanlış alarmlar içerir: Doğu Çin'deki parlak çatılarda %40'a, Güney Afrika'daki bir termik santralde %10'a varan oranlarda. Alt çubuktaki “Düşük güveni hariç tut” bunları harmonizasyondan önce çıkarır; yıllık seri filtresiz kalır.",
   methodsSettingsTitle: "Görünüm",
   themeLabel: "Tema",
   themeDark: "Koyu",

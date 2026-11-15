@@ -24,7 +24,9 @@ import type {
   ApiErrorInfo,
   AsyncStatus,
   BriefingMetrics,
+  ConfidenceFilterInfo,
   Lang,
+  MinConfidence,
   MapPointSet,
   MonthCell,
   MonthRef,
@@ -183,7 +185,13 @@ function reconcileRegionWithList(regions: readonly RegionSummary[]): void {
   const rawHashRegion = typeof window === "undefined" ? null : readRawHashRegion(window.location.hash);
   if (rawHashRegion && !validIds.includes(rawHashRegion)) {
     const s = useAppStore.getState();
-    syncUrlHash({ region: s.region, mode: s.mode, month: s.selectedMonth, lang: s.lang });
+    syncUrlHash({
+      region: s.region,
+      mode: s.mode,
+      month: s.selectedMonth,
+      lang: s.lang,
+      minConfidence: s.minConfidence,
+    });
   }
 }
 
@@ -351,12 +359,18 @@ function releaseSeries(region: string): void {
   }
 }
 
-function makePointsKey(region: string, year: number, month: number | null): string {
-  return `${region}:${year}:${month ?? "all"}`;
+function makePointsKey(region: string, year: number, month: number | null, minConfidence: MinConfidence): string {
+  return `${region}:${year}:${month ?? "all"}:${minConfidence}`;
 }
 
-function startPointsFetch(region: string, year: number, month: number | null, force: boolean): void {
-  const key = makePointsKey(region, year, month);
+function startPointsFetch(
+  region: string,
+  year: number,
+  month: number | null,
+  minConfidence: MinConfidence,
+  force: boolean,
+): void {
+  const key = makePointsKey(region, year, month, minConfidence);
   if (activePointsKey && activePointsKey !== key) {
     const prev = pointsCache.get(activePointsKey);
     if (prev?.controller) {
@@ -386,7 +400,7 @@ function startPointsFetch(region: string, year: number, month: number | null, fo
   });
   emitChange();
 
-  fetchPoints({ region, year, month }, controller.signal)
+  fetchPoints({ region, year, month, minConfidence }, controller.signal)
     .then((res) => {
       if (controller.signal.aborted || token !== pointsToken || activePointsKey !== key) return;
       const isEmpty = (res.raw.length === 0 && res.harmonized.length === 0) || res.bbox === null;
@@ -413,10 +427,10 @@ function startPointsFetch(region: string, year: number, month: number | null, fo
     });
 }
 
-function acquirePoints(region: string, year: number, month: number | null): void {
-  const key = makePointsKey(region, year, month);
+function acquirePoints(region: string, year: number, month: number | null, minConfidence: MinConfidence): void {
+  const key = makePointsKey(region, year, month, minConfidence);
   pointsSubscribers.set(key, (pointsSubscribers.get(key) ?? 0) + 1);
-  startPointsFetch(region, year, month, false);
+  startPointsFetch(region, year, month, minConfidence, false);
 }
 
 function releasePoints(key: string): void {
@@ -446,6 +460,7 @@ const EMPTY_STAGES: PointStages = {
   matchedPairs: 0,
   harmonized: 0,
 };
+const UNFILTERED: ConfidenceFilterInfo = { minConfidence: "low", excludedDetections: 0 };
 const EMPTY_TOTALS: RegionTotals = {
   modis: 0,
   viirs: 0,
@@ -697,6 +712,7 @@ export function useRegionData(): UseRegionDataResult {
   const regionId = useAppStore((state) => state.region);
   const lang = useAppStore((state) => state.lang);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
+  const minConfidence = useAppStore((state) => state.minConfidence);
   const regionsEmpty = regionsEntry.status === "empty";
 
   useEffect(() => {
@@ -773,7 +789,7 @@ export function useRegionData(): UseRegionDataResult {
 
   const defaultMapMonth = useMemo(() => findDefaultMapMonth(activeSeries), [activeSeries]);
   const targetMonth = selectedMonth ?? defaultMapMonth;
-  const pointsKey = targetMonth ? makePointsKey(regionId, targetMonth.year, targetMonth.month) : null;
+  const pointsKey = targetMonth ? makePointsKey(regionId, targetMonth.year, targetMonth.month, minConfidence) : null;
   const pointsEntry = pointsKey ? pointsCache.get(pointsKey) : undefined;
   const activePoints =
     pointsEntry?.status === "ready" && pointsEntry.data && pointsEntry.data.region === regionId
@@ -946,6 +962,7 @@ export function useMapPoints(): UseMapPointsResult {
   const regionId = useAppStore((state) => state.region);
   const lang = useAppStore((state) => state.lang);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
+  const minConfidence = useAppStore((state) => state.minConfidence);
   const {
     defaultMapMonth,
     status: seriesStatus,
@@ -960,12 +977,12 @@ export function useMapPoints(): UseMapPointsResult {
 
   useEffect(() => {
     if (targetYear === null || seriesStatus === "error" || seriesStatus === "empty") return;
-    const key = makePointsKey(regionId, targetYear, targetMonthNum);
-    acquirePoints(regionId, targetYear, targetMonthNum);
+    const key = makePointsKey(regionId, targetYear, targetMonthNum, minConfidence);
+    acquirePoints(regionId, targetYear, targetMonthNum, minConfidence);
     return () => {
       releasePoints(key);
     };
-  }, [regionId, targetYear, targetMonthNum, seriesStatus]);
+  }, [regionId, targetYear, targetMonthNum, minConfidence, seriesStatus]);
 
   const retry = useCallback(() => {
     if (regionsEntry.status === "error" || regionsEntry.status === "empty" || !regionsEntry.data) {
@@ -976,11 +993,11 @@ export function useMapPoints(): UseMapPointsResult {
       return;
     }
     if (targetYear !== null) {
-      startPointsFetch(regionId, targetYear, targetMonthNum, true);
+      startPointsFetch(regionId, targetYear, targetMonthNum, minConfidence, true);
     }
-  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, regionId]);
+  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, minConfidence, regionId]);
 
-  const key = targetYear !== null ? makePointsKey(regionId, targetYear, targetMonthNum) : null;
+  const key = targetYear !== null ? makePointsKey(regionId, targetYear, targetMonthNum, minConfidence) : null;
   const entry = key ? pointsCache.get(key) : undefined;
   const rawPointsError = entry?.error ?? null;
   const pointsError = useMemo(() => formatStoredError(rawPointsError, lang), [rawPointsError, lang]);
@@ -1023,6 +1040,7 @@ export function useMapPoints(): UseMapPointsResult {
         truncated: false,
         limit: 4000,
         frpAngleCorrectionPct: null,
+        filters: UNFILTERED,
       };
     }
 
@@ -1040,6 +1058,7 @@ export function useMapPoints(): UseMapPointsResult {
       truncated: activeData.truncated,
       limit: activeData.limit,
       frpAngleCorrectionPct,
+      filters: activeData.filters,
     };
   }, [activeData, status, regionsEmpty, error, retry, targetYear, targetMonthNum, frpAngleCorrectionPct]);
 }

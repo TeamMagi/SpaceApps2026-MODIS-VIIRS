@@ -1,4 +1,4 @@
-import type { Lang, MonthRef, RegionId, ViewMode } from "../types";
+import type { Lang, MinConfidence, MonthRef, RegionId, ViewMode } from "../types";
 import { monthKey } from "./format";
 
 export const DEFAULT_REGION: RegionId = "Turkey";
@@ -43,6 +43,7 @@ export interface UrlState {
   mode: ViewMode;
   month: MonthRef | null;
   lang: Lang;
+  minConfidence: MinConfidence;
 }
 
 function parseMonth(value: string): MonthRef | null | undefined {
@@ -59,7 +60,10 @@ function parseMonth(value: string): MonthRef | null | undefined {
   return { year, month };
 }
 
-/** Reads `#region=Turkey&mode=harmonized&month=2021-08&lang=tr`. Unknown or invalid values are ignored. */
+/**
+ * Reads `#region=Turkey&mode=harmonized&month=2021-08&lang=tr&conf=nominal`. Unknown or invalid
+ * values are ignored. A missing `conf` means the default `low`, since `serializeHash` omits it.
+ */
 export function parseHash(hash: string): Partial<UrlState> {
   const params = new URLSearchParams(hash.replace(/^#/, ""));
   const result: Partial<UrlState> = {};
@@ -82,6 +86,10 @@ export function parseHash(hash: string): Partial<UrlState> {
     const parsed = parseMonth(month);
     if (parsed !== undefined) result.month = parsed;
   }
+
+  const conf = params.get("conf");
+  if (conf === null || conf === "low") result.minConfidence = "low";
+  else if (conf === "nominal" || conf === "high") result.minConfidence = conf;
   return result;
 }
 
@@ -91,6 +99,7 @@ export function serializeHash(state: UrlState): string {
   params.set("mode", state.mode);
   if (state.month) params.set("month", monthKey(state.month));
   params.set("lang", state.lang);
+  if (state.minConfidence !== "low") params.set("conf", state.minConfidence);
   return `#${params.toString()}`;
 }
 

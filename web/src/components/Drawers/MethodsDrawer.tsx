@@ -4,7 +4,8 @@
  * Built on Drawer (id "methods"). Sections in order:
  *   1. methodsCliffDef — the ONLY place "sensor cliff" is defined; methodsSensors.
  *   2. methodsStepsTitle — the 6 applied steps + 1 planned step (H3 grid).
- *   3. methodsLimitsTitle — disclaimer (the honest limit, said once) + archive source citation.
+ *   3. methodsLimitsTitle — disclaimer (the honest limit, said once), the one-sided smoke/cloud
+ *      FRP bias, why low-confidence detections can be excluded, and the archive source citation.
  *   4. methodsSettingsTitle — theme (themeDark/themeLight → store.setTheme) and presentationMode
  *      (store.setPresentation).
  */
@@ -156,6 +157,8 @@ export default function MethodsDrawer() {
 
       <h3 className={styles.heading}>{t("methodsLimitsTitle")}</h3>
       <p className={styles.bodyText}>{t("disclaimer")}</p>
+      <p className={styles.bodyText}>{t("methodsAtmosphereNote")}</p>
+      <p className={styles.bodyText}>{t("methodsLowConfidenceNote")}</p>
 
       <div className={styles.references} aria-label={t("methodsSensors")}>
         <p className={styles.refSource}>{sourceCitation}</p>
