@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Nepal.csv",
@@ -195,5 +195,5 @@
       "bytes": 1817480
     }
   ],
-  "body_hash": "b777ea2c39d2b381"
+  "body_hash": "74f589125365013c"
 }

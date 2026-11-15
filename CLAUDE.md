@@ -28,6 +28,10 @@
 - Görevi tamamlayan kişi, "Bitti sayılır" şartı sağlandığında kendi görevinin kutusunu (başlıkta ve özet tablosunda) `[X]` yapar. Şart sağlanmadan `[X]` konmaz.
 - Görev metinleri silinmez veya kısaltılmaz; kapanış ve durum bilgisi görevin altına not olarak eklenir.
 
+### Hazır Sonuçlar (data/derived) Kuralı
+- Harmonizasyon davranışını veya ayarlarını (`PipelineConfig`, dedup/fleet/matching/VZA/kalibrasyon/belirsizlik/maske mantığı) ya da `DERIVED_SCHEMA_VERSION`'ı değiştiren her commit'ten sonra repodaki hazır sonuçlar geçersiz olur. Aynı iş kapsamında `make precompute` → `make bundle-derived` çalıştırılır ve `data/derived` commit'lenir.
+- Push öncesi çalışan sunucuya karşı `make smoke` koşulur; 3. kontrol "238 precomputed" göstermiyorsa hazır sonuçlar bayattır.
+
 ### Güvenlik
 - `.env` dosyaları commit edilmez, `.env.example` şablon olarak tutulur.
 - API anahtarları environment variable üzerinden okunur, hiçbir zaman hard-code edilmez.

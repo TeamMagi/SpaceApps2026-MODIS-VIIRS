@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2001/modis_2001_United_States_Minor_Outlying_Islands.csv",
@@ -151,5 +151,5 @@
       "bytes": 206
     }
   ],
-  "body_hash": "005b61c9dfd88424"
+  "body_hash": "f6e67d999a1a4ded"
 }

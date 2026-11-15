@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Cuba.csv",
@@ -195,5 +195,5 @@
       "bytes": 3544204
     }
   ],
-  "body_hash": "fbdabbe6baee9828"
+  "body_hash": "dad6a8ce414f058a"
 }

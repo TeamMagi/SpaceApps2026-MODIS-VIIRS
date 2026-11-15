@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Uganda.csv",
@@ -195,5 +195,5 @@
       "bytes": 7872640
     }
   ],
-  "body_hash": "65c4e7a79307b79c"
+  "body_hash": "5d4b9c191c5681a1"
 }

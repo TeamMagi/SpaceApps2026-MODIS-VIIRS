@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Myanmar.csv",
@@ -195,5 +195,5 @@
       "bytes": 23699963
     }
   ],
-  "body_hash": "8e5d07560f0aa8d9"
+  "body_hash": "85ad6ff7edc85044"
 }

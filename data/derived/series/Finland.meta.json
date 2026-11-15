@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2001/modis_2001_Finland.csv",
@@ -191,5 +191,5 @@
       "bytes": 89747
     }
   ],
-  "body_hash": "64b87838527dfedb"
+  "body_hash": "709b5d5bfbeb467d"
 }

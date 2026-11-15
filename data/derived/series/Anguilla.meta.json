@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2010/modis_2010_Anguilla.csv",
@@ -23,5 +23,5 @@
       "bytes": 208
     }
   ],
-  "body_hash": "8021625e56015246"
+  "body_hash": "932068b84b961c8d"
 }

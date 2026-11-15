@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2003/modis_2003_Antigua_and_Barbuda.csv",
@@ -171,5 +171,5 @@
       "bytes": 1476
     }
   ],
-  "body_hash": "c13ac2c209776060"
+  "body_hash": "3c724969057f5e18"
 }
