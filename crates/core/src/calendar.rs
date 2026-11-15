@@ -1169,6 +1169,31 @@ mod tests {
     }
 
     #[test]
+    fn default_config_gives_a_viirs_less_savanna_cell_its_measured_factor() {
+        // Northern Australian savanna, July, day: measured (savanna, 7, Day) = 1.084.
+        let mut day = make_harmonized(2010, 7, 1, 100.0, 100.0);
+        day.lat = -13.0;
+        day.lon = 132.0;
+        day.daynight = DayNight::Day;
+        let cells = build_calendar(&[day.clone()]);
+        assert!((cells[0].total_frp - 108.4).abs() < 1e-9, "{}", cells[0].total_frp);
+
+        // The same cell, night: savanna July night = 1.099, not the latitude band (1.11).
+        let mut night = day.clone();
+        night.daynight = DayNight::Night;
+        let cells = build_calendar(&[night]);
+        assert!((cells[0].total_frp - 109.9).abs() < 1e-9, "{}", cells[0].total_frp);
+
+        // Pinned to the latitude band the old factor returns.
+        let lat_band = CalibrationConfig {
+            mode: crate::calibration::CalibrationMode::LatBand,
+            ..Default::default()
+        };
+        let cells = build_calendar_with(&[day], &UncertaintyParams::default(), &lat_band);
+        assert!((cells[0].total_frp - 111.0).abs() < 1e-9);
+    }
+
+    #[test]
     fn mean_frp_with_uncertainty_matches_calendar_cell_and_handles_edge_cases() {
         let params = UncertaintyParams::default();
         assert_eq!(mean_frp_with_uncertainty(&[], &params), None);

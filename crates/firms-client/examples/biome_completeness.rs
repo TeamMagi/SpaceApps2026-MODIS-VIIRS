@@ -579,16 +579,16 @@ fn evaluate(cell_days: &[CellDay], rows: &[Row], cfg: &CalibrationConfig) -> Hol
 
 fn verdict(p: &Predictors) -> &'static str {
     let (Some(lat_e), Some(bio_e)) = (p.lat.median_abs_log(), p.biome.median_abs_log()) else {
-        return "belirsiz (hold-out ornegi yok)";
+        return "belirsiz (hold-out örneği yok)";
     };
     let (Some(lat_b), Some(bio_b)) = (p.lat.bias(), p.biome.bias()) else {
-        return "belirsiz (hold-out ornegi yok)";
+        return "belirsiz (hold-out örneği yok)";
     };
     match (bio_e < lat_e, bio_b.abs() < lat_b.abs()) {
-        (true, true) => "BIYOM TABLOSU ENLEM BANDLARINDAN IYI (hem medyan |log hata| hem toplam sapma)",
-        (false, false) => "BIYOM TABLOSU ENLEM BANDLARINDAN IYI DEGIL (ne medyan |log hata| ne toplam sapma)",
-        (true, false) => "KARISIK: biyom medyan |log hata|da iyi, toplam sapmada degil",
-        (false, true) => "KARISIK: biyom toplam sapmada iyi, medyan |log hata|da degil",
+        (true, true) => "BİYOM TABLOSU ENLEM BANDLARINDAN İYİ (hem medyan |log hata| hem toplam sapma)",
+        (false, false) => "BİYOM TABLOSU ENLEM BANDLARINDAN İYİ DEĞİL (ne medyan |log hata| ne toplam sapma)",
+        (true, false) => "KARIŞIK: biyom medyan |log hata| bakımından iyi, toplam sapma bakımından değil",
+        (false, true) => "KARIŞIK: biyom toplam sapma bakımından iyi, medyan |log hata| bakımından değil",
     }
 }
 
@@ -665,15 +665,15 @@ fn emit_toml(rows: &[Row], laws: &[PowerLaw]) -> String {
 
 fn level_label(r: &Row) -> &'static str {
     match (r.month, r.day) {
-        (Some(_), Some(_)) => "biyom-ay-gun/gece",
-        (None, Some(_)) => "biyom-gun/gece",
+        (Some(_), Some(_)) => "biyom-ay-gün/gece",
+        (None, Some(_)) => "biyom-gün/gece",
         _ => "biyom",
     }
 }
 
 fn dn_label(day: Option<bool>) -> &'static str {
     match day {
-        Some(true) => "gunduz",
+        Some(true) => "gündüz",
         Some(false) => "gece",
         None => "hepsi",
     }
@@ -715,21 +715,21 @@ fn fmt_pct(v: Option<f64>) -> String {
 fn render_report(res: &Results) -> String {
     let a = &res.args;
     let mut s = String::new();
-    let _ = writeln!(s, "# Biyom bazli tamlik katsayisi k_c (K14 olcumu)\n");
+    let _ = writeln!(s, "# Biyom bazlı tamlık katsayısı k_c (K14 ölçümü)\n");
     let _ = writeln!(
         s,
-        "Aqua MODIS (`MODIS_SP`, yalniz Aqua satirlari) ve S-NPP 375 m VIIRS (`VIIRS_SNPP_SP`), 1x1 derece UTC hucre-gun, |dt| <= {} dk, gunduz ve gece ayri. \
-         k = toplam(VIIRS FRP) / toplam(MODIS FRP x R_rel(theta)). Uydurma yil {}, hold-out yil {}. Asgari ornek (hucre-gun) {}.\n",
+        "Aqua MODIS (`MODIS_SP`, yalnız Aqua satırları) ve S-NPP 375 m VIIRS (`VIIRS_SNPP_SP`), 1x1 derece UTC hücre-gün, |dt| <= {} dk, gündüz ve gece ayrı. \
+         k = toplam(VIIRS FRP) / toplam(MODIS FRP x R_rel(theta)). Uydurma (fit) yılı {}, hold-out yılı {}. Asgari örnek (hücre-gün) {}.\n",
         a.max_dt_min, a.fit_year, a.holdout_year, a.min_n
     );
     let _ = writeln!(
         s,
-        "Onbellek: {} pencere onbellekten, {} pencere agdan; harcanan islem {}.\n",
+        "Önbellek: {} pencere önbellekten, {} pencere ağdan; harcanan işlem {}.\n",
         res.cached_windows, res.uncached_windows, res.transactions_spent
     );
     let _ = writeln!(
         s,
-        "FIRMS sayacindan gozlenen gercek islem: {} (yukaridaki rakam pencere basina gun sayisina dayanan tahmindir ve gercek maliyetin altindadir).",
+        "FIRMS sayacından gözlenen gerçek işlem: {} (yukarıdaki rakam pencere başına gün sayısına dayanan tahmindir ve gerçek maliyetin altındadır).",
         res.observed_transactions
     );
     for line in &res.observed_rates {
@@ -737,8 +737,8 @@ fn render_report(res: &Results) -> String {
     }
     s.push('\n');
 
-    let _ = writeln!(s, "## Bolgeler\n");
-    let _ = writeln!(s, "| Bolge | bbox (w,s,e,n) | Aqua satir | VIIRS satir | cift hucre-gun {0} | cift hucre-gun {1} |", a.fit_year, a.holdout_year);
+    let _ = writeln!(s, "## Bölgeler\n");
+    let _ = writeln!(s, "| Bölge | bbox (w,s,e,n) | Aqua satır | VIIRS satır | çift hücre-gün {0} | çift hücre-gün {1} |", a.fit_year, a.holdout_year);
     let _ = writeln!(s, "|---|---|---:|---:|---:|---:|");
     for r in &res.used {
         let _ = writeln!(
@@ -748,18 +748,18 @@ fn render_report(res: &Results) -> String {
         );
     }
     if res.excluded.is_empty() {
-        let _ = writeln!(s, "\nDisarida birakilan bolge yok.\n");
+        let _ = writeln!(s, "\nDışarıda bırakılan bölge yok.\n");
     } else {
-        let _ = writeln!(s, "\nDISARIDA BIRAKILAN BOLGELER (basarisiz pencere; sonuca girmedi):\n");
+        let _ = writeln!(s, "\nDIŞARIDA BIRAKILAN BÖLGELER (başarısız pencere; sonuca girmedi):\n");
         for (name, why) in &res.excluded {
             let _ = writeln!(s, "- {name}: {why}");
         }
         s.push('\n');
     }
 
-    let _ = writeln!(s, "## k_c tablosu (uydurma yili {})\n", a.fit_year);
-    let _ = writeln!(s, "sigma = hucre-gunler uzerinden oran-toplam kestiriminin standart hatasi (delta yontemi); `sd_hg` = hucre-gun orani standart sapmasi (yalniz bilgi).\n");
-    let _ = writeln!(s, "| Biyom | Seviye | Ay | Gun/gece | k_c | sigma | sd_hg | N |");
+    let _ = writeln!(s, "## k_c tablosu (uydurma yılı {})\n", a.fit_year);
+    let _ = writeln!(s, "sigma = hücre-günler üzerinden oran-toplam kestiriminin standart hatası (delta yöntemi); `sd_hg` = hücre-gün oranı standart sapması (yalnız bilgi, tabloya alınmaz).\n");
+    let _ = writeln!(s, "| Biyom | Seviye | Ay | Gün/gece | k_c | sigma | sd_hg | N |");
     let _ = writeln!(s, "|---|---|---:|---|---:|---:|---:|---:|");
     for r in &res.rows {
         let _ = writeln!(
@@ -776,13 +776,13 @@ fn render_report(res: &Results) -> String {
         );
     }
 
-    let _ = writeln!(s, "\n## Guc yasasi (VIIRS FRP, uydurma yili)\n");
+    let _ = writeln!(s, "\n## Güç yasası (VIIRS FRP, uydurma yılı)\n");
     let _ = writeln!(
         s,
-        "alpha: p(x) ~ x^-alpha icin Hill en-olabilirlik kestirimi, x >= {} MW; SE = (alpha-1)/sqrt(N). `p_max` = tum VIIRS FRP degerlerinin 99.9. yuzdeligi. Literatur (Cerrado, [15, Sek. 6]) {}.\n",
+        "alpha: p(x) ~ x^-alpha için Hill en-olabilirlik kestirimi, x >= {} MW; SE = (alpha-1)/sqrt(N). `p_max` = tüm VIIRS FRP değerlerinin 99.9. yüzdeliği. Literatür (Cerrado, [15, Şek. 6]) {}.\n",
         a.xmin, LITERATURE_ALPHA
     );
-    let _ = writeln!(s, "| Biyom | alpha | SE | N (kuyruk) | N (tum) | p_max (MW) |");
+    let _ = writeln!(s, "| Biyom | alpha | SE | N (kuyruk) | N (tüm) | p_max (MW) |");
     let _ = writeln!(s, "|---|---:|---:|---:|---:|---:|");
     for p in &res.laws {
         let _ = writeln!(
@@ -800,19 +800,19 @@ fn render_report(res: &Results) -> String {
         Some(h) => {
             let _ = writeln!(
                 s,
-                "\nCerrado bolgesi tek basina: alpha = {:.3} +- {:.3} (N = {}); literatur {}.",
+                "\nCerrado bölgesi tek başına: alpha = {:.3} ± {:.3} (N = {}); literatür {}.",
                 h.alpha, h.se, h.n, LITERATURE_ALPHA
             );
         }
         None => {
-            let _ = writeln!(s, "\nCerrado bolgesi alpha kestirimi icin yeterli veri/bolge yok (literatur {LITERATURE_ALPHA}).");
+            let _ = writeln!(s, "\nCerrado bölgesi alpha kestirimi için yeterli veri/bölge yok (literatür {LITERATURE_ALPHA}).");
         }
     }
 
-    let _ = writeln!(s, "\n## Hold-out ({}), {} hucre-gun\n", a.holdout_year, res.holdout_n);
+    let _ = writeln!(s, "\n## Hold-out ({}), {} hücre-gün\n", a.holdout_year, res.holdout_n);
     let _ = writeln!(
         s,
-        "Sapma = toplam(MODIS x R_rel x k) / toplam(VIIRS) - 1. MedAE = medyan |ln(tahmin/olculen)| (hucre-gun basina). Biyom tablosunda hicbir seviyede satir yoksa enlem bandi kullanildi ({} hucre-gun).\n",
+        "Sapma = toplam(MODIS x R_rel x k) / toplam(VIIRS) - 1. MedAE = medyan |ln(tahmin/ölçülen)| (hücre-gün başına). Biyom tablosunda hiçbir seviyede satır yoksa enlem bandı kullanıldı ({} hücre-gün).\n",
         res.holdout.biome_fallback_lat
     );
     let _ = writeln!(s, "| Kapsam | N | sapma enlem | sapma biyom | sapma k=1 | MedAE enlem | MedAE biyom | MedAE k=1 |");
@@ -834,7 +834,7 @@ fn render_report(res: &Results) -> String {
     for (b, p) in &res.holdout.per_biome {
         let _ = writeln!(s, "{}", line(Biome::ALL[*b as usize].as_str(), p));
     }
-    let _ = writeln!(s, "\nSonuc: {}.", verdict(&res.holdout.overall));
+    let _ = writeln!(s, "\nAraç sonucu: {}.", verdict(&res.holdout.overall));
     s
 }
 
@@ -1316,7 +1316,7 @@ async fn main() -> Result<()> {
         if !failures.is_empty() {
             let first = failures.iter().take(3).cloned().collect::<Vec<_>>().join("; ");
             eprintln!("{}: {} failed window(s), region excluded: {first}", region.name, failures.len());
-            excluded.push((region.name, format!("{} basarisiz pencere ({first})", failures.len())));
+            excluded.push((region.name, format!("{} başarısız pencere ({first})", failures.len())));
             continue;
         }
 
@@ -1360,7 +1360,7 @@ async fn main() -> Result<()> {
             let mut v: Vec<_> = observed.by_source.iter().collect();
             v.sort();
             v.iter()
-                .map(|(src, (t, w))| format!("{src}: {:.1} islem/pencere ({t} islem, {w} pencere)", *t as f64 / *w as f64))
+                .map(|(src, (t, w))| format!("{src}: {:.1} işlem/pencere ({t} işlem, {w} pencere)", *t as f64 / *w as f64))
                 .collect()
         },
     };
@@ -1560,7 +1560,7 @@ mod tests {
         assert!(ho.overall.lat.bias().unwrap() < 0.0);
         assert!(ho.per_biome.contains_key(&(Biome::Savanna as u8)));
         assert_eq!(ho.biome_fallback_lat, 0);
-        assert!(verdict(&ho.overall).starts_with("BIYOM TABLOSU ENLEM BANDLARINDAN IYI ("));
+        assert!(verdict(&ho.overall).starts_with("BİYOM TABLOSU ENLEM BANDLARINDAN İYİ ("));
 
         // forest has no row: scored with the latitude band, so the two predictors tie.
         let ho = evaluate(&[cd(Biome::Forest, 8, true, 150.0, 100.0)], &rows, &CalibrationConfig::default());
@@ -1769,7 +1769,7 @@ mod tests {
         let res = Results {
             args: Args::default(),
             used: vec![],
-            excluded: vec![("punjab", "2 basarisiz pencere".into())],
+            excluded: vec![("punjab", "2 başarısız pencere".into())],
             rows,
             laws: vec![],
             cerrado: None,
@@ -1779,10 +1779,10 @@ mod tests {
             uncached_windows: 2,
             transactions_spent: 10,
             observed_transactions: 42,
-            observed_rates: vec!["MODIS_SP: 7.5 islem/pencere".into()],
+            observed_rates: vec!["MODIS_SP: 7.5 işlem/pencere".into()],
         };
         let text = render_report(&res);
-        assert!(text.contains("DISARIDA BIRAKILAN"));
+        assert!(text.contains("DIŞARIDA BIRAKILAN"));
         assert!(text.contains("punjab"));
         assert!(text.contains("| savanna | biyom |"));
         assert!(text.contains("belirsiz"));

@@ -493,6 +493,9 @@ mod tests {
         rejected(table(row(Some(13), Some(DayNight::Day), 1.2, 0.1)), "calibration.biome_table[0].month");
         rejected(table(row(Some(5), None, 1.2, 0.1)), "calibration.biome_table[0].daynight");
         rejected(table(row(None, None, 0.0, 0.1)), "calibration.biome_table[0].ratio");
+        // A measured ratio below 1 is legitimate (VIIRS total below the corrected MODIS total).
+        accepted(table(row(Some(3), Some(DayNight::Day), 0.946, 0.034)));
+        accepted(table(row(None, None, 0.5, 0.0)));
         rejected(table(row(None, None, f64::NAN, 0.1)), "calibration.biome_table[0].ratio");
         rejected(table(row(None, None, 1.2, -0.1)), "calibration.biome_table[0].ratio_sigma");
 
@@ -517,7 +520,8 @@ mod tests {
     fn default_calibration_round_trips_through_json_and_old_json_still_loads() {
         let c = PipelineConfig::default();
         assert_eq!(c.calibration.mode, CalibrationMode::Biome);
-        assert_eq!(c.calibration.power_law.len(), 1);
+        assert!(c.calibration.power_law.is_empty());
+        assert_eq!(c.calibration.biome_table.len(), 109);
         let json = serde_json::to_string(&c).unwrap();
         assert_eq!(serde_json::from_str::<PipelineConfig>(&json).unwrap(), c);
         assert!(json.contains(r#""mode":"biome""#));

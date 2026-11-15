@@ -47,26 +47,884 @@ c = 1.0
 # 2019 fit, 2020 hold-out), mirrored by |lat| across hemispheres with linear interpolation in
 # 50-55 deg and clamping above 70 deg. Consistent with Li et al. (2020) and Sofiev & Kouznetsov (2026).
 enabled = true
-# "biome": month x biome x day/night table, then the power-law small-fire budget, then the
-# latitude bands below (the fallback for non-burnable/unknown biomes and missing entries).
+# "biome": month x biome x day/night table, then (only if configured) the power-law small-fire
+# budget, then the latitude bands below (the fallback for non-burnable/unknown biomes and
+# biomes without measured rows).
 # "lat_band": bands only (the pre-K14 behaviour).
 mode = "biome"
 # Measured completeness per (biome, month, daynight); month/daynight may be omitted to pool.
-# Shipped empty: the values come from crates/firms-client/examples/biome_completeness.rs.
-# Row: { biome = "cropland", month = 7, daynight = "Day", ratio = 1.2, ratio_sigma = 0.1, n = 100 }
-biome_table = []
+# This is the measured table of crates/firms-client/examples/biome_completeness.rs (K14: fit year
+# 2019, 12 regions; report in docs/BIYOM_TAMLIK.md), pasted from its `--emit-toml` output.
+# `ratio_sigma` is the standard error of the ratio of sums, not the cell-day spread of the
+# latitude bands below, so it is much smaller than their sigma and understates cell-level
+# uncertainty. A ratio below 1 is a legitimate measurement. Tundra and wetland have no rows
+# and use the latitude bands.
+[[calibration.biome_table]]
+biome = "forest"
+ratio = 1.091
+ratio_sigma = 0.016
+n = 8626
 
-# Small-fire budget: f(P) ~ P^-alpha up to p_max_mw, k = sum(VIIRS seen) / sum(MODIS seen), each
-# sensor weighted by the Sofiev & Kouznetsov (2026) Eq. 5-7 detection probability; MODIS pixel
-# area averaged over the +-55 deg swath (1 - ~9.7 km2), VIIRS at nadir 0.375 x 0.375 km.
-# alpha_sigma is propagated as half the spread of k at alpha +- alpha_sigma.
-# alpha = 1.31 is the Cerrado slope [15, Fig. 6]. alpha_sigma and p_max_mw are assumptions: no
-# source gives either. Without a biome entry here the latitude bands apply.
-[[calibration.power_law]]
+[[calibration.biome_table]]
+biome = "forest"
+daynight = "Night"
+ratio = 1.998
+ratio_sigma = 0.049
+n = 1861
+
+[[calibration.biome_table]]
+biome = "forest"
+daynight = "Day"
+ratio = 1.048
+ratio_sigma = 0.016
+n = 6765
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 1
+daynight = "Day"
+ratio = 1.176
+ratio_sigma = 0.071
+n = 237
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 2
+daynight = "Night"
+ratio = 3.144
+ratio_sigma = 0.624
+n = 48
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 2
+daynight = "Day"
+ratio = 1.062
+ratio_sigma = 0.039
+n = 421
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 3
+daynight = "Night"
+ratio = 3.168
+ratio_sigma = 0.281
+n = 178
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 3
+daynight = "Day"
+ratio = 0.946
+ratio_sigma = 0.034
+n = 558
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 4
+daynight = "Night"
+ratio = 2.822
+ratio_sigma = 0.225
+n = 139
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 4
+daynight = "Day"
+ratio = 0.914
+ratio_sigma = 0.058
+n = 451
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 5
+daynight = "Night"
+ratio = 1.975
+ratio_sigma = 0.217
+n = 84
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 5
+daynight = "Day"
+ratio = 1.260
+ratio_sigma = 0.077
+n = 428
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 6
+daynight = "Night"
+ratio = 1.403
+ratio_sigma = 0.112
+n = 95
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 6
+daynight = "Day"
+ratio = 1.175
+ratio_sigma = 0.050
+n = 443
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 7
+daynight = "Night"
+ratio = 2.044
+ratio_sigma = 0.093
+n = 405
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 7
+daynight = "Day"
+ratio = 1.158
+ratio_sigma = 0.027
+n = 1168
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 8
+daynight = "Night"
+ratio = 2.052
+ratio_sigma = 0.068
+n = 506
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 8
+daynight = "Day"
+ratio = 1.030
+ratio_sigma = 0.027
+n = 1296
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 9
+daynight = "Night"
+ratio = 1.750
+ratio_sigma = 0.062
+n = 290
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 9
+daynight = "Day"
+ratio = 1.096
+ratio_sigma = 0.031
+n = 851
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 10
+daynight = "Night"
+ratio = 1.590
+ratio_sigma = 0.418
+n = 53
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 10
+daynight = "Day"
+ratio = 1.253
+ratio_sigma = 0.071
+n = 388
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 11
+daynight = "Day"
+ratio = 0.923
+ratio_sigma = 0.062
+n = 251
+
+[[calibration.biome_table]]
+biome = "forest"
+month = 12
+daynight = "Day"
+ratio = 1.040
+ratio_sigma = 0.062
+n = 273
+
+[[calibration.biome_table]]
+biome = "shrubland"
+ratio = 1.267
+ratio_sigma = 0.040
+n = 1454
+
+[[calibration.biome_table]]
+biome = "shrubland"
+daynight = "Night"
+ratio = 1.565
+ratio_sigma = 0.075
+n = 308
+
+[[calibration.biome_table]]
+biome = "shrubland"
+daynight = "Day"
+ratio = 1.244
+ratio_sigma = 0.042
+n = 1146
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 1
+daynight = "Day"
+ratio = 0.923
+ratio_sigma = 0.155
+n = 30
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 2
+daynight = "Day"
+ratio = 1.374
+ratio_sigma = 0.183
+n = 30
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 3
+daynight = "Day"
+ratio = 1.145
+ratio_sigma = 0.133
+n = 53
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 4
+daynight = "Day"
+ratio = 1.111
+ratio_sigma = 0.118
+n = 46
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 5
+daynight = "Day"
+ratio = 1.480
+ratio_sigma = 0.183
+n = 86
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 6
+daynight = "Day"
+ratio = 1.127
+ratio_sigma = 0.138
+n = 110
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 7
+daynight = "Night"
+ratio = 1.687
+ratio_sigma = 0.148
+n = 57
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 7
+daynight = "Day"
+ratio = 1.307
+ratio_sigma = 0.092
+n = 156
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 8
+daynight = "Night"
+ratio = 1.959
+ratio_sigma = 0.292
+n = 62
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 8
+daynight = "Day"
+ratio = 1.035
+ratio_sigma = 0.118
+n = 138
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 9
+daynight = "Night"
+ratio = 1.470
+ratio_sigma = 0.114
+n = 34
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 9
+daynight = "Day"
+ratio = 1.269
+ratio_sigma = 0.063
+n = 138
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 10
+daynight = "Day"
+ratio = 1.291
+ratio_sigma = 0.097
+n = 148
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 11
+daynight = "Night"
+ratio = 1.409
+ratio_sigma = 0.141
+n = 30
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 11
+daynight = "Day"
+ratio = 1.487
+ratio_sigma = 0.138
+n = 143
+
+[[calibration.biome_table]]
+biome = "shrubland"
+month = 12
+daynight = "Day"
+ratio = 1.302
+ratio_sigma = 0.144
+n = 68
+
+[[calibration.biome_table]]
 biome = "savanna"
-alpha = 1.31
-alpha_sigma = 0.1
-p_max_mw = 1000.0
+ratio = 1.193
+ratio_sigma = 0.008
+n = 17468
+
+[[calibration.biome_table]]
+biome = "savanna"
+daynight = "Night"
+ratio = 1.319
+ratio_sigma = 0.037
+n = 1658
+
+[[calibration.biome_table]]
+biome = "savanna"
+daynight = "Day"
+ratio = 1.192
+ratio_sigma = 0.008
+n = 15810
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 1
+daynight = "Night"
+ratio = 1.476
+ratio_sigma = 0.171
+n = 104
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 1
+daynight = "Day"
+ratio = 1.332
+ratio_sigma = 0.029
+n = 1141
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 2
+daynight = "Night"
+ratio = 1.638
+ratio_sigma = 0.312
+n = 62
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 2
+daynight = "Day"
+ratio = 1.231
+ratio_sigma = 0.055
+n = 802
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 3
+daynight = "Night"
+ratio = 1.112
+ratio_sigma = 0.205
+n = 38
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 3
+daynight = "Day"
+ratio = 1.431
+ratio_sigma = 0.051
+n = 718
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 4
+daynight = "Day"
+ratio = 1.290
+ratio_sigma = 0.067
+n = 469
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 5
+daynight = "Night"
+ratio = 1.532
+ratio_sigma = 0.240
+n = 51
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 5
+daynight = "Day"
+ratio = 1.265
+ratio_sigma = 0.027
+n = 1265
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 6
+daynight = "Night"
+ratio = 1.114
+ratio_sigma = 0.100
+n = 124
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 6
+daynight = "Day"
+ratio = 1.145
+ratio_sigma = 0.017
+n = 1878
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 7
+daynight = "Night"
+ratio = 1.099
+ratio_sigma = 0.118
+n = 184
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 7
+daynight = "Day"
+ratio = 1.084
+ratio_sigma = 0.016
+n = 2025
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 8
+daynight = "Night"
+ratio = 1.471
+ratio_sigma = 0.073
+n = 324
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 8
+daynight = "Day"
+ratio = 1.203
+ratio_sigma = 0.019
+n = 2082
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 9
+daynight = "Night"
+ratio = 1.403
+ratio_sigma = 0.070
+n = 372
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 9
+daynight = "Day"
+ratio = 1.257
+ratio_sigma = 0.021
+n = 1935
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 10
+daynight = "Night"
+ratio = 1.422
+ratio_sigma = 0.052
+n = 205
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 10
+daynight = "Day"
+ratio = 1.265
+ratio_sigma = 0.044
+n = 1195
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 11
+daynight = "Night"
+ratio = 1.090
+ratio_sigma = 0.084
+n = 81
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 11
+daynight = "Day"
+ratio = 1.257
+ratio_sigma = 0.030
+n = 1034
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 12
+daynight = "Night"
+ratio = 0.949
+ratio_sigma = 0.160
+n = 92
+
+[[calibration.biome_table]]
+biome = "savanna"
+month = 12
+daynight = "Day"
+ratio = 1.155
+ratio_sigma = 0.024
+n = 1266
+
+[[calibration.biome_table]]
+biome = "grassland"
+ratio = 1.224
+ratio_sigma = 0.031
+n = 2146
+
+[[calibration.biome_table]]
+biome = "grassland"
+daynight = "Night"
+ratio = 1.332
+ratio_sigma = 0.141
+n = 251
+
+[[calibration.biome_table]]
+biome = "grassland"
+daynight = "Day"
+ratio = 1.217
+ratio_sigma = 0.032
+n = 1895
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 1
+daynight = "Day"
+ratio = 1.291
+ratio_sigma = 0.080
+n = 180
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 2
+daynight = "Day"
+ratio = 1.284
+ratio_sigma = 0.123
+n = 116
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 3
+daynight = "Day"
+ratio = 1.457
+ratio_sigma = 0.149
+n = 126
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 4
+daynight = "Day"
+ratio = 1.219
+ratio_sigma = 0.094
+n = 127
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 5
+daynight = "Day"
+ratio = 1.425
+ratio_sigma = 0.247
+n = 103
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 6
+daynight = "Day"
+ratio = 0.959
+ratio_sigma = 0.099
+n = 90
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 7
+daynight = "Night"
+ratio = 1.525
+ratio_sigma = 0.280
+n = 64
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 7
+daynight = "Day"
+ratio = 1.342
+ratio_sigma = 0.114
+n = 191
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 8
+daynight = "Night"
+ratio = 1.072
+ratio_sigma = 0.231
+n = 44
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 8
+daynight = "Day"
+ratio = 0.976
+ratio_sigma = 0.067
+n = 146
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 9
+daynight = "Night"
+ratio = 1.273
+ratio_sigma = 0.156
+n = 30
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 9
+daynight = "Day"
+ratio = 1.160
+ratio_sigma = 0.068
+n = 121
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 10
+daynight = "Day"
+ratio = 1.036
+ratio_sigma = 0.083
+n = 185
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 11
+daynight = "Day"
+ratio = 1.308
+ratio_sigma = 0.058
+n = 302
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 12
+daynight = "Night"
+ratio = 1.318
+ratio_sigma = 0.230
+n = 31
+
+[[calibration.biome_table]]
+biome = "grassland"
+month = 12
+daynight = "Day"
+ratio = 1.204
+ratio_sigma = 0.062
+n = 208
+
+[[calibration.biome_table]]
+biome = "cropland"
+ratio = 1.325
+ratio_sigma = 0.026
+n = 4265
+
+[[calibration.biome_table]]
+biome = "cropland"
+daynight = "Night"
+ratio = 1.487
+ratio_sigma = 0.148
+n = 313
+
+[[calibration.biome_table]]
+biome = "cropland"
+daynight = "Day"
+ratio = 1.321
+ratio_sigma = 0.026
+n = 3952
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 1
+daynight = "Night"
+ratio = 2.103
+ratio_sigma = 0.294
+n = 32
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 1
+daynight = "Day"
+ratio = 1.171
+ratio_sigma = 0.064
+n = 158
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 2
+daynight = "Night"
+ratio = 2.592
+ratio_sigma = 0.485
+n = 40
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 2
+daynight = "Day"
+ratio = 1.480
+ratio_sigma = 0.084
+n = 188
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 3
+daynight = "Night"
+ratio = 1.421
+ratio_sigma = 0.343
+n = 38
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 3
+daynight = "Day"
+ratio = 1.331
+ratio_sigma = 0.062
+n = 318
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 4
+daynight = "Day"
+ratio = 1.260
+ratio_sigma = 0.062
+n = 517
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 5
+daynight = "Day"
+ratio = 1.751
+ratio_sigma = 0.113
+n = 288
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 6
+daynight = "Day"
+ratio = 1.462
+ratio_sigma = 0.164
+n = 116
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 7
+daynight = "Night"
+ratio = 1.279
+ratio_sigma = 0.157
+n = 38
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 7
+daynight = "Day"
+ratio = 1.170
+ratio_sigma = 0.095
+n = 324
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 8
+daynight = "Night"
+ratio = 1.794
+ratio_sigma = 0.517
+n = 40
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 8
+daynight = "Day"
+ratio = 1.199
+ratio_sigma = 0.085
+n = 337
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 9
+daynight = "Night"
+ratio = 0.990
+ratio_sigma = 0.170
+n = 31
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 9
+daynight = "Day"
+ratio = 1.148
+ratio_sigma = 0.074
+n = 462
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 10
+daynight = "Day"
+ratio = 1.207
+ratio_sigma = 0.073
+n = 657
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 11
+daynight = "Day"
+ratio = 1.368
+ratio_sigma = 0.067
+n = 378
+
+[[calibration.biome_table]]
+biome = "cropland"
+month = 12
+daynight = "Day"
+ratio = 1.233
+ratio_sigma = 0.097
+n = 209
+
+# Small-fire power-law budget: shipped EMPTY, so the default chain is measured table -> latitude
+# band. The model brackets the measured savanna completeness without predicting it: the
+# literature alpha = 1.31 gives k ~ 1.03-1.04 (too low) while alpha ~ 2.2 and p_max ~ 190 MW from
+# our own VIIRS data give ~1.6 day / ~2.5 night (too high) against the measured 1.19 / 1.32.
+# For experiments add entries, e.g.:
+#   [[calibration.power_law]]
+#   biome = "savanna"
+#   alpha = 1.31
+#   alpha_sigma = 0.1   # default; an assumption, not a measurement
+#   p_max_mw = 1000.0
+# k = sum(VIIRS seen) / sum(MODIS seen), each sensor weighted by the Sofiev & Kouznetsov (2026)
+# Eq. 5-7 detection probability; MODIS pixel area averaged over the +-55 deg swath (1 - ~9.7
+# km2), VIIRS at nadir 0.375 x 0.375 km. alpha_sigma is propagated as half the spread of k at
+# alpha +- alpha_sigma. A power-law entry only answers for biomes without a measured row.
 
 [[calibration.bands]]
 min_abs_lat = 0.0
