@@ -21,6 +21,7 @@ import { analyticsCopyEn, analyticsCopyTr } from "./copyAnalytics";
 import { methodsPageCopyEn, methodsPageCopyTr } from "./copyMethods";
 import { tourCopyEn, tourCopyTr } from "./copyTour";
 import { fusionCopyEn, fusionCopyTr } from "./copyFusion";
+import { briefingCopyEn, briefingCopyTr } from "./copyBriefing";
 
 export const TR_REGION_NAMES: Readonly<Record<string, string>> = {
   Turkey: "Türkiye",
@@ -255,7 +256,7 @@ const enBase = {
   disclaimer: "Harmonized values are model estimates, not ground truth.",
   disclaimerLink: "See how we calculate them →",
   exportCsv: "Download this view (CSV)",
-  exportCsvShort: "Download CSV",
+  exportCsvShort: "CSV",
   exportCsvDescription: "Downloads {file}",
   briefMe: "Brief me on this region",
   confidenceFilterOff: "Exclude low-confidence",
@@ -364,7 +365,7 @@ const enBase = {
   nrtTransactions: "{n} API calls",
 } as const;
 
-const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn, ...tourCopyEn, ...fusionCopyEn } as const;
+const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn, ...tourCopyEn, ...fusionCopyEn, ...briefingCopyEn } as const;
 
 export type CopyKey = keyof typeof en;
 export type CopyDictionary = { readonly [K in CopyKey]: string };
@@ -568,7 +569,7 @@ const trBase = {
   disclaimer: "Harmonize değerler model tahminidir, yer gerçeği değildir.",
   disclaimerLink: "Nasıl hesapladığımızı gör →",
   exportCsv: "Bu görünümü indir (CSV)",
-  exportCsvShort: "CSV indir",
+  exportCsvShort: "CSV",
   exportCsvDescription: "{file} dosyasını indirir",
   briefMe: "Bu bölgeyi özetle",
   confidenceFilterOff: "Düşük güveni hariç tut",
@@ -674,7 +675,7 @@ const trBase = {
   nrtTransactions: "{n} API çağrısı",
 } as const;
 
-const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr, ...tourCopyTr, ...fusionCopyTr };
+const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr, ...tourCopyTr, ...fusionCopyTr, ...briefingCopyTr };
 
 export const copy: Readonly<Record<Lang, CopyDictionary>> = { en, tr };
 
