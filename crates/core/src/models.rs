@@ -1,3 +1,4 @@
+use crate::quality::QualityFlag;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -166,6 +167,8 @@ pub struct CalendarCell {
     /// Blended robust z-score of `count_normalized`: `(x - median) / (0.65 * 1.4826 * MAD + 0.35 * sigma)`; same pool as `anomaly`.
     #[serde(default)]
     pub sfai: Option<f64>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub quality_flags: Vec<QualityFlag>,
 }
 
 /// How months are grouped into seasons for [`SeasonalityYear`].

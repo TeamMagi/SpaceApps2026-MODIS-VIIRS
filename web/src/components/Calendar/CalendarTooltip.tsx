@@ -5,6 +5,11 @@
 
 import type { CopyApi } from "../../hooks/useCopy";
 import { useCopy } from "../../hooks/useCopy";
+import {
+  formatFrpInterval,
+  relativeUncertaintyWidth,
+  WIDE_UNCERTAINTY_THRESHOLD,
+} from "../../lib/format";
 import { anomalyCopyKey } from "../../lib/scales";
 import type { CalendarCell, MonthCell } from "../../types";
 import styles from "./CalendarTooltip.module.css";
@@ -85,11 +90,20 @@ export interface CalendarTooltipProps {
 }
 
 export default function CalendarTooltip({ id, cell, harmonized, frp, position, bounds }: CalendarTooltipProps) {
-  const { t, fmt } = useCopy();
+  const { lang, t, fmt } = useCopy();
   const text = formatCalendarCellBase(cell, harmonized, { t, fmt });
   const showFrp = harmonized && cell.hasData;
   const frpText = showFrp ? formatCalendarFrpText(frp, { t, fmt }) : "";
   const nativeText = showFrp ? formatCalendarNativeText(frp, { t, fmt }) : "";
+  const fallbackMeanFrp = showFrp && !nativeText && cell.meanFrp !== null;
+  const uncertMean = frp ? frp.meanFrp : cell.meanFrp;
+  const uncertLower = frp ? frp.meanFrpLower : cell.meanFrpLower;
+  const uncertUpper = frp ? frp.meanFrpUpper : cell.meanFrpUpper;
+  const relWidth =
+    showFrp && uncertMean !== null
+      ? relativeUncertaintyWidth(uncertLower, uncertUpper, uncertMean)
+      : null;
+  const isWideUncert = relWidth !== null && relWidth > WIDE_UNCERTAINTY_THRESHOLD;
 
   const flipBottom = position.y < 52;
   const top = flipBottom ? position.y + (bounds?.cellHeight ?? 18) : position.y;
@@ -109,6 +123,16 @@ export default function CalendarTooltip({ id, cell, harmonized, frp, position, b
       <span>{text}</span>
       {frpText && <span className={styles.frpLine}>{frpText}</span>}
       {nativeText && <span className={styles.nativeLine}>{nativeText}</span>}
+      {fallbackMeanFrp && cell.meanFrp !== null && (
+        <span className={styles.frpLine}>
+          {formatFrpInterval(cell.meanFrp, cell.meanFrpLower, cell.meanFrpUpper, lang)}
+        </span>
+      )}
+      {isWideUncert && (
+        <span className={styles.wideHint}>
+          <strong>{t("uncertaintyWideTitle")}:</strong> {t("uncertaintyWideBody")}
+        </span>
+      )}
       <span className={styles.arrow} style={{ left: `calc(50% + ${arrowOffset - 140}px)` }} aria-hidden="true" />
     </div>
   );

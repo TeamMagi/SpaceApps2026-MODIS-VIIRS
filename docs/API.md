@@ -119,6 +119,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
 | `sfai` | number \| null | `count_normalized` için dayanıklı z-skoru (SFAI): `(x − medyan) / (0.65 × 1.4826 × MAD + 0.35 × σ)`; σ popülasyon standart sapmasıdır. Payda ağırlıkları flare-chronos referans projesinden gelir, medyan payı bize aittir. `anomaly` ile aynı havuz (aynı takvim ayı); en az 3 değer gerekir, payda 0 ise `null` |
+| `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
 
@@ -201,6 +202,7 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 - Arşiv yıl aralığı kırpıldığında (`calendar`).
 - Takvimde NOAA-21 eksikliği bildirildiğinde (`calendar`).
 - Yıl aralığında Terra-only dönem dışlandığında (bkz. "CalendarCell").
+- Takvim hücrelerinde tarihsel sensör anomalisi veya kesinti bayrağı (`quality_flags`) bulunan aylar olduğunda, her farklı bayrak için bir özet uyarı eklenir (en fazla 6 `YYYY-MM` ayı listelenir, fazlası `...` ile kısaltılır).
 - Yerel arşivde beklenen dosya yoksa (`calendar`).
 
 ### report
@@ -221,6 +223,7 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 | `reliable` | boolean | Yukarıdaki koşul geçerliyse `false` |
 | `reason` | string \| null | Güvenilmezlik nedeni. Yoksa `null` |
 | `factors` | array | Uydu yapılandırmasına göre Ω faktörleri (aşağıda) |
+| `tropical_swath_gap` | object \| null | Ekvatoral swath boşluğu bayrağı; aşağıya bakın (`effort.tropical_swath_gap`) |
 
 `factors[]` öğeleri:
 
@@ -233,7 +236,10 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 | `total` | integer | Toplam harmonize kayıt sayısı |
 | `modis_observable` | integer | MODIS ile gözlemlenebilen kayıt sayısı |
 | `omega` | number \| null | Ω değeri. Ay sayısı azsa (kodda eşik 3 aydır) `null` olabilir |
-| `tropical_swath_gap` | object \| null | `effort` nesnesinin alanı (faktör öğesinin değil); aşağıya bakın |
+| `total_high_intensity` | integer | `frp >= 40.0` MW (sonlu) toplam harmonize kayıt sayısı |
+| `modis_observable_high_intensity` | integer | `frp >= 40.0` MW (sonlu) MODIS ile gözlemlenebilen kayıt sayısı |
+| `omega_high_intensity` | number \| null | Yüksek şiddet (≥ 40 MW) rejimi için Ω; 3+ ay ve `modis_observable_high_intensity >= 30` gerekir |
+| `snpp_aqua_high_intensity_ratio` | number \| null | Gündüz ≥ 40 MW S-NPP / Aqua oranı (diurnal/swath tanı metriği, ayrı raporlanır ve sayımlara uygulanmaz; S-NPP yoksa veya Aqua < 30 ise `null`) |
 
 ### effort.tropical_swath_gap (C10)
 
@@ -2052,6 +2058,8 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
 | `year`, `month` | integer | Yıl ve ay |
 | `raw_modis`, `raw_viirs`, `raw_total` | integer | O ayın ham sayımları |
 | `harmonized` | integer | O ay **tek başına** harmonize edilmiş kayıt sayısı |
+| `mean_frp` | number \| null | O aydaki harmonize kayıtların (`frp_corrected`) ortalama FRP değeri (MW). Harmonize tespit yoksa veya aralık sonlu değilse `null` |
+| `mean_frp_lower`, `mean_frp_upper` | number \| null | `mean_frp` için analitik güven aralığının alt ve üst sınırları (MW; `0 <= mean_frp_lower <= mean_frp <= mean_frp_upper`). Harmonize tespit yoksa veya aralık sonlu değilse `null` |
 | `anomaly_raw` | number \| null | `raw_total` için z-skoru |
 | `anomaly_harmonized` | number \| null | `harmonized` için z-skoru |
 
@@ -2104,6 +2112,7 @@ Z-skoru, tüm yıllardaki aynı takvim ayı değerleri üzerinden hesaplanır (o
 - Türetilmiş seri bir damga (şema sürümü, `PipelineConfig` özeti, arşiv dosyalarının yolu ve boyutu) ile doğrulanır. Damga uyuşmazsa seri yeniden hesaplanır ve disk önbelleği güncellenir. Bozuk önbellek dosyası yok sayılır. Yazılamayan bir önbellek dizini isteği engellemez.
 - Hesaplanan seri sunucu süreci boyunca bellekte de tutulur (`memory`).
 - Önceden hesaplama: `make precompute` (Docker) veya `make precompute-local`. CLI: `pyrosync-server precompute [--region <id>]... [--concurrency <n>] [--force]`. `--force` mevcut geçerli önbelleği yeniden hesaplar.
+- `/api/series`, `/api/points` tarafından desteklenen istek bazlı eşik geçersiz kılma parametrelerini (`dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`) **yoksayar**; seriler her zaman sunucunun etkin `PipelineConfig` yapılandırmasıyla önceden hesaplanır ve önbelleğe alınır.
 - Frontend `fetchSeries` ile alır.
 
 ## GET /api/points
@@ -2118,6 +2127,11 @@ Bir bölgenin tek bir yılına (opsiyonel olarak tek bir ayına) ait ham ve harm
 | `year` | integer | Evet | — | Bölge için arşivde bir dosya olmalı |
 | `month` | integer | Hayır | — (tüm yıl) | `1..=12` |
 | `limit` | integer | Hayır | `4000` | En az `1`. `20000`'den büyük değerler `20000`e indirilir. `0` 400 döner |
+| `dedup_time_secs` | integer | Hayır | Sunucu yapılandırması (`8`) | `>= 0` (`dedup.max_time_diff_secs` değerini bu istek için ezer) |
+| `dedup_overlap` | number | Hayır | Sunucu yapılandırması (`0.3`) | `0.0..=1.0`, sonlu (`dedup.min_overlap_ratio` değerini bu istek için ezer) |
+| `match_radius_km` | number | Hayır | Sunucu yapılandırması (`2.0`) | `> 0.0` ve `<= 10.0`, sonlu (`matching.radius_km` değerini bu istek için ezer) |
+| `match_window_secs` | integer | Hayır | Sunucu yapılandırması (`10800`) | `>= 0` (`matching.window_secs` değerini bu istek için ezer) |
+| `fleet_radius_km` | number | Hayır | Sunucu yapılandırması (`2.0`) | `> 0.0`, sonlu (`fleet.radius_km` değerini bu istek için ezer) |
 | `min_confidence` | string | Hayır | `low` | `low`, `nominal` veya `high`. Seçilen yıl/ayda harmonizasyondan ve örneklemeden önce uygulanır; `stages` filtrelenmiş girdiye göredir. Bkz. "Güven filtresi" |
 
 ### Örnek istek
@@ -2341,6 +2355,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `tropical_swath_gap` | object \| null | Bkz. "effort.tropical_swath_gap". `basis: "detections"`; `month` verilse bile istenen yılın tüm ham satırlarının enlem kapsamından, güven filtresinden önce hesaplanır |
 | `events` | object | Yangın olayı kümeleri (aşağıda). **Tüm** harmonize kayıtlar üzerinden hesaplanır; `limit` örneklemesinden etkilenmez |
 | `no_detection_days` | array | Bir sensör ailesinin hiç tespit döndürmediği günler (aşağıda) |
+| `config` | object | Bu yanıt üretilirken kullanılan etkin `PipelineConfig` (varsayılan sunucu yapılandırması + istek geçersiz kılmaları; şema `/api/config` ile aynıdır) |
+| `config_overridden` | boolean | İstek bazlı eşik parametrelerinden en az biri verildiyse `true`, aksi halde `false` |
 
 `raw[]` öğeleri:
 
@@ -2420,9 +2436,10 @@ Ham satır sayısı `limit` değerini aşarsa sunucu, her `k`-inci harmonize kay
 |-------|----------|-------|
 | 400 | `region` yoksa | JSON: `missing 'region' parameter` |
 | 400 | `year` yoksa | JSON: `missing 'year' parameter` |
-| 400 | `year`, `month` veya `limit` sayı değilse | JSON: `invalid 'year' value 'abc'` (benzer biçimde `month` ve `limit`) |
+| 400 | `year`, `month`, `limit` veya eşik parametrelerinden biri sayı değilse | JSON: `invalid '<param>' value '...'` |
 | 400 | `month` `1..=12` dışındaysa | JSON: `'month' must be within 1..=12` |
 | 400 | `limit=0` | JSON: `'limit' must be at least 1` |
+| 400 | Eşik geçersiz kılma değerleri aralık dışındaysa (`dedup_time_secs < 0`, `dedup_overlap` `0.0..=1.0` dışında, `match_radius_km` `(0.0, 10.0]` dışında, `match_window_secs < 0`, `fleet_radius_km <= 0` veya sonlu değil) | JSON: doğrulama hatası (ilgili alan adını içerir, ör. `matching.radius_km must be <= 10, got 50`) |
 | 404 | Bölge bilinmiyorsa | JSON |
 | 404 | Bölge için o yılda dosya yoksa | JSON: `the archive has no Turkey file for 1999` |
 | 413 | Seçilen **yıl** `ARCHIVE_MAX_REGION_MB` değerini aşıyorsa | JSON: `Region year 2021 too large for this server: ...` |
@@ -2458,6 +2475,7 @@ Ham satır sayısı `limit` değerini aşarsa sunucu, her `k`-inci harmonize kay
 - Boyut sınırı yıl bazında uygulanır. Bölgenin toplam boyutu sınırı aşsa bile istenen yıl sınırın altındaysa istek yanıt verir.
 - Yıl verisi ilk istekte okunur ve bir yıl önbelleğinde tutulur. Önbelleğin toplam bütçesi 4.000.000 satırdır. Bütçe aşılınca en az yakın zamanda kullanılan (LRU) yıl önce çıkarılır. Tek bir yılın satır sayısı bütçeyi aşıyorsa o yıl önbelleğe alınmaz.
 - `month` verildiğinde yalnızca o ayın satırları işlenir.
+- İstek bazlı eşik parametreleri (`dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`) yalnızca bu isteğin harmonize işlemini etkiler ve yanıt önbelleğine yazılmaz; `/api/series` bu parametreleri yoksayar.
 - Frontend `fetchPoints` ile alır.
 
 ## Hata kodları
@@ -2466,7 +2484,7 @@ Ham satır sayısı `limit` değerini aşarsa sunucu, her `k`-inci harmonize kay
 |-----|--------------------|----------|-------|
 | 400 | harmonize, compare, stats, export, calendar | Bbox geçersiz, `days` aralık dışı, `start`/`end` eksik veya tarih biçimi yanlış, `days` ile `start`/`end` birlikte, `format` geçersiz, calendar `country` geçersiz, `from > to`, bbox parçaları eksik | JSON `{"error": "..."}` |
 | 400 | harmonize, compare, stats, export, calendar | Zorunlu sorgu parametresi yok veya tipi hatalı | JSON: `Failed to deserialize query string: ...` |
-| 400 | series, points | `region`/`year` eksik; `year`/`month`/`limit` sayı değil; `month` aralık dışı; `limit=0` | JSON |
+| 400 | series, points | `region`/`year` eksik; `year`/`month`/`limit` veya eşik parametreleri sayı değil; `month` aralık dışı; `limit=0`; eşik geçersiz kılma değeri aralık dışı | JSON |
 | 404 | (herhangi) | `/api/` altında bilinmeyen yol: `Unknown API endpoint: /api/...` | JSON |
 | 404 | calendar | Yerel arşivde istenen aralıkta hiçbir dosya yok | JSON |
 | 404 | series, points | Bilinmeyen bölge; bölge için o yılda arşiv dosyası yok | JSON |

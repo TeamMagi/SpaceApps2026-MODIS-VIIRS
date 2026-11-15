@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { DEFAULT_PIPELINE_CONFIG } from "../lib/pipelineOverrides";
 import { parseRoute, type Route } from "../lib/route";
 import { serializeHash } from "../lib/urlState";
 import { useAppStore } from "../store/useAppStore";
@@ -27,7 +28,19 @@ export function useRoute(): Route {
  */
 export function useLeaveMethods(): () => void {
   return useCallback(() => {
-    const { region, mode, selectedMonth, lang, minConfidence } = useAppStore.getState();
-    window.location.hash = serializeHash({ region, mode, month: selectedMonth, lang, minConfidence });
+    const s = useAppStore.getState();
+    window.location.hash = serializeHash(
+      {
+        region: s.region,
+        mode: s.mode,
+        month: s.selectedMonth,
+        lang: s.lang,
+        palette: s.palette,
+        data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
+        overrides: s.pipelineOverrides,
+        minConfidence: s.minConfidence,
+      },
+      s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+    );
   }, []);
 }

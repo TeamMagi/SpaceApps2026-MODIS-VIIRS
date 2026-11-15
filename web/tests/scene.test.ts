@@ -200,6 +200,8 @@ for (let i = 0; i < RAW_COUNT; i++) {
       confidence: Confidence.Nominal,
       acquired: "2024-07-15T10:00:00Z",
       daynight: DayNight.Day,
+      frpLower: null,
+      frpUpper: null,
     });
   }
 }

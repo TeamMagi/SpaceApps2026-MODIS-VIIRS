@@ -1,5 +1,21 @@
-import type { Lang, MinConfidence, MonthRef, RegionId, ViewMode } from "../types";
+import type {
+  DataMode,
+  Lang,
+  MinConfidence,
+  MonthRef,
+  Palette,
+  PipelineConfig,
+  PipelineOverrides,
+  RegionId,
+  ViewMode,
+} from "../types";
 import { monthKey } from "./format";
+import {
+  DEFAULT_PIPELINE_CONFIG,
+  normalizeOverrides,
+  parseBoundedNumber,
+  PIPELINE_PARAM_SPECS,
+} from "./pipelineOverrides";
 import { isRouteHash } from "./route";
 
 export const DEFAULT_REGION: RegionId = "Turkey";
@@ -44,6 +60,9 @@ export interface UrlState {
   mode: ViewMode;
   month: MonthRef | null;
   lang: Lang;
+  palette?: Palette;
+  data?: DataMode;
+  overrides?: PipelineOverrides;
   minConfidence: MinConfidence;
 }
 
@@ -88,25 +107,75 @@ export function parseHash(hash: string): Partial<UrlState> {
     if (parsed !== undefined) result.month = parsed;
   }
 
+  const palette = params.get("palette");
+  if (palette === "default" || palette === "viridis" || palette === "cividis") {
+    result.palette = palette;
+  }
+
+  const data = params.get("data");
+  if (data === "demo" || data === "live") {
+    result.data = data;
+  }
+
+  const overrides: PipelineOverrides = {};
+  let hasOverrides = false;
+  for (const spec of PIPELINE_PARAM_SPECS) {
+    const parsed = parseBoundedNumber(
+      params.get(spec.hashKey),
+      spec.apiMin,
+      spec.apiMax,
+      spec.apiInteger,
+    );
+    if (parsed !== undefined) {
+      overrides[spec.key] = parsed;
+      hasOverrides = true;
+    }
+  }
+  if (hasOverrides) {
+    result.overrides = overrides;
+  }
+
   const conf = params.get("conf");
   if (conf === null || conf === "low") result.minConfidence = "low";
   else if (conf === "nominal") result.minConfidence = conf;
   return result;
 }
 
-export function serializeHash(state: UrlState): string {
+export function serializeHash(
+  state: UrlState,
+  defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+): string {
   const params = new URLSearchParams();
   params.set("region", state.region);
   params.set("mode", state.mode);
   if (state.month) params.set("month", monthKey(state.month));
   params.set("lang", state.lang);
-  if (state.minConfidence !== "low") params.set("conf", state.minConfidence);
+  if (state.palette && state.palette !== "default") {
+    params.set("palette", state.palette);
+  }
+  if (state.data === "demo") {
+    params.set("data", "demo");
+  }
+  const normalized = normalizeOverrides(state.overrides, defaults);
+  for (const spec of PIPELINE_PARAM_SPECS) {
+    const val = normalized[spec.key];
+    if (val !== undefined) {
+      const formatted = spec.apiInteger ? String(Math.round(val)) : String(Number(val.toFixed(4)));
+      params.set(spec.hashKey, formatted);
+    }
+  }
+  if (state.minConfidence && state.minConfidence !== "low") {
+    params.set("conf", state.minConfidence);
+  }
   return `#${params.toString()}`;
 }
 
-export function syncUrlHash(state: UrlState): void {
+export function syncUrlHash(
+  state: UrlState,
+  defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+): void {
   if (typeof window === "undefined" || isRouteHash(window.location.hash)) return;
-  const next = serializeHash(state);
+  const next = serializeHash(state, defaults);
   if (window.location.hash !== next) {
     window.history.replaceState(
       window.history.state,
