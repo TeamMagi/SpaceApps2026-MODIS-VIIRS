@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 
 use crate::models::HarmonizedHotspot;
 
-pub const CSV_HEADER: &str = "lat,lon,frp_mw,frp_corrected_mw,vza_factor,n_obs,platforms,source,confidence,daynight,acquired_utc,calibration_ratio,frp_lower_mw,frp_upper_mw";
+pub const CSV_HEADER: &str = "lat,lon,frp_mw,frp_corrected_mw,vza_factor,n_obs,platforms,source,confidence,daynight,acquired_utc,frp_lower_mw,frp_upper_mw";
 
 const CSV_ROW_CAPACITY: usize = 128;
 
@@ -29,16 +29,14 @@ pub fn to_csv(hotspots: &[HarmonizedHotspot]) -> String {
         }
         let _ = write!(
             out,
-            ",{:?},{:?},{:?},{},",
+            ",{:?},{:?},{:?},{},{},{}",
             h.source,
             h.confidence,
             h.daynight,
             h.acquired.to_rfc3339_opts(SecondsFormat::Secs, true),
+            h.frp_lower,
+            h.frp_upper,
         );
-        if let Some(ratio) = h.calibration_ratio {
-            let _ = write!(out, "{ratio}");
-        }
-        let _ = write!(out, ",{},{}", h.frp_lower, h.frp_upper);
         out.push_str("\r\n");
     }
 
@@ -62,7 +60,6 @@ pub fn to_geojson(hotspots: &[HarmonizedHotspot]) -> String {
                     "confidence": format!("{:?}", h.confidence),
                     "daynight": format!("{:?}", h.daynight),
                     "acquired_utc": h.acquired.to_rfc3339_opts(SecondsFormat::Secs, true),
-                    "calibration_ratio": h.calibration_ratio,
                     "frp_lower_mw": h.frp_lower,
                     "frp_upper_mw": h.frp_upper,
                 },
@@ -88,7 +85,6 @@ mod tests {
             frp_lower: 9.2,
             frp_upper: 10.8,
             vza_factor,
-            calibration_ratio: None,
             n_obs: platforms.len() as u16,
             platforms,
             confidence: Confidence::High,
@@ -101,11 +97,12 @@ mod tests {
     #[test]
     fn csv_rows_match_header_column_count() {
         let hotspots = vec![
-            hotspot(Some(0.8), vec![Sensor::ModisTerra, Sensor::ViirsSNPP]),
+            hotspot(Some(1.2), vec![Sensor::ModisTerra, Sensor::ViirsSNPP]),
             hotspot(None, vec![Sensor::ViirsNOAA20]),
         ];
         let csv = to_csv(&hotspots);
         assert!(csv.ends_with("\r\n"));
+        assert!(!CSV_HEADER.contains("calibration_ratio"));
         let lines: Vec<&str> = csv.trim_end_matches("\r\n").split("\r\n").collect();
         assert_eq!(lines[0], CSV_HEADER);
         assert_eq!(lines.len(), 3);
@@ -125,31 +122,15 @@ mod tests {
     }
 
     #[test]
-    fn missing_vza_and_calibration_are_empty_cell_and_json_null() {
+    fn missing_vza_is_empty_cell_and_json_null() {
         let hotspots = vec![hotspot(None, vec![Sensor::ViirsSNPP])];
         let csv = to_csv(&hotspots);
         let row = csv.lines().nth(1).unwrap();
         assert_eq!(row.split(',').nth(4), Some(""));
-        assert_eq!(row.split(',').nth(11), Some(""));
 
         let parsed: Value = serde_json::from_str(&to_geojson(&hotspots)).unwrap();
         assert!(parsed["features"][0]["properties"]["vza_factor"].is_null());
-        assert!(parsed["features"][0]["properties"]["calibration_ratio"].is_null());
-    }
-
-    #[test]
-    fn present_calibration_ratio_is_exported_in_csv_and_geojson() {
-        let mut h = hotspot(Some(1.2), vec![Sensor::ModisTerra]);
-        h.source = HotspotSource::ModisOnly;
-        h.calibration_ratio = Some(1.16);
-        let hotspots = vec![h];
-
-        let csv = to_csv(&hotspots);
-        let row = csv.lines().nth(1).unwrap();
-        assert_eq!(row.split(',').nth(11), Some("1.16"));
-
-        let parsed: Value = serde_json::from_str(&to_geojson(&hotspots)).unwrap();
-        assert_eq!(parsed["features"][0]["properties"]["calibration_ratio"], json!(1.16));
+        assert!(parsed["features"][0]["properties"].get("calibration_ratio").is_none());
     }
 
     #[test]
@@ -163,7 +144,7 @@ mod tests {
 
     #[test]
     fn geojson_round_trips_with_lon_first() {
-        let hotspots = vec![hotspot(Some(0.5), vec![Sensor::ModisTerra, Sensor::ViirsSNPP])];
+        let hotspots = vec![hotspot(Some(1.25), vec![Sensor::ModisTerra, Sensor::ViirsSNPP])];
         let parsed: Value = serde_json::from_str(&to_geojson(&hotspots)).unwrap();
         assert_eq!(parsed["type"], "FeatureCollection");
         let feature = &parsed["features"][0];
@@ -173,15 +154,16 @@ mod tests {
             feature["properties"]["platforms"],
             json!(["ModisTerra", "ViirsSNPP"])
         );
-        assert_eq!(feature["properties"]["vza_factor"], json!(0.5));
+        assert_eq!(feature["properties"]["vza_factor"], json!(1.25));
         assert_eq!(feature["properties"]["source"], "Matched");
         assert_eq!(feature["properties"]["frp_lower_mw"], json!(9.2));
         assert_eq!(feature["properties"]["frp_upper_mw"], json!(10.8));
+        assert!(feature["properties"].get("calibration_ratio").is_none());
 
         let csv = to_csv(&hotspots);
         let row = csv.lines().nth(1).unwrap();
-        assert_eq!(row.split(',').nth(12), Some("9.2"));
-        assert_eq!(row.split(',').nth(13), Some("10.8"));
+        assert_eq!(row.split(',').nth(11), Some("9.2"));
+        assert_eq!(row.split(',').nth(12), Some("10.8"));
     }
 
     #[test]

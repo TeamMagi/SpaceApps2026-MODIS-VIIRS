@@ -2,23 +2,23 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::CalibrationConfig;
 
-/// Latitude-band MODIS->VIIRS FRP calibration ratio (`VIIRS / MODIS`) and uncertainty.
+/// Latitude-band pre-VIIRS completeness factor `k_c` (`ΣVIIRS / Σ(MODIS × R_rel(θ))`) and uncertainty.
 ///
-/// Based on Li et al. (2018), "Comparison of Fire Radiative Power Estimates From VIIRS
-/// and MODIS Observations" (JGR: Atmospheres, doi:10.1029/2017JD027823).
+/// Measured from our archive (`calibration_grid_check.rs`, Aqua MODIS vs S-NPP 375 m VIIRS,
+/// daytime, Δt ≤ 20 min, 1°×1° cell-days; 2019 fit, 2020 hold-out). Accounts for small fires
+/// missed by MODIS's 1 km pixel threshold that VIIRS detects; applied ONLY to monthly `total_frp`
+/// in pre-2012 cells with no VIIRS detections, never per-detection.
 ///
-/// Limitation: Li et al. (2018) also reports that in large boreal fire clusters (>1000 MW),
-/// MODIS FRP can exceed VIIRS FRP by up to 47% due to smoke attenuation in VIIRS M13.
-/// That cluster-scale adjustment is intentionally NOT applied here because per-detection
-/// fire-cluster FRP is not available during hotspot-level harmonization.
+/// Consistent with literature: Li et al. (2020) reports MODIS underestimates African total FRP by
+/// ~26%, and Sofiev & Kouznetsov (2026) reports ~38% global underestimation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CalibrationBand {
     pub min_abs_lat: f64,
     pub max_abs_lat: f64,
+    /// Completeness multiplier `k_c` applied to pre-VIIRS monthly total FRP.
     pub ratio: f64,
-    /// Derived spread estimate from the paper's reported ranges (NOT a fitted sigma
-    /// reported in Li et al. 2018); used downstream for uncertainty intervals.
+    /// Measured 1σ spread of `k_c` across grid-days, propagated as systematic uncertainty.
     pub ratio_sigma: f64,
 }
 
@@ -30,42 +30,36 @@ pub struct Calibration {
 
 pub(crate) fn default_bands() -> Vec<CalibrationBand> {
     vec![
-        // Tropics (30 S - 30 N): VIIRS FRP averages 16% larger than MODIS.
-        // ratio_sigma = 0.13 is a derived estimate from the <13% spread across tropical
-        // and broadleaf forest ecosystems vs ~1% in savanna/cropland (not a reported sigma).
+        // Tropics (0 - 30 deg): k_c = 1.11 (sigma = 0.08).
         CalibrationBand {
             min_abs_lat: 0.0,
             max_abs_lat: 30.0,
-            ratio: 1.16,
-            ratio_sigma: 0.13,
+            ratio: 1.11,
+            ratio_sigma: 0.08,
         },
-        // Mid-latitudes (30 N - 50 N): VIIRS FRP up to 3% smaller than MODIS.
-        // ratio_sigma = 0.03 is a derived estimate from that 3% bound (not a reported sigma).
+        // Mid-latitudes (30 - 50 deg): k_c = 1.18 (sigma = 0.15, small sample).
         CalibrationBand {
             min_abs_lat: 30.0,
             max_abs_lat: 50.0,
-            ratio: 0.97,
-            ratio_sigma: 0.03,
+            ratio: 1.18,
+            ratio_sigma: 0.15,
         },
-        // High latitudes / boreal (55 N - 70 N): VIIRS FRP up to 18% smaller than MODIS.
-        // ratio_sigma = 0.18 is a derived estimate from that 18% bound (not a reported sigma).
+        // High latitudes / boreal (55 - 70 deg): k_c = 1.28 (sigma = 0.11).
         CalibrationBand {
             min_abs_lat: 55.0,
             max_abs_lat: 70.0,
-            ratio: 0.82,
-            ratio_sigma: 0.18,
+            ratio: 1.28,
+            ratio_sigma: 0.11,
         },
     ]
 }
 
-/// Returns the MODIS->VIIRS FRP calibration factor for `lat` under `config`.
+/// Returns the pre-VIIRS completeness factor `k_c` and its uncertainty `σ` for `lat` under `config`.
 ///
-/// Uses `|lat|` (hemispheric symmetry): Li et al. (2018) reports mid- and high-latitude
-/// ratios only for the Northern Hemisphere and gives no separate Southern Hemisphere
-/// mid/high-latitude values, so we mirror by absolute latitude across hemispheres.
-/// Transition gaps between adjacent bands (e.g., 50-55 deg) are linearly interpolated,
-/// latitudes beyond the last band (>70 deg) clamp to the last band, and invalid/NaN
-/// latitudes or disabled configs return the identity calibration (`ratio = 1.0`, `ratio_sigma = 0.0`).
+/// Uses `|lat|` (hemispheric symmetry) across bands. Transition gaps between adjacent bands
+/// (50-55 deg) are linearly interpolated, latitudes beyond the last band (>70 deg) clamp to the
+/// last band, and invalid/NaN latitudes or disabled configs return the identity (`ratio = 1.0`,
+/// `ratio_sigma = 0.0`).
 pub fn calibration_for(lat: f64, config: &CalibrationConfig) -> Calibration {
     if !config.enabled || !lat.is_finite() || lat.abs() > 90.0 || config.bands.is_empty() {
         return Calibration {
@@ -124,31 +118,31 @@ mod tests {
         let cfg = CalibrationConfig::default();
 
         let eq = calibration_for(0.0, &cfg);
-        assert!(approx_eq(eq.ratio, 1.16));
-        assert!(approx_eq(eq.ratio_sigma, 0.13));
+        assert!(approx_eq(eq.ratio, 1.11));
+        assert!(approx_eq(eq.ratio_sigma, 0.08));
 
         let south_tropics = calibration_for(-10.0, &cfg);
-        assert!(approx_eq(south_tropics.ratio, 1.16));
-        assert!(approx_eq(south_tropics.ratio_sigma, 0.13));
+        assert!(approx_eq(south_tropics.ratio, 1.11));
+        assert!(approx_eq(south_tropics.ratio_sigma, 0.08));
 
         let mid = calibration_for(40.0, &cfg);
-        assert!(approx_eq(mid.ratio, 0.97));
-        assert!(approx_eq(mid.ratio_sigma, 0.03));
+        assert!(approx_eq(mid.ratio, 1.18));
+        assert!(approx_eq(mid.ratio_sigma, 0.15));
 
         let gap_mid = calibration_for(52.5, &cfg);
-        assert!(approx_eq(gap_mid.ratio, 0.5 * (0.97 + 0.82)));
-        assert!(approx_eq(gap_mid.ratio_sigma, 0.5 * (0.03 + 0.18)));
+        assert!(approx_eq(gap_mid.ratio, 0.5 * (1.18 + 1.28)));
+        assert!(approx_eq(gap_mid.ratio_sigma, 0.5 * (0.15 + 0.11)));
 
         let boreal = calibration_for(60.0, &cfg);
-        assert!(approx_eq(boreal.ratio, 0.82));
-        assert!(approx_eq(boreal.ratio_sigma, 0.18));
+        assert!(approx_eq(boreal.ratio, 1.28));
+        assert!(approx_eq(boreal.ratio_sigma, 0.11));
 
         let polar = calibration_for(80.0, &cfg);
-        assert!(approx_eq(polar.ratio, 0.82));
-        assert!(approx_eq(polar.ratio_sigma, 0.18));
+        assert!(approx_eq(polar.ratio, 1.28));
+        assert!(approx_eq(polar.ratio_sigma, 0.11));
 
         let south_polar = calibration_for(-80.0, &cfg);
-        assert!(approx_eq(south_polar.ratio, 0.82));
+        assert!(approx_eq(south_polar.ratio, 1.28));
     }
 
     #[test]
@@ -191,15 +185,15 @@ mod tests {
     #[test]
     fn band_boundaries_and_interpolation_monotonicity() {
         let cfg = CalibrationConfig::default();
-        assert!(approx_eq(calibration_for(30.0, &cfg).ratio, 1.16));
-        assert!(approx_eq(calibration_for(30.0001, &cfg).ratio, 0.97));
-        assert!(approx_eq(calibration_for(50.0, &cfg).ratio, 0.97));
-        assert!(approx_eq(calibration_for(55.0, &cfg).ratio, 0.82));
-        assert!(approx_eq(calibration_for(70.0, &cfg).ratio, 0.82));
+        assert!(approx_eq(calibration_for(30.0, &cfg).ratio, 1.11));
+        assert!(approx_eq(calibration_for(30.0001, &cfg).ratio, 1.18));
+        assert!(approx_eq(calibration_for(50.0, &cfg).ratio, 1.18));
+        assert!(approx_eq(calibration_for(55.0, &cfg).ratio, 1.28));
+        assert!(approx_eq(calibration_for(70.0, &cfg).ratio, 1.28));
 
         let r51 = calibration_for(51.0, &cfg).ratio;
         let r52 = calibration_for(52.5, &cfg).ratio;
         let r54 = calibration_for(54.0, &cfg).ratio;
-        assert!(0.97 > r51 && r51 > r52 && r52 > r54 && r54 > 0.82);
+        assert!(1.18 < r51 && r51 < r52 && r52 < r54 && r54 < 1.28);
     }
 }

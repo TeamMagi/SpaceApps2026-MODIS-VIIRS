@@ -958,6 +958,10 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             mean_frp_raw: 0.0,
             mean_frp_lower: None,
             mean_frp_upper: None,
+            total_frp: 0.0,
+            total_frp_lower: None,
+            total_frp_upper: None,
+            frp_per_detection_eq: None,
             anomaly: None,
         })
         .collect();

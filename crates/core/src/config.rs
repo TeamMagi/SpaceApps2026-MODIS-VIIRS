@@ -224,12 +224,12 @@ mod tests {
         assert_eq!(c.fleet.radius_km, 2.0);
         assert_eq!(c.matching.radius_km, 2.0);
         assert_eq!(c.matching.window_secs, 10_800);
-        assert_eq!((c.vza.a, c.vza.b, c.vza.c), (0.85, 0.12, 1.0));
+        assert_eq!((c.vza.a, c.vza.b, c.vza.c), (0.2017, 0.0168, 1.0));
         assert!(c.calibration.enabled);
         assert_eq!(c.calibration.bands.len(), 3);
-        assert_eq!(c.calibration.bands[0].ratio, 1.16);
-        assert_eq!(c.calibration.bands[1].ratio, 0.97);
-        assert_eq!(c.calibration.bands[2].ratio, 0.82);
+        assert_eq!(c.calibration.bands[0].ratio, 1.11);
+        assert_eq!(c.calibration.bands[1].ratio, 1.18);
+        assert_eq!(c.calibration.bands[2].ratio, 1.28);
         assert_eq!(c.uncertainty, UncertaintyParams::default());
         assert_eq!(c.validate(), Ok(()));
     }
@@ -288,6 +288,10 @@ mod tests {
         rejected(
             |c| c.uncertainty.modis_sensor_sigma = -0.1,
             "uncertainty.modis_sensor_sigma",
+        );
+        rejected(
+            |c| c.uncertainty.modis_scale_sigma = -0.1,
+            "uncertainty.modis_scale_sigma",
         );
     }
 

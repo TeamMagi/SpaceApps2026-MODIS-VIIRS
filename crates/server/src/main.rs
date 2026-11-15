@@ -55,7 +55,7 @@ const ARCHIVE_AVAILABLE_SENSORS: [Sensor; 4] = [
 // NOAA-21 is omitted because FIRMS has no `viirs-jpss2` country archive.
 const ARCHIVE_UNAVAILABLE_SENSORS: [Sensor; 1] = [Sensor::ViirsNOAA21];
 const ARCHIVE_COVERAGE_NOTE: &str = "The FIRMS country archive packages MODIS, VIIRS SNPP and VIIRS NOAA-20; NOAA-21 is not included, so this calendar covers a smaller fleet than the near-real-time endpoints from 2023 onward.";
-const UNCERTAINTY_NOTE: &str = "Harmonized values are model estimates, not ground truth. Bounds combine sensor noise, viewing-angle correction and MODIS-to-VIIRS calibration uncertainty; default sensor-noise and VZA parameters are assumptions, not published values.";
+const UNCERTAINTY_NOTE: &str = "Harmonized values are model estimates, not ground truth. For MODIS detections, VZA scales raw FRP to MODIS footprint equivalents; VIIRS-era calendar total_frp adds empirically measured pre-VIIRS completeness (k_c) when no VIIRS detections are present in a cell. mean_frp remains native-pixel and is discontinuous at sensor transitions. Default sensor-noise, VZA error, and MODIS scale uncertainty parameters are assumptions, not published values.";
 
 #[derive(Clone)]
 struct AppState {
@@ -379,6 +379,7 @@ struct CompareVza {
     mean_factor: Option<f64>,
     max_factor: Option<f64>,
     mean_frp_reduction_pct: Option<f64>,
+    mean_frp_adjustment_pct: Option<f64>,
 }
 
 #[derive(Serialize)]
@@ -1427,6 +1428,7 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
     let mut vza_factor_sum = 0.0_f64;
     let mut vza_max_factor: Option<f64> = None;
     let mut vza_reduction_pct_sum = 0.0_f64;
+    let mut vza_adjustment_pct_sum = 0.0_f64;
 
     for h in &run.harmonized {
         match h.source {
@@ -1457,9 +1459,10 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
                 _ => factor,
             });
             if h.frp > 0.0 {
-                // Isolate VZA reduction from latitude calibration included in `h.frp_corrected`.
                 let vza_only_frp = pyrosync_core::vza::apply_vza_correction(h.frp, h.vza_factor);
-                vza_reduction_pct_sum += 100.0 * (1.0 - vza_only_frp / h.frp);
+                let ratio = vza_only_frp / h.frp;
+                vza_reduction_pct_sum += 100.0 * (1.0 - ratio);
+                vza_adjustment_pct_sum += 100.0 * (ratio - 1.0);
             }
         }
     }
@@ -1487,6 +1490,7 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
             mean_factor: None,
             max_factor: None,
             mean_frp_reduction_pct: None,
+            mean_frp_adjustment_pct: None,
         }
     } else {
         let count_f64 = vza_count as f64;
@@ -1495,6 +1499,7 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
             mean_factor: Some(vza_factor_sum / count_f64),
             max_factor: vza_max_factor,
             mean_frp_reduction_pct: Some(vza_reduction_pct_sum / count_f64),
+            mean_frp_adjustment_pct: Some(vza_adjustment_pct_sum / count_f64),
         }
     };
 
@@ -2192,7 +2197,6 @@ mod tests {
             source: args.source,
             acquired: args.acquired,
             daynight: args.daynight,
-            calibration_ratio: None,
         }
     }
 
@@ -2225,6 +2229,7 @@ mod tests {
         assert!(resp.vza.mean_factor.is_none());
         assert!(resp.vza.max_factor.is_none());
         assert!(resp.vza.mean_frp_reduction_pct.is_none());
+        assert!(resp.vza.mean_frp_adjustment_pct.is_none());
         assert!(resp.warnings.is_empty());
     }
 
@@ -2337,7 +2342,8 @@ mod tests {
         assert_eq!(resp.vza.records_with_correction, 1);
         assert_eq!(resp.vza.mean_factor, Some(2.0));
         assert_eq!(resp.vza.max_factor, Some(2.0));
-        assert_eq!(resp.vza.mean_frp_reduction_pct, Some(50.0));
+        assert_eq!(resp.vza.mean_frp_reduction_pct, Some(-100.0));
+        assert_eq!(resp.vza.mean_frp_adjustment_pct, Some(100.0));
         assert_eq!(resp.warnings.len(), 1);
     }
 
@@ -3605,7 +3611,7 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
     }
 
     #[test]
-    fn compare_vza_reduction_isolates_vza_effect_from_calibration_ratio() {
+    fn compare_vza_adjustment_reports_both_signed_reduction_and_positive_adjustment() {
         let dt = Utc.with_ymd_and_hms(2026, 7, 15, 12, 0, 0).unwrap();
         let run = PipelineRun {
             bbox: sample_bbox(),
@@ -3616,24 +3622,24 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
                 make_raw(Sensor::ModisAqua, 100.0, 11, DayNight::Day),
             ],
             harmonized: vec![
-                // Nadir MODIS in tropics: vza_factor=1.0 (0% VZA reduction), calibration shifts FRP up to 140.0.
+                // Nadir MODIS: vza_factor=1.0 -> 0% adjustment.
                 make_harmonized(HarmonizedArgs {
                     platforms: vec![Sensor::ModisTerra],
                     source: HotspotSource::ModisOnly,
                     frp: 100.0,
-                    frp_corrected: 140.0,
+                    frp_corrected: 100.0,
                     vza_factor: Some(1.0),
                     n_obs: 1,
                     confidence: Confidence::Nominal,
                     daynight: DayNight::Day,
                     acquired: dt,
                 }),
-                // Off-nadir MODIS: vza_factor=2.0 (50% VZA reduction), plus 1.4 calibration -> frp_corrected=70.0.
+                // Off-nadir MODIS: vza_factor=2.0 -> +100% VZA adjustment (frp_corrected=200.0).
                 make_harmonized(HarmonizedArgs {
                     platforms: vec![Sensor::ModisAqua],
                     source: HotspotSource::ModisOnly,
                     frp: 100.0,
-                    frp_corrected: 70.0,
+                    frp_corrected: 200.0,
                     vza_factor: Some(2.0),
                     n_obs: 1,
                     confidence: Confidence::Nominal,
@@ -3650,10 +3656,18 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
             .vza
             .mean_frp_reduction_pct
             .expect("mean_frp_reduction_pct should be present");
-        // (0% + 50%) / 2 = 25%, not (-40% + 30%) / 2 = -5%.
+        let mean_adjustment = resp
+            .vza
+            .mean_frp_adjustment_pct
+            .expect("mean_frp_adjustment_pct should be present");
+        // (0% + (-100%)) / 2 = -50% reduction; (0% + 100%) / 2 = +50% adjustment.
         assert!(
-            (mean_reduction - 25.0).abs() < 1e-9,
-            "expected 25.0, got {mean_reduction}"
+            (mean_reduction - (-50.0)).abs() < 1e-9,
+            "expected -50.0, got {mean_reduction}"
+        );
+        assert!(
+            (mean_adjustment - 50.0).abs() < 1e-9,
+            "expected 50.0, got {mean_adjustment}"
         );
     }
 }

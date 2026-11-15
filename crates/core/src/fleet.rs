@@ -623,7 +623,7 @@ mod tests {
         assert_eq!(out.len(), 1);
         assert!((out[0].frp_mean - 120.0).abs() < 1e-9);
         assert!((out[0].frp_corrected_mean - expected_corrected_mean).abs() < 1e-12);
-        assert!(out[0].frp_corrected_mean < out[0].frp_mean);
+        assert!(out[0].frp_corrected_mean > out[0].frp_mean);
     }
 
     #[test]

@@ -14,9 +14,9 @@
 | `dedup.rs` | İnterscan duplikat temizleme (varsayılan Δt<8s, overlap>30%), haversine mesafe hesabı |
 | `fleet.rs` | Aynı sensör ailesinin (MODIS Terra/Aqua, VIIRS SNPP/NOAA-20/21) eşzamanlı tespitlerini tek gözleme birleştirme |
 | `h3index.rs` | H3 (çözünürlük 8) uzamsal indeks; `k_ring_for_radius` arama halkasını eşleştirme yarıçapına göre ölçekler |
-| `vza.rs` | MODIS FRP görüş açısı düzeltmesi (kuadratik polinom, katsayılar `VzaConfig`'ten) |
-| `calibration.rs` | Enlem bandına dayalı MODIS→VIIRS FRP kalibrasyonu (Li et al. 2018 oranları, geçiş boşluklarında doğrusal interpolasyon) |
-| `uncertainty.rs` | Analitik FRP güven aralığı (`frp_lower`/`frp_upper` ve takvim hücresi `mean_frp_lower`/`mean_frp_upper`) yayılımı |
+| `vza.rs` | MODIS FRP görüş açısı düzeltmesi (`R_rel(θ)` kuadratik polinom × ham FRP, `VzaConfig`'ten) |
+| `calibration.rs` | VIIRS öncesi (2012 öncesi) enlem bandı tamlık katsayısı `k_c` (gözlenen geçiş oranı + interpolasyon) |
+| `uncertainty.rs` | Analitik FRP güven aralığı (`frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*`) yayılımı |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
 | `effort.rs` | Gözlem eforu (EffortFactor) tahmini |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
@@ -29,10 +29,9 @@
 - `calendar.rs` içinde `use chrono::Datelike;` import'u gereklidir (`.year()` ve `.month()` için).
 - Cross-sensor matching: varsayılan 2 km mesafe, 180 dakika zaman penceresi (aynı yangının MODIS/VIIRS geçişleri FIRMS verisinde en az 34 dk arayla gelir). Tüm eşikler `PipelineConfig`'ten gelir; eski `harmonize`/`harmonize_with_links` fonksiyonları varsayılan konfigürasyonla çalışır, `*_config` varyantları konfigürasyon alır.
 - Fusion: VIIRS tercih edilir (yüksek çözünürlük), eşleşmeyenler her iki sensörden alınır.
-- Enlem bandı FRP kalibrasyonu (Li et al. 2018): harmonize ölçek VIIRS olduğu için kalibrasyon (`frp_corrected = vza_mean * ratio`) yalnız `ModisOnly` kayıtlara uygulanır (`Matched` ve `ViirsOnly` değişmez); bantlar `|lat|` simetrisiyle uygulanır (30°: 1.16, 30–50°: 0.97, 55–70°: 0.82; 50–55° doğrusal interpolasyon, >70° sabitlenir).
-- Büyük boreal küme sınırlaması: Li et al. (2018) >1000 MW boreal kümelerde yoğun duman etkisiyle MODIS FRP'nin VIIRS'tan %47'ye kadar büyük olduğunu bildirir; tespit başına küme FRP'si bilinmediğinden bu ek düzeltme uygulanmaz.
-- FRP belirsizlik modeli (`uncertainty.rs`): her kaydın `frp_lower`/`frp_upper` ve aylık hücrelerin `mean_frp_lower`/`mean_frp_upper` sınırları sensör gürültüsü, VZA düzeltme hatası (`vza_error_coeff × (factor - 1)`) ve `ModisOnly` kalibrasyon belirsizliğini (`ratio_sigma / ratio`) karesel olarak birleştirir.
-- Çoklu gözlem ve hücre birleştirmesinde bağımsız rastgele hatalar `1/√n` ölçeklenirken bölgesel kalibrasyon belirsizliği sistematik kabul edilip ölçeklenmez; varsayılan `modis_sensor_sigma` (0.12), `viirs_sensor_sigma` (0.08) ve `vza_error_coeff` (0.05) değerleri yayımlanmış ölçümler değil başlangıç varsayımlarıdır.
+- VZA düzeltmesi ve ayak izi ölçeklemesi (`vza.rs`): Zheng et al. (2026) Şekil 4 nadirde 1'e normalize edilen oran (`R_rel(θ) = 0.2017θ² + 0.0168θ + 1.0`, θ radyan) MODIS ham FRP'si ile çarpılır (`raw_frp * ratio`). `ModisOnly` tespit başına enlem kalibrasyonu uygulanmaz.
+- VIIRS öncesi tamlık katsayısı `k_c` (`calibration.rs` + `calendar.rs`): `0–30°: 1.11 (σ 0.08)`, `30–50°: 1.18 (σ 0.15)`, `55–70°: 1.28 (σ 0.11)` (50–55° lineer geçiş, >70° sabit) yalnız VIIRS tespiti içermeyen aylık `CalendarCell.total_frp` toplamına uygulanır; `frp_per_detection_eq = total_frp / count_normalized`. `mean_frp` ham piksel ortalamasıdır ve sensör geçişinde süreksizdir.
+- FRP belirsizlik modeli (`uncertainty.rs`): `frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*` sınırları rastgele hataları karesel (`1/√n` ölçeklenen sensör + VZA), sistematik bileşeni ise doğrusal (`modis_scale_sigma = 0.10` ve `total_frp`'de `k_c` uygulanınca `ratio_sigma/ratio`) birleştirir; varsayılan sigma ve VZA hata katsayıları model varsayımlarıdır.
 - FRP birimi: MW (megawatt). Negatif FRP olamaz.
 
 ## Bağımlılıklar

@@ -107,8 +107,6 @@ pub struct HarmonizedHotspot {
     #[serde(default)]
     pub frp_upper: f64,
     pub vza_factor: Option<f64>,
-    #[serde(default)]
-    pub calibration_ratio: Option<f64>,
     pub n_obs: u16,
     pub platforms: Vec<Sensor>,
     pub confidence: Confidence,
@@ -145,12 +143,25 @@ pub struct CalendarCell {
     pub count: u64,
     pub count_normalized: Option<f64>,
     pub effort_omega: Option<f64>,
+    /// Native-pixel mean harmonized FRP; discontinuous across the MODIS->VIIRS sensor
+    /// transition due to pixel-size differences.
     pub mean_frp: f64,
     pub mean_frp_raw: f64,
     #[serde(default)]
     pub mean_frp_lower: Option<f64>,
     #[serde(default)]
     pub mean_frp_upper: Option<f64>,
+    /// Monthly total harmonized FRP (MW); applies pre-VIIRS completeness factor `k_c(lat)`
+    /// in cells with no VIIRS detections when calibration is enabled.
+    #[serde(default)]
+    pub total_frp: f64,
+    #[serde(default)]
+    pub total_frp_lower: Option<f64>,
+    #[serde(default)]
+    pub total_frp_upper: Option<f64>,
+    /// MODIS-equivalent FRP per normalized detection (`total_frp / count_normalized`).
+    #[serde(default)]
+    pub frp_per_detection_eq: Option<f64>,
     pub anomaly: Option<f64>,
 }
 

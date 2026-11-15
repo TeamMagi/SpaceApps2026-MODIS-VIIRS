@@ -77,12 +77,14 @@ pub fn vza_from_scan(scan_km: f64) -> Option<f64> {
     theta_s_to_vza_deg(0.5 * (low + high))
 }
 
-/// Compute the MODIS viewing zenith angle (VZA) correction factor R(θ).
+/// Compute the MODIS viewing zenith angle (VZA) correction factor R_rel(θ).
 ///
-/// MODIS FRP increases up to 300% from nadir to scan edge due to pixel
-/// expansion. This correction uses a quadratic polynomial model:
-///   R(θ) = a·θ² + b·θ + c
-/// where θ is VZA in radians (Zheng et al. 2026, R² ≥ 98.18%).
+/// Off-nadir MODIS pixel expansion raises the detection threshold and attenuates observed
+/// pixel FRP relative to 375 m VIIRS at the MODIS footprint scale. This uses the quadratic
+/// polynomial:
+///   R_rel(θ) = a·θ² + b·θ + c
+/// where θ is VZA in radians (Zheng et al. 2026, Eq. 9 & Fig. 4, R² ≥ 98.18%), normalized at
+/// nadir (`c = 1.0`).
 ///
 /// VIIRS FRP is stable across the swath and needs no correction (`None`).
 /// MODIS detections use the explicit `vza` when present and otherwise fall
@@ -101,22 +103,27 @@ pub fn vza_factor_with(hotspot: &Hotspot, config: &VzaConfig) -> Option<f64> {
     Some(correction_ratio_with(vza_deg.to_radians(), config))
 }
 
-/// Apply a precomputed VZA correction factor to a raw FRP value without
+/// Apply a precomputed VZA correction factor R_rel(θ) to a raw FRP value without
 /// mutating the source hotspot.
+///
+/// Zheng et al. (2026) Eq. 9 defines `FRP_adj = R(θ) × FRP_MODIS` on the MODIS pixel
+/// footprint scale, so transforming MODIS FRP toward the VIIRS scale multiplies by `ratio`.
 pub fn apply_vza_correction(raw_frp: f64, factor: Option<f64>) -> f64 {
     match factor {
-        Some(ratio) if ratio > 0.0 => raw_frp / ratio,
+        Some(ratio) if ratio > 0.0 => raw_frp * ratio,
         _ => raw_frp,
     }
 }
 
-/// Polynomial correction ratio R(θ) = a·θ² + b·θ + c
+/// Normalized polynomial correction ratio R_rel(θ) = a·θ² + b·θ + c (θ in radians).
 ///
-/// These coefficients are derived from VIIRS/MODIS FRP ratios
-/// binned at 1° VZA intervals. Placeholder values — will be
-/// refined with real overlap-period data.
-pub(crate) const CORRECTION_A: f64 = 0.85;
-pub(crate) const CORRECTION_B: f64 = 0.12;
+/// Derived from Zheng et al. (2026) Fig. 4 (`R(θ) = 0.24θ² + 0.02θ + 1.19` for Aqua MYD14,
+/// footprint-scale VIIRS/MODIS FRP ratio), divided by 1.19 so `R_rel(0) = 1.0`. The nadir
+/// level offset (1.19) is measured separately in the pre-2012 completeness factor `k_c` so it
+/// is not double-counted. Terra has no separate fit (Zheng et al. §5) and reuses this curve
+/// as a geometric proxy, reflected in `modis_scale_sigma`.
+pub(crate) const CORRECTION_A: f64 = 0.2017;
+pub(crate) const CORRECTION_B: f64 = 0.0168;
 pub(crate) const CORRECTION_C: f64 = 1.0;
 
 fn correction_ratio_with(theta_rad: f64, config: &VzaConfig) -> f64 {
@@ -160,6 +167,12 @@ mod tests {
     }
 
     #[test]
+    fn correction_ratio_at_one_radian_matches_normalized_zheng_fit() {
+        let r = correction_ratio(1.0);
+        assert!((r - 1.2185).abs() < 1e-12, "expected 1.2185, got {r}");
+    }
+
+    #[test]
     fn large_vza_has_larger_correction() {
         let nadir = correction_ratio(0.0);
         let edge = correction_ratio(60.0_f64.to_radians());
@@ -181,9 +194,9 @@ mod tests {
     }
 
     #[test]
-    fn apply_vza_correction_divides_when_factor_present() {
+    fn apply_vza_correction_multiplies_when_factor_present() {
         let corrected = apply_vza_correction(100.0, Some(2.0));
-        assert!((corrected - 50.0).abs() < f64::EPSILON);
+        assert!((corrected - 200.0).abs() < f64::EPSILON);
         assert!((apply_vza_correction(100.0, None) - 100.0).abs() < f64::EPSILON);
     }
 
