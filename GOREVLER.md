@@ -499,6 +499,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Dikiş öncesi/sonrası seviye kayması ve `|log(kayma)|` metriklerini hacim eşiği (`<100/yıl` gürültü sınırı, `fire-harmony`) ile raporlama; gözlenen adım büyüklükleri ölçülecek
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ P4, `fire-harmony`)
 - **Bitti sayılır:** ~10 biyom-çeşitli ülkede `2002-07`, `2012-01` ve `2018-04` dikişlerinde ham vs harmonize (`count_normalized`, `total_frp`, `frp_per_detection_eq`) adım büyüklükleri ölçülüp tablo olarak raporlanıyor.
+- **Durum (2026-11-15):** Referans ölçüm yapıldı — araç `crates/firms-client/examples/seam_continuity.rs`, sonuçlar `docs/SUREKLILIK_ANALIZI.md` (10 ülke, 2000–2025). Ülkeler üzerinden medyan |log adım|, 2012 SNPP dikişi (2011→2012): ham sayım 1,77 → `count_normalized` 0,13 (Ω sayım sıçramasının ~%92'sini gideriyor); `total_frp` 0,59 (hâlâ belirgin adım); `frp_per_detection_eq` 0,14 ama 4/10 ülkede doğal dalgalanmanın (p90) dışında; 2018 NOAA-20 dikişinde F 10/10 ülkede yukarı kayıyor (+0,08 ile +0,42). Aqua 2002 dikişi için normalize metrikler Aqua öncesi ay kuralı nedeniyle NA. Görev, bağımlılıkları R10 ve K11 bittikten sonra aynı komutla yeniden ölçülüp karşılaştırılınca kapanacak.
 
 ### [ ] G12 — İç doğrulama paketi
 - **Bekler:** G11, S10 · **Açar:** G5, S12, Y10
