@@ -17,7 +17,7 @@ use axum::{
     response::{IntoResponse, Json, Response},
     routing::get,
 };
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, Semaphore};
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -354,9 +354,86 @@ struct SeasonalityResponse {
 // Terra's first FIRMS month; earlier months of the first archive year were never observed, not zero.
 const FIRST_MODIS_MONTH: (i32, u32) = (2000, 11);
 
-fn build_seasonality(cells: &[CalendarCell], years: &CalendarYears) -> SeasonalityResponse {
+// SNPP's first FIRMS month; VIIRS months before it were not observable, not zero.
+const FIRST_VIIRS_MONTH: (i32, u32) = (2012, 1);
+
+fn coverage_window(years: &CalendarYears) -> ((i32, u32), (i32, u32)) {
     let first = (years.effective_from, 1).max(FIRST_MODIS_MONTH);
-    let coverage = (first, (years.effective_to, 12));
+    (first, (years.effective_to, 12))
+}
+
+/// Pre-harmonization per-sensor-family monthly totals (UTC month of `acquired`, raw `frp` in MW).
+/// When `*_covered` is false the sensor was not observable that month: counts are 0 and consumers
+/// must treat the month as missing, not as zero detections.
+#[derive(Debug, Serialize, PartialEq)]
+struct RawMonthly {
+    year: i32,
+    month: u32,
+    modis_covered: bool,
+    modis_count: u64,
+    modis_frp_sum: f64,
+    viirs_covered: bool,
+    viirs_count: u64,
+    viirs_frp_sum: f64,
+    /// Raw detections per platform (non-zero only); sums to `modis_count + viirs_count`.
+    platform_counts: BTreeMap<Sensor, u64>,
+}
+
+fn aggregate_raw_monthly(
+    modis: &[Hotspot],
+    viirs: &[Hotspot],
+    years: &CalendarYears,
+) -> Vec<RawMonthly> {
+    let (first, last) = coverage_window(years);
+    let mut out = Vec::new();
+    let (mut y, mut m) = first;
+    while (y, m) <= last {
+        out.push(RawMonthly {
+            year: y,
+            month: m,
+            modis_covered: true,
+            modis_count: 0,
+            modis_frp_sum: 0.0,
+            viirs_covered: (y, m) >= FIRST_VIIRS_MONTH,
+            viirs_count: 0,
+            viirs_frp_sum: 0.0,
+            platform_counts: BTreeMap::new(),
+        });
+        if m == 12 {
+            y += 1;
+            m = 1;
+        } else {
+            m += 1;
+        }
+    }
+    let index = |h: &Hotspot| {
+        let key = (h.acquired.year(), h.acquired.month());
+        out_index(first, key)
+    };
+    for h in modis {
+        if let Some(i) = index(h).filter(|&i| i < out.len()) {
+            out[i].modis_count += 1;
+            out[i].modis_frp_sum += h.frp;
+            *out[i].platform_counts.entry(h.sensor).or_default() += 1;
+        }
+    }
+    for h in viirs {
+        if let Some(i) = index(h).filter(|&i| i < out.len() && out[i].viirs_covered) {
+            out[i].viirs_count += 1;
+            out[i].viirs_frp_sum += h.frp;
+            *out[i].platform_counts.entry(h.sensor).or_default() += 1;
+        }
+    }
+    out
+}
+
+fn out_index(first: (i32, u32), key: (i32, u32)) -> Option<usize> {
+    let months = |(y, m): (i32, u32)| y * 12 + m as i32 - 1;
+    usize::try_from(months(key) - months(first)).ok()
+}
+
+fn build_seasonality(cells: &[CalendarCell], years: &CalendarYears) -> SeasonalityResponse {
+    let coverage = coverage_window(years);
     SeasonalityResponse {
         metric: "count",
         calendar_year: seasonality(cells, SeasonYear::Calendar, coverage),
@@ -373,6 +450,7 @@ struct CalendarResponse {
     counts: CalendarCounts,
     calendar: Vec<CalendarCell>,
     seasonality: SeasonalityResponse,
+    raw_monthly: Vec<RawMonthly>,
     effort: EffortResponse,
     uncertainty: UncertaintyMetadata,
     filters: ConfidenceFilter,
@@ -802,7 +880,13 @@ fn build_router(
         .route("/sensitivity", get(sensitivity::sensitivity))
         .route("/stats", get(stats))
         .route("/calendar", get(calendar))
-        .route("/export", get(export))
+        .route(
+            "/export",
+            get(export).route_layer(axum::middleware::from_fn_with_state(
+                archive_api.clone(),
+                archive_api::export_dispatch,
+            )),
+        )
         .with_state(state);
 
     if let Some(archive_api) = archive_api {
@@ -1336,6 +1420,18 @@ fn pre_aqua_warning(excluded: usize) -> Option<String> {
     })
 }
 
+fn pre_aqua_recovery_warning(calendar: &[CalendarCell]) -> Option<String> {
+    let recovered = calendar
+        .iter()
+        .filter(|c| c.count_recovered.is_some())
+        .count();
+    (recovered > 0).then(|| {
+        format!(
+            "{recovered} Terra-only months (2000-11..2002-06) carry an ESTIMATED MODIS-observable count (count_recovered): detections multiplied by a Terra+Aqua/Terra ratio calibrated per calendar month on 2002-07..2020-12 (pool widened to +-1, +-2 months or all months until at least 400 Terra detections; 10% outlier months trimmed). Adapted from Remy & Kaiser (2014) without their cloud-difference filter; comparable with the MODIS-only baseline era, not with count_normalized."
+        )
+    })
+}
+
 fn quality_flag_label(flag: pyrosync_core::quality::QualityFlag) -> &'static str {
     use pyrosync_core::quality::QualityFlag;
     match flag {
@@ -1353,7 +1449,7 @@ fn quality_flag_warnings(calendar: &[CalendarCell]) -> Vec<String> {
 
     let mut by_flag: BTreeMap<QualityFlag, Vec<(i32, u32)>> = BTreeMap::new();
     for cell in calendar {
-        for &flag in &cell.quality_flags {
+        for &flag in cell.quality_flags.iter().filter(|f| f.reported_as_warning()) {
             by_flag
                 .entry(flag)
                 .or_default()
@@ -1397,6 +1493,7 @@ fn build_effort_and_warnings_from_counts(
         build_warnings_from_counts(failure_count, singular, plural, uncovered);
     let excluded = pyrosync_core::effort::pre_aqua_excluded_months(harmonized).len();
     warnings.extend(pre_aqua_warning(excluded));
+    warnings.extend(pre_aqua_recovery_warning(calendar));
     warnings.extend(quality_flag_warnings(calendar));
     let effort = EffortResponse {
         reliable: reason.is_none(),
@@ -2063,11 +2160,13 @@ fn parse_calendar_params(params: &CalendarParams) -> Result<ValidatedCalendarQue
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn build_calendar_response(
     query: &ValidatedCalendarQuery,
     raw_detections: usize,
     harmonized: &[HarmonizedHotspot],
     calendar: Vec<CalendarCell>,
+    raw_monthly: Vec<RawMonthly>,
     per_sensor_year: Vec<SensorYearFetch>,
     failures: Vec<SensorYearFailure>,
     uncertainty_params: &pyrosync_core::uncertainty::UncertaintyParams,
@@ -2137,6 +2236,7 @@ fn build_calendar_response(
         },
         seasonality: build_seasonality(&calendar, &query.years),
         calendar,
+        raw_monthly,
         effort,
         uncertainty: uncertainty_metadata(uncertainty_params),
         // The caller fills in `excluded_detections`, which is only known after the archive reads.
@@ -2300,6 +2400,7 @@ async fn run_calendar_pipeline(
     let query = query.clone();
     tokio::task::spawn_blocking(move || {
         let raw_detections = modis.len() + viirs.len();
+        let raw_monthly = aggregate_raw_monthly(&modis, &viirs, &query.years);
         let mask = mask_from_builder(&config, mask_builder);
         let harmonized = pyrosync_core::harmonize::harmonize_with_links_masked(
             modis,
@@ -2320,6 +2421,7 @@ async fn run_calendar_pipeline(
             raw_detections,
             &harmonized,
             calendar_cells,
+            raw_monthly,
             per_sensor_year,
             failures,
             &config.uncertainty,
@@ -2501,6 +2603,16 @@ mod tests {
     }
 
     #[test]
+    fn pre_aqua_recovery_warning_counts_recovered_months_only() {
+        let mut cells = calendar_cells_for_test(2001, 1, 5);
+        assert_eq!(pre_aqua_recovery_warning(&cells), None);
+        cells[0].count_recovered = Some(7.0);
+        let text = pre_aqua_recovery_warning(&cells).unwrap();
+        assert!(text.starts_with("1 Terra-only months"), "{text}");
+        assert!(text.contains("Remy & Kaiser"));
+    }
+
+    #[test]
     fn quality_flag_warnings_summarize_and_truncate_months() {
         use pyrosync_core::quality::{QualityFlag, flag_description};
 
@@ -2518,19 +2630,15 @@ mod tests {
         cells.push(outage_cell);
 
         let warnings = quality_flag_warnings(&cells);
-        assert_eq!(warnings.len(), 2);
+        assert!(cells[..8]
+            .iter()
+            .all(|c| c.quality_flags == vec![QualityFlag::ModisOrbitalDrift]));
+        assert_eq!(warnings.len(), 1, "{warnings:?}");
         assert_eq!(
             warnings[0],
             format!(
                 "1 month is affected by Terra MOD14 data outages (2001-06): {}",
                 flag_description(QualityFlag::TerraOutage)
-            )
-        );
-        assert_eq!(
-            warnings[1],
-            format!(
-                "8 months are affected by MODIS orbital drift (2022-01, 2022-02, 2022-03, 2022-04, 2022-05, 2022-06, ...): {}",
-                flag_description(QualityFlag::ModisOrbitalDrift)
             )
         );
     }
@@ -3585,6 +3693,7 @@ mod tests {
             cell,
             Vec::new(),
             Vec::new(),
+            Vec::new(),
             &pyrosync_core::uncertainty::UncertaintyParams::default(),
         );
         let json = serde_json::to_value(&resp).unwrap();
@@ -3596,6 +3705,129 @@ mod tests {
         assert_eq!(fire[1]["complete"], true);
         assert_eq!(fire[0]["complete"], false);
         assert_eq!(json["seasonality"]["calendar_year"].as_array().unwrap().len(), 2);
+    }
+
+    fn raw_hotspot(sensor: Sensor, ts: &str, frp: f64) -> Hotspot {
+        Hotspot {
+            lat: 39.0,
+            lon: 35.0,
+            brightness: 330.0,
+            frp,
+            confidence: pyrosync_core::models::Confidence::Nominal,
+            sensor,
+            acquired: ts.parse().unwrap(),
+            scan: 1.0,
+            track: 1.0,
+            satellite: String::new(),
+            daynight: pyrosync_core::models::DayNight::Day,
+            vza: None,
+            fire_type: pyrosync_core::models::FireType::VegetationFire,
+        }
+    }
+
+    fn years_for_test(from: i32, to: i32) -> CalendarYears {
+        CalendarYears {
+            requested_from: from,
+            requested_to: to,
+            effective_from: from,
+            effective_to: to,
+        }
+    }
+
+    #[test]
+    fn raw_monthly_buckets_utc_months_and_flags_coverage() {
+        let modis = [
+            raw_hotspot(Sensor::ModisTerra, "2012-01-31T23:59:59Z", 10.0),
+            raw_hotspot(Sensor::ModisAqua, "2012-02-01T00:00:00Z", 5.0),
+            raw_hotspot(Sensor::ModisTerra, "2012-02-15T12:00:00Z", 2.5),
+        ];
+        let viirs = [raw_hotspot(Sensor::ViirsSNPP, "2012-02-10T01:00:00Z", 1.5)];
+        let rows = aggregate_raw_monthly(&modis, &viirs, &years_for_test(2011, 2012));
+        assert_eq!(rows.len(), 24);
+        assert!(rows.windows(2).all(|w| (w[0].year, w[0].month) < (w[1].year, w[1].month)));
+        let get = |y, m| rows.iter().find(|r| r.year == y && r.month == m).unwrap();
+        let jan = get(2012, 1);
+        assert_eq!((jan.modis_count, jan.modis_frp_sum), (1, 10.0));
+        assert!(jan.viirs_covered);
+        assert_eq!(jan.viirs_count, 0);
+        let feb = get(2012, 2);
+        assert_eq!((feb.modis_count, feb.modis_frp_sum), (2, 7.5));
+        assert_eq!((feb.viirs_count, feb.viirs_frp_sum), (1, 1.5));
+        let dec11 = get(2011, 12);
+        assert!(dec11.modis_covered && !dec11.viirs_covered);
+        assert_eq!((dec11.modis_count, dec11.modis_frp_sum), (0, 0.0));
+        assert!(dec11.platform_counts.is_empty());
+        assert_eq!(jan.platform_counts, BTreeMap::from([(Sensor::ModisTerra, 1)]));
+        assert_eq!(
+            feb.platform_counts,
+            BTreeMap::from([
+                (Sensor::ModisTerra, 1),
+                (Sensor::ModisAqua, 1),
+                (Sensor::ViirsSNPP, 1)
+            ])
+        );
+        assert!(rows.iter().all(|r| {
+            r.platform_counts.values().sum::<u64>() == r.modis_count + r.viirs_count
+        }));
+    }
+
+    #[test]
+    fn raw_monthly_starts_at_first_modis_month_and_ignores_out_of_window() {
+        let modis = [raw_hotspot(Sensor::ModisTerra, "2001-01-01T00:00:00Z", 1.0)];
+        let rows = aggregate_raw_monthly(&modis, &[], &years_for_test(2000, 2001));
+        assert_eq!((rows[0].year, rows[0].month), (2000, 11));
+        assert_eq!(rows.len(), 14);
+        assert_eq!(rows.iter().map(|r| r.modis_count).sum::<u64>(), 1);
+        let outside = [raw_hotspot(Sensor::ModisTerra, "2005-01-01T00:00:00Z", 1.0)];
+        let rows = aggregate_raw_monthly(&outside, &[], &years_for_test(2000, 2001));
+        assert_eq!(rows.iter().map(|r| r.modis_count).sum::<u64>(), 0);
+    }
+
+    #[test]
+    fn calendar_response_raw_monthly_matches_window_and_raw_total() {
+        let query = parse_calendar_params(&calendar_params("Turkey", Some(2012), Some(2013), None))
+            .expect("valid range");
+        let modis = [
+            raw_hotspot(Sensor::ModisTerra, "2012-05-01T10:00:00Z", 3.0),
+            raw_hotspot(Sensor::ModisAqua, "2013-12-31T10:00:00Z", 4.0),
+        ];
+        let viirs = [raw_hotspot(Sensor::ViirsSNPP, "2013-01-01T00:00:00Z", 2.0)];
+        let raw_monthly = aggregate_raw_monthly(&modis, &viirs, &query.years);
+        let resp = build_calendar_response(
+            &query,
+            modis.len() + viirs.len(),
+            &[],
+            Vec::new(),
+            raw_monthly,
+            Vec::new(),
+            Vec::new(),
+            &pyrosync_core::uncertainty::UncertaintyParams::default(),
+        );
+        let json = serde_json::to_value(&resp).unwrap();
+        let rows = json["raw_monthly"].as_array().unwrap();
+        assert_eq!(rows.len(), 24);
+        let total: u64 = rows
+            .iter()
+            .map(|r| r["modis_count"].as_u64().unwrap() + r["viirs_count"].as_u64().unwrap())
+            .sum();
+        assert_eq!(total, json["counts"]["raw_detections"].as_u64().unwrap());
+        for r in rows {
+            let sum: u64 = r["platform_counts"]
+                .as_object()
+                .unwrap()
+                .values()
+                .map(|v| v.as_u64().unwrap())
+                .sum();
+            assert_eq!(
+                sum,
+                r["modis_count"].as_u64().unwrap() + r["viirs_count"].as_u64().unwrap()
+            );
+        }
+        let may = rows.iter().find(|r| r["year"] == 2012 && r["month"] == 5).unwrap();
+        assert_eq!(may["platform_counts"], serde_json::json!({ "ModisTerra": 1 }));
+        let jan13 = rows.iter().find(|r| r["year"] == 2013 && r["month"] == 1).unwrap();
+        assert_eq!(jan13["platform_counts"], serde_json::json!({ "ViirsSNPP": 1 }));
+        assert_eq!(rows[0]["platform_counts"], serde_json::json!({}));
     }
 
     fn calendar_cells_for_test(year: i32, month: u32, count: u64) -> Vec<CalendarCell> {
@@ -3617,6 +3849,9 @@ mod tests {
             sfai: None,
             quality_flags: Vec::new(),
             conformal: None,
+            count_recovered: None,
+            count_recovered_lower: None,
+            count_recovered_upper: None,
         }]
     }
 
@@ -3635,6 +3870,7 @@ mod tests {
             &query,
             0,
             &[],
+            Vec::new(),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -3663,6 +3899,7 @@ mod tests {
             Vec::new(),
             Vec::new(),
             Vec::new(),
+            Vec::new(),
             &default_uncertainty,
         );
         assert!(empty_resp.calendar.is_empty());
@@ -3679,6 +3916,7 @@ mod tests {
             &query,
             0,
             &[],
+            Vec::new(),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -3701,6 +3939,7 @@ mod tests {
             &query,
             0,
             &[],
+            Vec::new(),
             Vec::new(),
             Vec::new(),
             vec![SensorYearFailure {

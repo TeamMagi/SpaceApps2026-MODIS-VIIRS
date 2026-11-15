@@ -1,0 +1,247 @@
+{
+  "generated": "2026-11-15T00:00:00Z",
+  "method": "year-blocked LOYO, bootstrap 90% CI, B=1000, seed=42",
+  "source": "docs/DOGRULAMA_PAKETI.md 4.4 reference run",
+  "regions": {
+    "Brazil": {
+      "model_error": 0.0358,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.7078,
+          "ci90": [
+            1.6039,
+            1.7394
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.3137,
+          "ci90": [
+            0.1924,
+            0.3696
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Angola": {
+      "model_error": 0.0288,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.6723,
+          "ci90": [
+            1.5757,
+            1.7154
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.1152,
+          "ci90": [
+            0.0595,
+            0.1133
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Australia": {
+      "model_error": 0.0406,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.8216,
+          "ci90": [
+            1.7118,
+            1.8495
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.3403,
+          "ci90": [
+            0.1750,
+            0.4248
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Indonesia": {
+      "model_error": 0.0846,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 2.0269,
+          "ci90": [
+            1.8308,
+            2.0522
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.7178,
+          "ci90": [
+            0.4033,
+            0.9061
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "India": {
+      "model_error": 0.0530,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 2.1888,
+          "ci90": [
+            2.0342,
+            2.2434
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.1758,
+          "ci90": [
+            0.0690,
+            0.1813
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Turkey": {
+      "model_error": 0.0556,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.6137,
+          "ci90": [
+            1.4762,
+            1.6448
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.3971,
+          "ci90": [
+            0.2184,
+            0.4682
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "United_States": {
+      "model_error": 0.0343,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.5983,
+          "ci90": [
+            1.4712,
+            1.6512
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.2107,
+          "ci90": [
+            0.1277,
+            0.2191
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Canada": {
+      "model_error": 0.1025,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.8990,
+          "ci90": [
+            1.6989,
+            1.8898
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.7967,
+          "ci90": [
+            0.3936,
+            0.9952
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Russian_Federation": {
+      "model_error": 0.0368,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.7651,
+          "ci90": [
+            1.6710,
+            1.7895
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.3925,
+          "ci90": [
+            0.2535,
+            0.4714
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    },
+    "Kazakhstan": {
+      "model_error": 0.0442,
+      "baselines": [
+        {
+          "name": "b0_unnormalized",
+          "baseline_error": 1.5981,
+          "ci90": [
+            1.4855,
+            1.6228
+          ],
+          "decision": "pass"
+        },
+        {
+          "name": "b1_persistence",
+          "baseline_error": 0.6187,
+          "ci90": [
+            0.4275,
+            0.7329
+          ],
+          "decision": "pass"
+        }
+      ],
+      "decision": "pass"
+    }
+  }
+}

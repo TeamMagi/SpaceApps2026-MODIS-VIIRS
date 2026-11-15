@@ -10,7 +10,7 @@ use crate::vza;
 
 pub(crate) const MATCH_RADIUS_KM: f64 = 2.0;
 // 180 minutes: orbital geometry separates MODIS and VIIRS overpasses of the same fire
-// (min 34 min, median ~158 min in live FIRMS data), so a narrow window yields zero matches.
+// (min 34 min, median ~158 min in four live NRT regions), so a narrow window yields few matches.
 pub(crate) const MATCH_WINDOW_SECS: i64 = 10_800;
 // Radiometric comparison pairs need near-coincident overpasses; the literature accepts 5 min
 // and at most 20 min.
@@ -18,6 +18,8 @@ pub(crate) const SIMULTANEOUS_WINDOW_SECS: i64 = 1_200;
 // Sub-pixels of one VIIRS overpass over a footprint are seconds apart, while consecutive
 // platforms are at least 43 min apart, so 10 min separates passes without splitting a swath.
 pub(crate) const VIIRS_PASS_WINDOW_SECS: i64 = 600;
+// A 1 km nadir pixel's half-diagonal is ~0.71 km; allow for VIIRS geolocation tolerance.
+const MIN_FOOTPRINT_RADIUS_KM: f64 = 0.75;
 
 /// Output of [`harmonize_with_links`]: the harmonized hotspots plus, for every input row,
 /// which output it became.
@@ -53,12 +55,13 @@ pub struct HarmonizeLinks {
 /// 4. Quality-priority fusion (VIIRS preferred) and non-mutating MODIS VZA correction
 ///
 /// Cross-sensor semantics: `HotspotSource::Matched` represents observations of the same
-/// fire event by both sensors rather than simultaneous observations. In live FIRMS data,
-/// co-located MODIS/VIIRS pairs arrive at least 34 minutes apart with a median of ~158 minutes;
-/// the previous 5-minute window produced zero matches. The 180-minute window exists to
-/// prevent double-counting the same fire event, not for simultaneous radiometric comparison.
-/// VZA coefficient calibration requires simultaneous pairs and cannot be performed from FIRMS
-/// NRT data alone—it requires granule- or archive-level imagery.
+/// fire event by both sensors rather than simultaneous observations. In four live FIRMS NRT
+/// regions, co-located MODIS/VIIRS pairs were at least 34 minutes apart (median ~158 minutes).
+/// In the 2000–2025 country archive, near-simultaneous Aqua/S-NPP pairs are plentiful and form
+/// `simultaneous_matched` for measuring `k_c`; Terra does not coincide with VIIRS, and S-NPP /
+/// NOAA-20 are ~50 minutes apart, so the 180-minute window remains useful for same-fire matching.
+/// The VZA curve and VIIRS sigma 0.08 remain literature-based/provisional, not re-fitted here;
+/// archive pairs allow a diagnostic check, which this code does not perform.
 pub fn harmonize(modis: Vec<Hotspot>, viirs: Vec<Hotspot>) -> Vec<HarmonizedHotspot> {
     harmonize_with_config(modis, viirs, &PipelineConfig::default())
 }
@@ -283,9 +286,21 @@ fn eligible_distance(m: &Hotspot, v: &Hotspot, config: &MatchingConfig) -> Optio
     (dist <= config.radius_km).then_some(dist)
 }
 
+fn footprint_radius_km(m: &Hotspot, config: &MatchingConfig) -> f64 {
+    if m.scan.is_finite() && m.scan > 0.0 && m.track.is_finite() && m.track > 0.0 {
+        (0.5 * m.scan.hypot(m.track))
+            .max(MIN_FOOTPRINT_RADIUS_KM)
+            .min(config.radius_km)
+    } else {
+        config.radius_km
+    }
+}
+
 /// Picks the VIIRS pass of a MODIS observation from the observations it owns: the best-scoring
-/// one seeds the pass, and every owned observation within `VIIRS_PASS_WINDOW_SECS` of the seed
-/// joins it. Returns indices with the seed first, the rest ascending; `None` if nothing is owned.
+/// one seeds the pass anywhere within the matching radius. Other owned observations join within
+/// `VIIRS_PASS_WINDOW_SECS` of the seed and the MODIS-centred scan/track half-diagonal (at least
+/// 0.75 km, capped at the matching radius); missing or invalid dimensions use the matching radius.
+/// Returns indices with the seed first, the rest ascending; `None` if nothing is owned.
 fn viirs_pass_members(
     m: &FleetObservation,
     owned: &[usize],
@@ -306,11 +321,20 @@ fn viirs_pass_members(
     let (seed, _) = seed?;
 
     let seed_time = viirs_fleet[seed].hotspot.acquired;
+    let radius_km = footprint_radius_km(mh, config);
     let mut pass = vec![seed];
     pass.extend(owned.iter().copied().filter(|&j| {
         j != seed
-            && (viirs_fleet[j].hotspot.acquired - seed_time).num_seconds().abs()
+            && (viirs_fleet[j].hotspot.acquired - seed_time)
+                .num_seconds()
+                .abs()
                 <= VIIRS_PASS_WINDOW_SECS
+            && haversine_km(
+                mh.lat,
+                mh.lon,
+                viirs_fleet[j].hotspot.lat,
+                viirs_fleet[j].hotspot.lon,
+            ) <= radius_km
     }));
     Some(pass)
 }
@@ -2213,6 +2237,281 @@ mod tests {
 
     fn near(lat_offset: f64) -> f64 {
         39.0 + lat_offset
+    }
+
+    #[test]
+    fn footprint_radius_uses_half_diagonal_bounds_and_invalid_dimension_fallback() {
+        let mut m = make_hotspot(
+            Sensor::ModisTerra,
+            near(0.0),
+            32.0,
+            0,
+            50.0,
+            Confidence::Nominal,
+        );
+        let mut config = MatchingConfig::default();
+        for (scan, track, expected) in [
+            (1.0, 1.0, 0.75),
+            (1.2, 1.6, 1.0),
+            (4.8, 2.0, 2.0),
+            (0.0, 1.0, 2.0),
+            (1.0, 0.0, 2.0),
+            (-1.0, 1.0, 2.0),
+            (1.0, -1.0, 2.0),
+            (f64::NAN, 1.0, 2.0),
+            (1.0, f64::NAN, 2.0),
+            (f64::INFINITY, 1.0, 2.0),
+            (1.0, f64::INFINITY, 2.0),
+        ] {
+            m.scan = scan;
+            m.track = track;
+            assert!((footprint_radius_km(&m, &config) - expected).abs() < 1e-12);
+        }
+        m.scan = 1.0;
+        m.track = 1.0;
+        config.radius_km = 0.5;
+        assert_eq!(footprint_radius_km(&m, &config), 0.5);
+    }
+
+    #[test]
+    fn nadir_modis_footprint_keeps_distant_pass_pixel_viirs_only() {
+        let mut m = make_hotspot(
+            Sensor::ModisTerra,
+            near(0.0),
+            32.0,
+            0,
+            50.0,
+            Confidence::Nominal,
+        );
+        m.scan = 1.0;
+        m.track = 1.0;
+        let viirs = vec![
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0027),
+                32.0,
+                300,
+                10.0,
+                Confidence::Nominal,
+            ),
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0135),
+                32.0,
+                300,
+                20.0,
+                Confidence::Nominal,
+            ),
+        ];
+
+        let links = harmonize_with_links(vec![m], viirs);
+
+        assert_eq!(links.hotspots.len(), 2);
+        assert_eq!(links.hotspots[0].source, HotspotSource::Matched);
+        assert_eq!(links.hotspots[0].frp_corrected, 10.0);
+        assert_eq!(links.hotspots[0].n_obs, 2);
+        assert_eq!(links.hotspots[1].source, HotspotSource::ViirsOnly);
+        assert_eq!(links.hotspots[1].frp_corrected, 20.0);
+        assert_eq!(links.matched_pairs, 1);
+        assert_eq!(links.viirs_aggregated, 0);
+        assert_eq!(links.viirs_links, vec![Some(0), Some(1)]);
+    }
+
+    #[test]
+    fn scan_edge_modis_footprint_aggregates_distant_pass_pixel() {
+        let mut m = make_hotspot(
+            Sensor::ModisTerra,
+            near(0.0),
+            32.0,
+            0,
+            50.0,
+            Confidence::Nominal,
+        );
+        m.scan = 4.8;
+        m.track = 2.0;
+        let viirs = vec![
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0027),
+                32.0,
+                300,
+                10.0,
+                Confidence::Nominal,
+            ),
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0135),
+                32.0,
+                300,
+                20.0,
+                Confidence::Nominal,
+            ),
+        ];
+
+        let links = harmonize_with_links(vec![m], viirs);
+
+        assert_eq!(links.hotspots.len(), 1);
+        assert_eq!(links.hotspots[0].source, HotspotSource::Matched);
+        assert_eq!(links.hotspots[0].frp_corrected, 30.0);
+        assert_eq!(links.hotspots[0].n_obs, 3);
+        assert_eq!(links.matched_pairs, 1);
+        assert_eq!(links.viirs_aggregated, 1);
+        assert_eq!(links.viirs_links, vec![Some(0); 2]);
+    }
+
+    #[test]
+    fn unknown_modis_footprint_preserves_matching_radius_aggregation() {
+        let mut m = make_hotspot(
+            Sensor::ModisTerra,
+            near(0.0),
+            32.0,
+            0,
+            50.0,
+            Confidence::Nominal,
+        );
+        m.scan = 0.0;
+        m.track = 0.0;
+        let viirs = vec![
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0027),
+                32.0,
+                300,
+                10.0,
+                Confidence::Nominal,
+            ),
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0135),
+                32.0,
+                300,
+                20.0,
+                Confidence::Nominal,
+            ),
+        ];
+
+        let links = harmonize_with_links(vec![m], viirs);
+
+        assert_eq!(links.hotspots.len(), 1);
+        assert_eq!(links.hotspots[0].source, HotspotSource::Matched);
+        assert_eq!(links.hotspots[0].frp_corrected, 30.0);
+        assert_eq!(links.hotspots[0].n_obs, 3);
+        assert_eq!(links.matched_pairs, 1);
+        assert_eq!(links.viirs_aggregated, 1);
+        assert_eq!(links.viirs_links, vec![Some(0); 2]);
+    }
+
+    #[test]
+    fn viirs_pass_seed_can_lie_outside_modis_footprint() {
+        let mut m = make_hotspot(
+            Sensor::ModisTerra,
+            near(0.0),
+            32.0,
+            0,
+            50.0,
+            Confidence::Nominal,
+        );
+        m.scan = 1.0;
+        m.track = 1.0;
+        let viirs = vec![
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0135),
+                32.0,
+                300,
+                10.0,
+                Confidence::Nominal,
+            ),
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(0.0162),
+                32.0,
+                300,
+                20.0,
+                Confidence::Nominal,
+            ),
+        ];
+
+        let links = harmonize_with_links(vec![m], viirs);
+
+        assert_eq!(links.hotspots.len(), 2);
+        assert_eq!(links.hotspots[0].source, HotspotSource::Matched);
+        assert_eq!(links.hotspots[0].frp_corrected, 10.0);
+        assert_eq!(links.hotspots[1].source, HotspotSource::ViirsOnly);
+        assert_eq!(links.matched_pairs, 1);
+        assert_eq!(links.viirs_aggregated, 0);
+        assert_eq!(links.viirs_links, vec![Some(0), Some(1)]);
+    }
+
+    #[test]
+    fn mixed_modis_footprints_conserve_viirs_frp_and_links() {
+        let modis = [(0.0, 1.0, 1.0), (0.05, 2.0, 1.0)]
+            .into_iter()
+            .map(|(offset, scan, track)| {
+                let mut m = make_hotspot(
+                    Sensor::ModisTerra,
+                    near(offset),
+                    32.0,
+                    0,
+                    50.0,
+                    Confidence::Nominal,
+                );
+                m.scan = scan;
+                m.track = track;
+                m
+            })
+            .collect::<Vec<_>>();
+        let viirs = [
+            (0.003, 1.0),
+            (-0.006, 2.0),
+            (0.0135, 4.0),
+            (0.053, 8.0),
+            (0.044, 16.0),
+            (0.0635, 32.0),
+        ]
+        .into_iter()
+        .map(|(offset, frp)| {
+            make_hotspot(
+                Sensor::ViirsSNPP,
+                near(offset),
+                32.0,
+                300,
+                frp,
+                Confidence::Nominal,
+            )
+        })
+        .collect::<Vec<_>>();
+        let config = PipelineConfig::default();
+        let expected = reference_harmonize_with_links_config(modis.clone(), viirs.clone(), &config);
+        let brute_force = harmonize_brute_force(modis.clone(), viirs.clone());
+
+        let links = harmonize_with_links(modis.clone(), viirs.clone());
+
+        assert_links_bits_eq(&links, &expected, "mixed MODIS footprints");
+        assert_harmonized_eq(&links.hotspots, &brute_force);
+        assert_links_valid(&modis, &viirs, &links);
+        assert_eq!(links.hotspots.len(), 4);
+        assert_eq!(links.matched_pairs, 2);
+        assert_eq!(links.viirs_aggregated, 2);
+        assert!(links.viirs_links.iter().all(Option::is_some));
+        let output_frp: f64 = links
+            .hotspots
+            .iter()
+            .filter(|h| matches!(h.source, HotspotSource::Matched | HotspotSource::ViirsOnly))
+            .map(|h| h.frp_corrected)
+            .sum();
+        let input_frp: f64 = viirs.iter().map(|h| h.frp).sum();
+        assert!((output_frp - input_frp).abs() < 1e-12);
+        for (j, expected_frp) in [(0, 3.0), (1, 3.0), (3, 24.0), (4, 24.0)] {
+            let h = &links.hotspots[links.viirs_links[j].unwrap()];
+            assert_eq!(h.source, HotspotSource::Matched);
+            assert_eq!(h.frp_corrected, expected_frp);
+        }
+        for j in [2, 5] {
+            let h = &links.hotspots[links.viirs_links[j].unwrap()];
+            assert_eq!(h.source, HotspotSource::ViirsOnly);
+            assert_eq!(h.frp_corrected, viirs[j].frp);
+        }
     }
 
     #[test]

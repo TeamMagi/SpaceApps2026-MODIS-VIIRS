@@ -30,5 +30,9 @@ tools/
 # Use data/* instead of data/ so the negation can take effect
 data/*
 !data/sample/
+# Türkiye case study figures imported by the web build (web/src/lib/caseStudy.ts)
+!data/case-study/
+data/case-study/*/*
+!data/case-study/*/stats.json
 # The seed container reads the canonical archive set from the image, so it must stay in context
 !data/archive-set.json

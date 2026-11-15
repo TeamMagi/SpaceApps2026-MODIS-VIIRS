@@ -10,7 +10,7 @@ import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
 import { WIDE_UNCERTAINTY_THRESHOLD, formatFrpInterval, relativeUncertaintyWidth } from "../../lib/format";
-import { annualMeanFrp, type AnnualFrpPoint } from "../../lib/frpSeries";
+import { annualMeanFrp, type AnnualFrpPoint } from "../../lib/annualFrp";
 import { resolveActiveYear } from "../../lib/radialCalendar";
 import { yearTicks } from "../../lib/yearTicks";
 import { resolveMonthForYear, useAppStore } from "../../store/useAppStore";

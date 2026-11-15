@@ -14,5 +14,7 @@ pub mod conformal;
 pub mod static_mask;
 pub mod sama;
 pub mod events;
+pub mod density;
 pub mod quality;
 pub mod fusion;
+pub mod pre_aqua;

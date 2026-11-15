@@ -6,10 +6,10 @@
 //! Usage:
 //!   ARCHIVE_CACHE_DIR=../../.cache/firms-archive \
 //!     cargo run --release -p pyrosync-firms --example validation_suite -- \
-//!     <Country>... [--from 2000] [--to 2025] [--out <csv>] [--bootstrap 1000] [--seed 42]
+//!     <Country>... [--from 2000] [--to 2025] [--out <csv>] [--gate-json <path>] [--bootstrap 1000] [--seed 42]
 
 use anyhow::{Context, Result, bail};
-use chrono::Datelike;
+use chrono::{Datelike, SecondsFormat, Utc};
 use pyrosync_core::calendar::build_calendar_with;
 use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::effort::FIRST_TERRA_AQUA_MONTH;
@@ -64,7 +64,9 @@ impl Metric {
     fn extract(self, summary: &AnnualSummary) -> Option<f64> {
         match self {
             Self::Raw => (summary.raw > 0).then_some(summary.raw as f64),
-            Self::CountNormalized => summary.count_normalized.filter(|v| v.is_finite() && *v > 0.0),
+            Self::CountNormalized => summary
+                .count_normalized
+                .filter(|v| v.is_finite() && *v > 0.0),
             Self::TotalFrp => summary.total_frp.filter(|v| v.is_finite() && *v > 0.0),
             Self::FYear => summary.f_year.filter(|v| v.is_finite() && *v > 0.0),
         }
@@ -121,6 +123,14 @@ enum GateVerdict {
 }
 
 impl GateVerdict {
+    fn as_json_str(self) -> &'static str {
+        match self {
+            Self::Pass => "pass",
+            Self::Uncertain => "inconclusive",
+            Self::Fail => "fail",
+        }
+    }
+
     fn as_str(self) -> &'static str {
         match self {
             Self::Pass => "GEÇTİ",
@@ -135,6 +145,7 @@ struct Args {
     from: i32,
     to: i32,
     out: Option<PathBuf>,
+    gate_json: Option<PathBuf>,
     bootstrap: usize,
     seed: u64,
 }
@@ -215,7 +226,7 @@ struct GateRow {
 fn print_usage() {
     println!(
         "\
-Usage: validation_suite <Country>... [--from {DEFAULT_FROM_YEAR}] [--to {DEFAULT_TO_YEAR}] [--out <csv>] [--bootstrap {DEFAULT_BOOTSTRAP}] [--seed {DEFAULT_SEED}]
+Usage: validation_suite <Country>... [--from {DEFAULT_FROM_YEAR}] [--to {DEFAULT_TO_YEAR}] [--out <csv>] [--gate-json <path>] [--bootstrap {DEFAULT_BOOTSTRAP}] [--seed {DEFAULT_SEED}]
 
 Run internal validation tests (Placebo step test, LOYO normalization, Model vs Baseline gate).
 Archive directory: ARCHIVE_CACHE_DIR env var, or {DEFAULT_ARCHIVE_CACHE_DIR}."
@@ -228,6 +239,7 @@ fn parse_args() -> Result<Option<Args>> {
     let mut from = DEFAULT_FROM_YEAR;
     let mut to = DEFAULT_TO_YEAR;
     let mut out: Option<PathBuf> = None;
+    let mut gate_json = None;
     let mut bootstrap = DEFAULT_BOOTSTRAP;
     let mut seed = DEFAULT_SEED;
 
@@ -252,6 +264,10 @@ fn parse_args() -> Result<Option<Args>> {
             "--out" => {
                 let val = raw_args.next().context("missing value for --out")?;
                 out = Some(PathBuf::from(val));
+            }
+            "--gate-json" => {
+                let val = raw_args.next().context("missing value for --gate-json")?;
+                gate_json = Some(PathBuf::from(val));
             }
             "--bootstrap" => {
                 let val = raw_args.next().context("missing value for --bootstrap")?;
@@ -287,6 +303,7 @@ fn parse_args() -> Result<Option<Args>> {
         from,
         to,
         out,
+        gate_json,
         bootstrap,
         seed,
     }))
@@ -516,8 +533,7 @@ fn exact_two_sided_wilcoxon(diffs: &[f64]) -> (Option<f64>, Option<f64>) {
         let t = 1.0 / (1.0 + 0.2316419 * z);
         let poly = t
             * (0.319381530
-                + t * (-0.356563782
-                    + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+                + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
         let pdf = (-0.5 * z * z).exp() / (2.0 * std::f64::consts::PI).sqrt();
         return (Some(w_plus), Some((2.0 * pdf * poly).clamp(0.0, 1.0)));
     }
@@ -848,7 +864,16 @@ fn print_placebo_table(rows: &[PlaceboRow]) {
     println!("\n[A. Placebo Step Test]");
     println!(
         "{:<13} {:<9} {:<17} {:>9} {:>9} {:>5} {:>8} {:>8} {:>8} {:>7}",
-        "seam", "years", "metric", "log_step", "abs_step", "n_pl", "pl_med", "pl_p90", "emp_p", "pct_rk"
+        "seam",
+        "years",
+        "metric",
+        "log_step",
+        "abs_step",
+        "n_pl",
+        "pl_med",
+        "pl_p90",
+        "emp_p",
+        "pct_rk"
     );
     println!("{}", "-".repeat(103));
     for r in rows {
@@ -873,7 +898,16 @@ fn print_loyo_table(rows: &[LoyoYearRow]) {
     println!("\n[B. LOYO Normalization Test (VIIRS era)]");
     println!(
         "{:>4} {:>10} {:>10} {:>4} {:>11} {:>11} {:>11} {:>8} {:>8} {:>8}",
-        "year", "total", "modis_obs", "skip", "pred_loyo", "pred_b0", "pred_b1", "err_mod", "err_b0", "err_b1"
+        "year",
+        "total",
+        "modis_obs",
+        "skip",
+        "pred_loyo",
+        "pred_b0",
+        "pred_b1",
+        "err_mod",
+        "err_b0",
+        "err_b1"
     );
     println!("{}", "-".repeat(106));
     for r in rows {
@@ -915,7 +949,15 @@ fn print_gate_table(title: &str, rows: &[GateRow]) {
     println!("\n[{title}]");
     println!(
         "{:<20} {:<16} {:>4} {:>9} {:>9} {:>10} {:>10} {:>10} {:<10}",
-        "scope", "baseline", "n_yr", "err_model", "err_base", "diff(B-M)", "ci90_lo", "ci90_hi", "verdict"
+        "scope",
+        "baseline",
+        "n_yr",
+        "err_model",
+        "err_base",
+        "diff(B-M)",
+        "ci90_lo",
+        "ci90_hi",
+        "verdict"
     );
     println!("{}", "-".repeat(108));
     for r in rows {
@@ -1020,7 +1062,8 @@ fn write_csv(
     {
         std::fs::create_dir_all(parent)?;
     }
-    let file = File::create(path).with_context(|| format!("failed to create {}", path.display()))?;
+    let file =
+        File::create(path).with_context(|| format!("failed to create {}", path.display()))?;
     let mut w = BufWriter::new(file);
     writeln!(
         w,
@@ -1102,6 +1145,82 @@ fn write_csv(
     Ok(())
 }
 
+fn gate_json_document(
+    countries: &[String],
+    rows: &[GateRow],
+    bootstrap: usize,
+    seed: u64,
+) -> Result<serde_json::Value> {
+    let mut regions = BTreeMap::new();
+    for country in countries {
+        let mut baselines = Vec::new();
+        let mut decision = GateVerdict::Pass;
+        let mut model_error = None;
+        for baseline in BaselineKind::ALL {
+            let row = rows
+                .iter()
+                .find(|r| r.country == *country && r.baseline == baseline)
+                .with_context(|| format!("missing gate for {country} {}", baseline.as_str()))?;
+            let (Some(em), Some(eb), Some(lo), Some(hi), Some(verdict)) = (
+                row.mean_err_model,
+                row.mean_err_baseline,
+                row.ci90_lo,
+                row.ci90_hi,
+                row.verdict,
+            ) else {
+                bail!("gate unavailable for {country} {}", baseline.as_str());
+            };
+            if ![em, eb, lo, hi].iter().all(|v| v.is_finite()) {
+                bail!(
+                    "non-finite gate statistics for {country} {}",
+                    baseline.as_str()
+                );
+            }
+            model_error.get_or_insert(em);
+            decision = match (decision, verdict) {
+                (GateVerdict::Fail, _) | (_, GateVerdict::Fail) => GateVerdict::Fail,
+                (GateVerdict::Uncertain, _) | (_, GateVerdict::Uncertain) => GateVerdict::Uncertain,
+                _ => GateVerdict::Pass,
+            };
+            baselines.push(serde_json::json!({
+                "name": baseline.as_str(),
+                "baseline_error": eb,
+                "ci90": [lo, hi],
+                "decision": verdict.as_json_str(),
+            }));
+        }
+        regions.insert(
+            country,
+            serde_json::json!({
+                "model_error": model_error,
+                "baselines": baselines,
+                "decision": decision.as_json_str(),
+            }),
+        );
+    }
+    Ok(serde_json::json!({
+        "generated": Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
+        "method": format!("year-blocked LOYO, bootstrap 90% CI, B={bootstrap}, seed={seed}"),
+        "regions": regions,
+    }))
+}
+
+fn write_gate_json(path: &PathBuf, args: &Args, rows: &[GateRow]) -> Result<()> {
+    let document = gate_json_document(&args.countries, rows, args.bootstrap, args.seed)?;
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)?;
+    }
+    let file =
+        File::create(path).with_context(|| format!("failed to create {}", path.display()))?;
+    let mut writer = BufWriter::new(file);
+    serde_json::to_writer_pretty(&mut writer, &document)?;
+    writeln!(writer)?;
+    writer.flush()?;
+    Ok(())
+}
+
 struct CountryValidation {
     placebo_rows: Vec<PlaceboRow>,
     loyo_rows: Vec<LoyoYearRow>,
@@ -1139,8 +1258,8 @@ async fn analyze_country(
                         viirs.append(&mut hotspots);
                     }
                 }
-                Err(ArchiveError::NotCached { .. }) if archive.sensor_year_complete(sensor, year) => {
-                }
+                Err(ArchiveError::NotCached { .. })
+                    if archive.sensor_year_complete(sensor, year) => {}
                 Err(err) => {
                     return Err(err).with_context(|| {
                         format!("failed to load {sensor:?} {country} {year} from archive")
@@ -1202,7 +1321,10 @@ async fn analyze_country(
     );
     print_placebo_table(&placebo_rows);
     print_loyo_table(&loyo_rows);
-    print_gate_table("C. Model vs Baseline Gate (90% year-blocked bootstrap CI)", &gate_rows);
+    print_gate_table(
+        "C. Model vs Baseline Gate (90% year-blocked bootstrap CI)",
+        &gate_rows,
+    );
 
     Ok(CountryValidation {
         placebo_rows,
@@ -1260,12 +1382,25 @@ async fn main() -> Result<()> {
                 stream_id,
             ));
         }
-        print_gate_table("POOLED MODEL vs BASELINE GATE (year-blocked 90% CI)", &all_gate);
+        print_gate_table(
+            "POOLED MODEL vs BASELINE GATE (year-blocked 90% CI)",
+            &all_gate,
+        );
     }
 
     if let Some(ref out_path) = args.out {
-        write_csv(out_path, &all_placebo, &pooled_placebo, &all_loyo, &all_gate)?;
+        write_csv(
+            out_path,
+            &all_placebo,
+            &pooled_placebo,
+            &all_loyo,
+            &all_gate,
+        )?;
         println!("\nCSV written: {}", out_path.display());
+    }
+    if let Some(ref path) = args.gate_json {
+        write_gate_json(path, &args, &all_gate)?;
+        println!("\nGate JSON written: {}", path.display());
     }
 
     println!(
@@ -1274,4 +1409,193 @@ async fn main() -> Result<()> {
         overall_t0.elapsed().as_secs_f64()
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn injected_seam_step_tops_placebo_distribution_but_control_does_not() {
+        let series = |step: f64| {
+            (2000..=2025)
+                .map(|year| {
+                    let phase = if year == 2012 { 2011 } else { year };
+                    let log_value =
+                        0.1 * (phase as f64).sin() + if year >= 2012 { step } else { 0.0 };
+                    let value = 1000.0 * log_value.exp();
+                    (
+                        year,
+                        AnnualSummary {
+                            raw: value.round() as u64,
+                            count_normalized: Some(value),
+                            total_frp: Some(value),
+                            f_year: Some(value),
+                        },
+                    )
+                })
+                .collect()
+        };
+        for (step, expected_rank) in [(2.0, 1.0), (0.0, 0.0)] {
+            let rows = compute_placebo_rows("Synthetic", &series(step));
+            for row in rows.iter().filter(|r| r.seam == "snpp_2012") {
+                assert_eq!(row.n_placebo, 19);
+                assert_eq!(row.pct_rank, Some(expected_rank));
+                assert!((row.real_log_step.unwrap() - step).abs() < 0.002);
+                let expected_p = if step > 0.0 { 0.05 } else { 1.0 };
+                assert_eq!(row.empirical_p, Some(expected_p));
+            }
+        }
+    }
+
+    fn synthetic_months() -> HashMap<(i32, u32), MonthBucket> {
+        let mut months = HashMap::new();
+        for year in 2012..=2019 {
+            for month in 1..=12 {
+                let mut platforms = BTreeSet::from([Sensor::ModisTerra, Sensor::ViirsSNPP]);
+                let omega = if year < 2016 {
+                    2
+                } else {
+                    platforms.insert(Sensor::ViirsNOAA20);
+                    4
+                };
+                let modis_observable = (year - 2010) as u64 * 10 + u64::from(month);
+                months.insert(
+                    (year, month),
+                    MonthBucket {
+                        platforms,
+                        total: modis_observable * omega,
+                        modis_observable,
+                    },
+                );
+            }
+        }
+        months
+    }
+
+    #[test]
+    fn loyo_recovers_known_omega_for_two_configurations() {
+        let rows = compute_loyo_rows("Synthetic", 2012, 2019, &synthetic_months());
+        assert_eq!(rows.len(), 8);
+        for row in rows {
+            let omega: f64 = if row.year < 2016 { 2.0 } else { 4.0 };
+            assert_eq!(row.skipped_months, 0);
+            assert!((row.pred_loyo.unwrap() - row.modis_observable as f64).abs() < 1e-10);
+            assert!((row.total_obs as f64 / row.pred_loyo.unwrap() - omega).abs() < 1e-12);
+            assert!(row.err_loyo.unwrap() < 1e-12);
+            assert!((row.err_b0.unwrap() - omega.ln()).abs() < 1e-12);
+            assert!(row.err_loyo.unwrap() < row.err_b0.unwrap() * 0.01);
+        }
+    }
+
+    #[test]
+    fn loyo_excludes_every_month_of_the_held_out_year() {
+        let mut months = synthetic_months();
+        for (&(year, _), bucket) in &mut months {
+            if year == 2015 {
+                bucket.total *= 3;
+            }
+        }
+        let rows = compute_loyo_rows("Synthetic", 2012, 2019, &months);
+        let held_out = rows.iter().find(|r| r.year == 2015).unwrap();
+        assert!(
+            (held_out.pred_loyo.unwrap() - 3.0 * held_out.modis_observable as f64).abs() < 1e-10
+        );
+        assert!((held_out.err_loyo.unwrap() - 3.0_f64.ln()).abs() < 1e-12);
+    }
+
+    fn error_rows(model: f64, baseline: f64) -> Vec<LoyoYearRow> {
+        (2012..=2025)
+            .map(|year| LoyoYearRow {
+                country: "Synthetic".to_string(),
+                year,
+                total_obs: 100,
+                modis_observable: 100,
+                skipped_months: 0,
+                pred_loyo: None,
+                pred_b0: None,
+                pred_b1: None,
+                err_loyo: Some(model + f64::from(year - 2012) * 0.01),
+                err_b0: Some(baseline + f64::from(year - 2012) * 0.02),
+                err_b1: Some(baseline + f64::from(year - 2012) * 0.02),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn bootstrap_gate_passes_fails_and_is_inconclusive_for_equal_errors() {
+        for (model, baseline, expected) in [
+            (0.1, 1.0, GateVerdict::Pass),
+            (1.0, 0.1, GateVerdict::Fail),
+            (0.5, 0.5, GateVerdict::Uncertain),
+        ] {
+            let mut rows = error_rows(model, baseline);
+            if expected == GateVerdict::Uncertain {
+                for row in &mut rows {
+                    row.err_b0 = row.err_loyo;
+                    row.err_b1 = row.err_loyo;
+                }
+            }
+            for kind in BaselineKind::ALL {
+                let gate = compute_gate_row("Synthetic", kind, &rows, 1000, 42, 16);
+                let repeat = compute_gate_row("Synthetic", kind, &rows, 1000, 42, 16);
+                assert_eq!(gate.n_years, 14);
+                assert_eq!(gate.verdict, Some(expected));
+                assert_eq!(gate.ci90_lo, repeat.ci90_lo);
+                assert_eq!(gate.ci90_hi, repeat.ci90_hi);
+                match expected {
+                    GateVerdict::Pass => assert!(gate.ci90_lo.unwrap() > 0.0),
+                    GateVerdict::Fail => assert!(gate.ci90_hi.unwrap() < 0.0),
+                    GateVerdict::Uncertain => {
+                        assert_eq!(gate.ci90_lo, Some(0.0));
+                        assert_eq!(gate.ci90_hi, Some(0.0));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn gate_json_uses_worst_baseline_and_excludes_pooled_rows() {
+        let countries = vec!["Synthetic".to_string()];
+        let rows = error_rows(0.1, 1.0);
+        let mut gates: Vec<_> = BaselineKind::ALL
+            .into_iter()
+            .map(|baseline| compute_gate_row("Synthetic", baseline, &rows, 1000, 42, 16))
+            .collect();
+        gates.push(compute_gate_row(
+            "ALL_POOLED",
+            BaselineKind::Unnormalized,
+            &rows,
+            1000,
+            42,
+            17,
+        ));
+        for (verdict, expected) in [
+            (GateVerdict::Pass, "pass"),
+            (GateVerdict::Uncertain, "inconclusive"),
+            (GateVerdict::Fail, "fail"),
+        ] {
+            gates[1].verdict = Some(verdict);
+            let document = gate_json_document(&countries, &gates, 1000, 42).unwrap();
+            assert_eq!(document["regions"].as_object().unwrap().len(), 1);
+            let region = &document["regions"]["Synthetic"];
+            assert_eq!(region["decision"], expected);
+            assert_eq!(region["baselines"][1]["decision"], expected);
+            assert_eq!(region["baselines"][0]["name"], "b0_unnormalized");
+            assert_eq!(region["baselines"][1]["name"], "b1_persistence");
+            assert_eq!(region["model_error"], gates[0].mean_err_model.unwrap());
+            assert_eq!(region["baselines"][0]["ci90"][0], gates[0].ci90_lo.unwrap());
+            assert_eq!(region["baselines"][0]["ci90"][1], gates[0].ci90_hi.unwrap());
+            assert_eq!(
+                document["method"],
+                "year-blocked LOYO, bootstrap 90% CI, B=1000, seed=42"
+            );
+            let generated = document["generated"].as_str().unwrap();
+            assert!(generated.ends_with('Z'));
+            assert!(chrono::DateTime::parse_from_rfc3339(generated).is_ok());
+        }
+        gates[0].ci90_lo = None;
+        assert!(gate_json_document(&countries, &gates, 1000, 42).is_err());
+    }
 }

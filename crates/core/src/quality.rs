@@ -23,6 +23,22 @@ pub enum QualityFlag {
     ModisOrbitalDrift,
 }
 
+impl QualityFlag {
+    /// True when the flagged period has no end date (still ongoing). Such a flag stays on the
+    /// calendar cells but is not worth a free-text response warning: it would appear on every
+    /// response with recent data, including live NRT.
+    pub fn is_open_ended(self) -> bool {
+        STATIC_PERIODS
+            .iter()
+            .any(|rule| rule.flag == self && rule.end.is_none())
+    }
+
+    /// Whether [`month_quality_flags`] hits of this flag are summarized in response `warnings`.
+    pub fn reported_as_warning(self) -> bool {
+        !self.is_open_ended()
+    }
+}
+
 #[derive(Clone, Copy)]
 enum PlatformScope {
     Terra,
@@ -195,6 +211,21 @@ mod tests {
             vec![QualityFlag::ModisOrbitalDrift]
         );
         assert!(month_quality_flags(2022, 7, &[Sensor::ViirsSNPP]).is_empty());
+    }
+
+    #[test]
+    fn only_the_orbital_drift_flag_is_open_ended() {
+        assert!(QualityFlag::ModisOrbitalDrift.is_open_ended());
+        assert!(!QualityFlag::ModisOrbitalDrift.reported_as_warning());
+        for flag in [
+            QualityFlag::TerraEarlyRecord,
+            QualityFlag::TerraOutage,
+            QualityFlag::SnppEarlyCalibration,
+            QualityFlag::SnppSpuriousScanLines,
+        ] {
+            assert!(!flag.is_open_ended(), "{flag:?}");
+            assert!(flag.reported_as_warning(), "{flag:?}");
+        }
     }
 
     #[test]

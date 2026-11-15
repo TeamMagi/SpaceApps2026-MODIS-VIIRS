@@ -2239,6 +2239,9 @@ mod tests {
             sfai: None,
             quality_flags: Vec::new(),
             conformal: None,
+            count_recovered: None,
+            count_recovered_lower: None,
+            count_recovered_upper: None,
         }
     }
 

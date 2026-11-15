@@ -159,8 +159,17 @@ export function monthKey(ref: MonthRef): string {
   return `${ref.year}-${String(ref.month).padStart(2, "0")}`;
 }
 
-/** "pyrosync_turkey_2021-08.csv"; demo exports include "_demo_", whole-year views use the year alone. */
-export function csvFileName(regionSlug: string, period: MapPeriod, isDemo = false): string {
+/**
+ * "pyrosync_turkey_2021-08.csv"; demo exports include "_demo_", whole-year views use the year alone,
+ * raw-view exports end in "_raw" (same as the backend's Content-Disposition names).
+ */
+export function exportFileName(
+  regionSlug: string,
+  period: MapPeriod,
+  extension: string,
+  isDemo = false,
+  raw = false,
+): string {
   const suffix =
     period.year === null
       ? "archive"
@@ -168,7 +177,20 @@ export function csvFileName(regionSlug: string, period: MapPeriod, isDemo = fals
         ? String(period.year)
         : monthKey({ year: period.year, month: period.month });
   const demoTag = isDemo ? "_demo" : "";
-  return `pyrosync_${regionSlug}${demoTag}_${suffix}.csv`;
+  return `pyrosync_${regionSlug}${demoTag}_${suffix}${raw ? "_raw" : ""}.${extension}`;
+}
+
+export function csvFileName(regionSlug: string, period: MapPeriod, isDemo = false): string {
+  return exportFileName(regionSlug, period, "csv", isDemo);
+}
+
+/** "25–31 Aug 2021", "28 Aug – 3 Sep 2021", "28 Dec 2021 – 3 Jan 2022" from two ISO dates (YYYY-MM-DD, UTC). */
+export function formatDayRange(lang: Lang, startIso: string, endIso: string): string {
+  const [sy, sm, sd] = startIso.split("-").map(Number);
+  const [ey, em, ed] = endIso.split("-").map(Number);
+  if (sy === ey && sm === em) return `${sd}–${ed} ${monthName(lang, em)} ${ey}`;
+  if (sy === ey) return `${sd} ${monthName(lang, sm)} – ${ed} ${monthName(lang, em)} ${ey}`;
+  return `${sd} ${monthName(lang, sm)} ${sy} – ${ed} ${monthName(lang, em)} ${ey}`;
 }
 
 export interface Formatter {

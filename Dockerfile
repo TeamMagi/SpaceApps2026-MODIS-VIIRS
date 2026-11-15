@@ -19,6 +19,8 @@ COPY web/package.json web/package-lock.json ./
 # Require package-lock.json with no npm install fallback so frontend builds stay reproducible
 RUN npm ci
 COPY web/ .
+# web/src/lib/caseStudy.ts imports ../../../data/case-study/turkey/stats.json, i.e. /data/... from /build/src/lib
+COPY data/case-study/turkey/stats.json /data/case-study/turkey/stats.json
 RUN npm run build
 
 # ---- Stage 3: Runtime ----

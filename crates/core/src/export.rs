@@ -3,7 +3,7 @@ use std::fmt::Write;
 use chrono::SecondsFormat;
 use serde_json::{Value, json};
 
-use crate::models::HarmonizedHotspot;
+use crate::models::{HarmonizedHotspot, Hotspot};
 
 pub const CSV_HEADER: &str = "lat,lon,frp_mw,frp_corrected_mw,vza_factor,n_obs,platforms,source,confidence,daynight,acquired_utc,frp_lower_mw,frp_upper_mw";
 
@@ -70,10 +70,94 @@ pub fn to_geojson(hotspots: &[HarmonizedHotspot]) -> String {
     json!({ "type": "FeatureCollection", "features": features }).to_string()
 }
 
+pub const RAW_CSV_HEADER: &str =
+    "latitude,longitude,sensor,platform,frp,confidence,acquired,daynight";
+
+fn sensor_family(h: &Hotspot) -> &'static str {
+    if h.sensor.is_modis() { "MODIS" } else { "VIIRS" }
+}
+
+pub fn raw_to_csv(hotspots: &[Hotspot]) -> String {
+    let mut out = String::with_capacity((hotspots.len() + 1) * CSV_ROW_CAPACITY);
+    out.push_str(RAW_CSV_HEADER);
+    out.push_str("\r\n");
+    for h in hotspots {
+        let _ = write!(
+            out,
+            "{},{},{},{:?},{},{:?},{},{:?}\r\n",
+            h.lat,
+            h.lon,
+            sensor_family(h),
+            h.sensor,
+            h.frp,
+            h.confidence,
+            h.acquired.to_rfc3339_opts(SecondsFormat::Secs, true),
+            h.daynight,
+        );
+    }
+    out
+}
+
+pub fn raw_to_geojson(hotspots: &[Hotspot]) -> String {
+    let features: Vec<Value> = hotspots
+        .iter()
+        .map(|h| {
+            json!({
+                "type": "Feature",
+                "geometry": { "type": "Point", "coordinates": [h.lon, h.lat] },
+                "properties": {
+                    "sensor": sensor_family(h),
+                    "platform": format!("{:?}", h.sensor),
+                    "frp": h.frp,
+                    "confidence": format!("{:?}", h.confidence),
+                    "acquired": h.acquired.to_rfc3339_opts(SecondsFormat::Secs, true),
+                    "daynight": format!("{:?}", h.daynight),
+                },
+            })
+        })
+        .collect();
+    json!({ "type": "FeatureCollection", "features": features }).to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::models::{Confidence, DayNight, HotspotSource, Sensor};
+
+    fn raw_hotspot(sensor: Sensor) -> Hotspot {
+        Hotspot {
+            lat: 38.5,
+            lon: 27.25,
+            brightness: 330.0,
+            frp: 7.5,
+            confidence: Confidence::Nominal,
+            sensor,
+            acquired: chrono::Utc.with_ymd_and_hms(2026, 7, 1, 10, 30, 0).unwrap(),
+            scan: 1.0,
+            track: 1.0,
+            satellite: "N".to_string(),
+            daynight: DayNight::Night,
+            vza: None,
+            fire_type: crate::models::FireType::VegetationFire,
+        }
+    }
+
+    #[test]
+    fn raw_export_writes_family_platform_and_lon_first_geometry() {
+        let hs = [raw_hotspot(Sensor::ModisAqua), raw_hotspot(Sensor::ViirsSNPP)];
+        let csv = raw_to_csv(&hs);
+        let lines: Vec<&str> = csv.trim_end_matches("\r\n").split("\r\n").collect();
+        assert_eq!(lines[0], RAW_CSV_HEADER);
+        assert_eq!(lines[1], "38.5,27.25,MODIS,ModisAqua,7.5,Nominal,2026-07-01T10:30:00Z,Night");
+        assert_eq!(lines[2].split(',').nth(2), Some("VIIRS"));
+
+        let parsed: Value = serde_json::from_str(&raw_to_geojson(&hs)).unwrap();
+        assert_eq!(parsed["features"].as_array().map(Vec::len), Some(2));
+        assert_eq!(parsed["features"][0]["geometry"]["coordinates"], json!([27.25, 38.5]));
+        assert_eq!(parsed["features"][1]["properties"]["platform"], "ViirsSNPP");
+        assert_eq!(raw_to_csv(&[]), format!("{RAW_CSV_HEADER}\r\n"));
+    }
+
     use chrono::{TimeZone, Utc};
 
     fn hotspot(vza_factor: Option<f64>, platforms: Vec<Sensor>) -> HarmonizedHotspot {

@@ -20,6 +20,19 @@
   color: var(--color-text);
 }
 
+.gate {
+  display: inline-block;
+  margin-inline-start: var(--space-1);
+  color: var(--color-text-secondary);
+}
+
+.gate[data-decision="fail"] {
+  color: var(--color-status-error);
+  border-inline-start: var(--border-width) solid currentColor;
+  padding-inline-start: var(--space-1);
+  font-weight: var(--font-weight-medium);
+}
+
 .actions {
   display: flex;
   flex-direction: column;

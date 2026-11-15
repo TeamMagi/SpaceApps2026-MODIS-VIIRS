@@ -32,11 +32,12 @@ Son doğrulama: 2026-11-15 · commit 8846819 · örnekler bu sürümden yakaland
 | `GET /api/compare` | Ham ve harmonize sayıların karşılaştırması | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/sensitivity` | Eşleştirme yarıçapı ve zaman penceresi duyarlılık önizlemesi | FIRMS canlı API (NRT ve SP) | Gerekir | Yok |
 | `GET /api/stats` | Toplamlar, sensör kırılımı, pipeline metrikleri | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
-| `GET /api/export` | Harmonize hotspot'lar, CSV veya GeoJSON dosyası | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
+| `GET /api/export` | Harmonize (veya ham) hotspot'lar, CSV veya GeoJSON dosyası | FIRMS canlı API (NRT ve SP); `region` verilirse yerel arşiv | Canlı modda gerekir; arşiv modu (`region`) API anahtarı gerektirmez | Canlı modda var; arşiv modunda yok |
 | `GET /api/calendar` | Ülke bazında tarihsel aylık yanma takvimi | Yerel FIRMS ülke arşivi (yalnızca okuma) | Gerekmez | Var |
 | `GET /api/regions` | Arşivdeki ülkeler, yıl aralıkları, boyut | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
 | `GET /api/series` | Bir bölgenin yıllık ve aylık serisi | Yerel arşiv; türetilmiş seri önbelleği | Gerekmez | Yok (`X-Series-Source` başlığı var) |
 | `GET /api/points` | Bir bölge ve yılın (opsiyonel ay) nokta verisi | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
+| `GET /api/density` | Bir bölge ve yılın aylık yoğunluk ızgarası (örneklemesiz) | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
 
 `calendar`, `regions`, `series` ve `points` hiçbir zaman arşiv dışına indirme yapmaz. Eksik arşiv dosyaları `make data` ile hazırlanır.
 
@@ -119,14 +120,33 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
 | `sfai` | number \| null | `count_normalized` için dayanıklı z-skoru (SFAI): `(x − medyan) / (0.65 × 1.4826 × MAD + 0.35 × σ)`; σ popülasyon standart sapmasıdır. Payda ağırlıkları flare-chronos referans projesinden gelir, medyan payı bize aittir. `anomaly` ile aynı havuz (aynı takvim ayı); en az 3 değer gerekir, payda 0 ise `null` |
-| `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz |
+| `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz. Bitiş tarihi olmayan (süregelen) bayraklar (`modis_orbital_drift`) hücrede kalır ama `warnings` içine yazılmaz; her yanıtta çıkacak bir gürültü satırı olurdu (`QualityFlag::is_open_ended`) |
+| `count_recovered` | number \| yok | *(Opsiyonel; yalnızca Terra-only aylarda `2000-11..2002-06` ve faktör varsa)* **TAHMİN**: MODIS-gözlenebilir (Terra+Aqua eşdeğeri) tespit sayısı, `count × k`. `k`, `2002-07..2020-12` aylarında takvim-ayı bazında Terra+Aqua / Terra oranından kalibre edilir (Remy & Kaiser 2014'ün uyarlaması, bulut-farkı filtresi olmadan). MODIS-yalnız taban dönem sayısıyla karşılaştırılabilir; filo-normalize `count_normalized` ile karşılaştırılamaz |
+| `count_recovered_lower` / `count_recovered_upper` | number \| yok | `count_recovered` bandı: kalibrasyon aylarının oranlarının 10. / 90. yüzdeliği × `count` (havuzda 10 aydan azsa min / maks) |
 | `conformal` | object \| yok | Mondrian split conformal bandı (`total_frp` için): `p68_lower`/`p68_upper`, `p90_lower`/`p90_upper` (MW, alt sınır 0'a kırpılır), `era` (`pre_viirs` \| `viirs`), `bin`, `n_cal`, `extrapolated`. Yalnızca kalibre tablo yüklüyse ve hücre uygunsa bulunur; Terra-only aylarda (2002-07 öncesi) yoktur. Analitik `total_frp_lower`/`total_frp_upper` yerine geçmez, ayrı anlamdadır. Ayrıntı için "Belirsizlik" bölümüne bakın |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
 
 `seasonality` (yalnızca `/api/calendar`): metrik harmonize aylık `count`'tur (`"metric": "count"`). Her mevsim yılı için Zhang & Qian (2003) yoğunlaşma derecesi/dönemi hesaplanır: 12 aylık değer `r_i` için açı `θ_i = (takvim_ayı − 0.5) × 30°` (ay aralığının orta noktası, Cui et al. 2021 Denk. 1–2; Ocak = 15°, Yangın Yılı modunda da takvim ayına sabit), `pcd = √(Rx² + Ry²) / R` ([0, 1]; 1 = tüm yangınlar tek ayda), `pcp_deg = atan2(Rx, Ry)` ([0, 360)), `peak_month = pcp_deg / 30 + 0.5` ((0.5, 12.5] aralığında kesirli takvim ayı; tek aylık girdi tam o ayı verir, Aralık+Ocak 12.5). Makale 36 on günlük aralık kullanır ve PCP'yi on günlük birimle verir; biz 12 aylık aralık kullandığımız için değerler doğrudan karşılaştırılamaz. `calendar_year` Ocak–Aralık'ı, `fire_year` Mart Y – Şubat Y+1 dönemini Y etiketiyle verir. Kapsam içinde olup hücresi olmayan ay 0 sayılır; 12 ayı tam kapsamda olmayan yıl `complete: false` ile döner ve `pcd`/`pcp_deg`/`peak_month` `null` olur (`total` yine kapsamdaki aylardan hesaplanır). Toplam sıfırsa üçü de `null`; ay dağılımı tamamen düzgünse `pcd ≈ 0` ve yön tanımsız olduğundan `pcp_deg`/`peak_month` `null` olur. Kapsam, istenen yıl aralığının arşiv kapsamıyla (MODIS Terra'nın ilk ayı 2000-11) kesişimidir.
 
+`raw_monthly` (yalnızca `/api/calendar`): harmonizasyondan **önceki** ham girdilerin aylık toplamıdır; harmonizasyona giren `modis` / `viirs` kümeleriyle aynı filtre ve kapsamdan (ülke, bbox, `type = 0`) hesaplanır. Kapsam penceresindeki (Ocak `effective_from` .. Aralık `effective_to`, başlangıç en erken 2000-11) **her ay** için bir öğe, kronolojik sırayla döner; kapsanan ama tespiti olmayan aylar 0 sayımla yer alır. Ay, `acquired` alanının UTC takvim ayıdır; FRP ham `frp` değeridir (MW, VZA düzeltmesi yok).
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `year`, `month` | integer | Yıl ve ay (1-12) |
+| `modis_covered` | boolean | MODIS ailesi o ay gözlenebilir mi (pencere içindeki tüm aylar için `true`) |
+| `modis_count` | integer | Ham MODIS (Terra + Aqua) tespit sayısı |
+| `modis_frp_sum` | number | Ham MODIS FRP toplamı (MW) |
+| `viirs_covered` | boolean | VIIRS ailesi o ay gözlenebilir mi (arşivde SNPP 2012-01'den itibaren) |
+| `viirs_count` | integer | Ham VIIRS (SNPP + NOAA-20) tespit sayısı |
+| `viirs_frp_sum` | number | Ham VIIRS FRP toplamı (MW) |
+| `platform_counts` | object | Ham tespit sayısının platform kırılımı; anahtarlar `Sensor` adıdır (`ModisTerra`, `ModisAqua`, `ViirsSNPP`, `ViirsNOAA20`), yalnızca sayımı sıfırdan büyük platformlar yer alır (tespitsiz ay için `{}`). Değerlerin toplamı her ay `modis_count + viirs_count` ile eşittir. Arşivde NOAA-21 yoktur, bu yüzden `ViirsNOAA21` hiç görünmez. Terra/Aqua ayrımı arşiv satırlarındaki `satellite` sütunundan gelir; VIIRS platformu ise indirilen veri kümesinden (SNPP / NOAA-20) belirlenir |
+
+`*_covered = false` "gözlenemedi" demektir, sıfır değildir: bu durumda sayım ve toplam 0 gelir ancak istemci bu ayı eksik veri olarak ele almalıdır. `modis_count + viirs_count` toplamı tüm pencerede `counts.raw_detections` ile eşittir.
+
 Terra'nın tek başına çalıştığı dönem (2002-07'den önce) için: seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır. Bu aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` olur; `count` ve FRP alanları ham değerleriyle kalır. Bu durumda `warnings` içinde bir uyarı bulunur. Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
+
+Terra-only aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` kalır (K8 kararı değişmez); bu aylar için ayrı etiketli `count_recovered*` tahmini verilir. Faktör: takvim ayı havuzunda toplam Terra-görünür tespit ≥ 400 olmalıdır (makaledeki N ≥ 400); değilse havuz sırayla ±1 ay, ±2 ay, tüm aylara genişler, yine < 400 ise `count_recovered*` alanları yer almaz. Havuzdaki en uç %10 ay oranı (medyandan uzaklığa göre) çıkarılır. `2000-11` öncesi aylar (`terra_early_record`) tahmin almaz. Bu durumda `warnings` içinde bir uyarı bulunur.
 
 ### Güven filtresi (`min_confidence`)
 
@@ -213,7 +233,8 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 - Arşiv yıl aralığı kırpıldığında (`calendar`).
 - Takvimde NOAA-21 eksikliği bildirildiğinde (`calendar`).
 - Yıl aralığında Terra-only dönem dışlandığında (bkz. "CalendarCell").
-- Takvim hücrelerinde tarihsel sensör anomalisi veya kesinti bayrağı (`quality_flags`) bulunan aylar olduğunda, her farklı bayrak için bir özet uyarı eklenir (en fazla 6 `YYYY-MM` ayı listelenir, fazlası `...` ile kısaltılır).
+- Terra-only aylara `count_recovered` tahmini eklendiğinde (ay sayısı, havuz kuralı, uyarlama notu).
+- Takvim hücrelerinde tarihsel sensör anomalisi veya kesinti bayrağı (`quality_flags`) bulunan aylar olduğunda, her farklı bayrak için bir özet uyarı eklenir (en fazla 6 `YYYY-MM` ayı listelenir, fazlası `...` ile kısaltılır). Süregelen bayraklar (`modis_orbital_drift`, `2021+`) için uyarı üretilmez, yalnızca hücre bayrağı kalır; sınırlı geçmiş bayraklar (Terra erken kayıt, Terra kesintileri, S-NPP erken kalibrasyon / tarama satırları) uyarı üretmeye devam eder.
 - Yerel arşivde beklenen dosya yoksa (`calendar`).
 
 ### report
@@ -1419,6 +1440,31 @@ Bu dosyalarda `calibration` veya ek kalibrasyon alanı yoktur.
 - Aynı istek tekrarlanınca gövde birebir aynı döner; yalnızca `X-Cache: HIT` olur.
 - Dosya tek bir yanıttır; sayfalama yoktur. Büyük aralıklar `REQUEST_TIMEOUT_SECS` süresini aşabilir.
 
+### Arşiv modu (`region`)
+
+Sorguda `region` parametresi varsa `/api/export` canlı FIRMS yerine yerel arşivden çalışır; `FIRMS_API_KEY` gerekmez ve yukarıdaki canlı davranış (bbox, `days`) değişmez. Dosya, `/api/points` ile aynı parametrelerde örneklemeden önceki kayıtların tamamını içerir.
+
+| Ad | Tip | Zorunlu | Varsayılan | Kural |
+|----|-----|---------|------------|-------|
+| `region` | string | Evet | - | Arşiv bölge kimliği (`/api/regions`) |
+| `year` | tamsayı | Evet | - | Arşivde bulunan yıl |
+| `month` | tamsayı | Hayır | tüm yıl | 1..=12 |
+| `format` | string | Hayır | `csv` | `csv` veya `geojson`; başka değer 400 |
+| `view` | string | Hayır | `harmonized` | `harmonized` (füzyon modeli sonrası harmonize kayıtlar) veya `raw` (`min_confidence` sonrası ham tespitler); başka değer 400 |
+| `dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`, `min_confidence`, `fusion_model` | - | Hayır | sunucu konfigürasyonu | `/api/points` ile aynı doğrulama ve aynı 400 mesajları |
+
+`limit` yoktur. Dönem 500000 tespiti aşarsa `413` döner (tek ay seçin veya `min_confidence` yükseltin). Bölge yoksa, yıl arşivde yoksa veya arşiv eksikse `/api/points` ile aynı hatalar döner (404, 413 vb.).
+
+Harmonize görünümün sütunları ve GeoJSON özellikleri canlı modla aynıdır. Ham görünümün sütunları: `latitude,longitude,sensor,platform,frp,confidence,acquired,daynight` (`sensor`: `MODIS` veya `VIIRS`, `platform`: ör. `ModisAqua`, `acquired`: RFC 3339 UTC). GeoJSON'da aynı alanlar `properties` içindedir.
+
+CSV yanıtı UTF-8 BOM ile başlar (Excel uyumu), ondalık ayracı `.`, satır sonu `
+`'dir. Yanıt başlıkları: `Content-Type: text/csv; charset=utf-8` veya `application/geo+json`; `Content-Disposition: attachment; filename="pyrosync_{bolge}_{donem}[_raw].{csv|geojson}"`. `{bolge}` bölge kimliğinin küçük harfli ASCII slug'ıdır (`Turkey` -> `turkey`, `Korea, South` -> `korea_south`), `{donem}` ay verilmişse `YYYY-MM`, yoksa `YYYY`'dir; `view=raw` için uzantıdan önce `_raw` eklenir (ör. `pyrosync_turkey_2023-08_raw.csv`).
+
+```bash
+curl -s -OJ "http://localhost:3001/api/export?region=Turkey&year=2023&month=8"
+curl -s -OJ "http://localhost:3001/api/export?region=Turkey&year=2023&format=geojson&view=raw&min_confidence=nominal"
+```
+
 ## GET /api/calendar
 
 Bir FIRMS ülke arşivinden tarihsel aylık yanma takvimini döndürür. FIRMS anahtarı gerekmez ve FIRMS işlemi harcamaz. Yalnızca yerel arşiv dizini okunur; eksik dosyalar indirilmez.
@@ -2499,13 +2545,59 @@ Ham satır sayısı `limit` değerini aşarsa sunucu, her `k`-inci harmonize kay
 - İstek bazlı eşik parametreleri (`dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`) yalnızca bu isteğin harmonize işlemini etkiler ve yanıt önbelleğine yazılmaz; `/api/series` bu parametreleri yoksayar.
 - Frontend `fetchPoints` ile alır.
 
+## GET /api/density
+
+Bir bölgenin tek bir yılı için aylık yangın yoğunluk ızgarasını döndürür. Değerler yılın **tüm** verisinden (örnekleme yok) sunucu tarafında hesaplanır; `/api/points` ise 4k-20k noktaya örneklendiği için yoğunluk hesabına uygun değildir. Yalnızca yerel arşiv okunur.
+
+### Parametreler
+
+| Ad | Tip | Zorunlu | Varsayılan | Kural |
+|----|-----|---------|------------|-------|
+| `region` | string | Evet | — | `/api/regions` içindeki bir `id` |
+| `year` | integer | Evet | — | Bölge için arşivde bir dosya olmalı |
+| `cell` | number | Hayır | `0.25` | Hücre boyutu (derece). Yalnızca `0.1`, `0.25`, `0.5`, `1.0`; diğer değerler 400 döner |
+| `min_confidence` | string | Hayır | `low` | `/api/points` ile aynı: `low`, `nominal`, `high`; ham ve harmonize sayımlardan önce uygulanır |
+| `fusion_model` | string | Hayır | `viirs_preferred` | `/api/points` ile aynı füzyon modeli; harmonize sütunları seçilen modelden hesaplanır |
+
+Girdi süzme ve harmonizasyon `/api/points` ile aynı yolu izler (yıl geneli statik kaynak maskesi, SAMA gece filtresi, VIIRS geçiş birleştirme); ham toplamlar aynı bölge/yıl için `/api/points` `stages.raw_modis + raw_viirs` değerine eşittir.
+
+### Örnek istek
+
+```bash
+curl -s "http://localhost:3001/api/density?region=Turkey&year=2021&cell=0.5"
+```
+
+### Yanıt alanları
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `region`, `year`, `cell_deg` | string, integer, number | İstek parametreleri |
+| `grid` | string | Her zaman `"global_latlon"` |
+| `months` | array | Her zaman 12 öğe (ay 1..12) |
+| `months[].month` | integer | 1..12 (UTC takvim ayı, `acquired` alanına göre) |
+| `months[].raw_total` | integer | O aydaki ham MODIS+VIIRS satır sayısı |
+| `months[].harmonized_total` | integer | O aydaki harmonize kayıt sayısı |
+| `months[].cells` | array | Yalnızca dolu hücreler, `(row, col)` sırasıyla. Her öğe `[row, col, raw_count, raw_frp, harm_count, harm_frp]` |
+| `max` | object | Yılın tüm ay ve hücreleri üzerinden `raw_count`, `raw_frp`, `harm_count`, `harm_frp` en büyük değerleri (sabit renk ölçeği için) |
+| `bbox` | object \| null | Ham tespitlerin `west`/`south`/`east`/`north` kapsamı |
+| `covered_months` | array | Yılın arşiv kapsamına giren ayları (`/api/points` içindeki `no_detection_days` ile aynı kapsam bilgisi) |
+
+Izgara tanımı: `row = floor((lat + 90) / cell_deg)`, `col = floor((lon + 180) / cell_deg)`; `lat = 90` ve `lon = 180` son satır/sütuna alınır. `raw_*` ham girdi satırlarından (ham `frp`, MW), `harm_*` harmonize kayıtlardan (`frp_corrected`, MW) gelir. FRP değerleri 0.1 MW'a yuvarlanır. Bir ayda dolu hücre tek kez, dört değerle birlikte yer alır (bir taraf boşsa 0).
+
+### Notlar
+
+- Tüm yıl bir kez harmonize edilir, sonuç harmonize kaydın kendi UTC ayına yazılır. Ay sınırını aşan eşleşmeler (ör. 31 Ocak gecesi ile 1 Şubat sabahı) harmonize kaydın ayına atanır; bu yüzden bir ayın ham ve harmonize toplamları aylık sınırda küçük kaymalar gösterebilir. Yıl toplamları `/api/points` `stages` değerleriyle (`raw_modis + raw_viirs`, `harmonized`) aynıdır.
+- Hücreler eşit açılıdır (equal-angle), eşit alanlı değildir. km² başına yoğunluk gösterilecekse hücre alanı `row`'dan istemcide hesaplanmalıdır (alan yaklaşık `cos(enlem)` ile küçülür).
+- Yıl verisi `/api/points` ile aynı yıl önbelleğini kullanır; yoğunluk yanıtının ayrı bir önbelleği yoktur.
+- Hatalar: 400 (`year` eksik/hatalı, `cell` izin verilmeyen değer), 404 (bilinmeyen bölge veya o yılda dosya yok), 413 (`ARCHIVE_MAX_REGION_MB`), 503, 504.
+
 ## Hata kodları
 
 | Kod | Hangi endpoint'ler | Ne zaman | Gövde |
 |-----|--------------------|----------|-------|
 | 400 | harmonize, compare, stats, export, calendar | Bbox geçersiz, `days` aralık dışı, `start`/`end` eksik veya tarih biçimi yanlış, `days` ile `start`/`end` birlikte, `format` geçersiz, calendar `country` geçersiz, `from > to`, bbox parçaları eksik | JSON `{"error": "..."}` |
 | 400 | harmonize, compare, stats, export, calendar | Zorunlu sorgu parametresi yok veya tipi hatalı | JSON: `Failed to deserialize query string: ...` |
-| 400 | series, points | `region`/`year` eksik; `year`/`month`/`limit` veya eşik parametreleri sayı değil; `month` aralık dışı; `limit=0`; eşik geçersiz kılma değeri aralık dışı | JSON |
+| 400 | series, points, density | `region`/`year` eksik; density `cell` geçersiz; `year`/`month`/`limit` veya eşik parametreleri sayı değil; `month` aralık dışı; `limit=0`; eşik geçersiz kılma değeri aralık dışı | JSON |
 | 404 | (herhangi) | `/api/` altında bilinmeyen yol: `Unknown API endpoint: /api/...` | JSON |
 | 404 | calendar | Yerel arşivde istenen aralıkta hiçbir dosya yok | JSON |
 | 404 | series, points | Bilinmeyen bölge; bölge için o yılda arşiv dosyası yok | JSON |

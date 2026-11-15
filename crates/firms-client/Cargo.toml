@@ -4,6 +4,10 @@ description = "NASA FIRMS API client"
 version.workspace = true
 edition.workspace = true
 
+[[example]]
+name = "validation_suite"
+test = true
+
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }

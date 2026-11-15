@@ -173,6 +173,16 @@ pub struct CalendarCell {
     /// present only when a calibrated table is supplied and the cell is eligible.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub conformal: Option<crate::conformal::ConformalBand>,
+    /// ESTIMATE of MODIS-observable (Terra+Aqua-equivalent) detections for a Terra-only month
+    /// (2000-11..2002-06), `count x k` from `pre_aqua`. Comparable with the MODIS-only baseline
+    /// era count, not with the fleet-normalized `count_normalized`; `count_normalized`,
+    /// `effort_omega` and `anomaly` stay `None` for those months.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub count_recovered: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub count_recovered_lower: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub count_recovered_upper: Option<f64>,
 }
 
 /// How months are grouped into seasons for [`SeasonalityYear`].

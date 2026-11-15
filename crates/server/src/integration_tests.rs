@@ -378,14 +378,8 @@ async fn harmonize_end_to_end_against_mock_firms() {
     assert_eq!(v["report"]["uncovered"], json!([]));
     assert_eq!(v["report"]["transactions_spent"], 4);
     let warnings = v["warnings"].as_array().expect("warnings array");
-    assert_eq!(warnings.len(), 1, "warnings: {warnings:?}");
-    assert!(
-        warnings[0]
-            .as_str()
-            .unwrap_or_default()
-            .contains("MODIS orbital drift"),
-        "warnings: {warnings:?}"
-    );
+    assert!(warnings.is_empty(), "open-ended drift flag must not warn: {warnings:?}");
+    assert_eq!(calendar[0]["quality_flags"], json!(["modis_orbital_drift"]));
     assert_eq!(v["effort"]["reliable"].as_bool(), Some(true));
 
     assert!(
@@ -648,19 +642,12 @@ async fn one_failing_source_degrades_to_200_with_warning() {
     assert_eq!(failures[0][0], "VIIRS_NOAA20_NRT");
 
     let warnings = v["warnings"].as_array().expect("warnings array");
-    assert_eq!(warnings.len(), 2, "warnings: {warnings:?}");
+    assert_eq!(warnings.len(), 1, "warnings: {warnings:?}");
     assert!(
         warnings[0]
             .as_str()
             .unwrap_or_default()
             .contains("1 FIRMS request failed"),
-        "warnings: {warnings:?}"
-    );
-    assert!(
-        warnings[1]
-            .as_str()
-            .unwrap_or_default()
-            .contains("MODIS orbital drift"),
         "warnings: {warnings:?}"
     );
     assert_eq!(v["effort"]["reliable"].as_bool(), Some(false));

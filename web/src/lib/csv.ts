@@ -1,4 +1,5 @@
 import type { MapPointSet } from "../types";
+import { EXPORT_MIME } from "./export";
 
 type Cell = string | number | null;
 
@@ -43,9 +44,7 @@ export function mapPointsToCsv(points: MapPointSet, harmonized: boolean, isDemo 
   );
 }
 
-export function downloadTextFile(fileName: string, text: string, mimeType = "text/csv;charset=utf-8"): void {
-  // BOM so spreadsheet apps read Turkish characters as UTF-8.
-  const blob = new Blob(["\uFEFF", text], { type: mimeType });
+export function downloadBlob(fileName: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -54,4 +53,10 @@ export function downloadTextFile(fileName: string, text: string, mimeType = "tex
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export function downloadTextFile(fileName: string, text: string, mimeType = EXPORT_MIME.csv): void {
+  // BOM only for CSV, so spreadsheet apps read Turkish characters as UTF-8; JSON must not start with one.
+  const parts = mimeType.startsWith("text/csv") ? ["﻿", text] : [text];
+  downloadBlob(fileName, new Blob(parts, { type: mimeType }));
 }
