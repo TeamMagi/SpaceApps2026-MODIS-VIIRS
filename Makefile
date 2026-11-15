@@ -1,9 +1,11 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local bundle-derived fetch-sample verify-data manifest clean clean-cache clean-derived help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local bundle-derived fetch-sample verify-data manifest smoke clean clean-cache clean-derived help
 
 # Shared host directory for the FIRMS country archive (override via environment or make args)
 ARCHIVE_CACHE_HOST_DIR ?= .cache/firms-archive
 # Shared host directory for precomputed /api/series disk cache (override via environment or make args)
 DERIVED_CACHE_HOST_DIR ?= .cache/pyrosync-derived
+# Target URL for 'make smoke'
+SMOKE_URL ?= http://localhost:3001
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
@@ -137,6 +139,9 @@ verify-data: ## Verify the local archive cache against data/archive-manifest.sha
 
 manifest: ## Regenerate data/archive-manifest.sha256 from the local cache
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) sh tools/verify-archive.sh generate
+
+smoke: ## Run end-to-end smoke checks against a running server (default http://localhost:3001)
+	bash tools/smoke_test.sh $(SMOKE_URL)
 
 # ---- Clean ----
 
