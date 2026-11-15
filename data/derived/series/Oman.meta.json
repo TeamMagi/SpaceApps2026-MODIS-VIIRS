@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Oman.csv",
@@ -195,5 +195,5 @@
       "bytes": 1558612
     }
   ],
-  "body_hash": "c2098f24602cb78b"
+  "body_hash": "1740e518dcc3dda1"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Equatorial_Guinea.csv",
@@ -195,5 +195,5 @@
       "bytes": 71142
     }
   ],
-  "body_hash": "51541916670459a5"
+  "body_hash": "98e9923d6204afbd"
 }

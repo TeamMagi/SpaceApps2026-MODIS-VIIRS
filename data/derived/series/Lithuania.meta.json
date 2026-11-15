@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2001/modis_2001_Lithuania.csv",
@@ -191,5 +191,5 @@
       "bytes": 15495
     }
   ],
-  "body_hash": "1023bea44670a761"
+  "body_hash": "8cad737e5aabeebc"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2016/modis_2016_Federated_States_of_Micronesia.csv",
@@ -75,5 +75,5 @@
       "bytes": 206
     }
   ],
-  "body_hash": "8d64fb8ec0661f8f"
+  "body_hash": "98d8cd01a32768f5"
 }

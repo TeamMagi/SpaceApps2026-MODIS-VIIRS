@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "viirs-jpss1/2024/viirs-jpss1_2024_Faeroe_Islands.csv",
@@ -31,5 +31,5 @@
       "bytes": 207
     }
   ],
-  "body_hash": "73876d01786bf3dd"
+  "body_hash": "682ce2e8e21bf58e"
 }

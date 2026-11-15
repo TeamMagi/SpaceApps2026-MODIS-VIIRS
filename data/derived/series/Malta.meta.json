@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2003/modis_2003_Malta.csv",
@@ -155,5 +155,5 @@
       "bytes": 1220
     }
   ],
-  "body_hash": "94f4355c0a65b102"
+  "body_hash": "d8adb25c99386fe3"
 }

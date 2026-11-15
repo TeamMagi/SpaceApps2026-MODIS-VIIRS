@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Montserrat.csv",
@@ -167,5 +167,5 @@
       "bytes": 365
     }
   ],
-  "body_hash": "093566eb43ad4cf4"
+  "body_hash": "93fb41d5d30e46e9"
 }

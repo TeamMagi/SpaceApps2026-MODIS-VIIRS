@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Vietnam.csv",
@@ -195,5 +195,5 @@
       "bytes": 3449334
     }
   ],
-  "body_hash": "a292ee63f50fe0b8"
+  "body_hash": "0d926beb386a015c"
 }
