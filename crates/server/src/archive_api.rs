@@ -2420,7 +2420,7 @@ mod tests {
             "MODIS_SP",
         )
         .unwrap();
-        let viirs_rows: String = [36.0, 36.005, 36.01]
+        let viirs_rows: String = [36.0, 36.003, 36.006]
             .iter()
             .map(|lat| format!("
 {lat},32.0,330,0.375,0.375,2015-08-11,1210,N,VIIRS,n,2,290,5,D,0"))
