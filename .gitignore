@@ -40,6 +40,8 @@ data/sample/*
 !data/archive-set.json
 !data/archive-manifest.sha256
 !data/derived/
+# Embedded biome grid (include_bytes! in crates/core/src/biome.rs).
+!data/landcover/
 
 # IDE
 .idea/

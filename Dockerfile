@@ -4,6 +4,8 @@ FROM rust:1.100-bookworm AS backend-builder
 WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
 COPY crates/ crates/
+# crates/core/src/biome.rs embeds this file with include_bytes!
+COPY data/landcover/biome_0p25.rle data/landcover/biome_0p25.rle
 # Cache mounts require BuildKit (default in Docker 23+); copy both binaries out before the target mount unmounts
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/build/target \

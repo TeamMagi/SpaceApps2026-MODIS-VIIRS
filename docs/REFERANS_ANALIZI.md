@@ -270,6 +270,10 @@ Politika değerlendirmesinde boyut/mevsim kayması tuzağı (`PCD/PCP` `[28, 30]
 | **FireBridge** | Sentetik Kaliforniya prototipi | Yalnızca UX fikirleri: **60 sn Guided Tour**, `Viridis/Plasma` renk paleti, ay hücresi tanı modalı. |
 | **Chronofire** | Kodsuz tasarım dokümanı | Merkezî **`RAW ↔ HARMONISED`** anahtarı ve saha müdahale özeti (**Responder Brief**) konsepti. |
 
+### Arazi örtüsü / biyom katmanı (Yol Haritası #9 altyapısı)
+
+K14 için `data/landcover/biome_0p25.rle` repoya eklendi (8 biyom grubu, 1440 × 720, 0.25°, yaklaşık 126 KB; `crates/core/src/biome.rs` içine gömülü). Kaynak: WRF/WPS `modis_landuse_20class_5m_with_lakes` (MODIS IGBP, 5 yay dakikası, 3 × 3 çoğunluk oyuyla 0.25°'ye indirgenmiş). Ham MCD12Q1 yerine seçildi: MCD12Q1 Earthdata girişi isteyen 500 m sinüzoidal HDF döşemeleridir (yıl başına yüzlerce dosya), K14 ise piksel değil takvim hücresi/bölge başına tek biyom ister. Bedeli: statik iklimleme olduğundan arazi örtüsü değişimi (ormansızlaşma) izlenmez ve 0.25° küçük parçaları gizler. Ayrıntı, sınıf eşlemesi ve yeniden üretim: `data/landcover/SOURCE.md`, `tools/build_biome_grid.py`.
+
 ### Tekrar Etmememiz Gereken Hatalar
 1. **Sentetik veri ve sabit gömülü metrikler (`FireBridge`, `flare-chronos` takvim):** `FireBridge` sentetik veriye `"FIRMS archive"` basıp 4 çelişen katsayı seti tutmuştur; `flare-chronos` 26×73 takviminin 72 pentadını sentetik gürültüyle doldurmuştur. PyroSync tüm sayıları doğrudan Rust çekirdeğinden ve gerçek 25 yıllık arşivden üretmelidir (**SSOT**).
 2. **375 m VIIRS'i MODIS sayımına aşağı kırpma (`FireBridge`):** `0.3185 * N_VIIRS` ile VIIRS'i MODIS düzeyine indirmek küçük yangın kazanımını yok eder.
