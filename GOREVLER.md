@@ -1211,6 +1211,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Sunum (`G5`) için iki vakanın grafikleri ve kısa anlatı metinleri
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7 (+ `[20, 21]`)
 - **Bitti sayılır:** Amazon 2019–2021 ve Hindistan WUI vakalarının kendi arşivimizden üretilen ham vs harmonize grafikleri ve kısa sunum metinleri depoda.
+- **Durum (2026-11-15):** Hindistan WUI kısmı tamamlandı: `crates/firms-client/examples/amazon_india_case.rs`, `docs/VAKA_AMAZON_HINDISTAN.md`, `docs/vaka/india_*`. 2019–2023, nüfusu 100 binin üstünde 538 şehir (GeoNames; [21] 275 şehir), 20×20 km kutu: ham S-NPP/MODIS oranı şehir kutularında 7,45× (tüm Hindistan 6,58×), [21] aralığı 6,3–7,7× ile uyumlu; harmonizasyon kutulardaki toplam tespiti 313 899 → 222 333 (−%29) indiriyor; <1 MW payı VIIRS %11,0, harmonize %10,3. Amazon kısmı ölçülmedi (takvim/Ω havuzlama dönem başına 10 dk+); kutu bu yüzden açık.
 
 ---
 

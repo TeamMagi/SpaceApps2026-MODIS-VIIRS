@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="1000" height="640" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">India top 15 cities by harmonised fire detections</title>
+<desc id="d">Raw per-sensor sums vs harmonised detections within 20x20 km of each city, 2019-2023.</desc>
+<rect width="1000" height="640" fill="#0d0f13"/>
+<text x="40" y="44" fill="#f1f3f7" font-size="24" font-weight="600">Top 15 city boxes by harmonised detections, 2019-2023</text>
+<text x="40" y="68" fill="#949cab" font-size="14">Raw sum counts one fire once per satellite; the harmonised count merges them.</text>
+<text x="180" y="115.0" fill="#f1f3f7" font-size="13" text-anchor="end">Barnala</text>
+<rect x="190" y="100.0" width="700.0" height="11" fill="#8d96a6"/><text x="896.0" y="110.0" fill="#949cab" font-size="11">10896</text>
+<rect x="190" y="112.0" width="423.8" height="11" fill="#3cc8f0"/><text x="619.8" y="122.0" fill="#f1f3f7" font-size="11">6597</text>
+<text x="180" y="145.0" fill="#f1f3f7" font-size="13" text-anchor="end">Moga</text>
+<rect x="190" y="130.0" width="572.2" height="11" fill="#8d96a6"/><text x="768.2" y="140.0" fill="#949cab" font-size="11">8907</text>
+<rect x="190" y="142.0" width="361.9" height="11" fill="#3cc8f0"/><text x="557.9" y="152.0" fill="#f1f3f7" font-size="11">5634</text>
+<text x="180" y="175.0" fill="#f1f3f7" font-size="13" text-anchor="end">Muktsar</text>
+<rect x="190" y="160.0" width="546.1" height="11" fill="#8d96a6"/><text x="742.1" y="170.0" fill="#949cab" font-size="11">8500</text>
+<rect x="190" y="172.0" width="357.1" height="11" fill="#3cc8f0"/><text x="553.1" y="182.0" fill="#f1f3f7" font-size="11">5558</text>
+<text x="180" y="205.0" fill="#f1f3f7" font-size="13" text-anchor="end">Firozpur</text>
+<rect x="190" y="190.0" width="570.4" height="11" fill="#8d96a6"/><text x="766.4" y="200.0" fill="#949cab" font-size="11">8878</text>
+<rect x="190" y="202.0" width="351.8" height="11" fill="#3cc8f0"/><text x="547.8" y="212.0" fill="#f1f3f7" font-size="11">5476</text>
+<text x="180" y="235.0" fill="#f1f3f7" font-size="13" text-anchor="end">Maler Kotla</text>
+<rect x="190" y="220.0" width="450.9" height="11" fill="#8d96a6"/><text x="646.9" y="230.0" fill="#949cab" font-size="11">7018</text>
+<rect x="190" y="232.0" width="302.2" height="11" fill="#3cc8f0"/><text x="498.2" y="242.0" fill="#f1f3f7" font-size="11">4704</text>
+<text x="180" y="265.0" fill="#f1f3f7" font-size="13" text-anchor="end">Itarsi</text>
+<rect x="190" y="250.0" width="527.8" height="11" fill="#8d96a6"/><text x="723.8" y="260.0" fill="#949cab" font-size="11">8215</text>
+<rect x="190" y="262.0" width="291.5" height="11" fill="#3cc8f0"/><text x="487.5" y="272.0" fill="#f1f3f7" font-size="11">4537</text>
+<text x="180" y="295.0" fill="#f1f3f7" font-size="13" text-anchor="end">Singrauli</text>
+<rect x="190" y="280.0" width="613.3" height="11" fill="#8d96a6"/><text x="809.3" y="290.0" fill="#949cab" font-size="11">9547</text>
+<rect x="190" y="292.0" width="291.0" height="11" fill="#3cc8f0"/><text x="487.0" y="302.0" fill="#f1f3f7" font-size="11">4529</text>
+<text x="180" y="325.0" fill="#f1f3f7" font-size="13" text-anchor="end">Bathinda</text>
+<rect x="190" y="310.0" width="403.7" height="11" fill="#8d96a6"/><text x="599.7" y="320.0" fill="#949cab" font-size="11">6284</text>
+<rect x="190" y="322.0" width="261.3" height="11" fill="#3cc8f0"/><text x="457.3" y="332.0" fill="#f1f3f7" font-size="11">4067</text>
+<text x="180" y="355.0" fill="#f1f3f7" font-size="13" text-anchor="end">Narmadapuram</text>
+<rect x="190" y="340.0" width="407.1" height="11" fill="#8d96a6"/><text x="603.1" y="350.0" fill="#949cab" font-size="11">6337</text>
+<rect x="190" y="352.0" width="233.7" height="11" fill="#3cc8f0"/><text x="429.7" y="362.0" fill="#f1f3f7" font-size="11">3637</text>
+<text x="180" y="385.0" fill="#f1f3f7" font-size="13" text-anchor="end">Batala</text>
+<rect x="190" y="370.0" width="322.6" height="11" fill="#8d96a6"/><text x="518.6" y="380.0" fill="#949cab" font-size="11">5022</text>
+<rect x="190" y="382.0" width="222.2" height="11" fill="#3cc8f0"/><text x="418.2" y="392.0" fill="#f1f3f7" font-size="11">3459</text>
+<text x="180" y="415.0" fill="#f1f3f7" font-size="13" text-anchor="end">Patiala</text>
+<rect x="190" y="400.0" width="315.0" height="11" fill="#8d96a6"/><text x="511.0" y="410.0" fill="#949cab" font-size="11">4903</text>
+<rect x="190" y="412.0" width="214.1" height="11" fill="#3cc8f0"/><text x="410.1" y="422.0" fill="#f1f3f7" font-size="11">3332</text>
+<text x="180" y="445.0" fill="#f1f3f7" font-size="13" text-anchor="end">Thenali</text>
+<rect x="190" y="430.0" width="307.5" height="11" fill="#8d96a6"/><text x="503.5" y="440.0" fill="#949cab" font-size="11">4786</text>
+<rect x="190" y="442.0" width="201.3" height="11" fill="#3cc8f0"/><text x="397.3" y="452.0" fill="#f1f3f7" font-size="11">3133</text>
+<text x="180" y="475.0" fill="#f1f3f7" font-size="13" text-anchor="end">Khanna</text>
+<rect x="190" y="460.0" width="270.0" height="11" fill="#8d96a6"/><text x="466.0" y="470.0" fill="#949cab" font-size="11">4203</text>
+<rect x="190" y="472.0" width="200.9" height="11" fill="#3cc8f0"/><text x="396.9" y="482.0" fill="#f1f3f7" font-size="11">3127</text>
+<text x="180" y="505.0" fill="#f1f3f7" font-size="13" text-anchor="end">Phagwara</text>
+<rect x="190" y="490.0" width="234.7" height="11" fill="#8d96a6"/><text x="430.7" y="500.0" fill="#949cab" font-size="11">3654</text>
+<rect x="190" y="502.0" width="179.2" height="11" fill="#3cc8f0"/><text x="375.2" y="512.0" fill="#f1f3f7" font-size="11">2789</text>
+<text x="180" y="535.0" fill="#f1f3f7" font-size="13" text-anchor="end">Vidisha</text>
+<rect x="190" y="520.0" width="266.0" height="11" fill="#8d96a6"/><text x="462.0" y="530.0" fill="#949cab" font-size="11">4141</text>
+<rect x="190" y="532.0" width="160.5" height="11" fill="#3cc8f0"/><text x="356.5" y="542.0" fill="#f1f3f7" font-size="11">2498</text>
+<rect x="190" y="580" width="14" height="14" fill="#8d96a6"/><text x="212" y="592" fill="#f1f3f7" font-size="13">Raw (MODIS + S-NPP + NOAA-20 sum)</text><rect x="490" y="580" width="14" height="14" fill="#3cc8f0"/><text x="512" y="592" fill="#f1f3f7" font-size="13">Harmonised</text>
+<text x="40" y="625" fill="#949cab" font-size="12">Source: NASA FIRMS SP country archive, India 2019-2023; GeoNames cities15000. docs/vaka/india_cities.csv</text>
+</svg>
