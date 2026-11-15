@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use axum::{
     Router,
     body::Bytes,
-    extract::{Query, Request, State},
+    extract::{Request, State},
     http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Json, Response},
@@ -19,7 +19,7 @@ use tokio::sync::{OnceCell, Semaphore};
 use tokio::task::JoinSet;
 
 use pyrosync_core::calendar::{compute_anomalies, mean_frp_with_uncertainty};
-use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::config::{MAX_MATCH_RADIUS_KM, PipelineConfig};
 use pyrosync_core::density::{ALLOWED_CELL_DEGREES, aggregate_density};
 use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap};
 use pyrosync_core::events::{
@@ -36,7 +36,9 @@ use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
 
 use crate::derived_cache::{ArchiveFileStamp, CoverageStamp, DerivedCache, SeriesStamp};
-use crate::{ConfidenceFilter, MinConfidence};
+// Same extractor as the live endpoints: a rejected query string answers with the JSON error body
+// instead of axum's plain-text one.
+use crate::{ApiQuery as Query, ConfidenceFilter, MinConfidence};
 
 const X_SERIES_SOURCE_HEADER: HeaderName = HeaderName::from_static("x-series-source");
 pub const DEFAULT_PRECOMPUTE_CONCURRENCY: usize = 2;
@@ -1931,13 +1933,27 @@ fn resolve_points_config(
         config.matching.window_secs = v;
         overridden = true;
     }
+    let mut fleet_radius_overridden = false;
     if let Some(v) = parse_param::<f64>("fleet_radius_km", params.fleet_radius_km.as_deref())? {
         config.fleet.radius_km = v;
         overridden = true;
+        fleet_radius_overridden = true;
     }
     config
         .validate()
         .map_err(|msg| ApiError::new(StatusCode::BAD_REQUEST, msg))?;
+    // `validate` only bounds the match radius, but the fleet merge searches an H3 disk whose cell
+    // count grows with the square of the radius, so one request with a huge value would exhaust
+    // memory and CPU. The server's own configured radius is trusted and left alone.
+    if fleet_radius_overridden && config.fleet.radius_km > MAX_MATCH_RADIUS_KM {
+        return Err(ApiError::new(
+            StatusCode::BAD_REQUEST,
+            format!(
+                "fleet.radius_km must be <= {MAX_MATCH_RADIUS_KM}, got {}",
+                config.fleet.radius_km
+            ),
+        ));
+    }
     Ok((config, overridden))
 }
 
@@ -2469,9 +2485,22 @@ fn export_filename(
     format!("pyrosync_{}_{period}{suffix}.{extension}", region_slug(region_id))
 }
 
+/// Rows the export would hold after the month and confidence filters, counted without copying
+/// the year, so an oversized request is refused before it allocates anything.
+fn export_record_count(data: &YearData, month: Option<u32>, min_confidence: MinConfidence) -> usize {
+    data.modis
+        .iter()
+        .chain(&data.viirs)
+        .filter(|h| {
+            month.is_none_or(|m| h.acquired.month() == m) && min_confidence.accepts(h.confidence)
+        })
+        .count()
+}
+
 async fn export_archive(
     state: Arc<ArchiveState>,
     params: ArchiveExportParams,
+    max_records: usize,
 ) -> Result<Response, ApiError> {
     let format = crate::ExportFormat::parse(params.format.as_deref())
         .map_err(|e| ApiError::new(e.status, e.message))?;
@@ -2495,6 +2524,15 @@ async fn export_archive(
     let data = load_year(&state, &region, year).await?;
     let body = tokio::task::spawn_blocking(move || {
         let _slot = slot;
+        let records = export_record_count(&data, month, min_confidence);
+        if records > max_records {
+            return Err(ApiError::new(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                format!(
+                    "the period holds {records} detections, above the export limit of {max_records}; request a single month or raise 'min_confidence'"
+                ),
+            ));
+        }
         let mask = config.static_mask.enabled.then(|| {
             StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
         });
@@ -2505,15 +2543,6 @@ async fn export_archive(
         drop(data);
         min_confidence.retain(&mut modis);
         min_confidence.retain(&mut viirs);
-        if modis.len() + viirs.len() > MAX_EXPORT_RECORDS {
-            return Err(ApiError::new(
-                StatusCode::PAYLOAD_TOO_LARGE,
-                format!(
-                    "the period holds {} detections, above the export limit of {MAX_EXPORT_RECORDS}; request a single month or raise 'min_confidence'",
-                    modis.len() + viirs.len()
-                ),
-            ));
-        }
 
         let text = if view == ExportView::Raw {
             let raw: Vec<Hotspot> = modis.into_iter().chain(viirs).collect();
@@ -2568,6 +2597,8 @@ pub async fn export_dispatch(
     request: Request,
     next: Next,
 ) -> Response {
+    use axum::extract::Query;
+
     #[derive(Deserialize)]
     struct Probe {
         region: Option<String>,
@@ -2588,7 +2619,7 @@ pub async fn export_dispatch(
         }
     };
     let limit = state.limits.request_timeout;
-    match tokio::time::timeout(limit, export_archive(state, params)).await {
+    match tokio::time::timeout(limit, export_archive(state, params, MAX_EXPORT_RECORDS)).await {
         Ok(Ok(response)) => response,
         Ok(Err(err)) => err.into_response(),
         Err(_) => ApiError::new(
@@ -3362,6 +3393,7 @@ mod tests {
             ("region=Malta", StatusCode::BAD_REQUEST),
             ("region=Malta&year=2021&month=13", StatusCode::BAD_REQUEST),
             ("region=Malta&year=2021&fusion_model=bogus", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&fleet_radius_km=1000000", StatusCode::BAD_REQUEST),
             ("region=Malta&year=1990", StatusCode::NOT_FOUND),
             ("region=Atlantis&year=2021", StatusCode::NOT_FOUND),
         ] {
@@ -3369,6 +3401,36 @@ mod tests {
             assert_eq!(status, expected, "query={query}");
             let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
             assert!(json["error"].as_str().is_some_and(|s| !s.is_empty()), "query={query}");
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_refuses_oversized_periods_before_copying_the_year() {
+        let (dir, state) = export_fixture("export-limit");
+        let request = |month: Option<&str>, min_confidence: Option<&str>| ArchiveExportParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            month: month.map(Into::into),
+            min_confidence: min_confidence.map(Into::into),
+            ..Default::default()
+        };
+
+        // The fixture holds 2 MODIS + 2 VIIRS rows in 2021, 3 of them in July.
+        let err = export_archive(state.clone(), request(None, None), 3)
+            .await
+            .unwrap_err();
+        assert_eq!(err.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert!(
+            err.message.contains("holds 4 detections") && err.message.contains("limit of 3"),
+            "{}",
+            err.message
+        );
+
+        // The advice in the message works: one month or a higher confidence floor fits.
+        for fitting in [request(Some("7"), None), request(None, Some("high"))] {
+            let response = export_archive(state.clone(), fitting, 3).await.unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
         }
         let _ = std::fs::remove_dir_all(dir);
     }
@@ -3394,6 +3456,116 @@ mod tests {
         assert_eq!(status, StatusCode::OK);
         assert_eq!(body, b"live");
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn archive_endpoints_answer_malformed_query_strings_with_json_errors() {
+        use tower::ServiceExt;
+
+        let dir = temp_archive("query-json-errors");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        let app = api_routes(state(dir.clone(), u64::MAX));
+        for uri in [
+            "/series?region=Malta&region=Cyprus",
+            "/points?region=Malta&year=2021&year=2022",
+            "/density?region=Malta&year=2021&cell=0.5&cell=1",
+        ] {
+            let request = axum::http::Request::get(uri)
+                .body(axum::body::Body::empty())
+                .unwrap();
+            let response = app.clone().oneshot(request).await.unwrap();
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "uri={uri}");
+            assert_eq!(
+                header_str(response.headers(), header::CONTENT_TYPE),
+                "application/json",
+                "uri={uri}"
+            );
+            let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+                .await
+                .unwrap();
+            let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert!(
+                json["error"]
+                    .as_str()
+                    .is_some_and(|message| message.contains("duplicate field")),
+                "uri={uri}: {json}"
+            );
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn hostile_region_values_are_unknown_regions_and_touch_no_files() {
+        let dir = temp_archive("hostile-regions");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        let state = state(dir.clone(), u64::MAX);
+        let long = "A".repeat(10_000);
+        let hostile = [
+            "..",
+            ".",
+            "../..",
+            "../../etc/passwd",
+            "Malta/../Malta",
+            "Malta\\..\\Malta",
+            "/etc/passwd",
+            "C:\\Windows\\win.ini",
+            "Malta\0",
+            "%2e%2e%2fMalta",
+            "malta",
+            "MALTA",
+            "Ｍalta",
+            "Malta.json",
+            long.as_str(),
+        ];
+        for region in hostile {
+            let series_err = series_raw(&state, region).await.unwrap_err();
+            assert_eq!(series_err.status, StatusCode::NOT_FOUND, "series {region:?}");
+
+            let points_err = points(
+                State(state.clone()),
+                Query(PointsParams {
+                    region: Some(region.to_string()),
+                    year: Some("2021".into()),
+                    ..Default::default()
+                }),
+            )
+            .await
+            .err()
+            .expect("unknown region");
+            assert_eq!(points_err.status, StatusCode::NOT_FOUND, "points {region:?}");
+
+            let density_err = density(
+                State(state.clone()),
+                Query(DensityParams {
+                    region: Some(region.to_string()),
+                    year: Some("2021".into()),
+                    ..Default::default()
+                }),
+            )
+            .await
+            .err()
+            .expect("unknown region");
+            assert_eq!(density_err.status, StatusCode::NOT_FOUND, "density {region:?}");
+
+            let (export_status, _, _) =
+                export_request(&state, &format!("region={}&year=2021", urlencode(region))).await;
+            assert_eq!(export_status, StatusCode::NOT_FOUND, "export {region:?}");
+        }
+        // Nothing was derived or written for any of the rejected names.
+        assert!(!dir.join("_derived_cache").exists());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    /// Percent-encodes every byte outside the unreserved set so any string survives a query string.
+    fn urlencode(raw: &str) -> String {
+        raw.bytes()
+            .map(|b| match b {
+                b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                    char::from(b).to_string()
+                }
+                _ => format!("%{b:02X}"),
+            })
+            .collect()
     }
 
     #[test]
@@ -5070,6 +5242,34 @@ mod tests {
                 },
                 "fleet.radius_km",
             ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("10.5".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km must be <= 10",
+            ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("1e12".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km must be <= 10",
+            ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("inf".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km",
+            ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("NaN".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km",
+            ),
         ];
 
         for (params, field) in range_cases {
@@ -5116,6 +5316,49 @@ mod tests {
             assert_eq!(err.status, StatusCode::BAD_REQUEST);
         }
 
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_accepts_request_fleet_radius_up_to_the_cap_and_rejects_above() {
+        let dir = temp_archive("points-fleet-cap");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        let config = PipelineConfig::default();
+        let default_fleet_radius = config.fleet.radius_km;
+        let derived = dir.join("_derived_cache");
+        let state = state_with_config(dir.clone(), derived, u64::MAX, config);
+        let request = |radius: Option<&str>| PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            fleet_radius_km: radius.map(Into::into),
+            ..Default::default()
+        };
+
+        // Without a request override the operator's configured radius is reported unchanged.
+        let Json(configured) = points(State(state.clone()), Query(request(None)))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(configured.config.fleet.radius_km, default_fleet_radius);
+        assert!(!configured.config_overridden);
+
+        let Json(boundary) = points(State(state.clone()), Query(request(Some("10"))))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(boundary.config.fleet.radius_km, 10.0);
+        assert!(boundary.config_overridden);
+
+        let err = points(State(state), Query(request(Some("10.01"))))
+            .await
+            .err()
+            .expect("a fleet radius above the match limit must fail with 400");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(
+            err.message.contains("fleet.radius_km must be <= 10"),
+            "{}",
+            err.message
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 

@@ -280,11 +280,15 @@ impl MinConfidence {
         }
     }
 
+    /// Whether a detection of this confidence class survives the filter.
+    pub(crate) fn accepts(self, confidence: Confidence) -> bool {
+        confidence >= self.floor()
+    }
+
     /// Drops detections below the floor and returns how many were dropped.
     pub(crate) fn retain(self, rows: &mut Vec<Hotspot>) -> usize {
         let before = rows.len();
-        let floor = self.floor();
-        rows.retain(|h| h.confidence >= floor);
+        rows.retain(|h| self.accepts(h.confidence));
         before - rows.len()
     }
 }
@@ -1656,11 +1660,16 @@ where
     }
 
     let run = run_pipeline_with_timeout(state, params).await?;
+    let degraded = !run.report.failures.is_empty();
     let payload = build_payload(run, include_raw);
     let body = serde_json::to_vec(&payload)
         .map_err(|e| ApiError::internal(format!("Failed to serialize response: {e}")))?;
 
-    put_cached(&state.cache, key, &body, cache_ttl_for_window(&window)).await;
+    // A response missing failed FIRMS windows would otherwise stay stuck for up to six hours
+    // after the upstream recovers; the area cache likewise never stores failed windows.
+    if !degraded {
+        put_cached(&state.cache, key, &body, cache_ttl_for_window(&window)).await;
+    }
     Ok(json_bytes_response(body, "MISS"))
 }
 
@@ -1798,7 +1807,9 @@ async fn export(
     }
     .into_bytes();
 
-    put_cached(&state.cache, key, &body, cache_ttl_for_window(&window)).await;
+    if run.report.failures.is_empty() {
+        put_cached(&state.cache, key, &body, cache_ttl_for_window(&window)).await;
+    }
     export_response(body, format, &bbox, "MISS")
 }
 
