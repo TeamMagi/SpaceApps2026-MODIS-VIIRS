@@ -2121,12 +2121,14 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
 | `harmonized` | integer | O ay **tek başına** harmonize edilmiş kayıt sayısı |
 | `mean_frp` | number \| null | O aydaki harmonize kayıtların (`frp_corrected`) ortalama FRP değeri (MW). Harmonize tespit yoksa veya aralık sonlu değilse `null` |
 | `mean_frp_lower`, `mean_frp_upper` | number \| null | `mean_frp` için analitik güven aralığının alt ve üst sınırları (MW; `0 <= mean_frp_lower <= mean_frp <= mean_frp_upper`). Harmonize tespit yoksa veya aralık sonlu değilse `null` |
-| `anomaly_raw` | number \| null | `raw_total` için z-skoru |
-| `anomaly_harmonized` | number \| null | `harmonized` için z-skoru |
+| `effort_omega` | number \| null | Ayın platform yapılandırması için gözlem çabası Ω (MODIS'e göre), `/api/calendar` ile aynı kestirici; yapılandırma tüm seri boyunca havuzlanır. Ω kestirilemezse (havuz < 3 ay, MODIS-görünür tespit yok), ay tespitsizse veya ay 2002-07 öncesi Terra-only ise `null` |
+| `count_normalized` | number \| null | `harmonized / effort_omega`. Tespitsiz ay `0`; Ω yoksa ve 2002-07 öncesi Terra-only aylarda `null` |
+| `anomaly_raw` | number \| null | `raw_total` ham tespit sayımının z-skoru. Bilerek efor düzeltmesi **uygulanmaz**: "harmonizasyon öncesi" görünümdür ve sensör geçişi sıçramasını (ör. 2012 civarı MODIS'ten VIIRS'e) gösterir |
+| `anomaly_harmonized` | number \| null | `count_normalized` değerinin z-skoru (Ω ile normalleşmiş, `/api/calendar` `anomaly` ile aynı yöntem). `count_normalized` `null` ise `null` |
 
 Ay satırları, katkıda bulunan sensörlerden en az birinin gözlem yaptığı her ay için üretilir. Hiç tespit olmayan ama kapsam içindeki aylar sıfır değerle yer alır. Kapsam dışındaki aylar listeye girmez.
 
-Z-skoru, tüm yıllardaki aynı takvim ayı değerleri üzerinden hesaplanır (ortalama ve popülasyon standart sapması). En az 3 değer gerekir; standart sapma sıfırsa `null` döner. Ham ve harmonize seriler ayrı tabanlarla hesaplanır.
+Z-skoru, tüm yıllardaki aynı takvim ayı değerleri üzerinden hesaplanır (ortalama ve popülasyon standart sapması). En az 3 değer gerekir; standart sapma sıfırsa `null` döner. Ham ve harmonize seriler ayrı tabanlarla hesaplanır; `count_normalized` değeri `null` olan aylar harmonize tabana girmez. Ω her ay tek başına harmonize edilmiş kayıtlardan toplanır, bu yüzden aylık sayımlar `/api/calendar`'dan (tüm veri birlikte harmonize edilir) az farkla ayrışabilir.
 
 Seri 2002-07 veya sonrasını da kapsıyorsa, 2002-07 öncesi (Terra'nın tek başına çalıştığı) aylarda `anomaly_raw` ve `anomaly_harmonized` `null` döner ve bu aylar diğer ayların tabanlarına girmez (`/api/calendar` ile aynı kural). Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
 

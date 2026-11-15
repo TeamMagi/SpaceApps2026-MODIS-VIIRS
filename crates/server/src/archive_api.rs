@@ -22,7 +22,7 @@ use pyrosync_core::calendar::{compute_anomalies, mean_frp_with_uncertainty};
 use pyrosync_core::config::{MAX_MATCH_RADIUS_KM, PipelineConfig};
 use pyrosync_core::density::{ALLOWED_CELL_DEGREES, aggregate_density};
 use pyrosync_core::effort::{
-    FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap,
+    EffortMonths, FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap,
 };
 use pyrosync_core::events::{
     EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
@@ -953,6 +953,8 @@ struct MonthEntry {
     mean_frp: Option<f64>,
     mean_frp_lower: Option<f64>,
     mean_frp_upper: Option<f64>,
+    effort_omega: Option<f64>,
+    count_normalized: Option<f64>,
     anomaly_raw: Option<f64>,
     anomaly_harmonized: Option<f64>,
 }
@@ -982,6 +984,7 @@ struct SeriesResponse {
 struct YearStats {
     entry: YearEntry,
     months: Vec<MonthEntry>,
+    effort: EffortMonths,
 }
 
 fn date_span(rows: &[Hotspot]) -> Option<(NaiveDate, NaiveDate)> {
@@ -1018,6 +1021,7 @@ fn year_stats_with(
     // Every month a contributing sensor observed gets an entry, zero fires included, so quiet
     // months count in the anomaly baselines; months outside coverage are left out. A month with
     // rows is always kept, so the raw monthly counts add up to the yearly totals.
+    let mut effort = EffortMonths::default();
     let months: Vec<MonthEntry> = (1..=12)
         .filter_map(|month| {
             let modis = in_month(&data.modis, month);
@@ -1037,6 +1041,7 @@ fn year_stats_with(
                     Some((mean, lower, upper)) => (Some(mean), Some(lower), Some(upper)),
                     None => (None, None, None),
                 };
+            effort.merge(EffortMonths::from_hotspots(&harmonized_hotspots));
             Some(MonthEntry {
                 year,
                 month,
@@ -1047,6 +1052,8 @@ fn year_stats_with(
                 mean_frp,
                 mean_frp_lower,
                 mean_frp_upper,
+                effort_omega: None,
+                count_normalized: None,
                 anomaly_raw: None,
                 anomaly_harmonized: None,
             })
@@ -1088,41 +1095,86 @@ fn year_stats_with(
         viirs_last_date: viirs_span.map(|s| s.1),
     };
 
-    YearStats { entry, months }
+    YearStats {
+        entry,
+        months,
+        effort,
+    }
 }
 
-fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec<Option<f64>> {
-    // Same rule as /api/calendar: once the series reaches Terra+Aqua, Terra-only months are not
-    // comparable, so they get no anomaly and must not enter the baseline of the other months.
-    let spans_terra_aqua = months.iter().any(|m| (m.year, m.month) >= FIRST_TERRA_AQUA_MONTH);
-    let terra_only = |m: &MonthEntry| spans_terra_aqua && (m.year, m.month) < FIRST_TERRA_AQUA_MONTH;
+fn spans_terra_aqua(months: &[MonthEntry]) -> bool {
+    months.iter().any(|m| (m.year, m.month) >= FIRST_TERRA_AQUA_MONTH)
+}
+
+fn anomaly_cells(
+    months: &[MonthEntry],
+    values: impl Fn(&MonthEntry) -> (u64, Option<f64>, Option<f64>),
+) -> Vec<Option<f64>> {
     let mut cells: Vec<CalendarCell> = months
         .iter()
-        .map(|m| CalendarCell {
-            year: m.year,
-            month: m.month,
-            count: count(m) as u64,
-            count_normalized: (!terra_only(m)).then(|| count(m) as f64),
-            effort_omega: None,
-            mean_frp: 0.0,
-            mean_frp_raw: 0.0,
-            mean_frp_lower: None,
-            mean_frp_upper: None,
-            total_frp: 0.0,
-            total_frp_lower: None,
-            total_frp_upper: None,
-            frp_per_detection_eq: None,
-            anomaly: None,
-            sfai: None,
-            quality_flags: Vec::new(),
-            conformal: None,
-            count_recovered: None,
-            count_recovered_lower: None,
-            count_recovered_upper: None,
+        .map(|m| {
+            let (count, count_normalized, effort_omega) = values(m);
+            CalendarCell {
+                year: m.year,
+                month: m.month,
+                count,
+                count_normalized,
+                effort_omega,
+                mean_frp: 0.0,
+                mean_frp_raw: 0.0,
+                mean_frp_lower: None,
+                mean_frp_upper: None,
+                total_frp: 0.0,
+                total_frp_lower: None,
+                total_frp_upper: None,
+                frp_per_detection_eq: None,
+                anomaly: None,
+                sfai: None,
+                quality_flags: Vec::new(),
+                conformal: None,
+                count_recovered: None,
+                count_recovered_lower: None,
+                count_recovered_upper: None,
+            }
         })
         .collect();
     compute_anomalies(&mut cells);
     cells.into_iter().map(|c| c.anomaly).collect()
+}
+
+/// Z-score of plain counts, deliberately not effort-corrected so it shows the sensor-transition
+/// jump. Same rule as /api/calendar for Terra-only months: once the series reaches Terra+Aqua they
+/// are not comparable, so they get no anomaly and must not enter the baseline of the other months.
+fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec<Option<f64>> {
+    let spans = spans_terra_aqua(months);
+    anomaly_cells(months, |m| {
+        let terra_only = spans && (m.year, m.month) < FIRST_TERRA_AQUA_MONTH;
+        (count(m) as u64, (!terra_only).then(|| count(m) as f64), None)
+    })
+}
+
+/// Z-score of the effort-normalised count (same method as /api/calendar). Months without a usable
+/// effort factor have `count_normalized == None`: no anomaly, and they stay out of the baseline.
+fn effort_anomalies(months: &[MonthEntry]) -> Vec<Option<f64>> {
+    anomaly_cells(months, |m| (m.harmonized as u64, m.count_normalized, m.effort_omega))
+}
+
+/// Ω is pooled per platform configuration over the whole series, as in /api/calendar. A month
+/// without detections has no platforms to pool but is a true zero whatever Ω is, so it keeps a
+/// zero count in the baseline; Terra-only months before 2002-07 never get a normalised count.
+fn apply_effort(months: &mut [MonthEntry], effort: &EffortMonths) {
+    let spans = spans_terra_aqua(months);
+    for m in months {
+        let terra_only = spans && (m.year, m.month) < FIRST_TERRA_AQUA_MONTH;
+        m.effort_omega = effort.omega_for(m.year, m.month);
+        m.count_normalized = if terra_only {
+            None
+        } else if m.harmonized == 0 {
+            Some(0.0)
+        } else {
+            m.effort_omega.map(|omega| m.harmonized as f64 / omega)
+        };
+    }
 }
 
 fn change_pct(from: usize, to: usize) -> Option<f64> {
@@ -1186,13 +1238,16 @@ async fn build_series(
 
     let mut year_entries = Vec::with_capacity(stats.len());
     let mut months = Vec::new();
+    let mut effort = EffortMonths::default();
     for (_, stat) in stats {
         year_entries.push(stat.entry);
         months.extend(stat.months);
+        effort.merge(stat.effort);
     }
 
+    apply_effort(&mut months, &effort);
     let raw_anomaly = anomalies(&months, |m| m.raw_total);
-    let harmonized_anomaly = anomalies(&months, |m| m.harmonized);
+    let harmonized_anomaly = effort_anomalies(&months);
     for (i, month) in months.iter_mut().enumerate() {
         month.anomaly_raw = raw_anomaly[i];
         month.anomaly_harmonized = harmonized_anomaly[i];
@@ -2853,6 +2908,8 @@ mod tests {
             mean_frp: None,
             mean_frp_lower: None,
             mean_frp_upper: None,
+            effort_omega: None,
+            count_normalized: None,
             anomaly_raw: None,
             anomaly_harmonized: None,
         }
@@ -2887,6 +2944,109 @@ mod tests {
         assert!(z[0].is_none());
         assert!((z[1].unwrap() - (-2.0 / sd)).abs() < 1e-12);
         assert!((z[3].unwrap() - (2.0 / sd)).abs() < 1e-12);
+    }
+
+    /// Writes `count(year, month)` distinct detections per summer month and year for one sensor
+    /// file; `lat_base` keeps MODIS and VIIRS rows far apart so nothing is matched.
+    fn write_summer_year(
+        dir: &Path,
+        slug: &str,
+        year: i32,
+        lat_base: f64,
+        count: impl Fn(i32, u32) -> usize,
+    ) {
+        let mut dates = Vec::new();
+        let mut lats = Vec::new();
+        for month in 6..=8_u32 {
+            for i in 0..count(year, month) {
+                dates.push(format!("{year}-{month:02}-15"));
+                lats.push(lat_base + (f64::from(month - 6) * 50.0 + i as f64) * 0.05);
+            }
+        }
+        let rows: Vec<(f64, &str, u8)> = lats
+            .iter()
+            .zip(&dates)
+            .map(|(lat, date)| (*lat, date.as_str(), 0))
+            .collect();
+        write_file(dir, slug, year, "Synth", &rows);
+    }
+
+    fn modis_summer_count(year: i32, month: u32) -> usize {
+        6 + ((year as u32 * 7 + month * 3) % 5) as usize
+    }
+
+    #[tokio::test]
+    async fn series_harmonized_anomaly_is_effort_normalised_and_raw_anomaly_stays_raw() {
+        let dir = temp_archive("effort-anomaly");
+        for year in 2005..=2016 {
+            write_summer_year(&dir, "modis", year, 10.0, modis_summer_count);
+        }
+        for year in 2012..=2016 {
+            write_summer_year(&dir, "viirs-snpp", year, 50.0, |y, m| 4 * modis_summer_count(y, m));
+        }
+        let state = state(dir.clone(), u64::MAX);
+        let json = series_json(&state, "Synth").await.ok().unwrap();
+        let months = json["months"].as_array().unwrap();
+
+        let summer: Vec<&serde_json::Value> = months
+            .iter()
+            .filter(|m| (6..=8).contains(&m["month"].as_i64().unwrap()))
+            .collect();
+        let mean_post = |field: &str| -> f64 {
+            let v: Vec<f64> = summer
+                .iter()
+                .filter(|m| m["year"].as_i64().unwrap() >= 2012)
+                .map(|m| m[field].as_f64().unwrap())
+                .collect();
+            v.iter().sum::<f64>() / v.len() as f64
+        };
+        let (raw_mean, harmonized_mean) = (mean_post("anomaly_raw"), mean_post("anomaly_harmonized"));
+        assert!(raw_mean > 0.8, "raw z keeps the sensor jump: {raw_mean}");
+        assert!(harmonized_mean.abs() < 0.6, "effort-normalised z: {harmonized_mean}");
+        assert!(raw_mean - harmonized_mean > 0.8, "{raw_mean} vs {harmonized_mean}");
+
+        // anomaly_raw is the plain z-score of raw_total, independent of any effort factor.
+        let june: Vec<&&serde_json::Value> =
+            summer.iter().filter(|m| m["month"] == 6).collect();
+        let counts: Vec<f64> = june.iter().map(|m| m["raw_total"].as_f64().unwrap()).collect();
+        let n = counts.len() as f64;
+        let mean = counts.iter().sum::<f64>() / n;
+        let sd = (counts.iter().map(|c| (c - mean).powi(2)).sum::<f64>() / n).sqrt();
+        for (m, c) in june.iter().zip(&counts) {
+            assert!((m["anomaly_raw"].as_f64().unwrap() - (c - mean) / sd).abs() < 1e-9);
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_months_carry_effort_fields_and_skip_terra_only_months() {
+        let dir = temp_archive("effort-fields");
+        for year in [2001, 2003, 2004, 2005] {
+            write_summer_year(&dir, "modis", year, 10.0, modis_summer_count);
+        }
+        let state = state(dir.clone(), u64::MAX);
+        let json = series_json(&state, "Synth").await.ok().unwrap();
+        let months = json["months"].as_array().unwrap();
+
+        let mut with_omega = 0;
+        for m in months {
+            let key = (m["year"].as_i64().unwrap(), m["month"].as_i64().unwrap());
+            assert!(m.get("effort_omega").is_some() && m.get("count_normalized").is_some());
+            if key < (2002, 7) {
+                assert!(m["effort_omega"].is_null(), "{key:?}");
+                assert!(m["count_normalized"].is_null(), "{key:?}");
+                assert!(m["anomaly_harmonized"].is_null(), "{key:?}");
+                continue;
+            }
+            if let Some(omega) = m["effort_omega"].as_f64() {
+                assert!(omega > 0.0);
+                let expected = m["harmonized"].as_f64().unwrap() / omega;
+                assert!((m["count_normalized"].as_f64().unwrap() - expected).abs() < 1e-9);
+                with_omega += 1;
+            }
+        }
+        assert!(with_omega >= 9, "{with_omega}");
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

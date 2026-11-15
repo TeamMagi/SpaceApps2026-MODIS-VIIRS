@@ -23,7 +23,8 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 // v7: VIIRS pass sums limited to the MODIS scan/track footprint.
 // v8: DEFAULT_VZA_ERROR_COEFF raised from 0.05 to 1.0 (off-nadir ModisOnly intervals and monthly mean_frp_* widen).
 // v9: Series anomalies skip Terra-only months before 2002-07 (they no longer get an anomaly nor enter the baseline).
-pub const DERIVED_SCHEMA_VERSION: u32 = 9;
+// v10: Series months carry effort_omega and count_normalized; anomaly_harmonized is computed from the effort-normalised count (anomaly_raw stays raw).
+pub const DERIVED_SCHEMA_VERSION: u32 = 10;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;
