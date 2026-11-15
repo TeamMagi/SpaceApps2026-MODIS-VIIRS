@@ -6,10 +6,53 @@
 import type { CopyApi } from "../../hooks/useCopy";
 import { useCopy } from "../../hooks/useCopy";
 import { anomalyCopyKey } from "../../lib/scales";
-import type { MonthCell } from "../../types";
+import type { CalendarCell, MonthCell } from "../../types";
 import styles from "./CalendarTooltip.module.css";
 
-export function formatCalendarCellText(cell: MonthCell, harmonized: boolean, copy: Pick<CopyApi, "t" | "fmt">): string {
+type TipCopy = Pick<CopyApi, "t" | "fmt">;
+
+/** Headline is FRP per detection; mean FRP is native-pixel and jumps at the 2012 VIIRS pixel-size change. */
+function formatCalendarFrpText(frp: CalendarCell | undefined, { t, fmt }: TipCopy): string {
+  if (!frp) return "";
+  const parts: string[] = [];
+  if (frp.frpPerDetectionEq !== null) {
+    parts.push(t("calendarFrpEq", { value: fmt.number(frp.frpPerDetectionEq, 1) }));
+  }
+  const total = fmt.number(frp.totalFrp, 1);
+  if (frp.totalFrpLower !== null && frp.totalFrpUpper !== null) {
+    parts.push(
+      t("calendarFrpTotalBand", {
+        value: total,
+        low: fmt.number(frp.totalFrpLower, 1),
+        high: fmt.number(frp.totalFrpUpper, 1),
+      }),
+    );
+  } else {
+    parts.push(t("calendarFrpTotal", { value: total }));
+  }
+  return parts.join(" · ");
+}
+
+function formatCalendarNativeText(frp: CalendarCell | undefined, { t, fmt }: TipCopy): string {
+  if (!frp) return "";
+  const value = fmt.number(frp.meanFrp, 1);
+  if (frp.meanFrpLower !== null && frp.meanFrpUpper !== null) {
+    return t("calendarFrpNativeBand", {
+      value,
+      low: fmt.number(frp.meanFrpLower, 1),
+      high: fmt.number(frp.meanFrpUpper, 1),
+    });
+  }
+  return t("calendarFrpNative", { value });
+}
+
+export function formatCalendarCellText(cell: MonthCell, harmonized: boolean, copy: TipCopy, frp?: CalendarCell): string {
+  const base = formatCalendarCellBase(cell, harmonized, copy);
+  if (!harmonized || !cell.hasData) return base;
+  return [base, formatCalendarFrpText(frp, copy), formatCalendarNativeText(frp, copy)].filter(Boolean).join(" · ");
+}
+
+function formatCalendarCellBase(cell: MonthCell, harmonized: boolean, copy: TipCopy): string {
   const { t, fmt } = copy;
   const date = fmt.monthYear(cell);
   const count = harmonized ? cell.harmonizedCount : cell.rawCount;
@@ -36,13 +79,17 @@ export interface CalendarTooltipProps {
   id: string;
   cell: MonthCell;
   harmonized: boolean;
+  frp?: CalendarCell;
   position: { x: number; y: number };
   bounds?: { width: number; cellHeight: number };
 }
 
-export default function CalendarTooltip({ id, cell, harmonized, position, bounds }: CalendarTooltipProps) {
+export default function CalendarTooltip({ id, cell, harmonized, frp, position, bounds }: CalendarTooltipProps) {
   const { t, fmt } = useCopy();
-  const text = formatCalendarCellText(cell, harmonized, { t, fmt });
+  const text = formatCalendarCellBase(cell, harmonized, { t, fmt });
+  const showFrp = harmonized && cell.hasData;
+  const frpText = showFrp ? formatCalendarFrpText(frp, { t, fmt }) : "";
+  const nativeText = showFrp ? formatCalendarNativeText(frp, { t, fmt }) : "";
 
   const flipBottom = position.y < 52;
   const top = flipBottom ? position.y + (bounds?.cellHeight ?? 18) : position.y;
@@ -60,6 +107,8 @@ export default function CalendarTooltip({ id, cell, harmonized, position, bounds
       style={{ left: clampedX, top }}
     >
       <span>{text}</span>
+      {frpText && <span className={styles.frpLine}>{frpText}</span>}
+      {nativeText && <span className={styles.nativeLine}>{nativeText}</span>}
       <span className={styles.arrow} style={{ left: `calc(50% + ${arrowOffset - 140}px)` }} aria-hidden="true" />
     </div>
   );

@@ -19,8 +19,30 @@ const BBOX: &str = "west=26&south=36&east=45&north=42";
 const MODIS_HEADER: &str = "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight";
 const VIIRS_HEADER: &str = "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight";
 
+// Tests that only need "some valid day" use this fixed one, so their result never depends on
+// the wall clock.
+fn fixed_day() -> NaiveDate {
+    NaiveDate::from_ymd_opt(2026, 3, 15).expect("valid date")
+}
+
+// The server resolves `days=N` against the real UTC clock (FirmsClient::fetch_all), so tests
+// that go through that path cannot use a fixed date and must mock the real "today".
 fn today() -> NaiveDate {
     Utc::now().date_naive()
+}
+
+// Waits out the last seconds before UTC midnight so a test never straddles a date change.
+async fn wait_clear_of_utc_midnight() {
+    let now = Utc::now();
+    let next_midnight = (now.date_naive() + chrono::Duration::days(1))
+        .and_hms_opt(0, 0, 0)
+        .expect("midnight")
+        .and_utc();
+    let remaining = next_midnight - now;
+    if remaining < chrono::Duration::seconds(15) {
+        tokio::time::sleep(remaining.to_std().unwrap_or_default() + Duration::from_millis(50))
+            .await;
+    }
 }
 
 fn ymd(date: NaiveDate) -> String {
@@ -68,8 +90,12 @@ async fn mount_area(server: &MockServer, source: &str, response: ResponseTemplat
 }
 
 async fn healthy_firms() -> MockServer {
+    wait_clear_of_utc_midnight().await;
+    healthy_firms_on(today()).await
+}
+
+async fn healthy_firms_on(date: NaiveDate) -> MockServer {
     let server = MockServer::start().await;
-    let date = today();
     let date_str = ymd(date);
 
     Mock::given(method("GET"))
@@ -434,7 +460,7 @@ async fn stats_summarises_the_same_pipeline_run() {
 
 #[tokio::test]
 async fn availability_lists_mock_sources_sorted() {
-    let firms = healthy_firms().await;
+    let firms = healthy_firms_on(fixed_day()).await;
     let app = app(
         Some(firms_client(&firms)),
         None,
@@ -460,8 +486,8 @@ async fn availability_lists_mock_sources_sorted() {
         ]
     );
 
-    let min = ymd(today() - chrono::Duration::days(60));
-    let max = ymd(today() + chrono::Duration::days(2));
+    let min = ymd(fixed_day() - chrono::Duration::days(60));
+    let max = ymd(fixed_day() + chrono::Duration::days(2));
     for entry in entries {
         assert_eq!(entry["min_date"].as_str(), Some(min.as_str()));
         assert_eq!(entry["max_date"].as_str(), Some(max.as_str()));
@@ -710,7 +736,7 @@ async fn slow_upstream_hits_request_timeout_with_504() {
         .respond_with(
             ResponseTemplate::new(200)
                 .set_body_string(format!("{VIIRS_HEADER}\n"))
-                .set_delay(Duration::from_secs(5)),
+                .set_delay(Duration::from_secs(2)),
         )
         .with_priority(1)
         .mount(&firms)
@@ -719,7 +745,7 @@ async fn slow_upstream_hits_request_timeout_with_504() {
     let app = app(
         Some(firms_client(&firms)),
         None,
-        Some(Duration::from_secs(1)),
+        Some(Duration::from_millis(100)),
     );
     let reply = call(&app, &format!("/api/harmonize?{BBOX}&days=1")).await;
     assert_eq!(
@@ -831,7 +857,14 @@ async fn firms_endpoints_without_api_key_return_503_with_reason(#[case] uri: &st
 )]
 #[tokio::test]
 async fn harmonize_query_validation(#[case] query: &str, #[case] expected: StatusCode) {
-    let firms = healthy_firms().await;
+    // Only the days-based and default-window cases depend on the real clock.
+    let explicit_range = query.contains("{today}");
+    let day = if explicit_range { fixed_day() } else { today() };
+    let firms = if explicit_range {
+        healthy_firms_on(day).await
+    } else {
+        healthy_firms().await
+    };
     let app = app(
         Some(firms_client(&firms)),
         None,
@@ -839,8 +872,8 @@ async fn harmonize_query_validation(#[case] query: &str, #[case] expected: Statu
     );
 
     let query = query
-        .replace("{today}", &ymd(today()))
-        .replace("{yesterday}", &ymd(today() - chrono::Duration::days(1)));
+        .replace("{today}", &ymd(day))
+        .replace("{yesterday}", &ymd(day - chrono::Duration::days(1)));
     let reply = call(&app, &format!("/api/harmonize?{query}")).await;
     assert_eq!(reply.status, expected, "query {query} body: {}", reply.body);
 

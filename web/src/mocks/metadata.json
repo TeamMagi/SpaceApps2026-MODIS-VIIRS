@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "sourceKind": "synthetic",
+  "seed": 20261115,
+  "generatedAt": "2026-11-15T00:00:00Z",
+  "region": "Turkey",
+  "detailYear": 2021,
+  "calendarSlots": 312,
+  "outsideCoverageSlots": 10,
+  "summaryYears": [
+    2000,
+    2025
+  ],
+  "scientificPipelineApplied": false,
+  "note": "2021 details describe a synthetic Mediterranean cluster, not national coverage. Other years are synthetic summaries only. No claim of sensor-cliff correction. calendar.json also carries a synthetic monthly FRP series (frpMonths); VIIRS-to-MODIS FRP bridge 0.35 is visual-only."
+}

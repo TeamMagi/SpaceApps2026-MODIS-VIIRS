@@ -18,6 +18,7 @@ import { isPlannedStage, PIPELINE_ORDER } from "../../hooks/useHarmonizeTransiti
 import { useRegionData } from "../../hooks/useRegionData";
 import { useAppStore } from "../../store/useAppStore";
 import type { PipelineStageKey, Theme } from "../../types";
+import MethodsLink from "../Methods/MethodsLink";
 import Drawer from "./Drawer";
 import styles from "./MethodsDrawer.module.css";
 
@@ -55,6 +56,9 @@ export default function MethodsDrawer() {
   return (
     <Drawer id="methods" title={t("methodsTitle")} description={t("methodsCliffDef")}>
       <p className={styles.lead}>{t("methodsSensors")}</p>
+      <p className={styles.fullPage}>
+        <MethodsLink className={styles.fullPageLink}>{t("methodsFullPageLink")}</MethodsLink>
+      </p>
 
       <h3 className={styles.heading}>{t("methodsStepsTitle")}</h3>
       <ol className={styles.steps} role="list">

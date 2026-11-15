@@ -21,6 +21,7 @@
 | `TASARIM_BELIRSIZLIK_RENK.md` | Grafik türüne göre belirsizlik gösterimi, erişilebilir renk skalaları, palet seçici (C7) |
 | `RENK_DENETIMI.md` | `tools/cvd_check.py` ile üretilen renk körlüğü / kontrast denetim raporu (elle düzenlenmez) |
 | `VAKA_CIN_ANIZ.md` | C11 vaka çalışması: Çin 2013–2018 anız yakma yasağı, ham vs harmonize seri, boyut/mevsim kayması, sunum metni; veri ve grafikler `vaka/` altında, `crates/firms-client/examples/china_ban_case.rs` ile üretilir |
+| `SUREKLILIK_ANALIZI.md` | G11 sensör dikişleri (2002 Aqua, 2012 SNPP, 2018 NOAA-20) süreklilik referans ölçümü: 10 ülkede ham vs harmonize metrik analizi |
 
 ## Doküman Ekleme Kuralları
 

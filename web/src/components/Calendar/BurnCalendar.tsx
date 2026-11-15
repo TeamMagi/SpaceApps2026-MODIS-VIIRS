@@ -22,6 +22,7 @@ import {
 } from "react";
 import { formatApiError } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
+import { calendarFrpKey, useCalendarFrp } from "../../hooks/useCalendarFrp";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData, useSelectedMonthCell } from "../../hooks/useRegionData";
 import { useYearPlayback } from "../../hooks/useYearPlayback";
@@ -83,6 +84,7 @@ function BurnCalendar() {
   const swathGapNote = useMemo(() => formatSwathGapNote(tropicalSwathGap, t), [tropicalSwathGap, t]);
   const selected = useSelectedMonthCell();
   const region = useAppStore((state) => state.region);
+  const calendarFrp = useCalendarFrp(region);
   const toggleMonth = useAppStore((state) => state.toggleMonth);
   const calendarYear = useAppStore((state) => state.calendarYear);
   const setCalendarYear = useAppStore((state) => state.setCalendarYear);
@@ -535,7 +537,7 @@ function BurnCalendar() {
                   data-empty={!cell.hasData ? "true" : undefined}
                   aria-pressed={isSelectedFilter}
                   aria-disabled={!cell.hasData ? true : undefined}
-                  aria-label={formatCalendarCellText(cell, revealAnswer, copy)}
+                  aria-label={formatCalendarCellText(cell, revealAnswer, copy, calendarFrp.get(calendarFrpKey(cell.year, cell.month)))}
                   aria-describedby={isTooltipCell ? tooltipId : undefined}
                   className={styles.sliceGroup}
                   style={sliceStyle}
@@ -669,6 +671,7 @@ function BurnCalendar() {
           id={tooltipId}
           cell={tooltipCell}
           harmonized={revealAnswer}
+          frp={calendarFrp.get(calendarFrpKey(tooltipCell.year, tooltipCell.month))}
           position={tooltipAnchor.position}
           bounds={tooltipAnchor.bounds}
         />

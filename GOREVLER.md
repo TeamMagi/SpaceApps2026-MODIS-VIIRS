@@ -240,11 +240,11 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
-| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] |
-| R11 | Seed-anchored zaman penceresi | Serhat | — | — | [ ] |
-| R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [ ] |
+| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] sürüyor |
+| R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
+| R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
-| R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [ ] bekliyor |
+| R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
 | R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [ ] |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | [X] |
@@ -260,9 +260,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
-| Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [ ] |
-| Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [ ] |
-| Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [ ] |
+| Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
+| Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
+| Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
@@ -499,6 +499,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Dikiş öncesi/sonrası seviye kayması ve `|log(kayma)|` metriklerini hacim eşiği (`<100/yıl` gürültü sınırı, `fire-harmony`) ile raporlama; gözlenen adım büyüklükleri ölçülecek
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ P4, `fire-harmony`)
 - **Bitti sayılır:** ~10 biyom-çeşitli ülkede `2002-07`, `2012-01` ve `2018-04` dikişlerinde ham vs harmonize (`count_normalized`, `total_frp`, `frp_per_detection_eq`) adım büyüklükleri ölçülüp tablo olarak raporlanıyor.
+- **Durum (2026-11-15):** Referans ölçüm yapıldı — araç `crates/firms-client/examples/seam_continuity.rs`, sonuçlar `docs/SUREKLILIK_ANALIZI.md` (10 ülke, 2000–2025). Ülkeler üzerinden medyan |log adım|, 2012 SNPP dikişi (2011→2012): ham sayım 1,77 → `count_normalized` 0,13 (Ω sayım sıçramasının ~%92'sini gideriyor); `total_frp` 0,59 (hâlâ belirgin adım); `frp_per_detection_eq` 0,14 ama 4/10 ülkede doğal dalgalanmanın (p90) dışında; 2018 NOAA-20 dikişinde F 10/10 ülkede yukarı kayıyor (+0,08 ile +0,42). Aqua 2002 dikişi için normalize metrikler Aqua öncesi ay kuralı nedeniyle NA. Görev, bağımlılıkları R10 ve K11 bittikten sonra aynı komutla yeniden ölçülüp karşılaştırılınca kapanacak.
 
 ### [ ] G12 — İç doğrulama paketi
 - **Bekler:** G11, S10 · **Açar:** G5, S12, Y10
@@ -671,6 +672,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - **Kaldırılan alan:** hotspot'lardaki `calibration_ratio` (ve CSV/GeoJSON export sütunu). Frontend kullanmıyordu.
 > - **Takvim hücrelerine eklenen alanlar (`/api/calendar`):** `total_frp`, `total_frp_lower`, `total_frp_upper`, `frp_per_detection_eq` (MODIS-eşdeğeri tespit başına FRP; sensör geçişinde süreklilik için önerilen metrik), `mean_frp_lower`, `mean_frp_upper`. `mean_frp` korunuyor ama artık "native-pixel" ortalama; 2012 VIIRS geçişinde piksel boyutu yüzünden düşüş gösterir, takvimde manşet metrik olarak kullanılmamalı.
 > - Ayrıntı: `crates/server/CLAUDE.md`, `docs/REFERANS_ANALIZI.md` (P1–P2) ve bu dosyadaki G8.
+> - **Uygulandı (Serhat, 2026-11-15):** `CompareVza.meanFrpReductionPct` → `meanFrpAdjustmentPct` (`web/src/types/index.ts`, `web/src/services/api.ts`). `CalendarCell` tipine ve adapter'ına `meanFrpLower/Upper`, `totalFrp`, `totalFrpLower/Upper`, `frpPerDetectionEq` eklendi. Bu alanları hiçbir UI component'i kullanmıyor (takvim arşiv verisini kullanıyor), bu yüzden metin değişikliği gerekmedi. `npm run typecheck`, `npm run build`, `npm test` temiz.
 
 ### [X] R1 — React component mimarisi + layout
 - **Bekler:** C2 · **Açar:** R2, R3, R4, Y1–Y4
@@ -742,21 +744,24 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Radyometrik parametre kestiriminde kullanılmak üzere yalnızca `|Δt| ≤ 5–20 dk` eşzamanlı alt-kümesinin ayrıştırılması (`[01, 02, 03, 14, 23]`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P5, Yol Haritası #3 (+ `[01, 02, 03, 14, 23]`, `flare-chronos`, `FireHarmonize`)
 - **Bitti sayılır:** aynı MODIS ayak izindeki çoklu VIIRS alt-pikselleri tek `Matched` kaydında toplanıyor (`ViirsOnly` artığı kalmıyor); birim testleri ve canlı/arşiv veride `Matched` FRP toplamı doğrulanıyor.
+- **Durum (Serhat, 2026-11-15):** Kod yazıldı ve birim testleri geçiyor. Henüz `main`'e alınmadı, Serhat'ın makinesindeki yerel `r10-footprint-aggregation` branch'inde duruyor. Sebep: yeni `matching.simultaneous_window_secs` alanı `PipelineConfig` hash'ini değiştiriyor. Bu yüzden repodaki hazır `/api/series` sonuçlarının hepsi (`data/derived/series`) geçersiz sayılıyor; arşivi olmayan biri harita ve takvim verisini göremez. **Gereken:** arşivi olan biri (`make data`) R10 ile `make precompute-local` ve `make bundle-derived` çalıştırmalı, `DERIVED_SCHEMA_VERSION` 3'e çıkarılmalı. Ondan sonra R10 ve yeni hazır sonuçlar birlikte merge edilecek. Arşiv verisiyle `Matched` FRP doğrulaması da o adımda yapılacak.
 
-### [ ] R11 — Seed-anchored zaman penceresi
+### [X] R11 — Seed-anchored zaman penceresi
 - **Bekler:** — · **Açar:** —
 - `crates/core/src/fleet.rs` ve `crates/core/src/harmonize.rs` içinde zaman penceresi kümelemesinde zincirlemeyi (chaining) önlemek için pencereyi son eklenen kayda değil ilk tohum kayda göre sabitleme (`|t - t_anchor| ≤ window_secs`, `flare-chronos` `deduplication.py` kuralı)
 - Ardışık uzun süren tespit dizilerinin tek dev pencereye birleşmediğini doğrulayan regresyon testlerinin `fleet.rs` ve `harmonize.rs` test paketine eklenmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P5, Yol Haritası #12 (+ `flare-chronos`)
 - **Bitti sayılır:** `fleet.rs` ve `harmonize.rs` zaman pencereleri `t_anchor` tabanlı çalışıyor; zincirleme önleme testleri dahil `cargo test -p pyrosync-core` geçiyor.
+- **Kapanış (Serhat, 2026-11-15):** İnceleme sonucunda üretim kodunda zincirleme bulunmadı, kod değişmedi. `fleet.rs` `consolidate_fleet_indexed_with` her adayı tohum kaydın zamanıyla (`cand.acquired - anchor.acquired`) karşılaştırıyor. `harmonize.rs` eşleştirmesi de her VIIRS kaydını sabit MODIS gözleminin zamanıyla karşılaştırıyor. Bu davranışı koruyan 4 regresyon testi eklendi: `fleet.rs`'e `platform_chain_longer_than_window_does_not_collapse_into_one_group` ve `candidate_is_compared_to_the_seed_not_to_the_last_member`, `harmonize.rs`'e `viirs_platform_chain_longer_than_fleet_window_stays_split_through_the_pipeline` ve `matching_window_is_anchored_on_the_modis_observation_not_on_earlier_matches`. `cargo test -p pyrosync-core` geçiyor (240 test).
 
-### [ ] R9 — Frontend'i yeni API alanlarına geçirme
+### [X] R9 — Frontend'i yeni API alanlarına geçirme
 - **Bekler:** — · **Açar:** R12
 - `web/src/types/index.ts` ve `web/src/services/api.ts` içinde `/api/compare` yanıtındaki `vza.mean_frp_reduction_pct` yerine `vza.mean_frp_adjustment_pct` alanına geçilmesi; UI metinlerinin "azaltım" yerine "düzeltme/artış" olarak güncellenmesi (bölüm başındaki nota göre)
 - `BurnCalendar` ve ilgili serilerde `/api/calendar` hücrelerinden `total_frp`, `frp_per_detection_eq` ve `mean_frp_lower`/`mean_frp_upper`, `total_frp_lower`/`total_frp_upper` bantlarının bağlanması
 - `mean_frp`'nin 2012 VIIRS piksel boyutu geçişindeki süreksizliği nedeniyle manşet metrikten indirilip yalnızca native-pixel ikincil detay olarak gösterilmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P2 (+ `GOREVLER.md` Serhat bölüm başı notu)
 - **Bitti sayılır:** `web/` içinde `mean_frp_adjustment_pct`, `total_frp`, `frp_per_detection_eq` ve `*_lower/upper` alanları kullanılıyor; `mean_frp` manşette değil; `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
+- **Kapanış (Serhat, 2026-11-15):** Yeni `web/src/hooks/useCalendarFrp.ts` hook'u seçili bölge için `/api/calendar`'ı çağırıyor. Bölge kimliği arşivdeki ülke adıyla aynı olduğu için `country` parametresine olduğu gibi gidiyor. Sonuç oturum boyunca bölge başına cache'leniyor. İstek yüklenirken veya hata verdiğinde takvim eskisi gibi `/api/series` verisiyle çiziliyor. Harmonize modda `CalendarTooltip` ve dilim aria-label'ı sırasıyla şunları gösteriyor: manşet olarak `frpPerDetectionEq`, ardından `totalFrp` ve olası aralığı (`totalFrpLower/Upper`), en son ikincil bilgi olarak native-pixel `meanFrp` ve aralığı. VZA düzeltmesi `CountDelta`'daki canlı karşılaştırma satırına eklendi (`meanFrpAdjustmentPct`, işaretli %). UI'da "azaltım" metni yoktu. `tsc`, `build` ve `npm test` temiz. **Sınır:** yerelde arşiv indirilmediği için `/api/calendar` ile canlı birleştirme denenmedi. C7'deki geniş bant tarama (hatch) deseni uygulanmadı.
 
 ### [ ] R8 — Çoklu harmonizasyon model seçimi
 - **Bekler:** G7, K1, R1 · **Açar:** —
@@ -769,7 +774,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** Strateji 1.2 — "Çoklu harmonizasyon modeli seçimi — kullanıcı yöntemi seçip farkı görebilecek"
 - **Bitti sayılır:** en az 2 farklı model arasında geçiş yapılabiliyor; sonuçlar gözle görülür şekilde farklı; istatistik farkı gösteriliyor.
 
-### [ ] R6 — Methods/About sayfası implementasyonu
+### [X] R6 — Methods/About sayfası implementasyonu
 - **Bekler:** C5, R1 · **Açar:** —
 - Can'ın C5 tasarımını koda dökmek:
   - `/methods` route (React Router veya conditional render)
@@ -779,6 +784,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Disclaimer banner component'i (sayfa altı veya header'da)
   - Responsive: mobilde de okunabilir
 - **Bitti sayılır:** `/methods` sayfası açılıyor; 7 pipeline aşaması görsel olarak anlaşılıyor; referanslar listelenmiş; disclaimer görünür.
+- **Kapanış (Serhat, 2026-11-15):** Sayfa `web/src/components/Methods/` altında, hash route ile açılıyor: `#/methods` ve `#/methods/{pipeline|vza|h3|references|limits}`. Path route yerine hash seçildi, çünkü backend SPA fallback'i çalışmıyor (K9) ve `/methods` linki yenilendiğinde 404 verirdi. Sayfa şunları içeriyor: 7 aşamalı pipeline şeması ve klavyeyle gezilebilen accordion (ne, neden, parametreler, girdi→çıktı); `/api/config`'ten canlı parametreler (backend yoksa koddaki varsayılanlar gösteriliyor); `R_rel(θ)` VZA eğrisi SVG'si, ±σ bandı ve açı slider'ı; H3 hexagon görseli; daraltılabilir disclaimer banner'ı; yazdırma görünümü. Sayfaya Methods çekmecesinden ve alt bardaki disclaimer linkinden giriliyor. Referanslar yalnızca repo dokümanlarındaki kaynaklardan `web/src/content/references.ts`'e alındı ve "tam künye bekleniyor" diye işaretlendi; içerik S8'de Samet tarafından güncellenecek. Metinler `copyMethods.ts`'te, EN ve TR. `tsc`, `build` ve `npm test` (15 test) temiz. **Sınır:** tarayıcıda görsel kontrol yapılmadı. Demo modu banner'ı K1 bekliyor. H/P kısayolları methods sayfasında da çalışıyor.
 
 ### [ ] R7 — CSV/GeoJSON export + acil müdahale brifingi
 - **Bekler:** G10, C6, S7 · **Açar:** —
@@ -967,7 +973,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 ## Yusuf'un görevleri
 
-### [ ] Y5 — Mock veri hazırlığı (frontend için)
+### [X] Y5 — Mock veri hazırlığı (frontend için)
 - **Bekler:** — · **Açar:** Y1, Y2, Y3, Y4
 - Frontend component'leri backend hazır olmadan geliştirilebilsin:
   - `web/src/mocks/hotspots.json` — 500-1000 arası hotspot (lat, lon, frp, confidence, sensor, date)
@@ -976,21 +982,24 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Veriler gerçekçi olmalı: FRP aralığı 1–500 MW, mevsimsellik var (yaz ayları yoğun), 2012'de VIIRS geçişi belirgin
   - `web/src/mocks/index.ts` ile export
 - **Bitti sayılır:** mock dosyaları `web/src/mocks/` altında; TypeScript hatasız import ediliyor; sensor cliff 2012'de görünüyor.
+- **Kapanış notu (15 Kasım 2026):** Sentetik, seed'li paket `web/scripts/generate-mocks.mjs` ile üretilir (800 ham / 500 harmonize nokta, 2000-11–2025-12 aylık seri, `calendar.json` içinde aylık sayım + `frpMonths` ortalama FRP + anomali, `stats.json`). `npm run typecheck` hatasız; `web/tests/mocks.test.ts` 8 kontrolle geçiyor (bağlantılar, aşama toplamları, mevsimsellik, 2021 tutarlılığı). 2012 cliff'i: ham sayım 277 → 894, ham ortalama FRP 128.6 → 74.3 MW; harmonize ortalama +%3.9. Harmonize süreklilik sentetik 0.35 köprüsüyle **yapı gereği** sağlanır, pipeline bulgusu değildir.
 
-### [ ] Y6 — Takvim analitiği (`crates/core/src/calendar.rs`)
+### [X] Y6 — Takvim analitiği (`crates/core/src/calendar.rs`)
 - **Bekler:** — · **Açar:** Y3
 - `crates/core/src/calendar.rs` içine dairesel mevsimsellik metrikleri **PCD** (Peak Concentration Degree) ve **PCP** (Peak Concentration Period) hesaplarının eklenmesi (`[30, Denklem 1–2]`)
 - Takvim yılı (Ocak–Aralık) yanında tarım/iklim analizleri için opsiyonel **Fire-Year** (Mart–Şubat `[21]`) gruplama modu eklenmesi
 - Standart sapma tabanlı `anomaly` z-skoru yanında aykırı değerlere dayanıklı **MAD-tabanlı SFAI** z-skorunun hesaplanması (`flare-chronos`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7, Yol Haritası #14 (+ `[21, 30]`, `flare-chronos`)
 - **Bitti sayılır:** `calendar.rs` birim testleriyle birlikte PCD/PCP, opsiyonel Fire-Year ve MAD-tabanlı SFAI z-skorunu üretiyor ve API çıktısında sunuyor.
+- **Kapanış notu (15 Kasım 2026):** `calendar::concentration` / `calendar::seasonality` (`SeasonYear::Calendar | FireYear`) ve `CalendarCell.sfai` eklendi; tanımlar kaynaklarla karşılaştırıldı. PCD/PCP `[30, Dnk. 1–2]`: dönem açısı aralığın orta noktası (`θ_m = (m−0.5)·30°`); makale 36 on günlük dönem kullanır ve PCP'yi on günlük birimde verir, biz 12 ay kullandığımız için değerler doğrudan kıyaslanamaz. Fire-Year `[21]`: Mart–Şubat, başlangıç yılıyla etiketlenir (`2013–14` = 2013). SFAI (`flare-chronos`): `(x − medyan) / (0.65·1.4826·MAD + 0.35·σ)`, `anomaly` ile aynı havuz; pay olarak medyan seçimi bizimdir (referans analizi yalnız paydayı kaydediyor). `/api/calendar` yanıtı `seasonality { metric: "count", calendar_year, fire_year }` taşır; kapsamı tam olmayan yıl `complete: false` ve `null` döner, kapsam içindeki tespitsiz ay gözlenmiş sıfırdır; `/api/series` şeması değişmedi. 18 yeni core + 1 server testi; `cargo test --workspace` ve clippy temiz. Metrik harmonize kayıt sayısıdır, Ω-normalize değildir: Türkiye'de PCD 2001'de 0.64, 2012'de 0.43; bu düşüşün bir kısmı VIIRS'in sezon dışı küçük yangınları yakalamasından gelebilir, mevsim kayması diye yorumlanmadan önce sensör etkisi ayrıştırılmalı.
 
-### [ ] Y7 — Olay kümeleme ve kesinti şeffaflığı
+### [X] Y7 — Olay kümeleme ve kesinti şeffaflığı
 - **Bekler:** — · **Açar:** —
 - `eg-firetrack` yaklaşımıyla `2 km` yarıçap / en az `3 nokta` eşiğiyle DBSCAN yangın olayı kümeleme katmanının eklenmesi
 - Sensör kesinti günlerinin (`no_detection_days` — ör. Terra 2000–2002 tam kesintileri `[18, Bölüm 4]` veya veri eksikliği günleri) gerçek sıfır yangın günlerinden ayrılıp API meta verisinde yayınlanması (`eg-firetrack`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7, P4 (+ `[18]`, `eg-firetrack`)
 - **Bitti sayılır:** DBSCAN (`2 km / 3 nokta`) olay kümeleme çıktısı ve API'de `no_detection_days` kesinti alanı testlerle doğrulanmış durumda.
+- **Kapanış notu (15 Kasım 2026):** `crates/core/src/events.rs`: harmonize tespitler üzerinde ST-DBSCAN (`eps 2 km`, `min_samples 3`, komşuluk için en fazla 1 UTC gün farkı; aynı yer farklı haftalarda/yıllarda birleşmez) ve `eg-firetrack`'in ardışık gün kuralı (2+ farklı günde görülen küçük gruplar `consecutive_days` olayı); kalan noktalar `watch`. `no_detection_days`: aile (MODIS/VIIRS) bazında tespitsiz bölge-günleri; Remy & Kaiser 2014 `[18, Böl. 4]` Terra pencereleri (6–17 Ağu 2000, 16 Haz–2 Tem 2001, 21–29 Mar 2002) `known_outage`, diğerleri `no_detections` (tek başına kesinti kanıtı değildir; `other_family_detected` boşluk ipucudur). `/api/points` yanıtında `events` (tam küme üzerinde, örneklemeden önce; en çok 1000 öğe) ve `no_detection_days`; harmonize noktalarda `event_id`. 18 core + 3 server testi; `cargo test --workspace` ve clippy temiz. Gerçek veri: Türkiye Ağu 2021 → 305 olay, en büyüğü 27 Tem–6 Ağu 36.93K/31.49D (2787 tespit, Manavgat ile uyumlu); Haziran 2001'de 16–30 Haziran `known_outage`. Sınır: 1 günlük zincirleme, sürekli yanan alanları tek olaya bağlayabilir (Brezilya Eyl 2020 Pantanal: 30 günlük 22.498 tespitlik olay); bu bir yangın kompleksidir, tekil ateş sayısı değildir. K12 (Sadık) tarihsel kesinti etiketlerini aynı `KNOWN_OUTAGES` tablosuna bağlamalı.
 
 ### [ ] Y1 — FRP zaman serisi grafiği
 - **Bekler:** R1, Y5, S4 · **Açar:** G5

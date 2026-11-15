@@ -2121,4 +2121,39 @@ mod tests {
         assert_eq!(actual.viirs_links, remap(&expected.viirs_links, &vk, viirs.len()));
         assert_links_valid(&modis, &viirs, &actual);
     }
+
+    #[test]
+    fn viirs_platform_chain_longer_than_fleet_window_stays_split_through_the_pipeline() {
+        let viirs = vec![
+            make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 0, 10.0, Confidence::Nominal),
+            make_hotspot(Sensor::ViirsNOAA20, 39.0, 32.0, 3000, 20.0, Confidence::Nominal),
+            make_hotspot(Sensor::ViirsNOAA21, 39.0, 32.0, 6000, 30.0, Confidence::Nominal),
+        ];
+
+        let links = harmonize_with_links(vec![], viirs);
+
+        assert_eq!(links.hotspots.len(), 2);
+        assert_eq!(links.fleet_merged, 1);
+        assert_eq!(links.hotspots[0].n_obs, 2);
+        assert_eq!(links.hotspots[1].n_obs, 1);
+    }
+
+    #[test]
+    fn matching_window_is_anchored_on_the_modis_observation_not_on_earlier_matches() {
+        // v1 is 170 min after the MODIS record and matches; v2 is 170 min after v1 but 340 min
+        // after MODIS, so it must not ride along on v1.
+        let modis = vec![make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 40.0, Confidence::Nominal)];
+        let viirs = vec![
+            make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 10_200, 10.0, Confidence::Nominal),
+            make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 20_400, 20.0, Confidence::Nominal),
+        ];
+
+        let out = harmonize(modis, viirs);
+
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].source, HotspotSource::Matched);
+        assert_eq!(out[0].frp, 10.0);
+        assert_eq!(out[1].source, HotspotSource::ViirsOnly);
+        assert_eq!(out[1].frp, 20.0);
+    }
 }

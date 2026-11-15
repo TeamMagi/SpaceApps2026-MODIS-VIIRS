@@ -1,0 +1,7 @@
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--w-drawer) / 2)), 1fr)); gap: var(--space-2); }
+.card { min-width: 0; padding: var(--space-2); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.card h2 { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+.value { font-size: var(--font-size-2xl); margin-block: var(--space-1); font-variant-numeric: tabular-nums; }
+.card svg { width: 100%; display: block; }
+.sparkline { fill: none; stroke: var(--color-text-secondary); stroke-width: 2; }
+.note { font-size: var(--font-size-sm); color: var(--color-text-muted); margin-top: var(--space-1); }

@@ -232,6 +232,12 @@ interface WireCalendarCell {
   effort_omega: number | null;
   mean_frp: number;
   mean_frp_raw: number;
+  mean_frp_lower: number | null;
+  mean_frp_upper: number | null;
+  total_frp: number;
+  total_frp_lower: number | null;
+  total_frp_upper: number | null;
+  frp_per_detection_eq: number | null;
   anomaly: number | null;
 }
 
@@ -335,6 +341,7 @@ interface WireCompareResponse {
     mean_factor: number | null;
     max_factor: number | null;
     mean_frp_reduction_pct: number | null;
+    mean_frp_adjustment_pct: number | null;
   };
   filters?: WireConfidenceFilter | null;
   warnings: string[];
@@ -603,6 +610,12 @@ function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
     effortOmega: w.effort_omega,
     meanFrp: w.mean_frp,
     meanFrpRaw: w.mean_frp_raw,
+    meanFrpLower: w.mean_frp_lower,
+    meanFrpUpper: w.mean_frp_upper,
+    totalFrp: w.total_frp,
+    totalFrpLower: w.total_frp_lower,
+    totalFrpUpper: w.total_frp_upper,
+    frpPerDetectionEq: w.frp_per_detection_eq,
     anomaly: w.anomaly,
   };
 }
@@ -984,7 +997,7 @@ export async function fetchCompare(
       recordsWithCorrection: wire.vza.records_with_correction,
       meanFactor: wire.vza.mean_factor,
       maxFactor: wire.vza.max_factor,
-      meanFrpReductionPct: wire.vza.mean_frp_reduction_pct,
+      meanFrpAdjustmentPct: wire.vza.mean_frp_adjustment_pct,
     },
     filters: adaptFilters(wire.filters),
     warnings: wire.warnings,

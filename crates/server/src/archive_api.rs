@@ -21,6 +21,9 @@ use tokio::task::JoinSet;
 use pyrosync_core::calendar::compute_anomalies;
 use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap};
+use pyrosync_core::events::{
+    EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
+};
 use pyrosync_core::harmonize::harmonize_with_links_masked;
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
@@ -30,7 +33,7 @@ use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_slug, scan_lo
 use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
 
-use crate::derived_cache::{ArchiveFileStamp, DerivedCache, SeriesStamp};
+use crate::derived_cache::{ArchiveFileStamp, CoverageStamp, DerivedCache, SeriesStamp};
 use crate::{ConfidenceFilter, MinConfidence};
 
 const X_SERIES_SOURCE_HEADER: HeaderName = HeaderName::from_static("x-series-source");
@@ -86,6 +89,8 @@ pub struct ArchiveState {
     bundled_cache: Arc<DerivedCache>,
     index: OnceCell<Arc<ArchiveIndex>>,
     coverage: OnceCell<Arc<Coverage>>,
+    #[cfg(test)]
+    coverage_scans: std::sync::atomic::AtomicUsize,
     series: Mutex<HashMap<String, Arc<OnceCell<Bytes>>>>,
     years: Mutex<YearCache>,
     /// Each slot holds one parsed year plus its harmonize working set until its stats are
@@ -104,6 +109,8 @@ impl ArchiveState {
             bundled_cache: Arc::new(DerivedCache::bundled_from_env()),
             index: OnceCell::new(),
             coverage: OnceCell::new(),
+            #[cfg(test)]
+            coverage_scans: std::sync::atomic::AtomicUsize::new(0),
             series: Mutex::new(HashMap::new()),
             years: Mutex::new(YearCache::default()),
             load_slots: Arc::new(Semaphore::new((cpus / 2).clamp(2, 8))),
@@ -120,6 +127,11 @@ impl ArchiveState {
     pub fn with_bundled_cache_dir(mut self, dir: PathBuf) -> Self {
         self.bundled_cache = Arc::new(DerivedCache::read_only(dir));
         self
+    }
+
+    #[cfg(test)]
+    pub fn coverage_scans(&self) -> usize {
+        self.coverage_scans.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub fn with_year_concurrency(mut self, concurrency: usize) -> Self {
@@ -378,6 +390,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
     state
         .index
         .get_or_try_init(|| async {
+            let started = Instant::now();
             let dir = state.dir().to_path_buf();
             let index = tokio::task::spawn_blocking(move || build_index(&dir))
                 .await
@@ -391,6 +404,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
             tracing::info!(
                 regions = index.regions.len(),
                 dir = %state.dir().display(),
+                elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
                 "scanned FIRMS archive"
             );
             Ok(Arc::new(index))
@@ -399,7 +413,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
         .cloned()
 }
 
-#[derive(Serialize, Clone, Copy, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 struct DateSpan {
     first: NaiveDate,
     last: NaiveDate,
@@ -541,21 +555,117 @@ fn file_date_span(path: &Path) -> std::io::Result<Option<DateSpan>> {
     }))
 }
 
+/// Persistent disk representation of [`Coverage`], preserving `snpp` and `noaa20` which are
+/// skipped in `/api/series` JSON responses.
+#[derive(Serialize, Deserialize)]
+struct CachedCoverage {
+    modis: Option<DateSpan>,
+    viirs: Option<DateSpan>,
+    snpp: Option<DateSpan>,
+    noaa20: Option<DateSpan>,
+}
+
+impl From<&Coverage> for CachedCoverage {
+    fn from(c: &Coverage) -> Self {
+        Self {
+            modis: c.modis,
+            viirs: c.viirs,
+            snpp: c.snpp,
+            noaa20: c.noaa20,
+        }
+    }
+}
+
+impl From<CachedCoverage> for Coverage {
+    fn from(c: CachedCoverage) -> Self {
+        Self {
+            modis: c.modis,
+            viirs: c.viirs,
+            snpp: c.snpp,
+            noaa20: c.noaa20,
+        }
+    }
+}
+
+fn coverage_stamp(index: &ArchiveIndex) -> CoverageStamp {
+    CoverageStamp::from_files(index.regions.values().flat_map(|r| r.files.iter()))
+}
+
+fn serialize_coverage(coverage: &Coverage) -> Vec<u8> {
+    serde_json::to_vec_pretty(&CachedCoverage::from(coverage))
+        .expect("Coverage serialization cannot fail")
+}
+
+fn deserialize_coverage(bytes: &[u8], source: &str) -> Option<Coverage> {
+    match serde_json::from_slice::<CachedCoverage>(bytes) {
+        Ok(cached) => Some(Coverage::from(cached)),
+        Err(err) => {
+            tracing::warn!(
+                source,
+                error = %err,
+                "corrupt derived coverage JSON; ignoring cache"
+            );
+            None
+        }
+    }
+}
+
 async fn load_coverage(state: &ArchiveState) -> Result<Arc<Coverage>, ApiError> {
     let index = load_index(state).await?;
     state
         .coverage
         .get_or_try_init(|| async move {
             let started = Instant::now();
-            let coverage = tokio::task::spawn_blocking(move || scan_coverage(&index))
-                .await
-                .map_err(join_error)?
-                .map_err(|err| {
-                    ApiError::new(
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("failed to read sensor coverage from the archive: {err}"),
-                    )
-                })?;
+            let stamp = coverage_stamp(&index);
+            let cache = state.derived_cache.clone();
+            let bundled = state.bundled_cache.clone();
+            let check_stamp = stamp.clone();
+
+            if let Some((coverage, source)) = tokio::task::spawn_blocking(move || {
+                if let Some(bytes) = cache.read_coverage(&check_stamp)
+                    && let Some(coverage) = deserialize_coverage(&bytes, "disk")
+                {
+                    return Some((coverage, "disk"));
+                }
+                if let Some(bytes) = bundled.read_coverage(&check_stamp)
+                    && let Some(coverage) = deserialize_coverage(&bytes, "bundled")
+                {
+                    return Some((coverage, "bundled"));
+                }
+                None
+            })
+            .await
+            .map_err(join_error)?
+            {
+                tracing::info!(
+                    ?coverage,
+                    source,
+                    elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+                    "loaded sensor coverage from cache"
+                );
+                return Ok(Arc::new(coverage));
+            }
+
+            #[cfg(test)]
+            state
+                .coverage_scans
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+            let cache = state.derived_cache.clone();
+            let coverage = tokio::task::spawn_blocking(move || {
+                let coverage = scan_coverage(&index)?;
+                let bytes = serialize_coverage(&coverage);
+                let _ = cache.write_coverage(&stamp, &bytes);
+                Ok::<_, std::io::Error>(coverage)
+            })
+            .await
+            .map_err(join_error)?
+            .map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to read sensor coverage from the archive: {err}"),
+                )
+            })?;
             tracing::info!(
                 ?coverage,
                 elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
@@ -978,6 +1088,7 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             total_frp_upper: None,
             frp_per_detection_eq: None,
             anomaly: None,
+            sfai: None,
         })
         .collect();
     compute_anomalies(&mut cells);
@@ -1322,7 +1433,43 @@ pub async fn precompute_series(
 ) -> Result<PrecomputeReport, ApiError> {
     let total_started = Instant::now();
     let index = load_index(&state).await?;
-    let coverage = load_coverage(&state).await?;
+    let coverage = if opts.force {
+        let started = Instant::now();
+        #[cfg(test)]
+        state
+            .coverage_scans
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let stamp = coverage_stamp(&index);
+        let scan_index = index.clone();
+        let cache = state.derived_cache.clone();
+        let coverage = tokio::task::spawn_blocking(move || {
+            let coverage = scan_coverage(&scan_index).map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to read sensor coverage from the archive: {err}"),
+                )
+            })?;
+            let bytes = serialize_coverage(&coverage);
+            cache.write_coverage(&stamp, &bytes).map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to write derived coverage cache: {err}"),
+                )
+            })?;
+            Ok::<_, ApiError>(Arc::new(coverage))
+        })
+        .await
+        .map_err(join_error)??;
+        let _ = state.coverage.set(coverage.clone());
+        tracing::info!(
+            ?coverage,
+            elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+            "computed sensor coverage from the archive"
+        );
+        coverage
+    } else {
+        load_coverage(&state).await?
+    };
 
     let targets: Vec<String> = if opts.regions.is_empty() {
         index.regions.keys().cloned().collect()
@@ -1466,6 +1613,8 @@ impl RawPoint {
 #[derive(Serialize)]
 struct HarmonizedPoint {
     id: String,
+    /// Fire event the detection belongs to; `None` for watch points.
+    event_id: Option<usize>,
     #[serde(flatten)]
     hotspot: HarmonizedHotspot,
 }
@@ -1491,6 +1640,77 @@ struct Extent {
 }
 
 #[derive(Serialize)]
+struct EventParamsMeta {
+    eps_km: f64,
+    min_samples: usize,
+    max_day_gap: i64,
+}
+
+/// Events describe the FULL harmonized set of the requested period, not the sampled subset
+/// returned in `harmonized`.
+#[derive(Serialize)]
+struct EventsMeta {
+    params: EventParamsMeta,
+    count: usize,
+    watch_points: usize,
+    items: Vec<FireEvent>,
+    items_truncated: bool,
+}
+
+const MAX_EVENT_ITEMS: usize = 1000;
+
+fn events_meta(clustering: &EventClustering, params: &EventParams) -> EventsMeta {
+    let count = clustering.events.len();
+    let mut items = clustering.events.clone();
+    let items_truncated = count > MAX_EVENT_ITEMS;
+    if items_truncated {
+        items.sort_by(|a, b| b.detections.cmp(&a.detections).then(a.id.cmp(&b.id)));
+        items.truncate(MAX_EVENT_ITEMS);
+        items.sort_by_key(|e| e.id);
+    }
+    EventsMeta {
+        params: EventParamsMeta {
+            eps_km: params.eps_km,
+            min_samples: params.min_samples,
+            max_day_gap: params.max_day_gap,
+        },
+        count,
+        watch_points: clustering.watch_points,
+        items,
+        items_truncated,
+    }
+}
+
+fn month_bounds(year: i32, month: Option<u32>) -> (NaiveDate, NaiveDate) {
+    match month {
+        Some(m) => {
+            let first = ymd(year, m, 1);
+            let next = if m == 12 { ymd(year + 1, 1, 1) } else { ymd(year, m + 1, 1) };
+            (first, next.pred_opt().expect("date has a predecessor"))
+        }
+        None => (ymd(year, 1, 1), ymd(year, 12, 31)),
+    }
+}
+
+type DayRange = Option<(NaiveDate, NaiveDate)>;
+
+/// Per-family archive coverage for this region and year. A sensor counts only when the region
+/// has a file for the year; its date span is the global archive span of that sensor (region
+/// files carry no first/last dates of their own). VIIRS is the hull of SNPP and NOAA-20.
+fn family_coverage(region: &RegionInfo, year: i32, coverage: &Coverage) -> (DayRange, DayRange) {
+    let span = |has: bool, s: Option<DateSpan>| s.filter(|_| has).map(|s| (s.first, s.last));
+    let modis = span(region.modis_years.contains(&year), coverage.modis);
+    let viirs = match (
+        span(region.viirs_years.contains(&year), coverage.snpp),
+        span(region.noaa20_years.contains(&year), coverage.noaa20),
+    ) {
+        (Some(a), Some(b)) => Some((a.0.min(b.0), a.1.max(b.1))),
+        (a, b) => a.or(b),
+    };
+    (modis, viirs)
+}
+
+#[derive(Serialize)]
 struct PointsResponse {
     region: String,
     year: i32,
@@ -1507,6 +1727,8 @@ struct PointsResponse {
     /// Effort metadata for the region. The `/api/series` body is precomputed without any
     /// geometry, so the flag is computed here at serve time from the year's detection extent.
     tropical_swath_gap: Option<TropicalSwathGap>,
+    events: EventsMeta,
+    no_detection_days: Vec<NoDetectionDay>,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1683,6 +1905,7 @@ async fn points(
         .await
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
+    let coverage = load_coverage(&state).await?;
     let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
@@ -1722,7 +1945,23 @@ async fn points(
             .collect();
         let bbox = extent(raw_points.iter().map(|p| (p.lat, p.lon)));
         let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
+        let modis_days: BTreeSet<NaiveDate> =
+            modis.iter().map(|h| h.acquired.date_naive()).collect();
+        let viirs_days: BTreeSet<NaiveDate> =
+            viirs.iter().map(|h| h.acquired.date_naive()).collect();
         let linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+
+        let event_params = EventParams::default();
+        let clustering = cluster_events(&linked.hotspots, &event_params);
+        let events = events_meta(&clustering, &event_params);
+        let (modis_cov, viirs_cov) = family_coverage(&region, year, &coverage);
+        let gaps = no_detection_days(
+            &modis_days,
+            &viirs_days,
+            month_bounds(year, month),
+            modis_cov,
+            viirs_cov,
+        );
 
         let links: Vec<Option<usize>> = linked
             .modis_links
@@ -1762,6 +2001,7 @@ async fn points(
             .filter(|(i, _)| keep_out[*i])
             .map(|(i, hotspot)| HarmonizedPoint {
                 id: format!("h{i}"),
+                event_id: clustering.labels[i],
                 hotspot,
             })
             .collect();
@@ -1782,6 +2022,8 @@ async fn points(
                 excluded_detections,
             },
             tropical_swath_gap,
+            events,
+            no_detection_days: gaps,
         }
     })
     .await
@@ -2288,6 +2530,108 @@ mod tests {
         }
 
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_reports_events_and_gaps_for_the_full_set_even_when_truncated() {
+        let dir = temp_archive("points-events");
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[
+                (35.9, "2021-07-01", 0),
+                (35.9, "2021-07-02", 0),
+                (35.9, "2021-07-03", 0),
+                (36.5, "2021-07-20", 0),
+            ],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        let Json(pts) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: None,
+                limit: Some("1".into()),
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        assert!(pts.truncated);
+        assert!(pts.harmonized.len() < 4);
+        assert_eq!(pts.events.count, 1);
+        assert_eq!(pts.events.items.len(), 1);
+        assert!(!pts.events.items_truncated);
+        assert_eq!(pts.events.items[0].detections, 3);
+        assert_eq!(pts.events.watch_points, 1);
+        assert_eq!(pts.events.params.eps_km, 2.0);
+        assert!(pts.harmonized.iter().all(|h| h.event_id.is_none() || h.event_id == Some(0)));
+
+        // VIIRS coverage is 07-01..07-20; 07-01..03 and 07-20 have detections.
+        assert_eq!(pts.no_detection_days.len(), 16);
+        assert!(pts.no_detection_days.iter().all(|d| d.family == pyrosync_core::uncertainty::SensorFamily::Viirs
+            && !d.other_family_detected));
+        assert_eq!(pts.no_detection_days[0].date, ymd(2021, 7, 4));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn events_meta_caps_items_keeping_largest_in_id_order() {
+        use pyrosync_core::events::EventKind;
+        let at = chrono::DateTime::<chrono::Utc>::UNIX_EPOCH;
+        let events: Vec<FireEvent> = (0..MAX_EVENT_ITEMS + 5)
+            .map(|id| FireEvent {
+                id,
+                kind: EventKind::Dense,
+                detections: if id < 5 { 1 } else { 10 },
+                start: at,
+                end: at,
+                days: 1,
+                centroid_lat: 0.0,
+                centroid_lon: 0.0,
+                bbox: pyrosync_core::models::BBox { west: 0.0, south: 0.0, east: 0.0, north: 0.0 },
+                total_frp: 0.0,
+            })
+            .collect();
+        let clustering = EventClustering { labels: Vec::new(), events, watch_points: 7 };
+        let meta = events_meta(&clustering, &EventParams::default());
+        assert_eq!(meta.count, MAX_EVENT_ITEMS + 5);
+        assert!(meta.items_truncated);
+        assert_eq!(meta.items.len(), MAX_EVENT_ITEMS);
+        assert!(meta.items.iter().all(|e| e.detections == 10));
+        assert!(meta.items.windows(2).all(|w| w[0].id < w[1].id));
+    }
+
+    #[test]
+    fn month_bounds_and_family_coverage() {
+        assert_eq!(month_bounds(2021, Some(2)), (ymd(2021, 2, 1), ymd(2021, 2, 28)));
+        assert_eq!(month_bounds(2021, Some(12)), (ymd(2021, 12, 1), ymd(2021, 12, 31)));
+        assert_eq!(month_bounds(2021, None), (ymd(2021, 1, 1), ymd(2021, 12, 31)));
+
+        let region = RegionInfo {
+            id: "X".into(),
+            name: "X".into(),
+            modis_years: BTreeSet::from([2021]),
+            viirs_years: BTreeSet::from([2021]),
+            noaa20_years: BTreeSet::new(),
+            bytes: 0,
+            files: Vec::new(),
+        };
+        let cov = Coverage {
+            modis: Some(DateSpan { first: ymd(2000, 11, 1), last: ymd(2022, 1, 1) }),
+            viirs: None,
+            snpp: Some(DateSpan { first: ymd(2012, 1, 20), last: ymd(2022, 1, 1) }),
+            noaa20: Some(DateSpan { first: ymd(2018, 1, 1), last: ymd(2022, 1, 1) }),
+        };
+        let (m, v) = family_coverage(&region, 2021, &cov);
+        assert_eq!(m, Some((ymd(2000, 11, 1), ymd(2022, 1, 1))));
+        assert_eq!(v, Some((ymd(2012, 1, 20), ymd(2022, 1, 1))));
+        assert_eq!(family_coverage(&region, 2019, &cov), (None, None));
     }
 
     #[test]
@@ -3069,6 +3413,14 @@ mod tests {
         let _ = std::fs::remove_dir_all(dir);
     }
 
+    /// Copies `coverage.{json,meta.json}` from `src` to `dst`.
+    fn copy_coverage_files(src: &Path, dst: &Path) {
+        std::fs::create_dir_all(dst).unwrap();
+        for name in ["coverage.json", "coverage.meta.json"] {
+            std::fs::copy(src.join(name), dst.join(name)).unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn precompute_skips_valid_bundled_region_and_force_writes_to_disk() {
         let dir = temp_archive("precompute-bundled");
@@ -3096,6 +3448,7 @@ mod tests {
         .unwrap();
         assert_eq!(r_stage.computed(), 1);
         copy_series_files(&staging_dir, &bundled_dir, "Samos");
+        copy_coverage_files(&staging_dir, &bundled_dir);
 
         let r_skip = precompute_series(
             state_with_caches(
@@ -3137,6 +3490,8 @@ mod tests {
         assert_eq!(r_force.computed(), 1);
         assert_eq!(r_force.skipped(), 0);
         assert_eq!(r_force.failed(), 0);
+        assert!(writable_dir.join("coverage.json").is_file());
+        assert!(writable_dir.join("coverage.meta.json").is_file());
         assert!(writable_dir.join("series/Samos.json").is_file());
         assert!(writable_dir.join("series/Samos.meta.json").is_file());
 
@@ -3379,5 +3734,214 @@ mod tests {
         let logs = String::from_utf8(buf.0.lock().unwrap().clone()).unwrap();
         assert!(logs.contains("/api/slow"), "missing path in logs: {logs}");
         assert!(logs.contains("WARN"), "missing WARN level in logs: {logs}");
+    }
+
+    #[tokio::test]
+    async fn coverage_disk_cache_roundtrip_avoids_rescan_and_preserves_all_sensors() {
+        let dir = temp_archive("coverage-disk-roundtrip");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        write_file(&dir, "viirs-snpp", 2021, "Malta", &[(35.9, "2021-07-02", 0)]);
+        write_file(
+            &dir,
+            "viirs-jpss1",
+            2021,
+            "Malta",
+            &[(36.0, "2021-07-05", 0)],
+        );
+
+        let s1 = state_with_config(dir.clone(), derived.clone(), u64::MAX, PipelineConfig::default());
+        let cov1 = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+        assert!(derived.join("coverage.json").is_file());
+        assert!(derived.join("coverage.meta.json").is_file());
+        assert_eq!(
+            cov1.snpp,
+            Some(DateSpan {
+                first: d(2021, 7, 2),
+                last: d(2021, 7, 2),
+            })
+        );
+        assert_eq!(
+            cov1.noaa20,
+            Some(DateSpan {
+                first: d(2021, 7, 5),
+                last: d(2021, 7, 5),
+            })
+        );
+
+        // Fresh state simulates a restart: must read coverage from disk without rescanning.
+        let s2 = state_with_config(dir.clone(), derived.clone(), u64::MAX, PipelineConfig::default());
+        let cov2 = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+        assert_eq!(cov2, cov1);
+
+        // /api/points must also work with the cached coverage (including snpp/noaa20 spans).
+        let Json(pts) = points(
+            State(s2.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: Some("7".into()),
+                limit: None,
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+        assert!(!pts.no_detection_days.is_empty());
+
+        // Coverage does not depend on PipelineConfig, so changing config must keep the cache valid.
+        let mut alt_cfg = PipelineConfig::default();
+        alt_cfg.matching.window_secs += 60;
+        let s3 = state_with_config(dir.clone(), derived, u64::MAX, alt_cfg);
+        let cov3 = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(cov3, cov1);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_reads_from_bundled_without_writing_writable_dir() {
+        let dir = temp_archive("coverage-bundled");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+        write_file(&dir, "viirs-snpp", 2020, "Cyprus", &[(35.1, "2020-07-10", 0)]);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let staging_state = state_with_caches(
+            dir.clone(),
+            staging_dir.clone(),
+            dir.join("_unused_bundled"),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let expected = load_coverage(&staging_state).await.ok().unwrap();
+        assert_eq!(staging_state.coverage_scans(), 1);
+        copy_coverage_files(&staging_dir, &bundled_dir);
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let loaded = load_coverage(&s).await.ok().unwrap();
+        assert_eq!(s.coverage_scans(), 0);
+        assert_eq!(loaded, expected);
+        assert!(
+            !writable_dir.exists(),
+            "reading coverage from bundled must not create or write to the writable cache"
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_disk_cache_invalidates_on_file_size_change_and_survives_mtime() {
+        let dir = temp_archive("coverage-invalidate");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let cov1 = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+        assert_eq!(cov1.modis.unwrap().last, d(2020, 7, 1));
+
+        // Changing mtime without changing size keeps the stamp valid.
+        let csv_path = dir.join("modis/2020/modis_2020_Cyprus.csv");
+        let past = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000_000);
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&csv_path)
+            .unwrap()
+            .set_modified(past)
+            .unwrap();
+        let s_mtime = state(dir.clone(), u64::MAX);
+        let _ = load_coverage(&s_mtime).await.ok().unwrap();
+        assert_eq!(s_mtime.coverage_scans(), 0);
+
+        // Changing file byte size invalidates the stamp and triggers a rescan.
+        let mut contents = std::fs::read_to_string(&csv_path).unwrap();
+        contents.push_str("35.2,32.0,320,0.5,0.5,2020-08-15,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n");
+        std::fs::write(&csv_path, contents).unwrap();
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let cov2 = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 1);
+        assert_eq!(cov2.modis.unwrap().last, d(2020, 8, 15));
+
+        // Subsequent restart reads the updated cache without rescanning.
+        let s3 = state(dir.clone(), u64::MAX);
+        let cov3 = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(cov3, cov2);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_ignores_corrupt_files_and_rescans_without_error() {
+        let dir = temp_archive("coverage-corrupt");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let expected = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+
+        // Corrupt coverage.json -> must fall back to scan with no error and repair disk cache.
+        std::fs::write(derived.join("coverage.json"), b"{corrupt").unwrap();
+        let s2 = state(dir.clone(), u64::MAX);
+        let repaired = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 1);
+        assert_eq!(repaired, expected);
+
+        let s3 = state(dir.clone(), u64::MAX);
+        let after_repair = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(after_repair, expected);
+
+        // Corrupt coverage.meta.json -> must also fall back to scan with no error.
+        std::fs::write(derived.join("coverage.meta.json"), b"not-json").unwrap();
+        let s4 = state(dir.clone(), u64::MAX);
+        let after_meta_corrupt = load_coverage(&s4).await.ok().unwrap();
+        assert_eq!(s4.coverage_scans(), 1);
+        assert_eq!(after_meta_corrupt, expected);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn precompute_persists_coverage_to_writable_disk() {
+        let dir = temp_archive("precompute-coverage");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let report = precompute_series(
+            s1.clone(),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+        assert_eq!(s1.coverage_scans(), 1);
+        assert!(derived.join("coverage.json").is_file());
+        assert!(derived.join("coverage.meta.json").is_file());
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let _ = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

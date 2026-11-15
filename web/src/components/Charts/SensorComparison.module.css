@@ -1,0 +1,17 @@
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--w-drawer)), 1fr)); gap: var(--space-2); }
+.panel { min-width: 0; padding: var(--space-2); background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); }
+.panel h2 { font-size: var(--font-size-lg); margin-bottom: var(--space-1); }
+.panel p { color: var(--color-text-secondary); margin-bottom: var(--space-2); }
+.panel svg { display: block; width: 100%; }
+.panel .donut { max-width: var(--toggle-w); margin: var(--space-2) auto; }
+.axis { stroke: var(--color-border-strong); }
+.text { fill: var(--color-text); font-size: var(--font-size-xs); }
+.modisBar { fill: none; stroke: var(--color-sensor-modis); stroke-width: 2; }
+.viirsBar { fill: var(--color-sensor-viirs); }
+.modis { stroke: var(--color-sensor-modis); }
+.viirs { stroke: var(--color-sensor-viirs); }
+.matched { stroke: var(--color-text-disabled); }
+.panel table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.panel th, .panel td { padding: var(--space-half); border-bottom: var(--border-width) solid var(--color-border-subtle); text-align: right; }
+.panel th:first-child { text-align: left; }
+.panel g:focus-visible { outline: var(--border-width) solid var(--color-focus); }

@@ -138,6 +138,8 @@ export default function CountDelta() {
             raw: fmt.number(nrt.compare.counts.rawTotal),
             harmonized: fmt.number(nrt.compare.counts.harmonizedTotal),
           })}
+          {nrt.compare.vza.meanFrpAdjustmentPct !== null &&
+            ` · ${t("nrtVzaAdjustment", { pct: `${fmt.signed(nrt.compare.vza.meanFrpAdjustmentPct, 1)}%` })}`}
         </p>
       )}
     </div>

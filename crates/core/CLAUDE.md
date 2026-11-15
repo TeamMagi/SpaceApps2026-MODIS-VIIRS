@@ -23,6 +23,7 @@
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
 | `static_mask.rs` | Kalıcı sıcak hücre (gaz meşalesi/endüstri) maskesi: H3 r7 hücre-yılı, yıl içinde ≥ `min_active_months` (varsayılan 10) farklı ayda tespit |
 | `sama.rs` | Güney Atlantik Manyetik Anomalisi kutusu (110°B–11°D, 55°G–7°K) içindeki gece VIIRS tespiti testi |
+| `events.rs` | Yangın olayı kümeleme (ST-DBSCAN + ardışık gün kuralı) ve `no_detection_days` (bilinen Terra kesintileri dahil) |
 
 ## Teknik Kısıtlar
 

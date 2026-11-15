@@ -246,4 +246,107 @@ mod tests {
         assert_eq!(in_flight.load(Ordering::SeqCst), 0);
         assert_eq!(limiter.remaining(), 94);
     }
+
+    #[tokio::test]
+    async fn window_walks_idle_partial_full_then_recovers() {
+        // State transition 0-switch on the sliding window: Idle -> Partial -> Full -> Idle.
+        tokio::time::pause();
+        let limiter = RateLimiter::new(10, Duration::from_secs(60), 4);
+
+        assert_eq!(limiter.remaining(), 10);
+        drop(limiter.acquire(4).await);
+        assert_eq!(limiter.remaining(), 6);
+        drop(limiter.acquire(6).await);
+        assert_eq!(limiter.remaining(), 0);
+        assert_eq!(limiter.wait_for(1), Duration::from_secs(60));
+
+        tokio::time::advance(Duration::from_secs(60)).await;
+        assert_eq!(limiter.remaining(), 10);
+        assert_eq!(limiter.wait_for(10), Duration::ZERO);
+    }
+
+    #[tokio::test]
+    async fn full_window_frees_exactly_at_the_window_boundary() {
+        // BVA: window-1ms still full, window exactly free.
+        tokio::time::pause();
+        let limiter = RateLimiter::new(10, Duration::from_secs(60), 1);
+        drop(limiter.acquire(10).await);
+
+        tokio::time::advance(Duration::from_millis(59_999)).await;
+        assert_eq!(limiter.remaining(), 0);
+        assert_eq!(limiter.wait_for(1), Duration::from_millis(1));
+        tokio::time::advance(Duration::from_millis(1)).await;
+        assert_eq!(limiter.remaining(), 10);
+    }
+
+    #[tokio::test]
+    async fn entries_expire_oldest_first() {
+        tokio::time::pause();
+        let limiter = RateLimiter::new(10, Duration::from_secs(60), 4);
+        drop(limiter.acquire(3).await);
+        tokio::time::advance(Duration::from_secs(30)).await;
+        drop(limiter.acquire(4).await);
+        assert_eq!(limiter.remaining(), 3);
+
+        tokio::time::advance(Duration::from_secs(30)).await;
+        assert_eq!(limiter.remaining(), 6);
+        assert_eq!(limiter.wait_for(8), Duration::from_secs(30));
+
+        tokio::time::advance(Duration::from_secs(30)).await;
+        assert_eq!(limiter.remaining(), 10);
+    }
+
+    #[tokio::test]
+    async fn zero_cost_acquire_spends_nothing_and_never_waits_on_a_full_window() {
+        tokio::time::pause();
+        let limiter = RateLimiter::new(5, Duration::from_secs(60), 2);
+        drop(limiter.acquire(5).await);
+
+        let start = Instant::now();
+        let _guard = limiter.acquire(0).await;
+        assert_eq!(start.elapsed(), Duration::ZERO);
+        assert_eq!(limiter.remaining(), 0);
+        assert_eq!(limiter.wait_for(0), Duration::ZERO);
+    }
+
+    #[tokio::test]
+    async fn exact_remaining_cost_is_granted_immediately_but_one_more_waits() {
+        // BVA around the capacity: cost == remaining passes, remaining + 1 waits.
+        tokio::time::pause();
+        let limiter = RateLimiter::new(10, Duration::from_secs(60), 2);
+        drop(limiter.acquire(7).await);
+
+        let start = Instant::now();
+        drop(limiter.acquire(3).await);
+        assert_eq!(start.elapsed(), Duration::ZERO);
+
+        drop(limiter.acquire(1).await);
+        assert!(start.elapsed() >= Duration::from_secs(60) && start.elapsed() < Duration::from_secs(61));
+    }
+
+    #[tokio::test]
+    async fn zero_concurrency_is_coerced_to_one_slot_that_guard_drop_releases() {
+        tokio::time::pause();
+        let limiter = RateLimiter::new(100, Duration::from_secs(60), 0);
+
+        let held = limiter.acquire(1).await;
+        let blocked = tokio::time::timeout(Duration::from_secs(1), limiter.acquire(1)).await;
+        assert!(blocked.is_err(), "second acquire must wait for the only slot");
+
+        drop(held);
+        let _next = tokio::time::timeout(Duration::from_secs(1), limiter.acquire(1))
+            .await
+            .expect("slot is free after the guard drops");
+    }
+
+    #[tokio::test]
+    async fn firms_default_allows_5000_transactions_and_clamps_larger_requests() {
+        tokio::time::pause();
+        let limiter = RateLimiter::firms_default(2);
+        assert_eq!(limiter.remaining(), 5000);
+
+        drop(limiter.acquire(6000).await);
+        assert_eq!(limiter.remaining(), 0);
+        assert_eq!(limiter.wait_for(1), Duration::from_secs(600));
+    }
 }

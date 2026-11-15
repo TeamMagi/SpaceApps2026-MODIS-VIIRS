@@ -14,6 +14,7 @@
 | `build-globe-tiles.sh` | NASA Blue Marble mozaiğinden küre görüntüsünü üretme (`web/public/globe/earth.jpg` + 128 adet 1024 px döşeme) |
 | `cvd_check.py` | Renk paletlerini renk körlüğü simülasyonu (Machado 2009), CIEDE2000 ve WCAG kontrastıyla denetler; docs/RENK_DENETIMI.md üretir (Python 3 + numpy gerekir, sh değil) |
 | `static-mask-check.sh` | Statik kaynak (gaz meşalesi) maske eşiğini ve SAMA gece filtresini yerel FIRMS arşivinden ölçer; `crates/firms-client/examples/static_mask_check.rs` örneğini çalıştırır |
+| `smoke_test.sh` | Çalışan PyroSync sunucusuna karşı uçtan uca duman testlerini çalıştırır (`BASE_URL`, varsayılan `http://localhost:3001`) |
 
 ## Script Ekleme Kuralları
 

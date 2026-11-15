@@ -266,4 +266,133 @@ mod tests {
         assert!(c.load_availability().await.is_none());
         let _ = std::fs::remove_dir_all(&dir);
     }
+
+    fn set_age(path: &Path, age: Duration) {
+        let file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
+        file.set_modified(SystemTime::now() - age).unwrap();
+    }
+
+    fn part_files(dir: &Path) -> usize {
+        std::fs::read_dir(dir)
+            .map(|entries| {
+                entries
+                    .flatten()
+                    .filter(|e| e.file_name().to_string_lossy().ends_with(".part"))
+                    .count()
+            })
+            .unwrap_or(0)
+    }
+
+    #[tokio::test]
+    async fn nrt_entry_walks_miss_fresh_expired_refreshed() {
+        // State transition 0-switch: Absent -store-> Fresh -time-> Expired -store-> Fresh.
+        let dir = temp_dir("nrt-lifecycle");
+        let c = cache(&dir, 3600);
+        let days = DayRange::clamped(2);
+        let path = c.window_path(nrt(), BBOX, d(1), days);
+
+        assert_eq!(c.load(nrt(), BBOX, d(1), days).await, None);
+        c.store(nrt(), BBOX, d(1), days, "old\n").await;
+        assert_eq!(c.load(nrt(), BBOX, d(1), days).await.as_deref(), Some("old\n"));
+
+        set_age(&path, Duration::from_secs(7200));
+        assert_eq!(c.load(nrt(), BBOX, d(1), days).await, None);
+
+        c.store(nrt(), BBOX, d(1), days, "new\n").await;
+        assert_eq!(c.load(nrt(), BBOX, d(1), days).await.as_deref(), Some("new\n"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn nrt_ttl_boundary_just_inside_and_just_outside() {
+        let dir = temp_dir("nrt-ttl-bva");
+        let c = cache(&dir, 100);
+        let days = DayRange::clamped(1);
+        let path = c.window_path(nrt(), BBOX, d(1), days);
+        c.store(nrt(), BBOX, d(1), days, CSV).await;
+
+        set_age(&path, Duration::from_secs(60));
+        assert!(c.load(nrt(), BBOX, d(1), days).await.is_some());
+        set_age(&path, Duration::from_secs(101));
+        assert!(c.load(nrt(), BBOX, d(1), days).await.is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn sp_entry_never_expires_however_old_the_file_is() {
+        let dir = temp_dir("sp-forever");
+        let c = cache(&dir, 1);
+        let days = DayRange::clamped(5);
+        c.store(sp(), BBOX, d(1), days, CSV).await;
+        set_age(&c.window_path(sp(), BBOX, d(1), days), Duration::from_secs(10 * 365 * 86_400));
+        assert_eq!(c.load(sp(), BBOX, d(1), days).await.as_deref(), Some(CSV));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn storing_again_overwrites_the_previous_entry() {
+        let dir = temp_dir("overwrite");
+        let c = cache(&dir, 600);
+        let days = DayRange::clamped(1);
+        c.store(sp(), BBOX, d(1), days, "first").await;
+        c.store(sp(), BBOX, d(1), days, "second").await;
+        assert_eq!(c.load(sp(), BBOX, d(1), days).await.as_deref(), Some("second"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn unreadable_entry_is_a_miss_not_a_panic() {
+        // Invalid state: a directory occupies the entry path.
+        let dir = temp_dir("dir-as-entry");
+        let c = cache(&dir, 600);
+        let days = DayRange::clamped(1);
+        std::fs::create_dir_all(c.window_path(sp(), BBOX, d(1), days)).unwrap();
+        assert_eq!(c.load(sp(), BBOX, d(1), days).await, None);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn stores_leave_no_part_files_even_when_racing() {
+        let dir = temp_dir("atomic");
+        let c = std::sync::Arc::new(cache(&dir, 600));
+        let days = DayRange::clamped(1);
+        let mut tasks = Vec::new();
+        for i in 0..8 {
+            let c = std::sync::Arc::clone(&c);
+            tasks.push(tokio::spawn(async move {
+                c.store(sp(), BBOX, d(1), days, &format!("writer-{i}\n")).await;
+            }));
+        }
+        for t in tasks {
+            t.await.unwrap();
+        }
+        let hit = c.load(sp(), BBOX, d(1), days).await.unwrap();
+        assert!(hit.starts_with("writer-") && hit.ends_with('\n'));
+        assert_eq!(part_files(&dir.join(sp().as_str())), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn availability_walks_absent_valid_corrupt_recovered() {
+        let dir = temp_dir("avail-lifecycle");
+        let c = cache(&dir, 600);
+        let good = "data_id,min_date,max_date\nMODIS_SP,2000-11-01,2026-03-31\n";
+
+        assert!(c.load_availability().await.is_none());
+        c.store_availability(good).await;
+        assert!(c.load_availability().await.is_some());
+        c.store_availability("<html>oops</html>").await;
+        assert!(c.load_availability().await.is_none());
+        c.store_availability(good).await;
+        assert!(c.load_availability().await.is_some());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn dir_accessor_and_window_path_layout() {
+        let c = cache(Path::new("cache-root"), 1);
+        assert_eq!(c.dir(), Path::new("cache-root"));
+        let path = c.window_path(nrt(), BBOX, d(9), DayRange::clamped(1));
+        assert!(path.starts_with(Path::new("cache-root").join("MODIS_NRT")));
+    }
 }

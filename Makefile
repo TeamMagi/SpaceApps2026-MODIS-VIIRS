@@ -1,9 +1,11 @@
-.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local bundle-derived fetch-sample verify-data manifest clean clean-cache clean-derived help
+.PHONY: dev dev-backend dev-frontend build build-backend build-frontend test test-backend test-frontend lint lint-backend check docker docker-up docker-down docker-logs docker-shell data docker-seed seed precompute precompute-local bundle-derived fetch-sample verify-data manifest smoke clean clean-cache clean-derived help
 
 # Shared host directory for the FIRMS country archive (override via environment or make args)
 ARCHIVE_CACHE_HOST_DIR ?= .cache/firms-archive
 # Shared host directory for precomputed /api/series disk cache (override via environment or make args)
 DERIVED_CACHE_HOST_DIR ?= .cache/pyrosync-derived
+# Target URL for 'make smoke'
+SMOKE_URL ?= http://localhost:3001
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
@@ -109,7 +111,7 @@ precompute-local: ## Precompute /api/series disk cache locally without Docker
 	mkdir -p $(DERIVED_CACHE_HOST_DIR)
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) DERIVED_CACHE_DIR=$(DERIVED_CACHE_HOST_DIR) cargo run --release -p pyrosync-server -- precompute
 
-bundle-derived: ## Copy precomputed /api/series cache into data/derived/series for git sharing
+bundle-derived: ## Copy precomputed /api/series and coverage cache into data/derived for git sharing
 	@if [ ! -d "$(DERIVED_CACHE_HOST_DIR)/series" ]; then \
 		echo "Error: $(DERIVED_CACHE_HOST_DIR)/series not found. Run 'make precompute' or 'make precompute-local' first."; \
 		exit 1; \
@@ -122,7 +124,13 @@ bundle-derived: ## Copy precomputed /api/series cache into data/derived/series f
 		cp "$$f" data/derived/series/; \
 		count=$$((count + 1)); \
 	done; \
-	echo "Copied $$count file(s) to data/derived/series/."; \
+	cov_count=0; \
+	for f in "$(DERIVED_CACHE_HOST_DIR)/coverage.json" "$(DERIVED_CACHE_HOST_DIR)/coverage.meta.json"; do \
+		[ -f "$$f" ] || continue; \
+		cp "$$f" data/derived/; \
+		cov_count=$$((cov_count + 1)); \
+	done; \
+	echo "Copied $$count series file(s) to data/derived/series/ and $$cov_count coverage file(s) to data/derived/."; \
 	echo "Commit data/derived to share precomputed results with the team."
 
 fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)
@@ -137,6 +145,9 @@ verify-data: ## Verify the local archive cache against data/archive-manifest.sha
 
 manifest: ## Regenerate data/archive-manifest.sha256 from the local cache
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) sh tools/verify-archive.sh generate
+
+smoke: ## Run end-to-end smoke checks against a running server (default http://localhost:3001)
+	bash tools/smoke_test.sh $(SMOKE_URL)
 
 # ---- Clean ----
 

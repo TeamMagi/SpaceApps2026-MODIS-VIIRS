@@ -163,6 +163,31 @@ pub struct CalendarCell {
     #[serde(default)]
     pub frp_per_detection_eq: Option<f64>,
     pub anomaly: Option<f64>,
+    /// Blended robust z-score of `count_normalized`: `(x - median) / (0.65 * 1.4826 * MAD + 0.35 * sigma)`; same pool as `anomaly`.
+    #[serde(default)]
+    pub sfai: Option<f64>,
+}
+
+/// How months are grouped into seasons for [`SeasonalityYear`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SeasonYear {
+    /// January-December, labeled by that year.
+    Calendar,
+    /// March of year Y through February of Y+1, labeled Y.
+    FireYear,
+}
+
+/// Per-season-year concentration of monthly detection counts (Zhang & Qian 2003 PCD/PCP).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SeasonalityYear {
+    pub year: i32,
+    pub complete: bool,
+    pub total: u64,
+    pub pcd: Option<f64>,
+    pub pcp_deg: Option<f64>,
+    /// Fractional calendar month of the concentration peak; 1.0 = January, range (0.5, 12.5].
+    pub peak_month: Option<f64>,
 }
 
 #[cfg(test)]
