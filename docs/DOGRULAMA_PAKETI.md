@@ -235,3 +235,66 @@ Ortalama mutlak log hata: $\frac{1}{n}\sum |\ln(\text{tahmin} / \text{gerçek})|
 3. **Havuz büyüklüğü ve uç aylar:** `Kazakhstan 2024` içinde MODIS=0 olan 1 kış ayında `Ω_-y = NA` oluşmuştur (`skip = 1`). Yıllık toplama etkisi önemsiz olsa da (`2024` LOYO hatası `0.0049`), aylık çözünürlükte düşük aktiviteli kuzey bölgelerinde küçük havuzlarda `MIN_MONTHS_PER_CONFIG = 3` / `modis_observable > 0` sınırına çarpılabilir.
 4. **`2000` kısmi yılı ve `>= 1000/yıl` hacim kapsamı:** `2000` yılı yalnız Kasım–Aralık aylarını içerdiği halde `(2000, 2001)` çifti `Δ=1` placebo havuzuna dahildir. Ayrıca test edilen 10 ülkenin tamamı `>= 1000/yıl` yüksek hacim katmanındadır; `< 100/yıl` düşük hacimli ülkelerde LOYO ve placebo davranışı bu referans çalışmada kapsanmamıştır.
 5. **LOYO tasarımının kapsamı:** Bölüm B ve C doğrudan `effort.rs`'deki `Ω` efor normalizasyonunun `modis_observable` sayımını yeniden üretme başarısını test eder; `total_frp` ve `F_yıl` üzerindeki enerji kalibrasyonu (Bölüm A ve dış doğrulama `S12`/`Y10`) için ayrı dış referans ürünleri gereklidir.
+
+---
+
+## D. Bilinen Olay Testi (dış referans)
+
+### Amaç ve olaylar
+
+`crates/firms-client/examples/event_recall.rs`, harmonize aylık takvimin kamuya açık kaynaklarda belgelenmiş büyük yangın olaylarının aylarını yakalayıp yakalamadığını ölçer. Ham tespit sayıları ile harmonize `count_normalized`, ham `raw_frp` ile harmonize `total_frp` ayrı metrikler olarak değerlendirilir; böylece VIIRS geçişlerinin ham serilerde oluşturabileceği alarm fazlalığı da ölçülebilir. Manavgat gibi az sayıda çok şiddetli yangından oluşan olaylar, her yıl tekrarlanan tarımsal yakmaların baskın olduğu tespit sayılarında görünmeyebileceğinden yangın şiddetini yansıtan FRP görünümüne de ihtiyaç vardır. Bu bir ölçümdür: olay kaçırılması programın hata koduyla çıkmasına neden olmaz.
+
+| Ülke arşiv adı | Aylar | Olay | Kısa kamu kaynağı notu |
+|---|---|---|---|
+| `Australia` | 2019-12, 2020-01 | Black Summer (NSW/Victoria) | [NASA Earth Observatory: Explosive Fire Activity in Australia](https://science.nasa.gov/earth/earth-observatory/explosive-fire-activity-in-australia-146125/), Aralık sonu ve Ocak başında Victoria ve New South Wales yangınları ve yangın kaynaklı fırtınalar. |
+| `Brazil` | 2019-08 | Amazon fires | [NASA Earth Observatory: A New Tool for Tracking Amazon Fires](https://science.nasa.gov/earth/earth-observatory/a-new-tool-for-tracking-amazon-fires-147075/), Ağustos 2019 Amazon yangın etkinliğindeki artış. |
+| `Canada` | 2023-06 | record wildfire season | [NASA: Fires Burn Across Quebec](https://science.nasa.gov/earth/earth-observatory/fires-burn-across-quebec-151430/), Haziran başında yeni yangınlar; [Tracking Canada's Extreme 2023 Fire Season](https://science.nasa.gov/earth/earth-observatory/tracking-canadas-extreme-2023-fire-season-151985/), rekor sezonun ülke geneline yayılması. |
+| `Turkey` | 2021-08 | Manavgat / Mediterranean fires | [Copernicus CAMS: Mediterranean region evolves into wildfire hotspot](https://atmosphere.copernicus.eu/copernicus-mediterranean-region-evolves-wildfire-hotspot-while-fire-intensity-reaches-new-records), 2021 yazında Akdeniz yangınları ve Türkiye'de rekor yangın şiddeti. |
+| `Indonesia` | 2015-09, 2015-10 | El Nino peat fires | [NASA: Seeing Through the Smoky Pall](https://science.nasa.gov/earth/earth-observatory/seeing-through-the-smoky-pall-observations-from-a-grim-indonesian-fire-season/), El Niño kuraklığında Eylül–Ekim boyunca yayılan yangınlar ve turba yanması. |
+| `United_States` | 2020-09 | western US fire season (CA/OR) | [NASA: A Wall of Smoke on the U.S. West Coast](https://science.nasa.gov/earth/earth-observatory/a-wall-of-smoke-on-the-us-west-coast-147261/), Eylül 2020 Oregon ve California yangınları. |
+| `Russian_Federation` | 2021-07 | Yakutia (Sakha) fires | [NASA: Fires Scorch the Sakha Republic](https://science.nasa.gov/earth/earth-observatory/fires-scorch-the-sakha-republic-148537/), Temmuz 2021 Yakutistan yangınları. |
+
+Olayların bazıları bölgeseldir; araç ülke toplamını ölçer. Dış referans burada belgelenmiş olay zamanıdır; kaynaklardaki uydu gözlemleri FIRMS ile ortak sensörler kullanabildiğinden bu, bağımsız bir yanmış alan veya hasar doğrulaması değildir.
+
+### Yöntem
+
+- Varsayılan dönem `2003..=2025` olup her takvim ayı Terra+Aqua dönemindedir. `--from`, `--to` ve `--countries a,b` ile dönem ve yerleşik olay ülkelerinin alt kümesi seçilebilir; varsayılan ülke kümesi listedeki yedi ülkedir.
+- `ARCHIVE_CACHE_DIR` (varsayılan `.cache/firms-archive`) altındaki `modis`, `viirs-snpp`, `viirs-jpss1` ülke CSV'leri salt okunur yüklenir. Mevcut doğrulama örnekleri gibi `retain_wildfires` uygulanır. Tamamlandı işareti bulunan sensör-yıl dizininde olmayan ülke dosyası boş kabul edilir; diğer eksik dosyalar hatadır.
+- **Ham seriler:** Harmonizasyondan önce, tüm arşiv sensörlerinin aylık tespit toplamı (`raw_count`) ve aynı ham satırların FRP toplamı (`raw_frp`). **Harmonize seriler:** `PipelineConfig::default()` → `harmonize_with_config` → `build_calendar_with` yolundan gelen `count_normalized` ve `total_frp`; `total_frp`, VIIRS öncesi `k_c` katsayısını ve çoklu VIIRS cetveli `frp_viirs_scale` düzeltmesini zaten içerir. Takvimin `anomaly` alanını üreten yol korunur; bu araç dört serinin her biri için istenen yıl-dışarıda karşılaştırmanın z puanını ayrıca hesaplar. Harmonizasyon ve efor katsayıları tüm seçili dönemden hesaplanır; yalnız z referansında hedef yıl dışarıda bırakılır.
+- Her ülke ve her takvim ayı `m` ayrı değerlendirilir. `y` yılı çıkarıldıktan sonra kalan aynı-ay yıllarının ortalaması `mean_m` ve anakütle standart sapması `sd_m = sqrt(Σ(x - mean_m)² / n)` hesaplanır: `z(y,m) = (x(y,m) - mean_m) / sd_m`. En az iki referans yıl yoksa veya standart sapma sıfırsa z `NA` olur.
+- Sıra, aynı takvim ayının seçilen tüm yılları içinde `1 + hedef değerden büyük değerlerin sayısı`dır. En yüksek değer `1` olur; eşit değerler aynı sırayı alır. Bir olay ayı **harmonize sıra ≤ 3 veya harmonize z ≥ 2** ise ilgili metrikte yakalanır: `recalled_count` yalnız `count_normalized`, `recalled_frp` yalnız `total_frp` üzerinden hesaplanır. Dönem dışındaki veya ilgili harmonize değeri olmayan olay ayları `NA` gösterilir; birden fazla ayı olan olaylar ay bazında değerlendirilir.
+- Arşivi yüklenmiş ve ham tespiti olmayan aylar her iki ham seride sıfırdır; Terra+Aqua döneminde takvim hücresi de yoksa her iki harmonize seride de sıfır kabul edilir. Mevcut hücrede `count_normalized` yoksa bu eksiklik korunur, sıfıra çevrilmez; `total_frp` bundan bağımsız değerlendirilir. Sonlu olmayan harmonize değerler eksik kabul edilir.
+- **Yanlış alarm göstergesi:** Seçilen dönemle kesişen `2012..=to` ayları içinde `z ≥ 2` olanların, z puanı hesaplanabilen aylara oranı; dört serinin her biri için ayrı pay/payda raporlanır. Birleşik (`ALL_POOLED`) oran ülke yüzdelerinin ortalaması değil, ülke-ay pay ve paydalarının toplamıdır. Bilinen olay ayları da bu hesaba dahildir. Tüm diğer ayların olaysız olduğu doğrulanmadığından bu değer kesin yanlış alarm oranı değil, alarm sıklığı göstergesidir; ham serinin daha yüksek çıkacağı önceden varsayılmaz.
+- `--out` CSV'sinde her ayın sayımları ve FRP toplamları, dört serinin z puanları ve sıraları ile olayların `recalled_count` ve `recalled_frp` sonuçları bulunur. `raw_z`, `raw_rank`, `harmonized_z`, `harmonized_rank` ve FRP eki olmayan alarm alanları sayım metriğine aittir; FRP alanları ayrıca `frp` ile adlandırılır. Olay ayları `section=event`, diğer aylar `month`, dönem dışındaki olaylar `event_outside_range`, ülke ve birleşik alarm özetleri `false_alarms` olarak yazılır. Hesaplanamayan sayısal alanlar boştur; alarm oranları `0..1` ölçeğindedir.
+
+### Çalıştırma
+
+```bash
+export PATH="$(ls -d "$HOME"/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.*/mingw64/bin):$PATH"
+cargo clippy -p pyrosync-firms --examples -- -D warnings
+
+ARCHIVE_CACHE_DIR="C:/Users/user/Desktop/SpaceApps2026-MODIS-VIIRS/.cache/firms-archive" \
+  cargo run --release -p pyrosync-firms --example event_recall -- \
+  --from 2003 --to 2025 --out .cache/review/event_recall.csv
+
+# Küçük kapsamlı kontrol
+ARCHIVE_CACHE_DIR="C:/Users/user/Desktop/SpaceApps2026-MODIS-VIIRS/.cache/firms-archive" \
+  cargo run --release -p pyrosync-firms --example event_recall -- \
+  --countries Turkey --out .cache/review/event_recall_turkey.csv
+```
+
+### Sonuç tablosu
+
+Sonuçlar: final koşusundan sonra doldurulacak.
+
+| Olay | Ay | Sayım ham z | Sayım ham sıra | Sayım harmonize z | Sayım harmonize sıra | FRP ham z | FRP ham sıra | FRP harmonize z | FRP harmonize sıra | recalled_count | recalled_frp |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Black Summer (Australia) | 2019-12 | | | | | | | | | | |
+| Black Summer (Australia) | 2020-01 | | | | | | | | | | |
+| Amazon fires (Brazil) | 2019-08 | | | | | | | | | | |
+| record wildfire season (Canada) | 2023-06 | | | | | | | | | | |
+| Manavgat / Mediterranean fires (Turkey) | 2021-08 | | | | | | | | | | |
+| El Nino peat fires (Indonesia) | 2015-09 | | | | | | | | | | |
+| El Nino peat fires (Indonesia) | 2015-10 | | | | | | | | | | |
+| western US fire season (CA/OR) | 2020-09 | | | | | | | | | | |
+| Yakutia (Sakha) fires | 2021-07 | | | | | | | | | | |
