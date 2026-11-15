@@ -265,6 +265,81 @@
   border: 1.25px dashed var(--map-duplicate-ring, var(--color-duplicate-ring));
 }
 
+/*
+ * On the globe the marks sit on satellite imagery: a bright "on imagery" fill (the lighter of
+ * --map-ink / --map-halo-light) inside a dark casing, and FRP discs with a glow in their own
+ * colour. The swatches mirror that; the flat map keeps the plain marks above.
+ */
+:global([data-surface="globe"]) .legend {
+  --mark-fill: var(--map-ink);
+  --mark-casing: var(--map-halo-light);
+}
+
+:global(:root[data-theme="light"]) :global([data-surface="globe"]) .legend {
+  --mark-fill: var(--map-halo-light);
+  --mark-casing: var(--map-ink);
+}
+
+:global([data-surface="globe"]) .modis {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--mark-fill);
+  box-shadow:
+    0 0 0 1.25px var(--mark-casing),
+    inset 0 0 0 1.25px var(--mark-casing),
+    0 0 3px 1px var(--mark-casing);
+}
+
+:global([data-surface="globe"]) .viirs {
+  width: 8px;
+  height: 8px;
+  background: var(--mark-fill);
+  box-shadow:
+    0 0 0 1.25px var(--mark-casing),
+    0 0 3px 1px var(--mark-casing);
+}
+
+:global([data-surface="globe"]) .ring {
+  border: 1.5px dashed var(--mark-fill);
+  box-shadow:
+    0 0 0 1px var(--mark-casing),
+    inset 0 0 0 1px var(--mark-casing);
+}
+
+:global([data-surface="globe"]) .harmonizedDot {
+  border-color: var(--mark-casing);
+  box-shadow: 0 0 4px 1px var(--frp-6);
+}
+
+:global([data-surface="globe"]) .ramp {
+  overflow: visible;
+  border-color: var(--mark-casing);
+}
+
+:global([data-surface="globe"]) .swatch:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+:global([data-surface="globe"]) .swatch:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* The glow grows with the bucket, as on the globe. */
+:global([data-surface="globe"]) .swatch[data-bucket="6"] {
+  position: relative;
+  box-shadow: 0 0 3px 0 var(--frp-6);
+}
+
+:global([data-surface="globe"]) .swatch[data-bucket="7"] {
+  position: relative;
+  box-shadow: 0 0 4px 1px var(--frp-7);
+}
+
+:global([data-surface="globe"]) .swatch[data-bucket="8"] {
+  position: relative;
+  box-shadow: 0 0 5px 1px var(--frp-8);
+}
+
 .frpSection {
   display: flex;
   flex-direction: column;

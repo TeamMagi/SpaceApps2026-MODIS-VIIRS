@@ -11,6 +11,7 @@
 |--------|-------|
 | `check-env.sh` | Geliştirme ortamı kontrol (cargo, node, npm, docker, .env) |
 | `fetch-sample.sh` | FIRMS API'den örnek CSV verisi indirme |
+| `build-globe-tiles.sh` | NASA Blue Marble mozaiğinden küre görüntüsünü üretme (`web/public/globe/earth.jpg` + 128 adet 1024 px döşeme) |
 
 ## Script Ekleme Kuralları
 

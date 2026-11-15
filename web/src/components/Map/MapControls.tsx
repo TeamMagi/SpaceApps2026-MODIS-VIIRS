@@ -9,6 +9,8 @@ export interface MapControlsProps {
   readonly onZoomIn: () => void;
   readonly onZoomOut: () => void;
   readonly onReset: () => void;
+  /** On the globe the arrow keys rotate rather than pan. */
+  readonly rotates?: boolean;
 }
 
 const SHORTCUTS = [
@@ -26,6 +28,7 @@ function MapControls({
   onZoomIn,
   onZoomOut,
   onReset,
+  rotates = false,
 }: MapControlsProps) {
   const { t } = useCopy();
   const popoverId = useId();
@@ -126,7 +129,9 @@ function MapControls({
                     <dt className={styles.shortcutKeyWrap}>
                       <kbd className={styles.kbd}>{t(item.keys)}</kbd>
                     </dt>
-                    <dd className={styles.shortcutAction}>{t(item.action)}</dd>
+                    <dd className={styles.shortcutAction}>
+                      {t(rotates && item.action === "mapShortcutPanAction" ? "mapShortcutRotateAction" : item.action)}
+                    </dd>
                   </div>
                 ))}
               </dl>

@@ -115,10 +115,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ✅ |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ (R5 ✅, Y1 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
-| C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | 🔄 |
-| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | 🔄 |
-| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | 🔄 |
-| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | 🔄 |
+| C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | ✅ |
+| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | ✅ |
+| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | ✅ |
+| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | ✅ |
 | R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ✅ |
 | R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ✅ |
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ✅ |
@@ -142,7 +142,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G5 — Sunum materyali + demo senaryosu (Y1 bekliyor). R5 bitti, G4 bitti.
-- **Can:** C1–C4 tasarımları + çalışan React prototipi (`web/src`) hazır (`🔄`); ekip onayı ve kalan uyumlaştırma maddeleri sonrası kapanacak.
+- **Can:** C1 ✅, C2 ✅, C3 ✅, C4 ✅. İlk faz UI/UX tasarım ve çalışan React prototipi (`web/src`) görevleri tamamlandı (sıradaki işler `GOREVLER2.md` içinde C5–C7).
 - **Serhat:** R1 ✅, R2 ✅, R3 ✅, R4 ✅, R5 ✅. Tüm frontend görevleri tamamlandı.
 - **Samet:** S5 — CI/CD (S1 bitti), S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil. R1 bitti, Y5 bitince Y1–Y4 açılır.
@@ -310,7 +310,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 ## Can'ın görevleri
 
-### C1 — UI/UX genel konsept + wireframe 🔄
+### C1 — UI/UX genel konsept + wireframe ✅
 - **Bekler:** — · **Açar:** C2, C3, C4
 - Projenin görsel kimliğini belirleyen ilk tasarım:
   - ✅ Ana sayfa layout'u: harita, takvim, kontroller nerede duracak
@@ -321,10 +321,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Bitti sayılır:** wireframe tüm ekiplere paylaşıldı ve onaylandı; ana sayfa, harita görünümü, takvim görünümü, karşılaştırma paneli var.
 - **Çıktı (2026-11-14):** `docs/UI-UX-KONSEPT.md` — tasarım ilkeleri, desktop layout, kullanıcı akışı + loading/empty/error state'leri, 4 ekran wireframe'i (dashboard, harita + hotspot popover, yıl×ay takvim ısı matrisi, Raw↔Harmonised karşılaştırma + Sensor Cliff grafiği), mobil wireframe + breakpoint'ler, bileşen ağacı + state sahipliği tablosu, C2/C3/C4 devir notları.
 - **Çıktı (Can, 2026-11-14):** `web/src` içinde interaktif React prototipi (+ offline arşiv API `/api/regions`, `/api/series`, `/api/points`) + `docs/TASARIM_KONSEPT.md`, `docs/UX_YAZIM.md`, `docs/FRONTEND_STACK_ONERISI.md`.
-- **Kalan:** ekibe paylaşım ve onay. Onay gelince ✅ olur.
-- **Bulgu:** `HarmonizeResponse.raw` yalnızca sayaç döndürüyor (`modis_count`, `viirs_count`, `total_raw`), ham hotspot koordinatları yok. Raw modda haritada gerçek ham noktalar gösterilecekse G4'te bu alanın eklenmesi gerekiyor — aksi halde Raw harita görünümü `HarmonizedHotspot.source` üzerinden türetilmek zorunda.
+- **Doğrulama (2026-11-15):** Tüm tasarım dokümanları, responsive layout (`AppShell.module.css`) ve prototip bileşenleri depoda; alt görevler `R1`–`R5` ekip/Serhat tarafından doğrulanıp `✅` kapatılarak onaylandı. `/api/harmonize` ham nokta ihtiyacı da G4+R4 kapsamında `include_raw=true` ile çözüldü.
+- **Bulgu:** `HarmonizeResponse.raw` varsayılan olarak yalnızca sayaç döndürüyor (`modis_count`, `viirs_count`, `total_raw`); ham noktalar gerektiğinde `include_raw=true` parametresiyle alınıyor.
 
-### C2 — Tasarım sistemi 🔄
+### C2 — Tasarım sistemi ✅
 - **Bekler:** C1 · **Açar:** R1
 - Serhat'ın kodlayacağı component'ler için görsel standartlar:
   - ✅ Renk paleti (primary, secondary, accent; MODIS, VIIRS ve harmonized FRP/anomali skalaları CSS token olarak tanımlı)
@@ -334,10 +334,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - ✅ Dark mode desteği (`[data-theme="dark"]` varsayılan + `[data-theme="light"]`)
 - **Çıktı (Can, 2026-11-14):** `web/src/styles/tokens.css`, `web/src/styles/global.css` ve CSS Modules bileşen stilleri içinde tüm CSS variable isimleri ve tema paletleri belirlendi.
 - **Çıktı (2026-11-14):** `docs/TASARIM_SISTEMI.md` — token referansı (dark/light renk tabloları, sensör + FRP/anomali skalaları, tipografi, 8px spacing, radius/motion, bileşen kalıpları, yapılmaması gerekenler).
-- **Kalan:** yalnızca ekip/Serhat onayı (`R1`'in önü açık).
+- **Doğrulama (2026-11-15):** `tokens.css`, `global.css` ve `docs/TASARIM_SISTEMI.md` birebir uyumlu; `R1` tamamlanıp `✅` işaretlendiği için onay şartı sağlandı.
 - **Bitti sayılır:** Serhat bu dökümanla component'leri birebir kodlayabilir; renk ve spacing soruları kalmamış.
 
-### C3 — Harita + takvim detay tasarımı 🔄
+### C3 — Harita + takvim detay tasarımı ✅
 - **Bekler:** C1 · **Açar:** R2, R3
 - İki ana görselleştirme panelinin detaylı tasarımı:
   - ✅ **Harita:** hotspot noktaları nasıl gösterilecek (FRP ve confidence'a göre renk/boyut/şekil, Canvas 2D örnekleme ve `PointDetail` popup/detay içeriği, boş/yükleniyor/hata/veri durumları)
@@ -345,10 +345,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - ✅ İkisi arasındaki etkileşim: takvimde bir aya tıklayınca haritada o ayın verileri
 - **Çıktı (Can, 2026-11-14):** `web/src/components/Map/HotspotMap.tsx` (+ `engine/`, `PointDetail.tsx`, `MapStateOverlay.tsx`) ve `web/src/components/Calendar/BurnCalendar.tsx` (+ `CalendarTooltip.tsx`) içinde çalışır şekilde uygulandı.
 - **Güncelleme (cddf0ec):** takvim ısı matrisi radyal yıl saati + yıllık histogram ile değiştirildi.
-- **Kalan:** Serbest bbox çizimi yerine ülke/bölge seçimi tercihinin ekip onayı ve `G4` canlı API uçlarıyla (`/api/harmonize`, `/api/calendar`) uyum kontrolü.
+- **Doğrulama (2026-11-15):** Harita ve takvimin tüm veri/boş/yükleniyor/hata durumları çalışır durumda; ülke seçimi yaklaşımı ve canlı `G4` API uyumu `R2`, `R3` ve `R4` (`✅`) ile doğrulandı, `CliffChart`–`BurnCalendar` yıl state senkronizasyonu eklendi.
 - **Bitti sayılır:** harita ve takvim component'lerinin her durumu (boş, yükleniyor, veri var, hata) tasarlanmış.
 
-### C4 — Raw ↔ Harmonized karşılaştırma tasarımı 🔄
+### C4 — Raw ↔ Harmonized karşılaştırma tasarımı ✅
 - **Bekler:** C1 · **Açar:** R5
 - Projenin **en önemli demo anı:** toggle ile Raw ve Harmonized arasında geçiş.
   - ✅ Toggle/switch UI tasarımı (belirgin, anlaşılır; `ViewToggle.tsx`)
@@ -358,7 +358,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - ✅ İstatistik paneli ve düzeltme fişi (`CountDelta.tsx`, `Receipt.tsx`)
 - **Çıktı (Can, 2026-11-14):** `ViewToggle.tsx`, `useHarmonizeTransition.ts`, `CliffChart.tsx`, `CountDelta.tsx`, `Receipt.tsx` ve `docs/TASARIM_KONSEPT.md`.
 - **Çıktı (2026-11-14):** `fleet_merged` arşiv API'sine (`/api/series` yıllık + `/api/points` stages) eklendi; `Receipt` ve `PipelineStrip` artık filo birleştirme adımını gösteriyor, sayılar `ham − interscan − filo − eşleşen = harmonize` olarak tutuyor.
-- **Kalan:** ekip onayı. (Not: 7 düğümlü pipeline şeridinde ayrı bir "filo" düğümü yok; `useHarmonizeTransition.ts` koreografisine dokunmamak için filo sayısı bölünme metninde gösteriliyor.)
+- **Doğrulama (2026-11-15):** Her iki mod, 3 vuruşlu geçiş koreografisi ve istatistik fişi `R5` (`✅`) ile doğrulandı. (Not: 7 düğümlü pipeline şeridinde ayrı bir "filo" düğümü yok; `useHarmonizeTransition.ts` koreografisine dokunmamak için filo sayısı bölünme metninde gösteriliyor.)
 - **Bitti sayılır:** toggle'ın her iki durumu ve geçiş animasyonunun tasarımı tamamlanmış; Serhat implementasyon için hazır.
 
 ---

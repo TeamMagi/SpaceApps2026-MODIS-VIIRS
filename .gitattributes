@@ -1,2 +1,5 @@
 # Keep precomputed /api/series JSON bytes identical across platforms so body_hash verification holds under core.autocrlf.
 data/derived/** -text
+web/public/globe/*.jpg filter=lfs diff=lfs merge=lfs -text
+web/public/globe/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+

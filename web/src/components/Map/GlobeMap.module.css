@@ -1,0 +1,61 @@
+.host {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.credits {
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  z-index: var(--z-map-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: calc(100% - 2 * var(--space-1));
+  pointer-events: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-snug);
+  text-align: right;
+}
+
+.orbitNote,
+.credit {
+  margin: 0;
+  padding: 1px var(--space-half);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+}
+
+.orbitNote {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-half);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+}
+
+.orbitLabel {
+  color: var(--color-text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.orbitGlyph {
+  width: 14px;
+  border-top: var(--border-width) dashed var(--color-text-muted);
+}
+

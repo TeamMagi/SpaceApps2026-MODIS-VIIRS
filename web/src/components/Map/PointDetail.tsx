@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useRef } from "react";
+import { memo, useLayoutEffect, useRef, type RefObject } from "react";
 import { useCopy, type CopyApi } from "../../hooks/useCopy";
 import {
   Confidence,
@@ -19,6 +19,49 @@ export interface PointDetailProps {
   readonly screenY: number;
   readonly viewportSize: ViewportSize;
   readonly onClose: () => void;
+  /** Lets a caller re-anchor the card every frame (see `applyPointCardAnchor`) without re-rendering it. */
+  readonly cardRef?: RefObject<HTMLDivElement | null>;
+}
+
+export interface PointCardAnchor {
+  readonly placement: "above" | "below";
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Where the card sits for a point at (screenX, screenY), clear of the panel edges and zoom controls. */
+export function pointCardAnchor(screenX: number, screenY: number, viewportSize: ViewportSize): PointCardAnchor {
+  const { width, height } = viewportSize;
+  const halfW = 150;
+  const cardH = 180;
+  const controlsLeft = Math.max(0, width - 184);
+  const controlsBottom = 60;
+
+  const wouldHitTopOrControls =
+    screenY - 14 - cardH < 10 ||
+    (screenX + halfW > controlsLeft && screenY - 14 - cardH < controlsBottom);
+  const placement: "above" | "below" = wouldHitTopOrControls ? "below" : "above";
+
+  let y: number;
+  if (placement === "above") {
+    y = Math.min(Math.max(screenY - 14, cardH + 10), Math.max(cardH + 10, height - 10));
+  } else {
+    y = Math.min(Math.max(screenY + 14, 10), Math.max(10, height - cardH - 10));
+  }
+
+  const cardTop = placement === "above" ? y - cardH : y;
+  const maxAllowedX =
+    cardTop < controlsBottom
+      ? Math.max(halfW + 10, controlsLeft - halfW - 8)
+      : Math.max(halfW + 10, width - halfW - 10);
+  const x = Math.min(Math.max(screenX, halfW + 10), maxAllowedX);
+  return { placement, x, y };
+}
+
+export function applyPointCardAnchor(el: HTMLElement, anchor: PointCardAnchor): void {
+  el.style.setProperty("--card-x", `${Math.round(anchor.x)}px`);
+  el.style.setProperty("--card-y", `${Math.round(anchor.y)}px`);
+  if (el.dataset.placement !== anchor.placement) el.dataset.placement = anchor.placement;
 }
 
 export function sourceCopyKey(
@@ -89,51 +132,23 @@ function PointDetail({
   screenY,
   viewportSize,
   onClose,
+  cardRef: externalCardRef,
 }: PointDetailProps) {
   const copy = useCopy();
   const { t, fmt } = copy;
-  const cardRef = useRef<HTMLDivElement | null>(null);
+  const localCardRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = externalCardRef ?? localCardRef;
 
   const showHarmonized = revealAnswer && harmPoint !== null;
   const activePoint = showHarmonized ? harmPoint : rawPoint;
 
-  const { width, height } = viewportSize;
-  const halfW = 150;
-  const cardH = 180;
-  const controlsLeft = Math.max(0, width - 184);
-  const controlsBottom = 60;
-
-  const wouldHitTopOrControls =
-    screenY - 14 - cardH < 10 ||
-    (screenX + halfW > controlsLeft && screenY - 14 - cardH < controlsBottom);
-  const placement: "above" | "below" = wouldHitTopOrControls ? "below" : "above";
-
-  let anchorY: number;
-  if (placement === "above") {
-    anchorY = Math.min(
-      Math.max(screenY - 14, cardH + 10),
-      Math.max(cardH + 10, height - 10),
-    );
-  } else {
-    anchorY = Math.min(
-      Math.max(screenY + 14, 10),
-      Math.max(10, height - cardH - 10),
-    );
-  }
-
-  const cardTop = placement === "above" ? anchorY - cardH : anchorY;
-  const maxAllowedX =
-    cardTop < controlsBottom
-      ? Math.max(halfW + 10, controlsLeft - halfW - 8)
-      : Math.max(halfW + 10, width - halfW - 10);
-  const anchorX = Math.min(Math.max(screenX, halfW + 10), maxAllowedX);
+  const anchor = pointCardAnchor(screenX, screenY, viewportSize);
+  const { placement } = anchor;
 
   useLayoutEffect(() => {
     const el = cardRef.current;
-    if (!el) return;
-    el.style.setProperty("--card-x", `${Math.round(anchorX)}px`);
-    el.style.setProperty("--card-y", `${Math.round(anchorY)}px`);
-  }, [anchorX, anchorY]);
+    if (el) applyPointCardAnchor(el, { placement, x: anchor.x, y: anchor.y });
+  }, [cardRef, placement, anchor.x, anchor.y]);
 
   if (!activePoint) return null;
 

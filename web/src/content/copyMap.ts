@@ -64,6 +64,10 @@ export const mapCopyEn = {
   mapCountryPickHint: "Click a country with archive data to switch to it. The Region menu lists every region.",
   mapCountrySelectHint: "Click to view",
   mapCountryNoData: "No data yet",
+  mapShortcutRotateAction: "Rotate globe",
+  mapGlobeOrbitsLabel: "Satellite orbits",
+  mapGlobeOrbitsNote: "Illustration, not a measurement",
+  mapGlobeCredit: "Earth imagery: NASA Blue Marble · Fire data: NASA FIRMS",
 } as const;
 
 export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
@@ -130,6 +134,10 @@ export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
   mapCountryPickHint: "Arşiv verisi olan bir ülkeye tıklayarak o bölgeye geçin. Tüm bölgeler Bölge menüsünde listelenir.",
   mapCountrySelectHint: "Görüntülemek için tıklayın",
   mapCountryNoData: "Henüz veri yok",
+  mapShortcutRotateAction: "Küreyi döndür",
+  mapGlobeOrbitsLabel: "Uydu yörüngeleri",
+  mapGlobeOrbitsNote: "Temsilî çizim, ölçüm değildir",
+  mapGlobeCredit: "Dünya görüntüsü: NASA Blue Marble · Yangın verisi: NASA FIRMS",
 };
 
 export const MAP_CONTEXT_NAMES_TR: Readonly<Record<string, string>> = {

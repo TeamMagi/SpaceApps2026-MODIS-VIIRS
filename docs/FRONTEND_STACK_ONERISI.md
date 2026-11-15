@@ -1,302 +1,419 @@
 # PyroSync Frontend Teknoloji Önerisi
 
-**Muhatap:** Serhat (Frontend — R1, R2), Görkem (Backend — G4)  
-**Kapsam:** C1 UI/UX Konsept ve Uygulama Planı (Bölüm 4) teknik kararları, mimari ve sözleşme önerisi  
-**Amaç:** "Uçurum bir yanılsama, tek hamlede kapanıyor" ana fikrini taşıyan Ham → Harmonize geçiş koreografisini takılmadan, SWC uyumlu ve ağ beklemeksizin çalıştıracak frontend yığınını netleştirmek.
+**Kime:** Serhat (frontend), Görkem (backend)
+**Kimden:** Can (C1)
+**Durum:** Öneri — ekip onayı bekliyor
+**İlgili dokümanlar:** `docs/MIMARI.md`, `web/src/mocks/sample-data.ts`
+
+Bu doküman bir uygulama kılavuzu değil, karar dokümanıdır. Amacı, C1'de tanımlanan
+"uçurum bir yanılsama, tek hamlede kapanıyor" fikrinin frontend'te teknik olarak
+mümkün olduğunu göstermek ve mevcut tercihlerden ayrıldığımız yerleri gerekçesiyle
+önermektir. Her öneri için bir geri dönüş planı vardır; hiçbiri tek yönlü kapı değildir.
+
+Örnek sayılar `web/src/mocks/sample-data.ts` ile aynıdır: **6.520 ham tespit**
+(MODIS 2.340 + VIIRS 4.180), **5.363 harmonize**, **1.157 çift sayım**, **%17,7**.
 
 ---
 
-## Uygulanan Karar (C1 Prototipi)
+## 1. Sabit kurallar
 
-C1 kapsamında `web/src` içinde kurulan interaktif prototipte **React 19 + TypeScript (strict) + SWC**, **zustand**, **Motion** (`motion/react`) ve **CSS Modules + CSS değişkenleri** (`web/src/styles/tokens.css`) kullanılmıştır. Aşağıdaki öneride yer alan **MapLibre + deck.gl** (sonraki yükseltme yolu olarak korunur), **TanStack Query** ve **Recharts** bağımlılıkları ertelenmiş; harita, uçurum grafiği ve takvim **elle yazılmış SVG/CSS** bileşenleri olarak geliştirilmiştir. Bunun nedeni tam **çevrimdışı demo** gereksinimi (karo sunucusu veya dış ağ bağımlılığı olmadan çalışma) ve düşük **paket boyutu**dur.
+Bu dört kural pazarlığa açık değildir; aşağıdaki bütün öneriler bu kuralların içinde kalır.
 
-Ayrıca mevcut `/api/harmonize` uç noktası ham noktaları, nokta `id` alanlarını, `mergesInto` eşlemesini, FRP aralıklarını, yıllık ham/MODIS/VIIRS serilerini, ham aylık sayımları ve aşama bazlı eleme (`per-stage removals`) sayılarını döndürmemektedir; bu nedenle prototip, `G4` kapsamındaki `/api/compare` sözleşmesi tanımlanana kadar `web/src/mocks/prototype-data.ts` üzerinde çalışır.
+| # | Kural | Bu dokumandaki anlamı |
+|---|---|---|
+| 1 | Backend **Rust** (Axum, Tokio) | Harmonizasyon, eşleştirme ve takvim hesabı sunucuda kalır. Tarayıcı yalnız görüntüler ve geçişi canlandırır. |
+| 2 | Frontend **React 19 + TypeScript strict** | `tsconfig.json` bugünkü haliyle korunur: `strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`. Yeni kod `any` ile bu kapıları delemez. |
+| 3 | Derleyici **yalnız SWC** | `@vitejs/plugin-react-swc` kullanılır. Babel eklentisi isteyen hiçbir paket alınmaz. |
+| 4 | **Babel eklentisi yok** | Kural, Babel dönüşümlerini hedefler. Babel olmayan Vite eklentileri (örneğin WASM yükleyici) serbesttir. |
 
----
+### 1.1 SWC uyum kontrolü
 
-## 1. Sabit Kurallar ve SWC Uyumluluk Denetimi
+Her aday kütüphane dört ölçütle denetlendi:
 
-Mevcut depo (`web/package.json`, `web/vite.config.ts`, `web/tsconfig.json`) temelinde değiştirilmeyecek sabit kurallar şunlardır:
+1. Çalışmak için bir `babel-plugin-*` gerektirmiyor mu?
+2. ESM olarak dağıtılıyor mu (Vite'ın ağaç sallaması çalışsın diye)?
+3. Derleme zamanında kod üreten bir macro/codegen katmanı var mı?
+4. React 19 ile peer dependency çakışması var mı?
 
-- **Backend:** Rust (`axum = "0.8"`, `pyrosync-core`, `pyrosync-firms`)
-- **Frontend:** React `^19.1.0` + TypeScript `^5.8.0` (`"strict": true`, `"noUnusedLocals": true`, `"noUnusedParameters": true`, `"isolatedModules": true`, `"jsx": "react-jsx"`)
-- **Derleyici:** Vite `^6.3.0` + `@vitejs/plugin-react-swc` `^4.3.0` (yalnızca SWC; Babel eklentisi, özel JSX pragma'sı veya derleme zamanı makrosu isteyen hiçbir kütüphane alınmaz)
-- **Açılış davranışı ve palet:** `web/src/App.tsx` şu an `useState<ViewMode>("harmonized")` ile açılmaktadır; plan gereği açılış modu `raw` olmalıdır. `web/src/components/Toggle/ViewToggle.tsx` içindeki kırmızı/yeşil (`#ef4444` / `#22c55e`) çifti renk körü güvenli palet token'larına taşınmalıdır.
-
-### Önerilen Kütüphanelerin SWC Uyumluluk Kontrolü
-
-| Kütüphane | Rol | SWC Uyumluluğu | Açıklama |
+| Paket | Rol | SWC uyumu | Not |
 |---|---|---|---|
-| `maplibre-gl` + `react-map-gl` (`react-map-gl/maplibre`) | Vektör harita kapsayıcısı | Uyumlu | Saf ESM/TypeScript; Babel eklentisi gerektirmez. |
-| `@deck.gl/core`, `@deck.gl/layers`, `@deck.gl/geo-layers`, `@deck.gl/mapbox` | GPU nokta ve H3 katmanları | Uyumlu | WebGL2 tamponları ve standart JS/TS erişimcileri kullanır. `MapboxOverlay` ile `useControl` üzerinden bağlandığı için React 19 uzlaştırıcısıyla çakışmaz. |
-| `recharts` | 2000–bugün uçurum grafiği (planlanan yeni bağımlılık) | Uyumlu | Standart React SVG bileşenleri; Babel eklentisi istemez (`web/package.json`'da kurulu değildir, planlanan yeni bağımlılıktır). React 19 eş bağımlılık (`peerDependencies` / `react-is`) uyarısı verirse sürüm sabitlemesi gerekir. |
-| `d3-scale` (+ `@types/d3-scale`) | Yanma takvimi renk ölçeği | Uyumlu | DOM'dan ve JSX'ten bağımsız saf ESM matematik modülü. |
-| `motion` (`motion/react`) | Düğme yayı, sayaç, başlık ve pipeline akışı | Uyumlu | Çalışma zamanı React hook'ları ve Web Animations API kullanır; derleme zamanı Babel eklentisi gerektirmez. |
-| `zustand` | İstemci arayüz ve faz durumu | Uyumlu | `useSyncExternalStore` tabanlı, Babel'siz, TypeScript `strict` ile tam tipli. |
-| `@tanstack/react-query` | Sunucu verisi önbelleği ve demo düşüşü | Uyumlu | Standart Context ve hook yapısı; SWC ile sorunsuz derlenir. |
-| CSS Custom Properties + CSS Modules (`*.module.css`) | Tasarım token'ları, tema ve palet | Uyumlu | Vite içinde yerleşiktir; çalışma zamanı ve Babel maliyeti sıfırdır. |
-| `@fontsource/inter` + yerel monospace (`tabular-nums`) | Yerel yazı tipleri | Uyumlu | Statik CSS ve WOFF2 dosyaları Vite tarafından paketlenir. |
-| `pyrosync-core` WASM çıktısı (opsiyonel) | Tarayıcıda anlık yeniden hesaplama | Uyumlu | `WebAssembly.instantiateStreaming` veya Vite WASM eklentisiyle yüklenir; Babel gerektirmez. |
+| `maplibre-gl` | Harita motoru | Uygun | Önceden derlenmiş ESM, eklenti istemez. |
+| `react-map-gl` (`/maplibre`) | React bağlayıcı | Uygun | Yalnız React bileşeni; derleme dönüşümü yok. |
+| `deck.gl`, `@deck.gl/react` | GPU katmanları | Koşullu | Eklenti istemez; React 19 peer aralığı kurulumda doğrulanmalı (bkz. 2.1). |
+| `recharts` | Uçurum grafiği | Uygun | Mevcut tercih, değişmiyor. |
+| `d3-scale` | Takvim renk ölçeği | Uygun | Yalnız fonksiyon; DOM'a dokunmaz. |
+| `motion` (`motion/react`) | Arayüz animasyonu | Uygun | ESM; eski `framer-motion` paketi değil. |
+| `zustand` | Durum yönetimi | Uygun | Eklenti istemez, React 19 destekli. |
+| `@tanstack/react-query` | Sunucu verisi | Uygun | Yalnız hook katmanı. |
+| CSS Modules | Stil | Uygun | Vite'ta yerleşik; PostCSS zorunlu değil. |
+| `@fontsource/*` | Yazı tipi | Uygun | Statik varlık; derleyiciye iş düşmez. |
+| `wasm-pack` çıktısı | Vitrin (opsiyonel) | Koşullu | Babel değil, Vite WASM eklentisi gerekir. Karar Görkem'in. |
+
+**Açıkça alınmayacaklar:** `styled-components` (Babel eklentisi), `linaria` (Babel
+eklentisi), `@emotion/babel-plugin`, dekoratör tabanlı ORM'ler ve `*.macro` paketleri.
+Bunlar kural 3'ü doğrudan çiğner; alternatifleri CSS Modules ile zaten karşılanıyor.
 
 ---
 
-## 2. Teknoloji Yığını Karar Tablosu
+## 2. Yığın önerisi
 
-| Katman | Öneri | GOREVLER.md'deki Plan / Mevcut Durum | Gerekçe | Risk / Geri Dönüş Planı |
+Tablo, C1 planının 4. bölümünün tamamını taşır. "Mevcut tercih" sütunu bugünkü kod
+tabanını veya R1/R2/R3'te yazılanı söyler; "—" henüz karar verilmediği anlamına gelir.
+
+| Katman | Öneri | Mevcut tercih | Gerekçe | Risk / geri dönüş planı |
 |---|---|---|---|---|
-| Harita | **MapLibre GL JS + deck.gl** (`react-map-gl/maplibre`) | GOREVLER.md'deki plan: `react-leaflet` (R2; `web/package.json`'da kurulu değil) | Tek kritik değişiklik. İmza anı binlerce noktanın aynı anda konum ve renk değiştirmesidir; `ScatterplotLayer` bunu GPU'da `transitions` ile 60 fps yapar. Leaflet birkaç bin noktada takılır. İkisi de açık kaynak. | Risk: React 19 ile `@deck.gl/react` sürüm uyuşmazlığı veya düşük GPU'lu cihaz. Geri dönüş: `MapboxOverlay` (`@deck.gl/mapbox`) kullanmak; acil durumda 500–1.000 noktalı örnekleme ile Canvas moduna düşmek. |
-| Uzak yakınlık | **deck.gl `H3HexagonLayer`** | Marker cluster | Backend (G2, `h3o`) zaten H3 ızgarası kullanır. Uzaklaşınca nokta kümesi yerine aynı altıgenleri göstermek pipeline'ın 4. aşamasını görünür kılar ve Y3 ısı haritasıyla ortak altyapı olur. | Risk: H3 indeksinin henüz `/api/compare` yanıtında gelmemesi. Geri dönüş: İstemcide zoom eşiğinde `ScatterplotLayer` yarıçap/opaklık kümelemesine geçmek. |
-| Altlık harita | **Koyu vektör altlık + çevrimdışı yedek ülke sınırları GeoJSON** | Tanımsız (`—`) | Docker on-premise hedefi ve K1 demo modu için internet kesilse bile harita boş kalmamalıdır. | Risk: Vektör karo sunucusuna erişim kesintisi. Geri dönüş: Paket içine gömülü düşük boyutlu Natural Earth / ülke sınırları GeoJSON katmanına otomatik düşmek. |
-| Grafik | **Recharts** (planlanan yeni bağımlılık; ekibin planlanan seçimi korunur) | GOREVLER.md'deki plan: Recharts (`web/package.json`'da kurulu değil; yeni bağımlılık olarak eklenecek) | 27 yıl × 12 ay = 324 nokta; SVG çizgi dönüşümü ve `Area` ile belirsizlik bandı için yeterlidir. Ekibin ve Yusuf'un planlanan seçimiyle uyumludur. | Risk: React 19 `peerDependencies` uyarısı. Geri dönüş: Recharts güncel v2/v3 sürümüne geçmek veya düz SVG `<path>` + `d3-scale` ile 324 noktayı çizmek. |
-| Takvim | **Elle yazılmış CSS Grid bileşeni + `d3-scale`** | R3'te belirtilmemiş | Recharts'ta ısı haritası türü yoktur. 324 hücre için ayrı grafik kütüphanesi gereksizdir; renk geçişi CSS `transition` ile maliyetsiz gelir. | Risk: Mobil dikey dönüşümde (`375×812`, 12 sütun × 27 satır) dokunma hedefinin küçülmesi. Geri dönüş: Hücre genişliğini 26 px sabit tutup tooltip yerine seçili ay özet çubuğu göstermek. |
-| Arayüz animasyonu | **Motion** (`motion/react`) | Tanımsız (`—`) | Düğme yayı, sayaç (`6.520` → `5.363`), başlık dönüşümü ve 7 düğümlü pipeline sırası tek zaman çizelgesinden yönetilir. Basit hover efektleri düz CSS kalır. | Risk: Paket boyutu artışı. Geri dönüş: `LazyMotion` + `domAnimation` alt kümesini yüklemek (~15 KB gzip). |
-| Durum yönetimi | **zustand + URL eşitlemesi** | Context veya zustand (R1) | Seçici (`selector`) abonelik ile mod değişince yalnızca ilgili bileşenler yeniden çizilir; harita örneği gereksiz yere kurulmaz. URL eşitlemesi paylaşılabilir linki (K2) sağlar. | Risk: URL ve store senkron döngüsü. Geri dönüş: Tek yönlü URL okuyucu + `replaceState` yardımcısı ile sadeleştirmek; gerekirse React Context'e dönmek. |
-| Sunucu verisi | **TanStack Query** (`@tanstack/react-query`) | `web/src/hooks/useApi.ts` | Önbellek, otomatik yeniden deneme ve K1 demo verisine (`SAMPLE_RESPONSE` türevi) kontrollü düşüş hazır gelir. Bölge değişimi önbellekten anında açılır. | Risk: Ek bağımlılık. Geri dönüş: `useApi.ts` içine `Map` tabanlı basit önbellek ve `AbortController` eklemek. |
-| Stil | **CSS custom properties + CSS Modules** | Inline `style` (`App.tsx`, `ViewToggle.tsx`) | Sıfır çalışma zamanı maliyeti, Vite'ta yerleşik. C2 token'ları doğrudan `tokens.css` olur; `[data-theme]` ve renk körü `[data-palette]` (K4) öznitelik seçicisiyle çalışır. | Risk: Token adlarının ekip içinde tutarsızlaşması. Geri dönüş: Ortak `tokens.css` sözlüğünü tek dosyada kilitlemek. |
-| Metinler | **Tek dosya `web/src/content/copy.ts` (`{ en, tr }` nesnesi)** | Dağınık sabit EN metinler | İki dil için i18n kütüphanesi gereksiz soyutlamadır. Tipli TypeScript nesnesi eksik çeviriyi derleme hatasına çevirir. | Risk: İleride 3. dil istenmesi. Geri dönüş: Aynı anahtar şemasını koruyarak JSON sözlük yükleyicisine taşımak. |
-| Yazı tipi | **Inter + tabular rakamlı mono (`@fontsource` yerel)** | `system-ui` | `tabular-nums` sayesinde sayaç `6.520` → `5.363` inerken rakamlar yatayda zıplamaz. Yerel paket çevrimdışı demoda da çalışır. | Risk: İlk yükleme font boyutu. Geri dönüş: Yalnızca `latin` + `latin-ext` (Türkçe karakterler) alt kümelerini ve 400/600 ağırlıklarını içe aktarmak. |
-| Backend | **Axum `CompressionLayer`; ham + harmonize + eşleme tek yanıtta** | Ayrı sayım alanları (`/api/harmonize`) | Düğmeye basıldığında ağ beklenmemesi (Doherty eşiği `< 100 ms`) için iki modun verisi baştan birlikte gelmelidir. | Risk: 10.000 noktada JSON yükünün büyümesi. Geri dönüş: `tower-http` gzip/brotli sıkıştırmasını açmak ve nokta alanlarını kısaltmak; gerekirse koordinatları 4 ondalığa yuvarlamak. |
-| Vitrin (opsiyonel) | **`pyrosync-core` → WASM derlemesi** | Tanımsız (`—`) | `pyrosync-core` saf hesaplama içerir (I/O yok). K2 ayar sürgüleri tarayıcıda anında yeniden hesaplanır. Karar Görkem'indir. | Risk: `wasm-pack` derleme karmaşıklığı ve süre kısıtı. Geri dönüş: Vitrin kapsamından çıkarıp sunucu taraflı ön tanımlı senaryo yanıtlarıyla devam etmek. |
+| **Harita** | **MapLibre GL JS + deck.gl** (`react-map-gl/maplibre`) | react-leaflet (R2) | İmza anı binlerce noktanın aynı anda konum ve renk değiştirmesidir. deck.gl bunu GPU'da `transitions` ile 60 fps yapar; Leaflet noktaları DOM/canvas üzerinde tek tek çizer. | En büyük paket artışı burada. Geri dönüş: harita bileşeni tek dosyada tutulur, Leaflet + statik geçişe dönüş bir günlük iş. |
+| **Uzak yakınlık** | deck.gl `H3HexagonLayer` | marker cluster | Backend zaten H3 ızgarası kullanacak (G2, `h3o`). Uzaklaşınca aynı altıgenleri göstermek pipeline'ın 4. aşamasını görünür kılar ve Y3 ısı haritasıyla ortak altyapı olur. | H3 çözünürlüğü seçimi görsel olarak yanlış olabilir. Geri dönüş: `ScatterplotLayer` tek başına yeterli; altıgen katmanı ayrı bir dosyada. |
+| **Altlık harita** | Koyu vektör altlık + çevrimdışı yedek olarak ülke sınırları GeoJSON | — | Docker ile on-premise hedefi ve K1 demo modu var. İnternet kesilirse harita boş kalmamalı. | Vektör stil dosyası büyür. Geri dönüş: yalnız GeoJSON arka plan + koyu zemin. |
+| **Grafik** | **Recharts** (aynen kalır) | Recharts | 27 yıl × 12 ay = 324 nokta; SVG çizgi dönüşümü için yeterli. Belirsizlik bandı `Area` ile yapılır. Yusuf'un işleri değişmez. | 2012 basamağının "akması" SVG'de sınırlı. Geri dönüş: geçiş sırasında `strokeDashoffset` ile tek çizgi animasyonu. |
+| **Takvim** | Elle yazılmış CSS Grid bileşeni + `d3-scale` | R3'te belirtilmemiş | Recharts'ta ısı haritası türü yok. 324 hücre için kütüphane gereksiz; renk geçişi CSS `transition` ile bedava gelir. | Erişilebilirlik (klavye, ekran okuyucu) elle yazılır. Geri dönüş: hücreler `<button>` + `aria-label`; kütüphane gerekmez. |
+| **Arayüz animasyonu** | **Motion** (`motion/react`) | — | Düğme yayı, sayaç, başlık geçişi ve pipeline sırası tek zaman çizelgesinden yönetilir. Basit hover'lar düz CSS kalır. | Paket boyutu ve "her şeyi animasyona çevirme" eğilimi. Geri dönüş: yalnız `animate`/`useAnimate` kullanılır; sayaç CSS ile de yazılabilir. |
+| **Durum** | **zustand** + URL eşitlemesi | Context veya zustand (R1) | Seçici ile abonelik: mod değişince yalnız ilgili bileşen çizilir, harita gereksiz yere yeniden kurulmaz. URL eşitlemesi paylaşılabilir linki (Hook "yatırım" adımı, K2 şartı) sağlar. | URL'i iki yönlü senkronlamak kolayca sonsuz döngüye girer. Geri dönüş: yazma tek yönlü (store → URL), okuma yalnız açılışta. |
+| **Sunucu verisi** | **TanStack Query** | `hooks/useApi.ts` | Önbellek, yeniden deneme ve demo verisine düşme (K1) hazır gelir. Bölge değişimi önbellekten anında açılır. | Küçük uygulama için fazla soyutlama sayılabilir. Geri dönüş: mevcut `useApi` sarmalayıcısı korunur, Query yalnız önbellek için kullanılır. |
+| **Stil** | **CSS custom properties + CSS Modules** | inline style | Sıfır çalışma zamanı maliyeti, Vite'ta yerleşik. C2'nin değişken adları doğrudan `tokens.css` olur. Tema `[data-theme]`, renk körü paleti `[data-palette]` ile değişir (K4). | CSS Modules sınıf adları üretir; testlerde seçici kırılabilir. Geri dönüş: testler `data-testid` ile yazılır. |
+| **Metinler** | Tek dosya `web/src/content/copy.ts`, `{ en, tr }` nesnesi | — | İki dil için i18n kütüphanesi gereksiz soyutlama olur. Tipli nesne, eksik çeviriyi derleme hatasına çevirir. | Metin dosyası büyür. Geri dönüş: bölüm bazlı alt nesnelere ayırma; API aynı kalır. |
+| **Yazı tipi** | Inter + tabular rakamlı mono, `@fontsource` ile yerel | system-ui | Sayaç inerken rakamlar zıplamaz. Yerel dosya, çevrimdışı demoda da çalışır. | İki aile indirme maliyeti. Geri dönüş: mono yalnız sayaçta `font-variant-numeric: tabular-nums` ile sistem yazı tipinden alınır. |
+| **Backend** | Axum'a `CompressionLayer`; ham + harmonize + eşleme tek yanıtta | ayrı sayım alanları | Düğmenin ağ beklememesi için iki modun verisi baştan gelmeli. | Yanıt büyür. Geri dönüş: `include=mapping` parametresi; eşleme istenmezse eski boyut. |
+| **Vitrin (opsiyonel)** | `pyrosync-core`'u **WASM**'a derlemek | — | Crate zaten saf hesaplama (I/O yok). K2 ayar sürgüleri tarayıcıda anında yeniden hesaplar; "uçtan uca Rust" hikâyesi jüri için ayırt edici olur. Karar Görkem'in. | Demo günü WASM derleme hatası riski. Geri dönüş: özellik bayrağı; kapalıyken sunucu hesabı kullanılır. |
+
+### 2.1 Öne çıkan riskler
+
+**deck.gl + MapLibre paket boyutu.** İki kütüphane birlikte, Leaflet'in birkaç katı
+JavaScript getirir. Önlem: harita ayrı bir `lazy()` parçasıdır ve ilk boyamaya girmez.
+İlk ekran başlık, sayaç ve grafikle açılır; harita bir sonraki karede yüklenir.
+Geri dönüş kapısı: `FireMap.tsx` tek giriş noktasıdır, içi Leaflet ile değiştirilebilir.
+
+**WebGL yoksa.** Kurumsal dizüstülerde ve bazı sanal makinelerde WebGL kapalı olabilir.
+Önlem: açılışta `canvas.getContext("webgl2")` denetimi; yoksa harita yerine statik
+önizleme ve "bu tarayıcıda hızlandırma kapalı" notu gösterilir. Sayılar ve grafik
+aynı kalır, yani demo düşmez.
+
+**React 19 peer aralığı.** deck.gl'nin React bağlayıcısı sürüm yükseltmelerinde
+peer aralığını geciktirebilir. Önlem: `npm ls react` ile kurulumda doğrulama;
+gerekirse `@deck.gl/react` yerine `DeckGL` örneği `useEffect` içinde elle kurulur
+(resmî desteklenen kullanım). Geri dönüş: React 19 ile uyumlu sürüm sabitlenir.
+
+**URL eşitlemesi.** İki yönlü senkron `popstate` ile birleşince döngü üretebilir.
+Önlem: tek yönlü yazma (store → `history.replaceState`), okuma yalnız ilk açılışta
+ve `popstate` olayında. Test: bölge değiştir, geri tuşuna bas, mod korunuyor mu.
 
 ---
 
-## 3. Neden `react-leaflet` Yerine MapLibre + deck.gl?
+## 3. Neden react-leaflet yerine MapLibre + deck.gl
 
-### Performans ve Mimari Gerekçe
+Tek cümlelik gerekçe: **geçişin kendisi üründür.** 6.520 noktanın 5.363'e inmesi,
+1.157 çiftin eşine doğru kayıp sönmesi ve grafiğin aynı anda düzleşmesi, jürinin
+"aynı yangın tek sayıldı" sonucuna vardığı an. Bu an 60 fps akmazsa ürün fikri değil,
+bir yükleme ekranı görürler.
 
-Ürünün imza anı, kullanıcı **Raw ↔ Harmonized** düğmesine bastığında (veya `H` tuşuna dokunduğunda) yaşanan **1,4 saniyelik geçiş koreografisidir**:
+### 3.1 İki motorun maliyeti
 
-1. **Tek karede binlerce nokta dönüşümü:** Ham moddaki tüm tespitlerin aynı anda `rawPos` konumundan eşleştiği `targetPos` konumuna kayması, çift sayılan noktaların yarıçap ve opaklığının sönümlenmesi, ham modda şekil ve nötr gri tonlarıyla (MODIS = içi boş daire, VIIRS = dolu küçük kare) ayrılan işaretçilerin tek bir ardışık FRP renk skalasına akması gerekir.
-2. **CPU vs. GPU darboğazı:** `react-leaflet` her noktayı DOM öğesi veya CPU tabanlı 2D Canvas çizimi olarak yönetir. 3.000–10.000 nokta arasında her animasyon karesinde tüm noktaların ara koordinatlarını JavaScript ile hesaplayıp yeniden boyamak ana iş parçacığını tıkar; kare hızı 60 fps'in altına düşer ve Doherty eşiği (`< 100 ms` ilk kare tepkisi) aşılır.
-3. **deck.gl `ScatterplotLayer` farkı:** Ham ve harmonize veriler başlangıçta tek bir GPU tamponuna yüklenir. Mod değiştiğinde veri dizisi yeniden oluşturulmaz; yalnızca `getPosition` ve `getFillColor` erişimci fonksiyonları `mode` değerine göre farklı alanları okur. `transitions` özelliği ara değer enterpolasyonunu doğrudan WebGL2 vertex/fragment shader'larında GPU üzerinde çalıştırır.
-4. **Pipeline ile görsel bütünlük:** Uzak zoom seviyelerinde `deck.gl` `H3HexagonLayer` kullanmak, backend'in 4. aşamada (`h3o`) ürettiği altıgen ızgarayı haritada doğrudan görünür kılar.
+| Ölçüt | Leaflet (DOM/canvas 2D) | deck.gl (WebGL) |
+|---|---|---|
+| Nokta başına çizim | Her nokta bir DOM düğümü ya da canvas üzerinde ayrı çizim çağrısı | Tek çizim çağrısı, konumlar GPU tamponunda |
+| Mod değişimi | React 6.520 öğeyi yeniden uzlaştırır; canvas'ta tümü yeniden çizilir | Veri aynı kalır, yalnız erişimci fonksiyonlar değişir |
+| Animasyon | `requestAnimationFrame` içinde 6.520 konumu elle hesaplamak gerekir | `transitions` shader'da interpolasyon yapar |
+| Kare bütçesi (16,6 ms) | Birkaç bin noktada ana iş parçacığı dolar | Kare başına iş yükü nokta sayısıyla neredeyse sabit |
+| 1.157 çiftin kayması | Her karede 1.157 çift için konum güncellemesi + tam yeniden çizim | Aynı tampon, yeni hedef konum; geçiş ücretsiz |
 
-### `ScatterplotLayer` Geçiş İskeleti (TSX)
+Kritik nokta şu: deck.gl'de mod değişimi **veri değişimi değildir**. Ham nokta dizisi
+`rawPos`, `targetPos` ve `survives` alanlarını taşır. Düğmeye basıldığında dizi
+yeniden istenmez; yalnız `getPosition` ve `getFillColor` başka alanları okumaya başlar.
+Nesne sürekliliği (Heer ve Robertson) tam olarak bunu gerektirir: göz, aynı nesnenin
+yeni yerine gittiğini görür.
+
+Leaflet ile aynı etkiyi kurmak mümkündür ama iki ek iş çıkar: nokta başına konum
+enterpolasyonu ve her karede tam yeniden çizim. 6.520 noktada bu, 60 fps yerine
+20–30 fps aralığına düşer; 1,4 saniyelik koreografi takılmaya başlar. Üstelik bu
+kodu biz yazmak zorunda kalırız; deck.gl'de aynı iş bir prop.
+
+### 3.2 Kısa TSX taslağı
 
 ```tsx
-import { ScatterplotLayer } from "@deck.gl/layers";
-import type { ComparePoint, ViewMode } from "../types";
+type Mode = "raw" | "harmonized";
+interface RawPoint {
+  id: string;
+  pos: [number, number];              // [lon, lat]
+  targetPos: [number, number] | null; // eşleştiği harmonize nokta
+  survives: boolean;
+  sensor: "MODIS" | "VIIRS";
+}
+const MODIS = [56, 132, 255, 230] as const;
+const VIIRS = [255, 138, 76, 230] as const;
+const MERGED = [235, 235, 235, 230] as const;
+const FADED = [235, 235, 235, 0] as const;
 
-export function createFireLayer(points: ComparePoint[], mode: ViewMode, ms: number) {
-  return new ScatterplotLayer<ComparePoint>({
-    id: "pyrosync-fires",
-    data: points,
-    pickable: true,
-    getPosition: (d) => (mode === "raw" ? d.rawPos : d.targetPos),
-    getFillColor: (d) =>
-      mode === "raw"
-        ? d.rawColor
-        : d.survives
-          ? d.frpColor
-          : [d.frpColor[0], d.frpColor[1], d.frpColor[2], 0],
-    getRadius: (d) => (mode === "raw" || d.survives ? d.radius : 0),
-    updateTriggers: {
-      getPosition: [mode],
-      getFillColor: [mode],
-      getRadius: [mode],
-    },
-    transitions: {
-      getPosition: { duration: ms },
-      getFillColor: { duration: ms },
-      getRadius: { duration: ms },
-    },
-  });
+export function FireLayer({ points, mode }: { points: RawPoint[]; mode: Mode }) {
+  const merged = mode === "harmonized";
+  return (
+    <ScatterplotLayer<RawPoint>
+      id="fires"
+      data={points}
+      pickable
+      getPosition={(d) => (merged && d.targetPos ? d.targetPos : d.pos)}
+      getRadius={merged ? 900 : 600}
+      getFillColor={(d) =>
+        merged ? (d.survives ? MERGED : FADED) : d.sensor === "MODIS" ? MODIS : VIIRS
+      }
+      transitions={{ getPosition: 600, getFillColor: 400, getRadius: 400 }}
+      updateTriggers={{ getPosition: mode, getFillColor: mode, getRadius: mode }}
+    />
+  );
 }
 ```
+
+`transitions` süreleri koreografiyle hizalıdır: birleşme 400–1000 ms arasında
+olduğu için konum geçişi 600 ms. `updateTriggers` olmadan deck.gl erişimcinin
+değiştiğini anlamaz ve noktalar yerinde kalır; bu, kurulumda en sık yapılan hata.
+
+### 3.3 Ne kaybediyoruz
+
+Leaflet daha küçük, daha tanıdık ve ekibin bildiği bir araç. MapLibre + deck.gl
+öğrenme eğrisi ve paket boyutu getiriyor. Karşılığında ürünün tek ayırt edici anı
+garanti altına alınıyor. Bu takas bilinçli: C1'in bütün değeri o 1,4 saniyede.
 
 ---
 
 ## 4. Mimari
 
-### Veri Akışı Şeması
+### 4.1 Veri akışı
 
 ```mermaid
 flowchart LR
-    API["Axum /api/compare"] --> TQ["TanStack Query (önbellek + demo düşüşü)"]
-    TQ --> ZS["zustand { region, month, mode, phase, lang }"]
-    ZS --> GL["deck.gl ScatterplotLayer (GPU transitions)"]
-    ZS --> RC["Recharts Uçurum Grafiği (SVG morph)"]
-    ZS --> CAL["Yanma Takvimi Grid (CSS transition)"]
-    ZS --> HUD["Sayaç ve Soru/Cevap Başlığı (Motion)"]
-    ZS --> PIPE["7 Aşamalı Pipeline Şeridi (Motion stagger)"]
+    API["Axum /api/compare<br/>G4 sözleşmesi"] --> Q["TanStack Query<br/>önbellek · retry · hata"]
+    DEMO["sample-data.ts<br/>demo yedeği (K1)"] -.-> Q
+    Q --> S["zustand store<br/>region · month · mode · lang"]
+    T["useHarmonizeTransition<br/>phase"] --> S
+    S <--> URL["URL query<br/>?region=&month=&mode="]
+    S --> MAP["deck.gl ScatterplotLayer<br/>GPU transitions"]
+    S --> CH["Recharts uçurum grafiği<br/>SVG morph"]
+    S --> CAL["Takvim ızgarası<br/>CSS transition"]
+    S --> CNT["Sayaç ve başlık<br/>Motion"]
+    S --> PIPE["Pipeline şeridi<br/>Motion stagger"]
 ```
 
-### `zustand` Store Arayüzü
+Beş görsel bileşen aynı `phase` alanına bağlanır. Bu yüzden harita, grafik, takvim,
+sayaç ve pipeline ayrı ayrı zamanlayıcı kurmaz; tek bir saatten beslenir. Ayrı
+zamanlayıcılar kurulduğunda 100 ms'lik kaymalar geçişi "bozuk" gösteriyor.
 
-Tek bir `zustand` deposu hem URL parametreleriyle (`region`, `month`, `mode`, `lang`) eşitlenir hem de beş görsel bileşeni aynı `phase` saatine bağlar:
+### 4.2 Store şekli
 
 ```ts
-export type RegionId = "turkiye-med" | "california" | "amazon" | "australia";
-export type ViewMode = "raw" | "harmonized";
-export type TransitionPhase = "idle" | "detect" | "merge" | "settle";
+export type Region = "turkiye-akdeniz" | "california" | "amazon" | "australia";
+export type Mode = "raw" | "harmonized";
+export type Phase = "idle" | "detect" | "merge" | "settle";
 export type Lang = "en" | "tr";
 
-export interface PyroSyncStore {
-  region: RegionId;
-  month: string | null; // Örn. "2020-08", seçili değilse null
-  mode: ViewMode; // Varsayılan: "raw"
-  phase: TransitionPhase;
-  lang: Lang; // Varsayılan: "en"
-  hasPlayedFullIntro: boolean;
-  setRegion: (region: RegionId) => void;
-  setMonth: (month: string | null) => void;
-  toggleMode: () => void;
-  setPhase: (phase: TransitionPhase) => void;
-  setLang: (lang: Lang) => void;
+export interface AppState {
+  region: Region;
+  month: string | null; // "2020-08"; null = tüm yıl
+  mode: Mode;
+  phase: Phase;
+  lang: Lang;
+
+  setRegion(region: Region): void;
+  setMonth(month: string | null): void;
+  setMode(mode: Mode): void;
+  setPhase(phase: Phase): void;
+  setLang(lang: Lang): void;
 }
 ```
 
-### `useHarmonizeTransition` Faz Makinesi
+`phase` store'da tutulur çünkü beş bileşen onu seçiciyle okur. Hook onu yazar,
+bileşenler yalnız okur; hiçbir bileşen `setPhase` çağırmaz. `month` tek bir ayı
+filtreler, `null` ise 27 yıllık tam seriyi gösterir.
 
-İlk geçiş tam koreografiyle `1400 ms` sürer (`detect` 0–400 ms, `merge` 400–1000 ms, `settle` 1000–1400 ms). Aynı oturumdaki sonraki geçişler yormamak için `500 ms` kısa sürümü kullanır; `prefers-reduced-motion: reduce` etkinse `150 ms` düz geçiş uygulanır.
+### 4.3 `useHarmonizeTransition` faz makinesi
 
 ```mermaid
 stateDiagram-v2
     [*] --> idle
-    idle --> detect: "toggleMode (H veya düğme)"
-    detect --> merge: "400 ms: çift sayılan noktada halka + pipeline 1-2"
-    merge --> settle: "1000 ms: noktalar kayar, 2012 basamağı düzleşir, pipeline 3-6"
-    settle --> idle: "1400 ms: sayaç 6.520 -> 5.363, düğüm 7, başlık cevaba döner"
+    idle --> detect: mode = harmonized
+    detect --> merge: 400 ms
+    merge --> settle: 600 ms
+    settle --> idle: 400 ms
+    detect --> settle: prefers-reduced-motion / 150 ms
+    merge --> idle: mode = raw (iptal)
+    settle --> idle: mode = raw (iptal)
+
+    note right of detect
+        Çiftlerin çevresinde halka belirir;
+        pipeline 1. ve 2. düğüm yanar
+    end note
+    note right of merge
+        Çiftler eşine kayar ve söner;
+        grafikte 2012 basamağı düzleşir
+    end note
+    note right of settle
+        Sayaç 6.520'den 5.363'e iner;
+        soru başlığı cevap başlığına döner
+    end note
 ```
+
+Kurallar:
+
+- İlk geçiş tam koreografiyle oynar (toplam 1.400 ms). Sonraki geçişler aynı makineyi
+  kullanır ama süreler oransal olarak kısalır (toplam 500 ms); aynı töreni tekrar
+  izletmek yorar.
+- `prefers-reduced-motion` açıksa `detect` doğrudan `settle`'a geçer; süre 150 ms,
+  yalnız sayaç ve başlık değişir, noktalar yer değiştirmez.
+- Geçiş sırasında düğmeye tekrar basılırsa makine `idle`'a döner; yarım kalmış
+  animasyonu sürdürmek sayaç ile haritanın uyumsuz kalmasına yol açar.
+- Süreler `transitionend` yerine zamanlayıcıyla yönetilir; deck.gl geçişi DOM olayı
+  üretmez, tek kaynak zamanlayıcı olmalı.
 
 ---
 
-## 5. `/api/compare` API Sözleşme Önerisi (Görkem / G4 için PROPOSAL)
+## 5. API sözleşme önerisi: `/api/compare`
 
-### Mevcut Durum ve Boşluk
+**ÖNERİ — Görkem (G4) için.** Bu bir istek listesidir, mevcut davranışın tarifi değil.
 
-`crates/server/src/main.rs` (satır 228–240) içindeki mevcut `GET /api/harmonize` uç noktası ile `web/src/types/index.ts` (satır 55–66) içindeki `HarmonizeResponse` TypeScript tipi yalnızca şu alanları paylaşmaktadır:
-
-- `raw`: `{ modis_count, viirs_count, total_raw }` (nokta koordinatları yok, yalnızca 3 sayı)
-- `harmonized`: `{ count, hotspots }` (`id` alanı yok)
-- `calendar`: `CalendarCell[]`
-
-Sunucu (`crates/server/src/main.rs`) bunlara ek olarak FIRMS kaynak raporunu içeren `report` nesnesini de döndürür; ancak `report` alanı `web/src/types/index.ts` içindeki `HarmonizeResponse` tipinde tanımlı değildir.
-
-Bu yapıyla haritada hangi ham noktanın hangi harmonize noktaya kaydığını veya hangi aşamada kaç tespitin ayıklandığını göstermek mümkün değildir.
-
-### Önerilen `GET /api/compare` Yanıt Şeması (PROPOSAL)
-
-Aşağıdaki örnekte sayısal toplamlar `web/src/mocks/sample-data.ts` ile birebir uyumludur (`6.520` ham = MODIS `2.340` + VIIRS `4.180`, `5.363` harmonize, `1.157` çift sayım = `%17,7`). `stages` içindeki aşama bölünmesi (`dedup: 400` + `match: 757` = `1.157`) yalnızca örnek amaçlıdır; gerçek dağılım `pyrosync-core` çıktısından gelir (G4, Görkem).
+Bugünkü sözleşme (özet):
 
 ```json
 {
+  "raw": { "modis_count": 2340, "viirs_count": 4180, "total_raw": 6520 },
+  "harmonized": { "count": 5363, "hotspots": [] },
+  "calendar": []
+}
+```
+
+Bu yanıt üç sayı ve harmonize noktaları veriyor; ham noktalar ve hangi ham noktanın
+hangi harmonize noktaya gittiği yok. Animasyonun ihtiyacı tam olarak o eşleme.
+(Yanıtta ayrıca FIRMS kaynak raporu alanı var; nokta düzeyinde bilgi taşımıyor.)
+
+Öneri: `/api/harmonize` olduğu gibi kalır, yeni bir `/api/compare` eklenir. Eski
+sözleşme bozulmaz, frontend iki uçtan birini seçebilir.
+
+```json
+{
+  "meta": {
+    "region": "turkiye-akdeniz",
+    "bbox": [25.6, 35.8, 44.8, 42.1],
+    "days": 365,
+    "generated_at": "2026-11-15T09:12:00Z",
+    "demo": false
+  },
   "raw": {
     "modis_count": 2340,
     "viirs_count": 4180,
     "total_raw": 6520,
     "points": [
       {
-        "id": "raw_m_0001",
-        "lat": 39.9214,
-        "lon": 32.8511,
+        "id": "m-0001",
+        "sensor": "MODIS",
+        "lat": 39.92,
+        "lon": 32.85,
         "frp": 45.2,
-        "confidence": "High",
-        "sensor": "ModisTerra",
         "acquired": "2020-07-15T12:30:00Z",
-        "daynight": "Day"
-      },
-      {
-        "id": "raw_v_0002",
-        "lat": 39.9198,
-        "lon": 32.8495,
-        "frp": 41.0,
         "confidence": "High",
-        "sensor": "ViirsSNPP",
-        "acquired": "2020-07-15T12:31:00Z",
         "daynight": "Day"
       },
       {
-        "id": "raw_v_0003",
-        "lat": 37.0110,
-        "lon": 35.3204,
-        "frp": 28.1,
+        "id": "v-0042",
+        "sensor": "VIIRS",
+        "lat": 39.93,
+        "lon": 32.87,
+        "frp": 41.0,
+        "acquired": "2020-07-15T12:33:00Z",
         "confidence": "Nominal",
-        "sensor": "ViirsNOAA20",
-        "acquired": "2020-07-15T13:15:00Z",
         "daynight": "Day"
       }
     ]
   },
   "harmonized": {
     "count": 5363,
-    "hotspots": [
+    "points": [
       {
-        "id": "harm_0001",
-        "lat": 39.9200,
-        "lon": 32.8500,
+        "id": "h-0001",
+        "lat": 39.925,
+        "lon": 32.86,
         "frp": 45.2,
         "frp_corrected": 38.7,
-        "confidence": "High",
         "source": "Matched",
         "acquired": "2020-07-15T12:30:00Z",
-        "daynight": "Day"
-      },
-      {
-        "id": "harm_0002",
-        "lat": 37.0100,
-        "lon": 35.3200,
-        "frp": 28.1,
-        "frp_corrected": 24.3,
-        "confidence": "Nominal",
-        "source": "ViirsOnly",
-        "acquired": "2020-07-15T13:15:00Z",
+        "confidence": "High",
         "daynight": "Day"
       }
     ]
   },
-  "mapping": {
-    "raw_m_0001": "harm_0001",
-    "raw_v_0002": "harm_0001",
-    "raw_v_0003": "harm_0002"
-  },
-  "stages": {
-    "collect": { "in_count": 6520, "out_count": 6520, "removed": 0 },
-    "dedup": { "in_count": 6520, "out_count": 6120, "removed": 400 },
-    "angle": { "in_count": 6120, "out_count": 6120, "frp_delta_pct": -14.4 },
-    "grid": { "in_count": 6120, "out_count": 6120, "h3_resolution": 7 },
-    "match": { "in_count": 6120, "out_count": 5363, "removed": 757 },
-    "fuse": { "in_count": 5363, "out_count": 5363, "removed": 0 },
-    "calendar": { "months": 12, "unique_fires": 5363 }
-  },
-  "calendar": [
-    { "year": 2020, "month": 7, "count": 890, "mean_frp": 88.1, "anomaly": 1.82 },
-    { "year": 2020, "month": 8, "count": 1120, "mean_frp": 102.6, "anomaly": 2.31 }
+  "mapping": [
+    { "raw_id": "m-0001", "harmonized_id": "h-0001" },
+    { "raw_id": "v-0042", "harmonized_id": "h-0001" },
+    { "raw_id": "v-0043", "harmonized_id": null }
+  ],
+  "stages": [
+    { "id": "ingest",   "label": "Collect",               "count_in": 6520, "count_out": 6520, "removed": 0,    "note": "MODIS 2.340 + VIIRS 4.180" },
+    { "id": "dedup",    "label": "Remove double-counts",  "count_in": 6520, "count_out": null, "removed": null, "note": "interscan |dt| < 8 s" },
+    { "id": "vza",      "label": "Correct viewing angle", "count_in": null, "count_out": null, "removed": 0,    "note": "sayı değişmez, FRP düzelir" },
+    { "id": "grid",     "label": "Align to one grid",     "count_in": null, "count_out": null, "removed": 0,    "note": "H3 hücresine oturtma" },
+    { "id": "match",    "label": "Match across sensors",  "count_in": null, "count_out": 5363, "removed": null, "note": "2 km / 5 dk eşleşme" },
+    { "id": "fuse",     "label": "Keep the best view",    "count_in": 5363, "count_out": 5363, "removed": 0,    "note": "VIIRS tercihli" },
+    { "id": "calendar", "label": "Build the calendar",    "count_in": 5363, "count_out": null, "removed": 0,    "note": "çıktı 27 x 12 hücre" }
   ]
 }
 ```
 
-**Sözleşme notları:**
-- `mapping` nesnesi her `raw_id` değerini hedef `harmonized_id` değerine bağlar. Ön filtreleme veya kenar durumu nedeniyle hiçbir harmonize noktaya bağlanamayan ham tespitler için değer `null` döner; istemci bu noktaları `survives = false` kabul edip yerinde söndürür.
-- `crates/server/Cargo.toml` içinde `tower-http` şu an yalnızca `["cors", "fs"]` özellikleriyle etkindir; `/api/compare` yanıtı birkaç bin nokta içerdiğinde aktarım boyutunu düşürmek için `"compression-gzip"` (veya `"compression-br"`) eklenip `CompressionLayer` bağlanmalıdır.
+Alanların anlamı:
+
+- **`raw.points`** — ham tespitler. `id` ön ekleri kaynağı söyler (`m-` MODIS,
+  `v-` VIIRS, `h-` harmonize). `sensor` alanı ham modda renk seçimini belirler.
+- **`harmonized.points`** — bugünkü `hotspots` dizisinin aynısı, artık `id` ile.
+  `source` alanı `Matched`, `ModisOnly`, `ViirsOnly` değerlerini korur.
+- **`mapping`** — 6.520 girdi. Çift sayılan 1.157 nokta **aynı** `harmonized_id`
+  değerini taşır; harita animasyonu bu iki satırı okuyup noktaları birbirine kaydırır.
+  `harmonized_id: null` ise ham nokta çıktıya girmedi demektir (filtre, düşük güven,
+  ızgara dışı). Frontend bu noktayı söndürür.
+- **`stages`** — düzeltme fişinin satırları. `count_in` / `count_out` `null` ise o
+  aşamada sayı ölçülmedi; arayüz rozet yerine "—" gösterir. Yalnız iki değer bugün
+  doğrulanmış: toplam 6.520 ve sonuç 5.363. Kalan satırlar G4 doldurana kadar boş kalır.
+- **`calendar`** — değişmiyor; bugünkü `CalendarCell[]` şeması aynen kullanılır.
+
+Boyut notu: 6.520 nokta + 6.520 eşleme satırı sıkıştırılmamış haliyle birkaç yüz
+kilobayt. `CompressionLayer` ile bu, demo için sorun değil. Yine de `include=mapping`
+parametresi önerilir: eşleme istenmezse yanıt küçülür, eski istemciler etkilenmez.
+Eşleme yoksa frontend geçişi "ani renk değişimi" olarak oynatır; ürün çalışır, yalnız
+imza anı zayıflar. Bu yüzden eşleme **opsiyonel ama öncelikli**.
 
 ---
 
-## 6. Performans Bütçesi ve Ekipten İstenecekler
+## 6. Performans bütçesi ve ekipten istenecekler
 
-### Performans Bütçesi
+### 6.1 Bütçe
 
-| Ölçüt | Hedef | Nasıl Sağlanır |
+| Ölçüt | Bütçe | Nerede ölçülür |
 |---|---|---|
-| Düğme ilk kare tepkisi | **< 100 ms** (Doherty eşiği) | Ham ve harmonize veri baştan birlikte yüklenir; düğme ağ isteği beklemez. |
-| Harita geçiş kare hızı | **10.000 noktada 60 fps** | `deck.gl` `ScatterplotLayer` GPU `transitions`; mod değişince yalnızca erişimciler değişir. |
-| Geçiş süresi kademeleri | İlk geçiş **1.400 ms**, sonraki **500 ms**, `prefers-reduced-motion` **150 ms** | `useHarmonizeTransition` + `hasPlayedFullIntro` bayrağı. |
-| İlk boyama ve tembel yükleme | Orta seviye telefonda **LCP < 2,5 sn** | Harita paketi (`maplibre-gl` + `deck.gl`) ayrı chunk olarak tembel yüklenir; ilk boyama başlık ve uçurum grafiğiyle gelir. |
+| Düğme tepkisi (ilk kare) | < 100 ms | Tıklama → ilk boyanmış kare; veri önceden yüklü olduğu için ağ beklemesi yok |
+| Geçiş kare süresi | ≤ 16,6 ms (60 fps), 10.000 nokta | DevTools Performance, geçiş kaydı |
+| Ana iş parçacığı uzun görevi | < 50 ms | Geçiş sırasında tek bir uzun görev bile takılma olarak görünür |
+| İlk boyama | Başlık, sayaç ve grafik haritasız görünür | Harita `lazy()` ile ayrı parça |
+| LCP (orta seviye telefon) | < 2,5 sn | Lighthouse mobil, 4G kısıtlama |
+| Harita etkileşimi | Kaydırma/yakınlaştırma 60 fps | 6.520 nokta yüklüyken |
+| Demo moduna düşme | Ağ hatasında < 300 ms | TanStack Query `retry: 1`, sonra yerel veri |
+| Azaltılmış hareket | Geçiş 150 ms, konum animasyonu yok | `prefers-reduced-motion: reduce` |
 
-### Ekipten İstenecekler
+Bütçenin tamamı tek bir ilkeye hizmet eder: **düğme hiçbir zaman ağ beklemez.**
+İki modun verisi açılışta birlikte gelir; düğme yalnız görünümü değiştirir. 100 ms'yi
+aşan her gecikme, nedensellik bağını koparır ve "sihir" etkisi kaybolur.
 
-- **Görkem (G4):**
-  - `GET /api/compare` uç noktasını (veya geriye dönük uyumlu sürümünü) ham noktalar (`id`), harmonize noktalar (`id`), `mapping` (`raw_id -> harmonized_id | null`) ve 7 aşamalı `stages` sayılarıyla eklemek.
-  - `crates/server/Cargo.toml` içinde `tower-http` sıkıştırma özelliğini açıp Axum yönlendiricisine `CompressionLayer` eklemek.
-  - Opsiyonel: `pyrosync-core` crate'inin WASM'a derlenip derlenmeyeceğine karar vermek.
-- **Serhat (R1, R2):**
-  - Haritada `react-leaflet` yerine `MapLibre GL JS + deck.gl` (`react-map-gl/maplibre`) + `H3HexagonLayer` kurulumunu ve tembel yükleme sınırını kurmak.
-  - `zustand` + URL eşitlemesi, TanStack Query, CSS Modules (`tokens.css`) ve `web/src/content/copy.ts` (`{ en, tr }`) yapısını kurmak.
-  - `web/src/App.tsx` açılış modunu `"raw"` yapmak; `ViewToggle.tsx` içindeki `#ef4444` / `#22c55e` renklerini token'lara taşımak.
-- **Yusuf (Y5):**
-  - `web/src/mocks/sample-data.ts` dosyasını ham noktalar, `raw_id -> harmonized_id | null` eşleme alanı, `stages` dökümü ve 2012 sensör basamağını gösterecek çok yıllı takvim/seri verisiyle genişletmek (planlanan Recharts grafiği yapısıyla uyumlu şekilde).
-- **Sadık (K1, K4):**
-  - K1 canlı/demo modu rozet metinlerini (`Live · NASA FIRMS` / `Demo data` ve TR karşılıkları) ve demo düşüşü davranışını bağlamak.
-  - K4 renk körü dostu paletleri `[data-palette]` ve tema değişkenlerini `[data-theme]` öznitelikleri üzerinden `tokens.css` ile eşleştirmek.
-- **Samet (S8):**
-  - Methods çekmecesi metinlerini "sakin bilim insanı" ses kurallarına göre yazmak; teknik terimleri ikinci satıra alıp "Harmonize değerler model tahminidir, yer gerçeği değildir" uyarısını tek ve net biçimde sunmak.
+### 6.2 Ekipten istenecekler
+
+| Kişi | İstenen | Neden / bağımlılık |
+|---|---|---|
+| **Görkem** (G4) | `/api/compare`: ham noktalar, `mapping` (raw_id → harmonized_id veya null), aşama sayıları, `CompressionLayer`. `/api/harmonize` olduğu gibi kalır. | Harita geçişi ve düzeltme fişi buna bağlı. Eşleme olmadan 1.157 çiftin kayması çizilemez. |
+| **Serhat** (R1, R2) | react-leaflet yerine MapLibre + deck.gl; zustand; CSS Modules; `copy.ts`; açılış modunun `raw` olması. | C1'in ana fikri ham açılışa dayanıyor; bugün `App.tsx` harmonize açıyor ve merak boşluğunu baştan kapatıyor. |
+| **Yusuf** (Y5) | Mock veride ham noktalar, `mapping` alanı ve 2012 basamağı. | Frontend, G4 hazır olmadan da geçişi geliştirebilmeli. Mock şeması `/api/compare` ile birebir olmalı. |
+| **Sadık** (K1, K4) | Rozet metinleri; paletlerin `data-palette` ile değişmesi. | Renk körü paleti ve demo/canlı ayrımı renk tek başına anlam taşımadan çalışmalı. |
+| **Samet** (S8) | Methods metinlerinin `docs/UX_YAZIM.md` ses kurallarına uyması. | Uyarı ve yöntem metinleri arayüzde aynı sesle konuşmalı. |
+| **Can** (C1, C2) | `tokens.css` değişken adları, geçiş karelerinin wireframe karşılıkları, koreografi süreleri. | Serhat'ın bileşenleri isimlendirilmiş token bekliyor; süreler tek yerde tanımlanmalı. |
+
+### 6.3 Karar özeti
+
+Onay bekleyen üç şey var:
+
+1. Harita motorunun MapLibre + deck.gl olması (tek kritik değişiklik).
+2. `/api/compare` sözleşmesinin G4 kapsamına alınması.
+3. Açılış modunun `raw` olması ve geçişin tek bir `phase` alanından sürülmesi.
+
+Geri kalan öneriler (zustand, TanStack Query, CSS Modules, `copy.ts`) bu üç kararın
+doğal sonucu; tek tek onay gerektirmiyor.
