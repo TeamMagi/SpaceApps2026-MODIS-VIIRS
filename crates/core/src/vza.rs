@@ -157,7 +157,11 @@ pub struct DetectionLimitCoefficients {
     pub c0: f64,
 }
 
-// Analytic detection-limit table from Sofiev & Kouznetsov (2026), Eq. 1-6 & Tables 1-2.
+// Coefficients are Tables 1-2 of Sofiev & Kouznetsov (2026), GMD 19, 10123. With Eq. 5
+// (D_p = lambda * A_p + mu) D_p is the 50 % detection mid-point of the sigmoid, not a hard cutoff.
+// The "typical" 5.7/3.7 MW (MODIS) and 3.7/0.7 MW (VIIRS) values in the paper's Conclusions are a
+// different, empirically fitted statistic and are not reproduced by Eq. 5 with these tables,
+// so the code uses the equation and the tables only.
 const MODIS_DAY_LIMIT_COEFFS: DetectionLimitCoefficients = DetectionLimitCoefficients {
     lambda: 4.44,
     mu: 0.52,
@@ -472,25 +476,56 @@ mod tests {
         );
 
         let nadir = detection_limit_mw(&coeffs, 1.0).expect("valid nadir area");
-        // Sofiev & Kouznetsov (2026) quote ~5.7 MW as a typical MODIS day nadir value;
-        // the linear table fit gives 4.96 MW at 1.0 km^2.
+        // Eq. 5 with Table 1 gives 4.96 MW at 1.0 km^2; the paper's Conclusions quote ~5.7 MW
+        // as a typical value, which is a different statistic (not an Eq. 5 output).
         assert!((nadir - 4.96).abs() < 1e-9, "expected 4.96 MW, got {nadir}");
 
         let edge = detection_limit_mw(&coeffs, 9.66).expect("valid edge area");
-        assert!(
-            (40.0..=43.5).contains(&edge),
-            "expected MODIS day edge limit in 40.0..=43.5 MW, got {edge}"
-        );
+        assert!((edge - 43.41).abs() < 0.005, "expected 43.41 MW, got {edge}");
     }
 
     #[test]
     fn modis_night_detection_limit_edge() {
         let coeffs = detection_limit_coefficients(Sensor::ModisAqua, DayNight::Night);
         let edge = detection_limit_mw(&coeffs, 9.66).expect("valid edge area");
-        assert!(
-            (38.0..=44.5).contains(&edge),
-            "expected MODIS night edge limit in 38.0..=44.5 MW, got {edge}"
-        );
+        assert!((edge - 43.80).abs() < 0.005, "expected 43.80 MW, got {edge}");
+    }
+
+    #[test]
+    fn coefficients_match_published_tables_1_and_2() {
+        let modis_day = [4.44, 0.52, 0.07, 1.26, 0.045];
+        let modis_night = [4.43, 1.01, 0.11, 1.06, 0.045];
+        let viirs_day = [6.17, 1.44, 0.61, 0.21, 0.05];
+        let viirs_night = [1.38, 0.35, 2.12, 1.02, 0.05];
+        let table = [
+            (Sensor::ModisTerra, DayNight::Day, modis_day),
+            (Sensor::ModisAqua, DayNight::Day, modis_day),
+            (Sensor::ModisTerra, DayNight::Night, modis_night),
+            (Sensor::ModisAqua, DayNight::Night, modis_night),
+            (Sensor::ViirsSNPP, DayNight::Day, viirs_day),
+            (Sensor::ViirsNOAA20, DayNight::Day, viirs_day),
+            (Sensor::ViirsNOAA21, DayNight::Day, viirs_day),
+            (Sensor::ViirsSNPP, DayNight::Night, viirs_night),
+            (Sensor::ViirsNOAA20, DayNight::Night, viirs_night),
+            (Sensor::ViirsNOAA21, DayNight::Night, viirs_night),
+        ];
+        for (sensor, daynight, [lambda, mu, r0, r1, c0]) in table {
+            let c = detection_limit_coefficients(sensor, daynight);
+            assert_eq!(
+                (c.lambda, c.mu, c.r0, c.r1, c.c0),
+                (lambda, mu, r0, r1, c0),
+                "{sensor:?} {daynight:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn reproduces_paper_section_5_3_nine_km2_example() {
+        // Sofiev & Kouznetsov (2026) Sect. 5.3: 9 km^2 corresponds to 40.5-40.9 MW (day-night).
+        let day = detection_limit_coefficients(Sensor::ModisAqua, DayNight::Day);
+        let night = detection_limit_coefficients(Sensor::ModisAqua, DayNight::Night);
+        assert!((detection_limit_mw(&day, 9.0).unwrap() - 40.48).abs() < 1e-9);
+        assert!((detection_limit_mw(&night, 9.0).unwrap() - 40.88).abs() < 1e-9);
     }
 
     #[test]

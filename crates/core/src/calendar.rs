@@ -1,7 +1,8 @@
 use crate::calibration::calibration_for;
+use crate::conformal::{ConformalEra, ConformalTable, conformal_interval};
 use crate::config::CalibrationConfig;
 use crate::effort::{
-    SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
+    FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
     swath_gap_compensation,
 };
 use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
@@ -117,6 +118,18 @@ pub fn build_calendar_with(
     uncertainty: &UncertaintyParams,
     calibration: &CalibrationConfig,
 ) -> Vec<CalendarCell> {
+    build_calendar_with_conformal(hotspots, uncertainty, calibration, None)
+}
+
+/// Same as [`build_calendar_with`], additionally attaching `conformal` bands when a table is
+/// given. Era: a cell with VIIRS is `Viirs`, a VIIRS-less cell is `PreViirs`, and Terra-only
+/// months (before 2002-07) get no band.
+pub fn build_calendar_with_conformal(
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+    calibration: &CalibrationConfig,
+    conformal: Option<&ConformalTable>,
+) -> Vec<CalendarCell> {
     let omegas = monthly_omegas(hotspots);
     let mut buckets: HashMap<(i32, u32), MonthBucket> = HashMap::new();
 
@@ -222,6 +235,17 @@ pub fn build_calendar_with(
                 .filter(|&c| c > 0.0 && c.is_finite())
                 .map(|c| total_frp / c);
 
+            let era = if (year, month) < FIRST_TERRA_AQUA_MONTH {
+                None
+            } else if bucket.has_viirs {
+                Some(ConformalEra::Viirs)
+            } else {
+                Some(ConformalEra::PreViirs)
+            };
+            let conformal_band = conformal
+                .zip(era)
+                .and_then(|(table, era)| conformal_interval(table, era, total_frp));
+
             CalendarCell {
                 year,
                 month,
@@ -239,6 +263,7 @@ pub fn build_calendar_with(
                 anomaly: None,
                 sfai: None,
                 quality_flags: month_quality_flags(year, month, &bucket.platforms),
+                conformal: conformal_band,
             }
         })
         .collect();
@@ -449,6 +474,7 @@ mod tests {
             anomaly: None,
             sfai: None,
             quality_flags: Vec::new(),
+            conformal: None,
         }
     }
 
@@ -1318,5 +1344,103 @@ mod tests {
         let on = calendar_swath_gap(Some(&bbox(-10.0, 5.0)), &[], &compensation_on()).unwrap();
         assert_eq!(on.belt_share, 1.0);
         assert_eq!(on.compensation, Some(swath_gap_compensation()));
+    }
+
+    fn unit_conformal_table() -> ConformalTable {
+        use crate::conformal::ConformalEntry;
+        let entry = |era| ConformalEntry {
+            era,
+            bin: 0,
+            mu_lo: None,
+            mu_hi: None,
+            cal_mu_min: 0.0,
+            cal_mu_max: 1e9,
+            n_cal: 100,
+            q68_lower: Some(-0.1),
+            q68_upper: Some(0.1),
+            q90_lower: Some(-0.2),
+            q90_upper: Some(0.2),
+        };
+        ConformalTable {
+            schema_version: 1,
+            calibration_fingerprint: "test".into(),
+            entries: vec![entry(ConformalEra::PreViirs), entry(ConformalEra::Viirs)],
+            coverage: None,
+            notes: None,
+        }
+    }
+
+    fn conformal_cells(hotspots: &[HarmonizedHotspot], table: Option<&ConformalTable>) -> Vec<CalendarCell> {
+        build_calendar_with_conformal(
+            hotspots,
+            &UncertaintyParams::default(),
+            &CalibrationConfig::default(),
+            table,
+        )
+    }
+
+    #[test]
+    fn conformal_era_follows_viirs_presence_and_terra_only_gets_none() {
+        let hotspots = vec![
+            make_with_platforms(2001, 3, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2010, 6, 2, vec![Sensor::ModisAqua]),
+            make_with_platforms(2015, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2015, 6, 2, vec![Sensor::ViirsSNPP]),
+        ];
+        let table = unit_conformal_table();
+        let cells = conformal_cells(&hotspots, Some(&table));
+        let cell = |y: i32| cells.iter().find(|c| c.year == y).unwrap();
+
+        assert!(cell(2001).conformal.is_none(), "Terra-only month");
+        let pre = cell(2010).conformal.expect("pre-VIIRS band");
+        assert_eq!(pre.era, ConformalEra::PreViirs);
+        assert!((pre.p68_lower - cell(2010).total_frp * 0.9).abs() < 1e-9);
+        assert!((pre.p90_upper - cell(2010).total_frp * 1.2).abs() < 1e-9);
+        let viirs = cell(2015).conformal.expect("VIIRS band");
+        assert_eq!(viirs.era, ConformalEra::Viirs);
+        assert!((viirs.p68_upper - cell(2015).total_frp * 1.1).abs() < 1e-9);
+    }
+
+    #[test]
+    fn terra_only_series_before_aqua_gets_no_conformal_band() {
+        let hotspots = vec![make_with_platforms(2001, 3, 1, vec![Sensor::ModisTerra])];
+        let cells = conformal_cells(&hotspots, Some(&unit_conformal_table()));
+        assert_eq!(cells.len(), 1);
+        assert!(cells[0].conformal.is_none());
+    }
+
+    #[test]
+    fn without_a_table_there_is_no_conformal_field_and_values_are_unchanged() {
+        let hotspots = vec![
+            make_with_platforms(2010, 6, 1, vec![Sensor::ModisTerra]),
+            make_with_platforms(2015, 6, 2, vec![Sensor::ViirsSNPP]),
+        ];
+        let plain = build_calendar(&hotspots);
+        let none = conformal_cells(&hotspots, None);
+        assert_eq!(
+            serde_json::to_string(&plain).unwrap(),
+            serde_json::to_string(&none).unwrap()
+        );
+        assert!(plain.iter().all(|c| c.conformal.is_none()));
+        assert!(!serde_json::to_string(&plain).unwrap().contains("conformal"));
+    }
+
+    #[test]
+    fn conformal_band_round_trips_through_cell_json() {
+        let hotspots = vec![make_with_platforms(2015, 6, 2, vec![Sensor::ViirsSNPP])];
+        let cells = conformal_cells(&hotspots, Some(&unit_conformal_table()));
+        let json = serde_json::to_string(&cells[0]).unwrap();
+        assert!(json.contains("\"conformal\""));
+        assert!(json.contains("\"era\":\"viirs\""));
+        let back: CalendarCell = serde_json::from_str(&json).unwrap();
+        let (b, a) = (back.conformal.unwrap(), cells[0].conformal.unwrap());
+        assert_eq!((b.era, b.bin, b.n_cal, b.extrapolated), (a.era, a.bin, a.n_cal, a.extrapolated));
+        assert!((b.p90_upper - a.p90_upper).abs() < 1e-9);
+        let legacy: CalendarCell = serde_json::from_str(
+            &json.replace(&format!(",\"conformal\":{}", serde_json::to_string(&cells[0].conformal).unwrap()), ""),
+        )
+        .unwrap();
+        assert!(legacy.conformal.is_none());
     }
 }

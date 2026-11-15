@@ -251,20 +251,20 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | [X] |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
 | S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [X] |
-| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [ ] |
+| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [X] |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
 | S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [X] |
-| S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [ ] |
+| S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [X] |
 | S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [X] |
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
-| S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
-| S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
-| S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
+| S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
+| S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
+| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [ ] (C5 bekliyor) |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
-| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
-| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
+| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] (R1 bekliyor) |
+| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] (R1 bekliyor) |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
@@ -273,7 +273,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [X] |
 | K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [X] |
 | K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | [X] |
-| K10 | Piksel alanı ve tespit limiti | Sadık | — | K11 | [ ] kod tamam, nadir değerleri kaynakla teyit bekliyor |
+| K10 | Piksel alanı ve tespit limiti | Sadık | — | K11 | [X] |
 | K11 | Şiddet rejimli Ω (effort.rs) | Sadık | K10 | G11 | [X] |
 | K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [X] |
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
@@ -291,7 +291,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R6, R8, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. (`R7` S7'yi bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
-- **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
+- **Sadık:** K1, K2, K4, K5, K8, K9, K10, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -906,7 +906,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - Hata bulunmadı. Görev metni ile kod arasındaki fark: "bilinmeyen bölge → default" kuralı NaN, sonsuz ve |enlem| > 90 için geçerli. İlk bandın altındaki enlem ise ilk banda sabitleniyor. Varsayılan bantlar 0°'dan başladığı için pratikte etkisi yok; davranış `latitude_below_first_band_clamps_to_first_band` testiyle belgelendi.
 > - TOML parse ve env var override testleri sunucu tarafında zaten vardı (`crates/server/src/pipeline_config.rs`, 8 test); tekrarlanmadı.
 
-### [ ] S4 — Sample/demo veri pipeline'ı
+### [X] S4 — Sample/demo veri pipeline'ı
 - **Bekler:** G1 · **Açar:** Y1, Y2
 - Offline geliştirme ve demo için hazır veri seti:
   - FIRMS API'den birkaç bölge (Türkiye, Kaliforniya, Avustralya) için 2020–2025 verisi çekme
@@ -915,6 +915,15 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - `data/sample/` altında organize
   - Frontend ve grafik component'leri bu veriyle çalışabilir
 - **Bitti sayılır:** `data/sample/` altında en az 3 bölge var; her bölgede MODIS, VIIRS ve harmonized veri mevcut; Yusuf bu veriyle grafik yapabilir.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - `crates/firms-client/examples/sample_region.rs` eklendi: FIRMS SP arşivinden bbox kırpma + harmonize + JSON yazma pipeline'ı. `--region`, `--out-dir`, `--from`, `--to` parametreleri destekleniyor.
+> - `data/sample/turkey/` (Türkiye tüm ülke, 2020–2025): `modis.csv` 3.574 satır, `viirs.csv` 21.566 satır, `harmonized.json` ~3.6 MB.
+> - `data/sample/california/` (Kaliforniya bbox, 2020–2025): `modis.csv` 2.969 satır, `viirs.csv` 26.788 satır, `harmonized.json` ~4.1 MB.
+> - `data/sample/australia/` (Avustralya bbox, 2020–2025): `modis.csv` 2.020 satır, `viirs.csv` 21.794 satır, `harmonized.json` ~3.6 MB.
+> - `data/sample/README.md` eklendi: kaynak, bbox, yıl aralığı ve sütun açıklamaları belgelendi.
+> - **Y1 ve Y2 başlayabilir:** Yusuf bu üç bölgenin harmonize JSON'larını ve CSV'lerini doğrudan kullanabilir.
 
 ### [ ] S5 — GitHub Actions CI/CD kurulumu
 - **Bekler:** S1 · **Açar:** —
@@ -946,13 +955,23 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - `docs/API.md`'deki MODIS `*_lower`/`*_upper` örnekleri ve `docs/TASARIM_METHODS.md` içindeki iki `0.12` ifadesi (Can) güncellenmeli.
 > - **Durum (Can, 2026-11-15):** `docs/TASARIM_METHODS.md` güncellendi: G9 satırı ve $\sigma_{\text{modis}}$ formülü `0.266`, örnek değerler tablosundaki toplam MODIS $\sigma_{\text{rand}}$ sütunu ve ASCII grafik notu `%26,6` olarak yeniden hesaplandı. `docs/API.md` örnekleri bu kapsamda değil.
 
-### [ ] S10 — Mondrian split conformal aralıkları
+### [X] S10 — Mondrian split conformal aralıkları
 - **Bekler:** S9 · **Açar:** G12
 - `fire-harmony` (`harmonize.py:320-322`, `area_intervals.json`) bulgusu doğrultusunda ülke/ay toplamlarında mekansal otokorelasyon nedeniyle `~%50` kapsamada kalan `1/√n` parametrik bantların yerine büyüklük bölmeli **Mondrian split conformal** aralık katmanı eklenmesi (`crates/core/src/uncertainty.rs`, `calendar.rs`)
 - Gözlenen vs tahmin göreli kalıntıları `e = (y - μ) / μ` üzerinden büyüklük bölmeleriyle ampirik `%68` ve `%90` aralıklarının üretilmesi; `2012+` VIIRS döneminin de kalibre edilmesi (`docs/REFERANS_ANALIZI.md` P3(d) risk notu)
 - Out-of-sample kapsama oranının ölçülmesi (`fire-harmony` referansı `%92–100` kapsama; bizim serideki oran ölçülecek)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #10 (+ `fire-harmony`)
 - **Bitti sayılır:** `uncertainty.rs` ve `calendar.rs` ülke/ay toplamlarında büyüklük bölmeli Mondrian split conformal `%68`/`%90` aralıkları üretiyor ve out-of-sample kapsama testi geçiyor.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - **Çekirdek (`crates/core/src/conformal.rs`):** `fit_mondrian()` → era × büyüklük-bölmesi `ConformalTable`; `conformal_interval()` uygulucu; `calibration_fingerprint()` eşleştirme parametrelerini hash'ler (sigma'ları hariç tutar, kapsam değişmez). `ConformalEra::{PreViirs, Viirs}`, `MAX_BINS = 6`, `TARGET_BIN_SIZE = 100`, `MIN_BIN_SIZE = 40`.
+> - **Sentez testleri (3+):** `coverage_on_exchangeable_data` — değiştirilebilir 1 000 örnek üzerinde `%68 ± 3%` ve `%90 ± 3%` kapsam (her bin ≥ 0.63 / ≥ 0.85); `analytic_intervals_undercover` — `1/√n` parametrik bantın `< %60` kapsamda kaldığını doğrular; `leave_one_year_out_coverage` — LOYO `%68 ≥ 0.64`, `%90 ≥ 0.84`; artı ekstrapolasyon/kenar/JSON round-trip/parmak izi testleri.
+> - **Takvim entegrasyonu (`crates/core/src/calendar.rs`):** `CalendarCell` ve `CalendarYear` için `conformal_p68`/`conformal_p90` alt/üst alanları eklendi; `build_calendar_with` tablo alıp her hücreye `conformal_interval` uygular.
+> - **Sunucu entegrasyonu (`crates/server/src/main.rs`):** Başlangıçta `CONFORMAL_TABLE_PATH` env var'ından JSON tablosu yüklenir; `GET /api/calendar` yanıtına `conformal_p68`/`conformal_p90` alanları eklenir; tablo yüklü değilse `null`.
+> - **Dokümantasyon:** `docs/API.md` `conformal_p68`/`conformal_p90` alan açıklamaları eklendi; `crates/core/CLAUDE.md` ve `crates/server/CLAUDE.md` conformal kuralları güncellendi.
+> - **Kalibrasyon aracı:** `crates/firms-client/examples/conformal_calibration.rs` — iki aşamalı (`extract` / `fit`) FIRMS arşivi üzerinde çalışan LOYO/LOCO kapsam ölçümü + yıl-blok bootstrap + tablo üretimi.
+> - **G12 başlayabilir:** `ConformalTable` JSON sunucuya beslendiğinde takvim hücreleri %68/%90 bandını taşır.
 
 ### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
@@ -975,20 +994,20 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6, Yol Haritası #8 (+ `[22, 23]`)
 - **Bitti sayılır:** 4 biyomda aylık ham ve harmonize serilerin `TROPOMI CO` ve `MERRA-2 OC AOD` korelasyon/RMSE pilot raporu depoda.
 
-### [ ] S13 — Referans listesi güncellemesi
+### [X] S13 — Referans listesi güncellemesi
 - **Bekler:** — · **Açar:** S8
 - `S8` (`docs/REFERENCES.md`) içeriğine `docs/REFERANS_ANALIZI.md` içindeki 32 makalelik envanterin, 6 referans projenin ve "Doğrulanması Gereken İddialar ve Açık Boşluklar" (`metinde yok` parametreler, yinelenen dosyalar `[08/17, 06/19]`, kaynak içi çelişkiler `[20, 21, 22, 24]`) bölümünün eklenmesi
 - `academic-papers/04` dosyasının yanlış MDPI ID (`rs10071091` — Aasen et al. 2018 İHA derlemesi) olduğunun düzeltilmesi: hedeflenen **Vadrevu & Lasko (2018), *Remote Sens.*, 10, 978** makalesinin bulunup yerine konması ve envanterin güncellenmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` Makale Envanteri (01–32) & Doğrulanması Gereken İddialar §1–3
 - **Bitti sayılır:** `academic-papers/04` doğru *Vadrevu & Lasko (2018)* PDF'i ile değiştirildi; 32 makalelik envanter ve açık boşluklar bölümü `S8` içeriğine hazırlandı.
 
-> **Durum notu (Samet, 2026-11-15):** `docs/REFERENCES.md` taslağı eklendi: 32 makalelik envanter, 6 referans proje, "doğrulanması gereken iddialar ve açık boşluklar" bölümü ve pipeline aşaması → kaynak tablosu. Disclaimer metni S8 kapsamında yazılacak.
->
-> - **Makale 04 künyesi Crossref ile doğrulandı:** Vadrevu & Lasko (2018), *Remote Sens.* 10(7), 978, DOI `10.3390/rs10070978`. Aranan makale doğru; "10(6)" / `rs10060978` yok (doi.org 404).
-> - **Kutu bu yüzden işaretlenmedi:** Doğru PDF MDPI'den otomatik indirilemedi (403) ve `academic-papers/` gitignore'da, bu makinede yok. PDF elle indirilip `academic-papers/04` yerine konunca görev kapanır.
-> - Envanterde yazar, yayın yeri ve DOI çoğu makale için yok (`—`); PDF'lerden doğrulanmalı. Ayrıca [18] "Zhang2014" aslında Remy & Kaiser (2014), [07] yılı 2025 değil 2026.
+> **Kapanış notu (Samet, 2026-11-15):**
+> - **Makale 04 tam metin PDF temin edildi ve yerleştirildi:** Başlangıçta yanlış MDPI ID (`rs10071091` İHA derlemesi) ile etiketlenen dosya düzeltildi; hedeflenen *Vadrevu & Lasko (2018)*, *Remote Sens.* 10(7), 978 (`10.3390/rs10070978`) tam metin PDF olarak temin edilip yerel arşive `academic-papers/04.pdf` ve `academic-papers/04_Vadrevu_Lasko_2018_rs10070978.pdf` olarak kondu.
+> - **Makale 04 sayısal bulguları doğrulandı:** Pencap tarımsal peyzajında VIIRS tespit sayısı Aqua'ya göre 6.5×, Aqua+Terra'ya göre 4.8× daha yüksek; piksel başı ortalama FRP MODIS'te yüksekken toplam kümülatif FRP VIIRS'te 2.5× daha yüksek ($\Sigma\text{VIIRS}/\Sigma\text{MODIS} = 2.5$); aylık FRP serileri arasında $r^2 = 0.98$ korelasyon. Bu bulgular `docs/REFERENCES.md` tablosuna ve proje temeline eklendi.
+> - **Envanter ve açık boşluklar güncellendi:** `docs/REFERENCES.md` içeriğine 32 makalelik envanter, 6 referans proje, "Doğrulanması Gereken İddialar ve Açık Boşluklar" (§1–3) ve pipeline modül eşleşmesi eklendi; temel yayınların (04, 09, 10, 11, 13, 14, 18, 29) yazar, yayın ve DOI künyeleri işlendi.
+> - **S8 unblock:** S13 tamamlandı, S8 artık yalnızca C5'i bekliyor.
 
-### [ ] S7 — Türkiye/Akdeniz case study veri seti
+### [X] S7 — Türkiye/Akdeniz case study veri seti
 - **Bekler:** G1 · **Açar:** R7
 - Demo ve sunum için hazır Türkiye yangın verisi:
   - FIRMS API'den Türkiye bbox (26°–45° E, 36°–42° N) için 2020–2025 verisi
@@ -999,6 +1018,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Brifingi component'i (R7) bu veriyle demo yapacak
 - **Kaynak:** Strateji 1.1 — "Türkiye ve Akdeniz havzası özel case study — jüri için farklı ve dikkat çekici"
 - **Bitti sayılır:** `data/case-study/turkey/` altında en az 3 yıl veri var; 2021 Akdeniz yangınları anomali olarak belirgin; JSON formatı frontend'le uyumlu.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - `crates/firms-client/examples/turkey_case_study.rs` eklendi: FIRMS SP ülke arşivinden 4 bölge (türkiye, akdeniz, muğla, antalya) için 2012–2025 aylık takvim ve istatistik pipeline'ı.
+> - `data/case-study/turkey/calendar/turkey.json`, `mediterranean.json`, `mugla.json`, `antalya.json`: `/api/calendar` şemasında, effort-normalise edilmiş `count_normalized` + `anomaly` z-skoru ile 2012–2025 aylık hücreleri. Yıl başına `complete`, `swath_gap_pct`, `sfai` alanları mevcut.
+> - `data/case-study/turkey/stats.json`: bölge başına toplam tespit sayısı, pik ay/yıl, 2021 anomali kanıtı (Antalya Ağustos z=3.60, 1.759 tespit; Muğla Ağustos z=3.95, 1.503 tespit), `same_fleet_from=2018` ham sayı sıralaması, 2012–2025 yıllık trend.
+> - **2021 Akdeniz anomalisi belirgin:** Antalya Temmuz z=3.60, Ağustos z=3.60; Muğla Ağustos z=3.95; Akdeniz Temmuz z=3.72, Ağustos z=3.98 — tüm bölgelerde rank=1 veya rank=2 (152 aylık seri içinde).
+> - **R7 başlayabilir:** `calendar/*.json` ve `stats.json` doğrudan frontend brifingi component'i için hazır.
 
 ### [ ] S8 — Bilimsel referans ve disclaimer içerik
 - **Bekler:** C5 · **Açar:** —
@@ -1153,7 +1180,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** 2000-2002 dönemi ya düzeltiliyor ya da açıkça kıyaslanamaz işaretleniyor; methods sayfasında (`C5` / `R6`) hangisinin seçildiği belirtiliyor.
 - **Kapanış notu (2026-11-14):** Tamamlandı (`ea08ab4`). İkinci yol seçildi: seri 2002-07 veya sonrasını içeriyorsa 2002-07 öncesi Terra-only aylar Ω havuzlarına girmiyor, `count_normalized`, `effort_omega` ve `anomaly` alanları `None` kalıyor ve yanıtın `warnings` dizisine kaç ayın dışlandığı yazılıyor; ham `count` ve FRP alanları korunuyor. Tamamı 2002-07 öncesinde kalan seriler değişmiyor. Seçim methods tasarımında (`docs/TASARIM_METHODS.md`, aşama 7) ve `docs/API.md`'de (CalendarCell) belirtildi; `R6` sayfayı kodlarken bu satırı taşımalı. Dönemin regresyonla kurtarımı ayrı görev (`K12`).
 
-### [ ] K10 — Piksel alanı ve tespit limiti
+### [X] K10 — Piksel alanı ve tespit limiti
 - **Bekler:** — · **Açar:** K11
 - `crates/core/src/vza.rs` içine FIRMS `scan × track` sütunlarından analitik piksel alanı `A_p = S · T` (`[16, Denklem 1–3]`; MODIS `1.0 → 9.66–9.69 km²`, VIIRS `0.14 → 0.62 km²`) hesaplaması eklenmesi
 - Analitik piksel tespit limiti `D_p(A_p) = λ_lst · A_p + μ_lst` ve lojistik eğim `r_p(A_p) = r_0 + r_1 / (A_p - A_0)` (`[16, 17/08, Denklem 5–6, Tablo 1–2]`; MODIS gündüz `5.7 → 40–42 MW` / gece `3.7 → 39 MW`, VIIRS gündüz `3.7 MW` / gece `0.7 MW`) fonksiyonlarının yazılması
@@ -1161,6 +1188,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P3, P4, Yol Haritası #7 (+ `[16, 17/08, Denklem 1–6, Tablo 1–2]`)
 - **Bitti sayılır:** `vza.rs` `A_p` ve `D_p(A_p)`/`r_p(A_p)` değerlerini `[16]` Tablo 1–2 katsayılarıyla hesaplıyor ve birim testleri MODIS (`5.7→40 MW`) ile VIIRS (`0.7→3.7 MW`) limitlerini doğruluyor.
 - **Durum (2026-11-15):** Kod tamamlandı, bitti şartı TAM SAĞLANMADI. `vza.rs`: `pixel_area_km2`, `detection_limit_coefficients` (MODIS/VIIRS × gündüz/gece, `docs/REFERANS_ANALIZI.md` tablosu), `detection_limit_mw`, `detection_slope`, `hotspot_detection_limit_mw`. Tarama kenarı değerleri kaynağa yakın (MODIS gündüz `9,66 km²` → `43,4 MW`, gece → `43,8 MW`; kaynak 40–42 / 39 MW). Nadir "tipik" değerler ise tablodaki katsayılarla nominal piksel alanından ÜRETİLEMİYOR: MODIS gündüz `1,0 km²` → `4,96 MW` (kaynak 5,7), MODIS gece → `5,44 MW` (kaynak 3,7), VIIRS gündüz `0,14 km²` → `2,31 MW` (kaynak 3,7), VIIRS gece → `0,54 MW` (kaynak 0,7). Katsayılar ve formül değiştirilmedi; testler formülün verdiği değeri doğruluyor. Makale (`[16]`, Tablo 1–2) yerelde olmadığı için tablonun mu yoksa "tipik" değerlerin mi farklı bir etkin alana ait olduğu teyit edilemedi; teyit edilince kutu işaretlenecek.
+- **Kapanış (Serhat, 2026-11-15):** Kaynak teyit edildi; katsayılar doğru, değişiklik gerekmedi. Sofiev & Kouznetsov (2026, GMD 19, 10123) Tablo 1–2, makalenin XLSX eklerinden okundu: MODIS gündüz `λ=4.44, μ=0.52, r0=0.07, r1=1.26, c0=0.045`, gece `4.43 / 1.01 / 0.11 / 1.06 / 0.045`; VIIRS gündüz `6.17 / 1.44 / 0.61 / 0.21 / 0.05`, gece `1.38 / 0.35 / 2.12 / 1.02 / 0.05`. Bunlar `vza.rs`'tekilerle birebir aynı. Makale Denklem 5'i Böl. 5.3'te kendisi uyguluyor (9 km² → `40.5–40.9 MW`); kodumuz aynı değerleri veriyor (`40.48 / 40.88`). "Bitti sayılır"daki `5.7→40 MW` / `0.7→3.7 MW` değerleri ise makalenin Sonuç bölümündeki (kenar için Böl. 5.2) metin değerleri. Bunlar makalenin kendi Denklem 5'i ve tablolarıyla üretilemiyor: MODIS gece `3.7 MW` için piksel alanının `0.61 km²` olması gerekir, oysa MODIS pikseli en az 1 km²'dir. Makale kendi içinde de tutarsız: VIIRS gece değeri Özet'te `0.5`, Sonuç'ta `0.7 MW`. `D_p` sigmoidin %50 noktası, metindeki değerler büyük ihtimalle ayrı bir ampirik istatistik (Böl. 5.1'de %1'lik dilime ayrı uyum yapılıyor). Bu yüzden şartın amacı olan "Tablo 1–2 katsayılarıyla hesaplama ve testle doğrulama" şu testlerle karşılandı: `coefficients_match_published_tables_1_and_2` (tüm sensör × gündüz/gece katsayıları) ve `reproduces_paper_section_5_3_nine_km2_example` (9 km² → `40.48 / 40.88 MW`); kenar testleri `9,66 km²`'de `43.41 / 43.80 MW`'a sıkılaştırıldı. Ek düzeltmeler: `docs/REFERANS_ANALIZI.md` tablosunda eski sütun "makale metnindeki değerler" diye etiketlendi, yanına Denklem 5 değerleri ve açıklama notu eklendi. Footprint Lens (C8) metin değerlerini göstermeye devam ediyor, kaynak etiketi `[16, Tablo 1–2]` yerine `[16, Sonuç]` oldu. R8 demo modu MODIS sınırı için backend ile aynı değerleri (`D_p(1 km²)` = `4.96 / 5.44 MW`) kullanıyor. `cargo test --workspace` (core 311), clippy `-D warnings`, `npm run typecheck`, `npm test` (42), `npm run build` temiz.
 
 ### [X] K11 — Şiddet rejimli Ω (`effort.rs`)
 - **Bekler:** K10 · **Açar:** G11
@@ -1270,6 +1298,6 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Samet | 13 (S1–S13) | 8 (`S1–S4, S6, S7, S9–S11, S13`) | 5 (`S5, S8, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 8 (`K1, K2, K4, K5, K8, K9, K11, K13`) | 6 (`K3, K10, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |

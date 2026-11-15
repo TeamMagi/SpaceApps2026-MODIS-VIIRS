@@ -45,6 +45,7 @@
 | `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre (gaz meşalesi) maskesi: bir yıl içinde ≥ N farklı ayda tespit olan H3 r7 hücresi o yıl için elenir |
 | `PYROSYNC_SAMA_ENABLED` | `false` | SAMA kutusundaki gece VIIRS tespitlerini eler (C2 arşivinde fazla gürültü ölçülmediği için kapalı) |
 | `PYROSYNC_TROPICAL_SWATH_GAP_COMPENSATION` | `false` | 30°G–30°K MODIS swath boşluğu için VIIRS-siz takvim `total_frp` telafisini açar |
+| `CONFORMAL_TABLE` | `data/conformal.json` | Mondrian conformal kantil tablosu; dosya yoksa veya parmak izi etkin konfigürasyonla eşleşmezse `/api/calendar` `conformal` alanı eklenmez |
 
 ## Teknik Notlar
 

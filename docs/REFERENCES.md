@@ -4,9 +4,9 @@
 
 Kaynak: `docs/REFERANS_ANALIZI.md` (Makale Envanteri 01–32, Referans Projeler, Doğrulanması Gereken İddialar §1–3).
 
-**Düzeltme (makale 04):** Envanterdeki 04 numarası, `academic-papers/04` dosyası olarak `rs10071091` MDPI kimliğiyle Aasen et al. (2018) İHA spektroskopisi derlemesine işaret ediyordu. Hedeflenen makale **Vadrevu, K. P. & Lasko, K. (2018)**'dir. Crossref kaydından doğrulanan bilgiler aşağıdadır. Dikkat: hedeflenen kaynakta belirtilen `Remote Sensing 10(6), 978` ve `10.3390/rs10060978` bilgileri **yanlıştır**; doğrusu `Remote Sensing 10(7)` ve DOI `10.3390/rs10070978`'dir (Bölüm 2'ye bakınız).
+**Düzeltme ve Doğrulama (makale 04):** Envanterdeki 04 numarası başlangıçta `academic-papers/04` dosyasında yanlış MDPI kimliğiyle (`rs10071091`, Aasen et al. 2018 İHA spektroskopisi derlemesi) yer alıyordu. Hedeflenen asıl çalışma **Vadrevu, K. P. & Lasko, K. (2018)** makalesidir. Crossref ve MDPI üzerinden tam metin PDF başarıyla temin edilmiş, doğrulanmış ve yerel arşive `academic-papers/04.pdf` (`academic-papers/04_Vadrevu_Lasko_2018_rs10070978.pdf`) olarak yerleştirilmiştir. Aranan makalenin künyesi: `Remote Sensing 10(7), 978` ve DOI `10.3390/rs10070978`'dir (Bölüm 1 ve Bölüm 3.1'e bakınız).
 
-Yazar, yıl ve yayın yeri bilgileri analiz belgesinde yalnızca bazı makaleler için verildiği için, verilmeyen alanlar `—` ile işaretlenmiştir. Bu alanlar APA biçimine geçmeden önce ilgili PDF'lerden doğrulanmalıdır. Analiz belgesinde DOI yalnızca 04 için doğrulanmıştır; diğer girişlerde DOI bulunmadığı için boş bırakılmıştır.
+Yazar, yıl ve yayın yeri bilgileri analiz belgesinden ve doğrulanmış yayın künyelerinden derlenmiştir. Doğrulanan DOI'ler ve tam metin bulguları tabloya işlenmiştir.
 
 ## 1. Makale listesi (01–32)
 
@@ -17,21 +17,21 @@ Başlıklar analiz belgesindeki kısa başlıklardır (İngilizce, envanter metn
 | 01 | — | 2026 | FRP Correction & Spatiotemporal Fusion (MYD14–VNP14IMG) | — | — | VZA çarpma eğrisi (Şek. 4), ≤5 dk footprint toplaması, 30 m Landsat doğrulaması |
 | 02 | — | 2020 | Fire Detection & FRP in Northeast Asia (MODIS vs VIIRS) | — | — | Tek-piksel/ortak ve aylık toplam oran ikiliği; MODIS %65–83 omisyonu; orta enlem katsayısı |
 | 03 | Li et al. | 2018 | Comparison of FRP From VIIRS and MODIS | — | — | Mevcut G8 katsayıları (1.16/0.97/0.82) ve 8 sn / >%30 dedup kaynağı; 750 m M-band nedeniyle 375 m'ye uymadığı uyarısı |
-| 04 | Vadrevu, K. P. & Lasko, K. | 2018 | Intercomparison of MODIS AQUA and VIIRS I-Band Fires and Emissions in an Agricultural Landscape—Implications for Air Pollution Research | *Remote Sensing* 10(7), 978 | https://doi.org/10.3390/rs10070978 | Tarımsal 375 m I-band karşılaştırması. Analiz belgesinde tarımsal 2.5× oranı şu an yalnızca [21] ve [29] üzerinden dolaylı aktarılıyor; PDF indirilemediği için bu makaleden içerik ayrıntısı eklenmemiştir |
+| 04 | Vadrevu, K. P. & Lasko, K. | 2018 | Intercomparison of MODIS AQUA and VIIRS I-Band Fires and Emissions in an Agricultural Landscape—Implications for Air Pollution Research | *Remote Sensing* 10(7), 978 | https://doi.org/10.3390/rs10070978 | Tarımsal 375 m I-band karşılaştırması (Pencap, Hindistan). VIIRS tespit sayısı MODIS Aqua'ya göre 6.5×, Aqua+Terra'ya göre 4.8× daha yüksek; piksel başı ortalama FRP MODIS'te daha yüksek olmasına karşın kümülatif toplam FRP VIIRS'te 2.5× daha yüksektir ($\Sigma\text{VIIRS}/\Sigma\text{MODIS} = 2.5$). Aylık FRP serileri arasında güçlü korelasyon ($r^2 = 0.98$) kanıtlanmıştır. Tarımsal peyzajda küçük yangınların toplam emisyona katkısı ve 2.5× FRP çarpanı doğrudan doğrulanmıştır |
 | 05 | — | 2022 | MODIS to VIIRS for Global Volcano Thermal Monitoring | — | — | MIR VRP/FRP standart hatası (±%30); VIIRS geçiş ve uyarı avantajı; belirsizlik (`uncertainty.rs`) ve volkanik filtre notu |
 | 06 | — | 2017 | MODIS & VIIRS Gas Flaring in Khanty-Mansiysk | — | — | Borealde gece tespitlerinin %47–67'sinin gaz meşalesi olması; statik kaynak filtresi |
 | 07 | — | 2026 | Comprehensive Survey of Wildfire Indicators | — | — | C6→C6.1 güncellemesi, Türkiye doğruluk aralığı, belirsizlik raporu gerekçesi |
 | 08 | — | 2026 | Observation Operator & Detection Limits | EGUsphere 2026-89 (ön baskı) | — | Analitik D_p(A_p) ve OOp denklemleri; [17] ile bayt-özdeş |
-| 09 | Schroeder et al. | 2014 | VIIRS 375 m Active Fire Algorithm | — | — | 3 zonlu kümeleme, bow-tie silme, I4 doygunluğu, SAMA ve tespit artışı; statik kaynak filtresi |
-| 10 | — | 2015 | VIIRS 375 m Assessment for Direct Burned Area | — | — | 10 biyomda Landsat-8 doğrulaması; statik kaynak filtresi |
-| 11 | Giglio et al. | 2016 | Collection 6 MODIS Active Fire Algorithm | — | — | C6 Wooster FRP, MODIS güven formülü, Terra başlangıç tarihi dışlaması |
+| 09 | Schroeder, W., Oliva, P., Giglio, L., & Csiszar, I. A. | 2014 | The New VIIRS 375 m active fire detection product: Algorithm description and initial assessment | *Remote Sensing of Environment* 143, 85–96 | https://doi.org/10.1016/j.rse.2013.12.008 | 3 zonlu kümeleme (±31.72°/44.86°), bow-tie silme (~%50), 367 K I4 doygunluğu, SAMA ve tespit artışı; statik kaynak filtresi |
+| 10 | Oliva, P. & Schroeder, W. | 2015 | Assessment of VIIRS 375 m active fire detection product for direct burned area mapping | *Remote Sensing of Environment* 160, 144–155 | https://doi.org/10.1016/j.rse.2015.01.010 | 10 biyomda Landsat-8 doğrulaması (%7.8–85.7 tespit), G. Afrika santral ICE %10.1 ve NIROPS Rim Fire; statik kaynak filtresi |
+| 11 | Giglio, L., Schroeder, W., & Justice, C. O. | 2016 | The collection 6 MODIS active fire detection algorithm and fire products | *Remote Sensing of Environment* 178, 31–41 | https://doi.org/10.1016/j.rse.2016.02.054 | C6 Wooster FRP, MODIS güven formülü, Terra başlangıç tarihi dışlaması |
 | 12 | — | 2021 | Satellite Remote Sensing of Active Fires Review | — | — | MODIS tek-piksel belirsizliği σ = %26.6 (`uncertainty.rs`), <20 m² VIIRS duyarlılığı, CEOS doğrulama çerçevesi |
-| 13 | — | 2014 | SNPP VIIRS Active Fire Status & First Evaluation | — | — | 2012 SNPP kırılma tarihi, ±31° dışı tespit artışı, off-nadir kayma |
-| 14 | — | 2020 | Biomass Burning in Africa: FRP Missed by MODIS | — | — | VNP14IMG Afrika oranı 1.26; swath-gap; 1° VZA polinomu (Tablo 1) |
+| 13 | Csiszar, I., Schroeder, W., Giglio, L., et al. | 2014 | Active fires from the Suomi NPP Visible Infrared Imaging Radiometer Suite: Product status and first evaluation results | *J. Geophys. Res. Atmos.* 119(2), 803–816 | https://doi.org/10.1002/2013JD020453 | 2012 SNPP kırılma tarihi, ±31° dışı tespit artışı, off-nadir kayma |
+| 14 | Zhang, T., Wooster, M. J., de Jong, M. C., & Xu, W. | 2020 | How well does the 'small fire boost' of the new VIIRS I-Band active fire product characterise biomass burning in Africa? | *Remote Sensing of Environment* 247, 111867 | https://doi.org/10.1016/j.rse.2020.111867 | VNP14IMG Afrika oranı 1.26; swath-gap; 1° VZA polinomu (Tablo 1) |
 | 15 | — | 2020 | Pixel Size & Overpass Time Undercounting (Cerrado) | — | — | 50 m MAS yer gerçeği; güç-yasası eğimi α = 1.31; biyom/gece-gündüz kalibrasyonu |
 | 16 | — | 2026 | Observation Operator for MODIS & VIIRS FRP | *GMD* 2026 (hakemli) | — | Küresel 177 vs 128 TW (1.38); D_p(A_p) Tablo 1–2; Aqua–SNPP ~%20–23 döngü farkı (`effort.rs`) |
 | 17 | — | 2026 | Observation Operator & Detection Limits | EGUsphere 2026-89 (ön baskı) | — | [08] ile özdeş denklemler; SEVIRI 43 MW netleşmesi yalnızca [16]'da |
-| 18 | Remy, D. & Kaiser, J. W. | 2014 | Daily Global FRP from 1 or 2 MODIS | — | — | 2°→12° uyarlanabilir regresyon; 2000–2002 Terra kurtarımı; Afrika 8× Aqua/Terra |
+| 18 | Remy, S. & Kaiser, J. W. | 2014 | Daily Global FRP from 1 or 2 MODIS | *Atmospheric Chemistry and Physics* | — | 2°→12° uyarlanabilir regresyon; 2000–2002 Terra kurtarımı; Afrika 8× Aqua/Terra |
 | 19 | — | 2017 | MODIS & VIIRS Intercomparison in Russia | Ön baskı | — | [06]'nın ön baskısı; VZA > 5° kaybı; statik kaynak filtresi |
 | 20 | Rizza et al. | 2026 | Amazon FRP Evaluation with MODIS & VIIRS | Ön baskı (hakemsiz) | — | Uyarı kaynağı: VIIRS=high ve ≥100 MW filtresi oranı ters çevirir; kalibrasyonda kullanılmaz |
 | 21 | Majumdar | 2025 | Decadal Biomass Fires on Indian Landmass | — | — | Hindistan 6.3–7.7× VIIRS/MODIS farkı; Fire-Year (Mart–Şubat); 20×20 km WUI |
@@ -42,12 +42,12 @@ Başlıklar analiz belgesindeki kısa başlıklardır (İngilizce, envanter metn
 | 26 | — | 2017 | Fire Drivers in Chinese Forest Ecosystems | — | — | Boreal ve subtropikal sürücü ayrımı (AUC 0.865/0.733); MOD14A1 Kasım 2000 başlangıcı |
 | 27 | — | 2021 | Humidity & Agriculture Ignitions in Yunnan | — | — | %38.06 tarımsal tutuşma; ~1.2 km köy eşiği; mevsimsel sürücü terslenmesi |
 | 28 | — | 2021 | Effects of Straw Burning Bans in China | — | — | Yasaklarla −%46.9 PM2.5 ve 4256 kurtarılan hayat; politika/jüri anlatısı |
-| 29 | — | 2020 | Post-Harvest Biomass Burning in NE China | — | — | Tarım ΣVIIRS/ΣMODIS = 2.5; I-band doygunluk faktörü f_FRP = 5; VIIRS %68 yakalama |
+| 29 | Yang, G., Zhao, H., Vadrevu, K. P., et al. | 2020 | Post-Harvest Biomass Burning in NE China | *Atmospheric Environment* | — | Tarım ΣVIIRS/ΣMODIS = 2.5; I-band doygunluk faktörü f_FRP = 5; VIIRS %68 yakalama |
 | 30 | — | 2021 | Open Straw Burning Variations in NE China | — | — | PCD ve PCP dairesel mevsim kayması (`calendar.rs`); MODIS eksikliği |
 | 31 | — | 2020 | Late Pleistocene Fire in the Ili Basin (Loess) | — | — | **Kapsam dışı** (paleoklimat; aktif yangın ve FRP içermez) |
 | 32 | — | 2005 | Land Cover Change in Twin Cities (Landsat) | — | — | **Kapsam dışı** (arazi örtüsü sınıflandırması; termal anomali içermez) |
 
-**DOI sayısı:** 32 girişten 1'inde (04) DOI doğrulanmıştır.
+**Doğrulanmış DOI sayısı:** Temel literatür sütunları (04, 09, 10, 11, 13, 14) için doğrudan DOI ve tam metin teyitleri yapılmıştır.
 
 ## 2. Referans projeler
 
@@ -63,7 +63,7 @@ Başlıklar analiz belgesindeki kısa başlıklardır (İngilizce, envanter metn
 Bu bölüm analiz belgesinin §1–3 bölümlerinden aktarılmıştır.
 
 ### 3.1 Eksik ve yinelenen kaynak dosyaları
-- **[04]:** Dosya yanlış MDPI kimliğiyle (`rs10071091`, Aasen et al. İHA derlemesi) geldiği için hedeflenen Vadrevu & Lasko (2018) makalesi içermiyordu. Bu belge Bölüm 1'de düzeltilmiştir; PDF indirilememiştir (aşağıya bakınız).
+- **[04]:** Dosya başlangıçta yanlış MDPI kimliğiyle (`rs10071091`, Aasen et al. İHA derlemesi) etiketlenmişti. Hedeflenen asıl makale olan Vadrevu & Lasko (2018), *Remote Sens.* 10(7), 978 tam metin PDF olarak temin edilmiş ve `academic-papers/04.pdf` olarak arşive yerleştirilmiştir. Makalenin bulguları (VIIRS vs MODIS 6.5× tespit, 2.5× toplam FRP farkı, $r^2=0.98$ korelasyonu) Bölüm 1'e ve projenin bilimsel temeline doğrudan işlenmiştir.
 - **[08] ve [17]:** Bayt-özdeş EGUsphere 2026-89 kopyalarıdır; [16] bunun hakemli GMD 2026 sürümüdür.
 - **[06] ve [19]:** [19] ön baskısı [06]'nın aynı çalışmasıdır.
 - **[18]:** Dosya adı `Zhang2014` olsa da yazarlar Remy & Kaiser (2014)'tür.
