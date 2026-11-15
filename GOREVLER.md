@@ -257,9 +257,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [X] |
 | S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [X] |
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
-| S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
+| S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
-| S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
+| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [ ] (C5 bekliyor) |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
@@ -994,18 +994,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6, Yol Haritası #8 (+ `[22, 23]`)
 - **Bitti sayılır:** 4 biyomda aylık ham ve harmonize serilerin `TROPOMI CO` ve `MERRA-2 OC AOD` korelasyon/RMSE pilot raporu depoda.
 
-### [ ] S13 — Referans listesi güncellemesi
+### [X] S13 — Referans listesi güncellemesi
 - **Bekler:** — · **Açar:** S8
 - `S8` (`docs/REFERENCES.md`) içeriğine `docs/REFERANS_ANALIZI.md` içindeki 32 makalelik envanterin, 6 referans projenin ve "Doğrulanması Gereken İddialar ve Açık Boşluklar" (`metinde yok` parametreler, yinelenen dosyalar `[08/17, 06/19]`, kaynak içi çelişkiler `[20, 21, 22, 24]`) bölümünün eklenmesi
 - `academic-papers/04` dosyasının yanlış MDPI ID (`rs10071091` — Aasen et al. 2018 İHA derlemesi) olduğunun düzeltilmesi: hedeflenen **Vadrevu & Lasko (2018), *Remote Sens.*, 10, 978** makalesinin bulunup yerine konması ve envanterin güncellenmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` Makale Envanteri (01–32) & Doğrulanması Gereken İddialar §1–3
 - **Bitti sayılır:** `academic-papers/04` doğru *Vadrevu & Lasko (2018)* PDF'i ile değiştirildi; 32 makalelik envanter ve açık boşluklar bölümü `S8` içeriğine hazırlandı.
 
-> **Durum notu (Samet, 2026-11-15):** `docs/REFERENCES.md` taslağı eklendi: 32 makalelik envanter, 6 referans proje, "doğrulanması gereken iddialar ve açık boşluklar" bölümü ve pipeline aşaması → kaynak tablosu. Disclaimer metni S8 kapsamında yazılacak.
->
-> - **Makale 04 künyesi Crossref ile doğrulandı:** Vadrevu & Lasko (2018), *Remote Sens.* 10(7), 978, DOI `10.3390/rs10070978`. Aranan makale doğru; "10(6)" / `rs10060978` yok (doi.org 404).
-> - **Kutu bu yüzden işaretlenmedi:** Doğru PDF MDPI'den otomatik indirilemedi (403) ve `academic-papers/` gitignore'da, bu makinede yok. PDF elle indirilip `academic-papers/04` yerine konunca görev kapanır.
-> - Envanterde yazar, yayın yeri ve DOI çoğu makale için yok (`—`); PDF'lerden doğrulanmalı. Ayrıca [18] "Zhang2014" aslında Remy & Kaiser (2014), [07] yılı 2025 değil 2026.
+> **Kapanış notu (Samet, 2026-11-15):**
+> - **Makale 04 tam metin PDF temin edildi ve yerleştirildi:** Başlangıçta yanlış MDPI ID (`rs10071091` İHA derlemesi) ile etiketlenen dosya düzeltildi; hedeflenen *Vadrevu & Lasko (2018)*, *Remote Sens.* 10(7), 978 (`10.3390/rs10070978`) tam metin PDF olarak temin edilip yerel arşive `academic-papers/04.pdf` ve `academic-papers/04_Vadrevu_Lasko_2018_rs10070978.pdf` olarak kondu.
+> - **Makale 04 sayısal bulguları doğrulandı:** Pencap tarımsal peyzajında VIIRS tespit sayısı Aqua'ya göre 6.5×, Aqua+Terra'ya göre 4.8× daha yüksek; piksel başı ortalama FRP MODIS'te yüksekken toplam kümülatif FRP VIIRS'te 2.5× daha yüksek ($\Sigma\text{VIIRS}/\Sigma\text{MODIS} = 2.5$); aylık FRP serileri arasında $r^2 = 0.98$ korelasyon. Bu bulgular `docs/REFERENCES.md` tablosuna ve proje temeline eklendi.
+> - **Envanter ve açık boşluklar güncellendi:** `docs/REFERENCES.md` içeriğine 32 makalelik envanter, 6 referans proje, "Doğrulanması Gereken İddialar ve Açık Boşluklar" (§1–3) ve pipeline modül eşleşmesi eklendi; temel yayınların (04, 09, 10, 11, 13, 14, 18, 29) yazar, yayın ve DOI künyeleri işlendi.
+> - **S8 unblock:** S13 tamamlandı, S8 artık yalnızca C5'i bekliyor.
 
 ### [X] S7 — Türkiye/Akdeniz case study veri seti
 - **Bekler:** G1 · **Açar:** R7
@@ -1296,6 +1296,6 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 7 (`S1–S4, S6, S7, S9–S11`) | 6 (`S5, S8, S12, S13`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Samet | 13 (S1–S13) | 8 (`S1–S4, S6, S7, S9–S11, S13`) | 5 (`S5, S8, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
