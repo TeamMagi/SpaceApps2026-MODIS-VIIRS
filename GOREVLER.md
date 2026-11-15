@@ -223,6 +223,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [X] |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1, G12, R12 [X]; Y8 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
+| G13 | CI süre bütçesi: Rust hattı (en çok 30 dk) | Görkem | — | — | [ ] |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
 | C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | [X] |
@@ -260,6 +261,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [X] |
+| S14 | CI süre bütçesi: web, tetikleyiciler ve doğrulama | Samet | — | — | [ ] |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
@@ -554,6 +556,17 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `cargo run -p pyrosync-server` ile backend + frontend tek process'te ayağa kalkıyor; jüri demo'yu sorunsuz görebilir.
 - **Not (2026-11-15, ekip kararı):** Hazır sonuçlar (`data/derived`) geliştirme boyunca yeniden üretilmiyor. G6'nın son adımı: tüm config/şema değişiklikleri `main`'e girdikten sonra Görkem (arşiv bu makinede) `make precompute` → `make bundle-derived` çalıştırır, `data/derived`'ı commit'ler ve `make smoke` ile 14 kontrolün tamamının PASS olduğunu doğrular.
 - **Not (Samet, 2026-11-15, final paket yenilemesi için):** (1) `/api/series` BUG-9 (anomali Ω ile normalize değildi) ve BUG-10 (2002-07 öncesi Terra-yalnız aylara anomali) düzeltildi; `DERIVED_SCHEMA_VERSION` 10. `data/derived` bu sürümle yeniden üretilmeli. Düzeltme 8 Akdeniz bölgesinde canlı hesapla ölçüldü (2012 sonrası ortalama z kayması ham +1,10σ, harmonize −0,13σ; Yunanistan Ağustos 2007 z 0,52 → 3,96); 138 bölgede yeniden ölçüm paket yenilenince yapılabilir. (2) `data/conformal.json` (S10) o anki varsayılan config'in parmak izine bağlıdır: freeze sonrası eşleştirme, VZA, kalibrasyon, maske ya da fleet ayarı değişirse tablo sessizce kapanır ve bant görünmez; değişmezse geçerli kalır. (3) Paket yokken `make smoke`'un 3., 4. ve 5. kontrolleri FAIL verir (238 hazır sonuç, Kıbrıs serisi zaman aşımı, Brezilya 413), yalnız 3. değil; paket yenilenince 14 kontrolün tamamı PASS olmalı. (4) Bilinen açık hata: BUG-8 (FIRMS availability tablosu süreç başına bir kez alınıyor; `client::availability_reflects_newer_firms_data_on_a_later_call` testi `#[ignore]` ile bunu gösterir).
+
+### [ ] G13 — CI süre bütçesi: Rust hattı (Paket A)
+- **Bekler:** — · **Açar:** —
+- Amaç: CI'ın en uzun job'ı en çok **30 dk**'da bitsin. İş iki kişiye eşit bölündü: Paket A = Görkem (bu görev), Paket B = Samet (S14). Ayrıntı ve ölçüm tablosu: `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5–§6.
+  - **A1** (5 dk): `cargo check` adımını kaldır; `clippy --all-targets` aynı hedefleri zaten derler
+  - **A2** (15 dk): `Swatinem/rust-cache@v2` için `rust` ve `coverage` job'larına ayrı `key` (`rust-test`, `rust-coverage`) ve `cache-on-failure: true`; `llvm-cov` farklı `RUSTFLAGS` ile derlediği için target dizini paylaşılamaz
+  - **A3** (20 dk): Çift test yürütmesi kararı. İlk iki gerçek koşuya göre `coverage` job'u 20 dk'dan uzunsa `rust` job'ından `cargo test` kaldırılır (testler kapsam altında zaten koşar), değilse ayrım korunur; karar rapora yazılır
+  - **A4** (15 dk): İlk 3 koşunun adım adım sürelerini rapor §6 tablosuna doldur (soğuk ve ısınmış ayrı)
+- **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `rust` ve `coverage` blokları. Samet `on:` ve `web` bloklarına dokunur; her değişiklikten önce `git pull --rebase`.
+- **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket A
+- **Bitti sayılır:** A1–A4 tamam; rapor §6 tablosunda Rust satırları dolu ve A3 kararı yazılı; üst üste 3 CI koşusunda `rust` ve `coverage` job'ları ≤ 30 dk.
 
 ---
 
@@ -964,7 +977,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 >
 > **Güncelleme (Samet, 2026-11-15):** İnceleme sonrası `ci.yml` sertleştirildi: Rust araç zinciri 1.100'e sabitlendi (yeni stable'ın `clippy -D warnings`'i kod değişmeden kırmasını önler), job zaman aşımları eklendi, kapsam kapısı %80'den **%90**'a çıkarıldı (ölçülen satır kapsamı %94,7), kapı kırmızı olsa da kapsam özeti yazdırılıyor. GitHub'da yeşil tik henüz doğrulanmadı (repo özel); doğrulanınca kutu işaretlenecek.
 >
-> **Süre bütçesi (Samet, 2026-11-15):** CI'ın en çok 30 dk'da bitmesi için ölçülenler, ölçülmeyenler ve iki kişiye eşit bölünmüş iki iş paketi (A: Rust hattı, B: web ve tetikleyiciler) `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` içinde. `coverage` job'unun `timeout-minutes` değeri 40 olduğundan hedefin üstünde; B2 işi bunu 30'a çeker.
+> **Süre bütçesi (Samet, 2026-11-15):** CI'ın en çok 30 dk'da bitmesi için ölçülenler, ölçülmeyenler ve iki kişiye eşit bölünmüş iki iş paketi `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` içinde: Paket A (Rust hattı) = Görkem, görev **G13**; Paket B (web ve tetikleyiciler) = Samet, görev **S14**. `coverage` job'unun `timeout-minutes` değeri 40 olduğundan hedefin üstünde; S14'ün B2 işi bunu 30'a çeker.
 
 ### [X] S9 — Belirsizlik tabanının kaynakla güncellenmesi
 - **Bekler:** — · **Açar:** S10
@@ -1074,6 +1087,17 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 >   - **Aşama ↔ Referans Eşleme Tablosu:** Her 7 aşama koddaki dosya/parametre dayanağı ve doğrulanmış APA 7 akademik kaynaklarıyla eşlendi (19 tam künye).
 >   - **32 Makalelik Envanter ve Doğrulanması Gereken İddialar:** Makale 04 bulguları dahil güncellendi.
 > - **Frontend entegrasyonu (`web/src/content/references.ts`):** Tüm referanslar doğrulanmış APA 7 künyeleri ve DOI bağlantılarıyla `complete: true` olarak frontend'e aktarıldı, typecheck ve 42 test suite'i başarıyla geçti.
+
+### [ ] S14 — CI süre bütçesi: web, tetikleyiciler ve doğrulama (Paket B)
+- **Bekler:** — · **Açar:** —
+- Amaç: G13 ile aynı hedef, iş bölüşümünün diğer yarısı (Paket B = Samet). Ayrıntı: `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5–§7.
+  - **B1** (10 dk): Web job'ını ölç; `npm` önbelleği isabeti, `npm ci`, `typecheck`, `test`, `build` süreleri (toplam 5 dk altı beklenir)
+  - **B2** (10 dk): Bütün job'larda `timeout-minutes` en çok 30 olsun (`coverage` şu an 40 → 30)
+  - **B3** (20 dk): Yalnız belge değişen push ve PR'larda CI'ı atla (`paths-ignore`: `docs/**`, `**/*.md`, `GOREVLER.md`); `data/**` ve `web/**` filtreye girmez, çünkü web `data/case-study/turkey/stats.json` dosyasını içe aktarır
+  - **B4** (15 dk): "Kırmızı CI" sorun giderme tablosunu (rapor §7) doğrula ve tamamla
+- **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `on:` ve `web` blokları. Görkem `rust` ve `coverage` bloklarına dokunur.
+- **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket B
+- **Bitti sayılır:** B1–B4 tamam; rapor §6 web satırı dolu; `ci.yml`'de en büyük `timeout-minutes` 30 ve `actionlint` temiz; yalnız `docs/` değişen commit'te CI çalışmıyor, `crates/` ya da `data/` değişince çalışıyor. S5 kutusu, GitHub'da yeşil bir koşu görüldüğünde ayrıca kapanır.
 
 ---
 
@@ -1360,9 +1384,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 | Kişi | Görev sayısı | Tamamlanan | Açık | Ağırlık | Odak |
 |------|-------------|------------|------|---------|------|
-| Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
+| Görkem | 13 (G1–G13) | 10 (`G1–G4, G7–G12`) | 3 (`G5, G6, G13`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon, CI Rust hattı süre bütçesi |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 11 (`S1–S4, S6–S11, S13`) | 2 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Samet | 14 (S1–S14) | 11 (`S1–S4, S6–S11, S13`) | 3 (`S5, S12, S14`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
 | Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 13 (`K1–K13`) | 1 (`K14`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
