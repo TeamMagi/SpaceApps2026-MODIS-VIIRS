@@ -22,7 +22,7 @@ PyroSync implements a seven-stage harmonization pipeline built in **Rust** for p
 3. **MODIS Fleet Consolidation** — Merge Terra/Aqua observations of the same fire within a **180-minute** window
 4. **VIIRS Fleet Consolidation** — Merge SNPP/NOAA-20/NOAA-21 observations within a **60-minute** window
 5. **H3-Indexed Cross-Sensor Matching** — Index detections onto **H3 resolution 8** hexagons and match MODIS and VIIRS within 2 km (k-ring 3 lookup) and **180 minutes** (across 26,505 co-located live pairs, zero fell below 30 min; min 34 min, median ~158 min). Every VIIRS pixel is assigned to its nearest MODIS footprint, and all VIIRS pixels of one pass inside that footprint are summed into a single `Matched` record (1 MODIS = N VIIRS, FRP adds up). `Matched` means dual-sensor observation of the same fire event, not simultaneous overpass
-6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events, retain unmatched detections from both sensors, and apply a per-record VZA correction to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA). MODIS FRP is **multiplied** by the nadir-normalized ratio of Zheng et al. (2026), `R_rel(θ) = 0.2017θ² + 0.0168θ + 1.0` (θ in radians), so the correction raises off-nadir FRP rather than lowering it
+6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events by default (see [Harmonization Models](#harmonization-models) for the alternatives), retain unmatched detections from both sensors, and apply a per-record VZA correction to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA). MODIS FRP is **multiplied** by the nadir-normalized ratio of Zheng et al. (2026), `R_rel(θ) = 0.2017θ² + 0.0168θ + 1.0` (θ in radians), so the correction raises off-nadir FRP rather than lowering it
 7. **Monthly Calendar & Effort Normalization (Ω)** — Aggregate detections into a monthly activity calendar and normalize counts against the MODIS reference channel using an empirically measured effort factor **Ω**. Each month also reports `total_frp` and `frp_per_detection_eq` (MODIS-equivalent FRP per normalized detection), the metric that stays continuous across the 2012 VIIRS transition. Before VIIRS, cell totals are scaled by a measured latitude-band completeness factor `k_c` (1.11 / 1.18 / 1.28)
 
 ### Effort Normalization (Ω)
@@ -36,6 +36,27 @@ As the satellite fleet expands (SNPP in 2012, NOAA-20 in 2018, NOAA-21 in 2023),
 The key demo feature: users can switch between raw multi-sensor data (showing the sensor cliff and biases) and the harmonized view (showing a consistent timeline) — making the problem and solution visible in a single action.
 
 In harmonized mode, the burning calendar tooltip leads with `frp_per_detection_eq` (MODIS-equivalent FRP per detection) and shows total FRP with its likely range. The native-pixel `mean_frp` is shown only as a secondary detail, because it drops at the 2012 VIIRS transition.
+
+### Harmonization Models
+
+The Settings drawer lets users compare three ways of fusing a matched MODIS/VIIRS record:
+
+- **Standard (VIIRS-preferred)**: the default pipeline. Matched records take the VIIRS FRP.
+- **Equal-weight**: matched records average the VZA-corrected MODIS FRP and the record's VIIRS FRP (the pass sum), and sit at the midpoint of the two positions.
+- **MODIS-calibrated**: MODIS is the reference sensor. Matched records take the VZA-corrected MODIS FRP and position. VIIRS-only detections below the MODIS nadir 50% detection limit are dropped, because MODIS could not have seen them.
+
+The drawer shows how the selected model differs from Standard (record count, total FRP and dropped detections). The choice is kept in the URL hash (`fm=eq|mc`), so shared links reopen with the same model, and "Reset to defaults" clears it. The model is applied after harmonization as a view option. It is not part of the pipeline configuration, so precomputed results stay valid. Like the threshold overrides, it changes only the selected month's map points and stage counts. The yearly chart and calendar stay on the Standard model. Demo mode applies the same models to the synthetic data on the client.
+
+### 60-Second Guided Tour
+
+The "60-s tour" button in the bottom bar (or the `T` key) starts a four-step guided tour that follows the jury demo script. Each step lasts 15 seconds and highlights the related panels:
+
+1. **Raw ↔ Harmonized**: the app opens in Raw, then switches to Harmonized after 5 seconds.
+2. **Footprint Lens**: explains how one MODIS pixel contains many VIIRS pixels, and how their detection thresholds differ.
+3. **Policy case**: switches to China in 2018 for the straw-burning ban case study (`docs/VAKA_CIN_ANIZ.md`).
+4. **Live validation**: opens `#/methods/limits` with the placebo and leave-one-year-out results (`docs/DOGRULAMA_PAKETI.md`).
+
+The tour advances on its own and can be paused, stepped back or forward with the arrow keys, or closed with `Esc`.
 
 ### Methods Page
 
@@ -86,6 +107,7 @@ tools/              Utility scripts (archive verification, data fetching)
 | `GET /api/compare` | Raw versus harmonized statistics for the same query; `vza.mean_frp_adjustment_pct` is the mean VZA change to MODIS FRP (positive = increase) |
 | `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
 | `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox); cells carry `total_frp`, `frp_per_detection_eq`, `mean_frp` and their `_lower`/`_upper` bounds |
+| `GET /api/points` | Raw and harmonized points of one archive region and period (`region`, `year`, optional `month`, `limit`, `min_confidence`, threshold overrides, and `fusion_model=viirs_preferred\|equal_weight\|modis_calibrated`); non-default models add a `fusion_comparison` against Standard. Details in `docs/API.md` |
 | `GET /api/export` | Download harmonized hotspots as a file (same query as `/api/harmonize` plus `format=csv\|geojson`, default `csv`) |
 
 - Responses include an `X-Cache: HIT|MISS` header.
