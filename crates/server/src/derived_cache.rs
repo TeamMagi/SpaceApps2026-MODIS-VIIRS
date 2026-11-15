@@ -20,7 +20,7 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 // v4: MonthEntry adds mean_frp, mean_frp_lower, and mean_frp_upper.
 // v5: YearEntry adds viirs_aggregated (1 MODIS = N VIIRS matching).
 // v6: Matched FRP intervals combine summed VIIRS pixels in quadrature (monthly mean_frp_* change).
-// v7: VIIRS pass sums limited to the MODIS footprint; multi-VIIRS FRP on a single-VIIRS ruler.
+// v7: VIIRS pass sums limited to the MODIS scan/track footprint.
 pub const DERIVED_SCHEMA_VERSION: u32 = 7;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
