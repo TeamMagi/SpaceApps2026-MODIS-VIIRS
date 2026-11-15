@@ -222,8 +222,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | G11 | Yeni metriklerin süreklilik analizi | Görkem | R10, K11 | G12 | [X] |
 | G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [X] |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1, G12, R12 [X]; Y8 bekliyor) |
-| G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
-| G13 | CI süre bütçesi: Rust hattı (en çok 30 dk) | Görkem | — | — | [ ] |
+| G6 | Final entegrasyon + deployment | Görkem | G5 | — | [X] teknik entegrasyon ve teslim paketi hazır |
+| G13 | CI süre bütçesi: Rust hattı (en çok 30 dk) | Görkem | — | — | [X] üç ardışık gerçek CI koşusu yeşil |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
 | C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | [X] |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [X] |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G1–G4 ve G7–G12 tamamlandı. Açık: G5 (yalnız `Y8` bekliyor; `R5, C8, C11, Y1, G12, R12` tamamlandı) ve G6 (final precompute + teslim).
+- **Görkem:** G1–G4 ve G6–G13 tamamlandı (12 görev). Açık: G5 (yalnız `Y8` bekliyor; `R5, C8, C11, Y1, G12, R12` tamamlandı). G6 teknik entegrasyonu, kullanıcının doğrudan talebiyle G5'i beklemeden kapatıldı; sunum/video G5'te kalır.
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
@@ -545,7 +545,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** demo senaryosu yazıldı; canlı demo 3 dakika içinde sorunsuz çalışıyor.
 - **Not (Can → Görkem, 2026-11-15, C11 bulgusu):** Harmonize `total_frp` Ω'ya bölünmediği için filo sıçramasını taşımaya devam ediyor: Çin serisinde ham MODIS FRP'ye oranı 2012'de `+%28`, 2018 NOAA-20 girişinde `+%31` sıçrıyor (aynı dönemde S-NPP/MODIS oranı yalnız `+%6`). Sunumda ve canlı demoda başlık metriği olarak `count_normalized` kullanılmalı; `total_frp` grafikleri bu uyarıyla gösterilmeli. Ayrıntı: `docs/VAKA_CIN_ANIZ.md`, `docs/vaka/china_ban_summary.json`. Pipeline tarafında `total_frp` için efor normalizasyonu ayrı bir görev olarak değerlendirilebilir.
 
-### [ ] G6 — Final entegrasyon + deployment
+### [X] G6 — Final entegrasyon + deployment
 - **Bekler:** G5 · **Açar:** —
 - Tüm parçaların bir araya gelmesi:
   - Frontend build (`npm run build`) → Axum static file serving
@@ -559,7 +559,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 - **Paket yenilemesi (2026-11-15):** Tamamlanan precompute koşusu 238/238 bölgeyi hatasız üretti (7857,67 sn). 476 seri/metadata dosyası ve iki kapsam dosyası `data/derived` altına kopyalandı; tüm bölgelerde şema `10`, config özeti `dd7b6c98ca9b9963`, gövde checksum'ları ve 10095 kaynak arşiv dosyası boyutu doğrulandı. Boş bir yazılabilir türetilmiş önbellekle başlatılan yerel sunucuda 14 smoke kontrolü PASS (0 FAIL, 0 SKIP); 238 bölgenin tamamı hazır, Kıbrıs ve Brezilya serileri `X-Series-Source: bundled` ile sunuluyor. `cargo test --workspace`, frontend typecheck, 76 frontend testi ve production build geçti. Smoke testi `SMOKE_EXPECT_LIVE=0` ile anahtarsız 503 davranışını doğruladı; canlı FIRMS erişimi bu koşuda sınanmadı. G5/demo ve submission teslimi bu paket yenilemesinin dışında kaldığından G6 kutusu açık tutuldu.
 
-### [ ] G13 — CI süre bütçesi: Rust hattı (Paket A)
+- **Kapanış (2026-11-15):** Kullanıcının G6'yı şimdi tamamlama talebiyle G5 bekleme sırası teknik entegrasyon için kaldırıldı. Güncel Docker build'i ve yerel deployment başarılı; konteyner içinden smoke sonucu **14 PASS, 0 FAIL, 0 SKIP**, canlı FIRMS isteği HTTP 200. Ayrı 3016 portunda `cargo run -p pyrosync-server --locked`, frontend ve backend'i tek süreçte açtı; boş yazılabilir önbellekle ikinci smoke **14 PASS**, Kıbrıs/Brezilya serileri `bundled` kaynaktan sunuldu, anahtarsız canlı uç 503 döndü. Docker `precompute` 238 geçerli sonucu doğrulayıp atladı, 0 hata (15,92 sn). 737 Rust testi geçti (2 ignore), clippy `--all-targets -D warnings`, frontend typecheck, 76 web testi ve production build başarılı. Kaynaklar, gerçek LFS görselleri, `web/dist`, hazır sonuçlar ve SHA-256 manifesti içeren `.cache/release/pyrosync-submission.zip` üretildi ve dosya dosya doğrulandı; anahtarlar ve ham arşiv pakete alınmadı. Çalıştırma ve teslim ayrıntıları: [G6_TESLIM.md](docs/G6_TESLIM.md). Sunum/video ve yarışma portalına gönderim G5 kapsamında ayrı kalır.
+
+### [X] G13 — CI süre bütçesi: Rust hattı (Paket A)
 - **Bekler:** — · **Açar:** —
 - Amaç: CI'ın en uzun job'ı en çok **30 dk**'da bitsin. İş iki kişiye eşit bölündü: Paket A = Görkem (bu görev), Paket B = Samet (S14). Ayrıntı ve ölçüm tablosu: `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5–§6.
   - **A1** (5 dk): `cargo check` adımını kaldır; `clippy --all-targets` aynı hedefleri zaten derler
@@ -569,6 +571,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `rust` ve `coverage` blokları. Samet `on:` ve `web` bloklarına dokunur; her değişiklikten önce `git pull --rebase`.
 - **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket A
 - **Bitti sayılır:** A1–A4 tamam; rapor §6 tablosunda Rust satırları dolu ve A3 kararı yazılı; üst üste 3 CI koşusunda `rust` ve `coverage` job'ları ≤ 30 dk.
+- **Kapanış (2026-11-15):** Actions API ve indirilen job loglarıyla üç ardışık gerçek koşu doğrulandı: [#65](https://github.com/TeamMagi/SpaceApps2026-MODIS-VIIRS/actions/runs/43756377651), [#66](https://github.com/TeamMagi/SpaceApps2026-MODIS-VIIRS/actions/runs/43757124772), [#67](https://github.com/TeamMagi/SpaceApps2026-MODIS-VIIRS/actions/runs/43757588852). `rust` süreleri 92/115/120 sn, `coverage` 91/88/89 sn; üçü de yeşil ve ≤ 30 dk. Her koşuda iki ayrı cache anahtarı için `Cache restored successfully` ve `full match: true` görüldü; job kimliğinin sağladığı ayrım nedeniyle ek `key` girdisi gerekmedi. İlk iki gerçek coverage süresi 20 dakikanın altında olduğundan A3 kararı çift test yürütmesini korumak. Üç koşunun tüm adım süreleri, ısınmış önbellek bilgisi ve kaynak bağlantıları rapor §6'ya yazıldı. A1–A4 ve kapanış şartı sağlandı. Aşağıdaki Samet notu önceki ara durumu anlatır.
 - **Durum (Samet, 2026-11-15):** Bu paket Görkem yerine Samet tarafından yapıldı. A1 (`cargo check` kaldırıldı), A2 (`cache-on-failure: true`; rust-cache anahtarı job kimliğini zaten içerir) ve A3 (karar: çift test yürütmesi korunur, çünkü soğuk önbellekle `rust` 136–158 sn, `coverage` 100–107 sn) tamamlandı. A4 yerel soğuk provayla yapıldı (temiz Linux klonu, 2 CPU / 7 GB); GitHub'daki gerçek koşular (#63–#65) toplam 1 dk 36 sn ile 2 dk 15 sn sürdü (`docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §6); job bazlı süreler tabloda eksik. Kutu, üst üste 3 gerçek koşu ≤ 30 dk görülene kadar açık.
 
 ---
@@ -1390,7 +1393,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 | Kişi | Görev sayısı | Tamamlanan | Açık | Ağırlık | Odak |
 |------|-------------|------------|------|---------|------|
-| Görkem | 13 (G1–G13) | 10 (`G1–G4, G7–G12`) | 3 (`G5, G6, G13`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon, CI Rust hattı süre bütçesi |
+| Görkem | 13 (G1–G13) | 12 (`G1–G4, G6–G13`) | 1 (`G5`) | Orta-ağır | Teknik entegrasyon, hazır sonuçlar, teslim paketi ve CI süre bütçesi tamamlandı; sunum G5'te |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 14 (S1–S14) | 12 (`S1–S11, S13`) | 2 (`S12, S14`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
