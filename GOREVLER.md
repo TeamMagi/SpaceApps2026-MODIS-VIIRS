@@ -529,6 +529,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Son testler ve bug fix'ler
   - Submission paketleme
 - **Bitti sayılır:** `cargo run -p pyrosync-server` ile backend + frontend tek process'te ayağa kalkıyor; jüri demo'yu sorunsuz görebilir.
+- **Not (2026-11-15, ekip kararı):** Hazır sonuçlar (`data/derived`) geliştirme boyunca yeniden üretilmiyor. G6'nın son adımı: tüm config/şema değişiklikleri `main`'e girdikten sonra Görkem (arşiv bu makinede) `make precompute` → `make bundle-derived` çalıştırır, `data/derived`'ı commit'ler ve `make smoke` ile 14 kontrolün tamamının PASS olduğunu doğrular.
 
 ---
 
@@ -759,6 +760,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P5, Yol Haritası #3 (+ `[01, 02, 03, 14, 23]`, `flare-chronos`, `FireHarmonize`)
 - **Bitti sayılır:** aynı MODIS ayak izindeki çoklu VIIRS alt-pikselleri tek `Matched` kaydında toplanıyor (`ViirsOnly` artığı kalmıyor); birim testleri ve canlı/arşiv veride `Matched` FRP toplamı doğrulanıyor.
 - **Durum (Serhat, 2026-11-15):** Kod yazıldı ve birim testleri geçiyor. Henüz `main`'e alınmadı, Serhat'ın makinesindeki yerel `r10-footprint-aggregation` branch'inde duruyor. Sebep: yeni `matching.simultaneous_window_secs` alanı `PipelineConfig` hash'ini değiştiriyor. Bu yüzden repodaki hazır `/api/series` sonuçlarının hepsi (`data/derived/series`) geçersiz sayılıyor; arşivi olmayan biri harita ve takvim verisini göremez. **Gereken:** arşivi olan biri (`make data`) R10 ile `make precompute-local` ve `make bundle-derived` çalıştırmalı, `DERIVED_SCHEMA_VERSION` 3'e çıkarılmalı. Ondan sonra R10 ve yeni hazır sonuçlar birlikte merge edilecek. Arşiv verisiyle `Matched` FRP doğrulaması da o adımda yapılacak.
+- **Güncelleme (Görkem, 2026-11-15):** R10 `main`'e alındı (`23ff7dc`, yazar Serhat); uzak `r10-footprint-aggregation` branch'i silindi. Takip commit'i (`5f6fbdf`): `viirs_aggregated` `/api/series` `years[]` ve `/api/points` `stages` alanlarına eklendi, arayüzde eşleştirme aşaması ve fiş satırı artık `matched + viirs_aggregated` gösteriyor, Methods metni, README, `crates/core/CLAUDE.md`, `docs/API.md`, `.env.example` ve `pyrosync.example.toml` güncellendi. Sadık'ın K11 (aylık `mean_frp*`) değişikliği de şemayı 4'e çıkardığı için birleşik `DERIVED_SCHEMA_VERSION` **5** oldu (Serhat'ın notundaki "3'e çıkar" eski tabana göreydi). Ekip kararıyla (Can, 2026-11-15) precompute + bundle sona bırakıldı; repodaki `data/derived` final adımına kadar bayat kabul ediliyor. Kapanış için kalan: arşiv verisinde `Matched` FRP / ViirsOnly değişiminin doğrulanması. İnceleme bulguları: toplam kayıtlarda `1/√n_obs` belirsizlik ölçeklemesi eşitsiz piksellerde aralığı fazla daraltıyor (ayrı commit ile düzeltiliyor); 2 km yarıçapın geniş cephelerde `Matched` FRP'yi MODIS ayak izine göre şişirip şişirmediği arşiv doğrulamasında ölçülecek.
 
 ### [X] R11 — Seed-anchored zaman penceresi
 - **Bekler:** — · **Açar:** —

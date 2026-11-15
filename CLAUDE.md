@@ -29,8 +29,9 @@
 - Görev metinleri silinmez veya kısaltılmaz; kapanış ve durum bilgisi görevin altına not olarak eklenir.
 
 ### Hazır Sonuçlar (data/derived) Kuralı
-- Harmonizasyon davranışını veya ayarlarını (`PipelineConfig`, dedup/fleet/matching/VZA/kalibrasyon/belirsizlik/maske mantığı) ya da `DERIVED_SCHEMA_VERSION`'ı değiştiren her commit'ten sonra repodaki hazır sonuçlar geçersiz olur. Aynı iş kapsamında `make precompute` → `make bundle-derived` çalıştırılır ve `data/derived` commit'lenir.
-- Push öncesi çalışan sunucuya karşı `make smoke` koşulur; 3. kontrol "238 precomputed" göstermiyorsa hazır sonuçlar bayattır.
+- Harmonizasyon davranışını veya ayarlarını (`PipelineConfig`, dedup/fleet/matching/VZA/kalibrasyon/belirsizlik/maske mantığı) ya da `/api/series` şemasını değiştiren commit'ler `DERIVED_SCHEMA_VERSION`'ı artırır (sürüm geçmişi `crates/server/src/derived_cache.rs` içinde yorum olarak tutulur); bu, repodaki hazır sonuçları geçersiz kılar.
+- **Ekip kararı (2026-11-15):** Geliştirme sürerken her değişiklikte `make precompute` (~1,5 saat) çalıştırılmaz; `data/derived` final entegrasyona (G6) kadar bayat kalabilir ve config değişiklikleri bunu beklemeden `main`'e alınır. Final adımında arşivi olan tek bir kişi `make precompute` → `make bundle-derived` çalıştırır ve `data/derived`'ı commit'ler. Arada başka biri `data/derived` üretip commit'lemez.
+- Bu ara dönemde `make smoke`'un 3. kontrolü ("238 precomputed") beklenen şekilde FAIL verir; diğer kontroller geçmelidir. Final adımından sonra 14 kontrolün tamamı PASS olmalıdır.
 
 ### Güvenlik
 - `.env` dosyaları commit edilmez, `.env.example` şablon olarak tutulur.
