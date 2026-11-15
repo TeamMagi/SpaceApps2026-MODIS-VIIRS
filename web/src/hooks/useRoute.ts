@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { DEFAULT_PIPELINE_CONFIG } from "../lib/pipelineOverrides";
 import { parseRoute, type Route } from "../lib/route";
+import { getPanel } from "../lib/dockPanel";
 import { serializeHash } from "../lib/urlState";
 import { useAppStore } from "../store/useAppStore";
 
@@ -27,6 +28,7 @@ export function dashboardHashFromStore(): string {
   return serializeHash(
     {
       region: s.region,
+      panel: getPanel(),
       mode: s.mode,
       month: s.selectedMonth,
       lang: s.lang,

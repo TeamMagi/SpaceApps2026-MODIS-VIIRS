@@ -1,20 +1,28 @@
 .controlsWrap {
   position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
+  right: 12px;
+  bottom: 56px;
   z-index: calc(var(--z-map-overlay) + 1);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  max-width: calc(100% - 2 * var(--space-1));
+  max-width: calc(100% - 24px);
+}
+
+@media (min-width: 640px) {
+  .controlsWrap {
+    bottom: 44px;
+  }
 }
 
 .controls {
   display: inline-flex;
-  align-items: stretch;
-  background: var(--color-surface-raised);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  background: rgba(13, 15, 19, 0.94);
+  border: 1px solid #313846;
+  border-radius: 10px;
   box-shadow: var(--shadow-raised);
   max-width: 100%;
 }
@@ -23,15 +31,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0 var(--space-1);
+  width: 32px;
+  height: 32px;
+  padding: 0;
   background: transparent;
   border: none;
-  border-right: var(--border-width) solid var(--color-border-subtle);
+  border-top: 1px solid #313846;
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: var(--font-size-md);
+  font-size: 14px;
   font-weight: var(--font-weight-semibold);
   line-height: 1;
   cursor: pointer;
@@ -40,14 +48,15 @@
 
 @media (pointer: coarse) {
   .button {
-    min-width: 44px;
-    min-height: 44px;
+    width: 44px;
+    height: 44px;
   }
 }
 
 .controls > .button:first-child {
-  border-top-left-radius: calc(var(--radius-md) - 1px);
-  border-bottom-left-radius: calc(var(--radius-md) - 1px);
+  border-top: none;
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
 }
 
 .helpWrap {
@@ -57,17 +66,27 @@
 }
 
 .helpWrap > .button {
-  border-right: none;
-  border-top-right-radius: calc(var(--radius-md) - 1px);
-  border-bottom-right-radius: calc(var(--radius-md) - 1px);
+  border-top: 1px solid #313846;
 }
 
 .fitButton {
-  font-family: var(--font-sans);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  width: auto;
+  height: 32px;
+  min-width: 32px;
   padding: 0 var(--space-1);
+  border-top: 1px solid #313846;
+  border-bottom-left-radius: 9px;
+  border-bottom-right-radius: 9px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .fitButton {
+    height: 44px;
+  }
 }
 
 .button:hover:not(:disabled) {
@@ -96,8 +115,9 @@
 
 .popover {
   position: absolute;
-  top: calc(100% + var(--space-half));
-  right: 0;
+  top: auto;
+  bottom: 0;
+  right: calc(100% + var(--space-1));
   z-index: var(--z-popover);
   min-width: 220px;
   max-width: min(280px, calc(100vw - 2 * var(--space-2)));

@@ -2,46 +2,43 @@
   display: flex;
   flex-direction: column;
   max-height: 100%;
-  background: var(--color-surface-raised);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: rgba(13, 15, 19, 0.95);
+  border: 1px solid #313846;
+  border-radius: 12px;
   box-shadow: var(--shadow-raised);
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   line-height: var(--line-height-snug);
   color: var(--color-text);
-  max-width: min(268px, calc(100vw - 2 * var(--space-2)));
+  width: max-content;
+  max-width: min(300px, calc(100vw - 2 * var(--space-2)));
 }
 
-.header {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
+.legend[data-open="true"] {
+  width: 300px;
 }
 
 .toggleButton {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-1);
+  gap: 8px;
   flex-shrink: 0;
-  min-width: 44px;
-  min-height: 30px;
-  padding: var(--space-half) var(--space-1);
+  min-height: 32px;
+  padding: 4px 10px;
   background: transparent;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   font-weight: var(--font-weight-semibold);
+  text-align: left;
   cursor: pointer;
   transition: background var(--dur-ui) var(--ease-standard);
 }
 
-@media (pointer: coarse) {
-  .toggleButton {
-    min-height: 44px;
-  }
+.toggleLabel {
+  flex: 1;
+  white-space: nowrap;
 }
 
 .toggleButton:hover {
@@ -53,18 +50,30 @@
   outline-offset: -2px;
 }
 
+.badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-accent, #f26a1b);
+  color: #0d0f13;
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.preview {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 48px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
 .chevron {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   line-height: 1;
-}
-
-.filterHint {
-  margin: 0;
-  padding: 0 var(--space-1) var(--space-half);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-2xs);
-  line-height: var(--line-height-tight);
 }
 
 .body {
@@ -72,308 +81,53 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--space-half) var(--space-1) var(--space-1);
   border-top: var(--border-width) solid var(--color-border-subtle);
 }
 
-.rawSection,
-.harmonizedSection,
-.ringsSection {
-  display: grid;
-  grid-template-rows: 1fr;
-  opacity: 1;
-  visibility: visible;
-  transition:
-    grid-template-rows var(--dur-ui) var(--ease-standard),
-    opacity var(--dur-ui) var(--ease-standard),
-    visibility 0s;
-}
-
-.legend[data-harmonized="true"] .rawSection {
-  grid-template-rows: 0fr;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    grid-template-rows var(--dur-ui) var(--ease-standard),
-    opacity var(--dur-ui) var(--ease-standard),
-    visibility 0s linear var(--dur-ui);
-}
-
-.legend[data-harmonized="false"] .harmonizedSection {
-  grid-template-rows: 0fr;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    grid-template-rows var(--dur-ui) var(--ease-standard),
-    opacity var(--dur-ui) var(--ease-standard),
-    visibility 0s linear var(--dur-ui);
-}
-
-.legend[data-harmonized="false"][data-rings="false"] .ringsSection {
-  grid-template-rows: 0fr;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    grid-template-rows var(--dur-ui) var(--ease-standard),
-    opacity var(--dur-ui) var(--ease-standard),
-    visibility 0s linear var(--dur-ui);
-}
-
-.collapsibleInner {
-  overflow: hidden;
-  min-height: 0;
-}
-
-.sensorGroup {
+.section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-half);
-  padding-bottom: var(--space-half);
+  gap: 6px;
+  padding: 10px 12px;
 }
 
-.sensorChip {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  width: 100%;
-  min-height: 28px;
-  padding: 2px var(--space-1);
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--dur-ui) var(--ease-standard),
-    border-color var(--dur-ui) var(--ease-standard),
-    color var(--dur-ui) var(--ease-standard);
+.section + .section {
+  border-top: 1px solid rgba(49, 56, 70, 0.7);
 }
 
-@media (pointer: coarse) {
-  .sensorChip {
-    min-height: 44px;
-  }
-}
-
-.sensorChip:hover {
-  background: var(--color-hover);
-  border-color: var(--color-border-strong);
-}
-
-.sensorChip:active {
-  background: var(--color-active);
-}
-
-.sensorChip:focus-visible {
-  outline: 2px solid var(--map-focus, var(--color-focus));
-  outline-offset: 1px;
-}
-
-.sensorChip[aria-pressed="false"] {
-  background: var(--color-surface-sunken);
-  border-color: var(--color-border-subtle);
-  border-style: dashed;
-  color: var(--color-text-secondary);
-}
-
-.sensorChip[aria-pressed="false"] .markWrap {
-  opacity: 0.45;
-}
-
-.sensorChip[aria-pressed="false"] .markWrap::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 14px;
-  height: 1.5px;
-  background: var(--color-text-secondary);
-  transform: rotate(-30deg);
-}
-
-.sensorChip[aria-pressed="false"] .sensorLabel {
-  text-decoration: line-through;
-  text-decoration-color: var(--color-text-muted);
-}
-
-.sensorLabel {
-  min-width: 0;
-}
-
-.harmonizedBlock {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-half);
-  padding-bottom: var(--space-half);
-}
-
-.row,
-.ringRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--color-text);
-}
-
-.ringRow {
-  padding-bottom: var(--space-half);
-}
-
-.markWrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  transition: opacity var(--dur-ui) var(--ease-standard);
-}
-
-.modis {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.6px solid var(--map-modis, var(--color-sensor-modis));
-}
-
-.viirs {
-  width: 7px;
-  height: 7px;
-  background: var(--map-viirs, var(--color-sensor-viirs));
-}
-
-.harmonizedDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--frp-6);
-  border: var(--border-width) solid var(--map-halo-light, var(--color-bg));
-}
-
-.ring {
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  border: 1.25px dashed var(--map-duplicate-ring, var(--color-duplicate-ring));
-}
-
-/*
- * On the globe the marks sit on satellite imagery: a bright "on imagery" fill (the lighter of
- * --map-ink / --map-halo-light) inside a dark casing, and FRP discs with a glow in their own
- * colour. The swatches mirror that; the flat map keeps the plain marks above.
- */
-:global([data-surface="globe"]) .legend {
-  --mark-fill: var(--map-ink);
-  --mark-casing: var(--map-halo-light);
-}
-
-:global(:root[data-theme="light"]) :global([data-surface="globe"]) .legend {
-  --mark-fill: var(--map-halo-light);
-  --mark-casing: var(--map-ink);
-}
-
-:global([data-surface="globe"]) .modis {
-  width: 10px;
-  height: 10px;
-  border: 2px solid var(--mark-fill);
-  box-shadow:
-    0 0 0 1.25px var(--mark-casing),
-    inset 0 0 0 1.25px var(--mark-casing),
-    0 0 3px 1px var(--mark-casing);
-}
-
-:global([data-surface="globe"]) .viirs {
-  width: 8px;
-  height: 8px;
-  background: var(--mark-fill);
-  box-shadow:
-    0 0 0 1.25px var(--mark-casing),
-    0 0 3px 1px var(--mark-casing);
-}
-
-:global([data-surface="globe"]) .ring {
-  border: 1.5px dashed var(--mark-fill);
-  box-shadow:
-    0 0 0 1px var(--mark-casing),
-    inset 0 0 0 1px var(--mark-casing);
-}
-
-:global([data-surface="globe"]) .harmonizedDot {
-  border-color: var(--mark-casing);
-  box-shadow: 0 0 4px 1px var(--frp-6);
-}
-
-:global([data-surface="globe"]) .ramp {
-  overflow: visible;
-  border-color: var(--mark-casing);
-}
-
-:global([data-surface="globe"]) .swatch:first-child {
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-}
-
-:global([data-surface="globe"]) .swatch:last-child {
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-
-/* The glow grows with the bucket, as on the globe. */
-:global([data-surface="globe"]) .swatch[data-bucket="6"] {
-  position: relative;
-  box-shadow: 0 0 3px 0 var(--frp-6);
-}
-
-:global([data-surface="globe"]) .swatch[data-bucket="7"] {
-  position: relative;
-  box-shadow: 0 0 4px 1px var(--frp-7);
-}
-
-:global([data-surface="globe"]) .swatch[data-bucket="8"] {
-  position: relative;
-  box-shadow: 0 0 5px 1px var(--frp-8);
-}
-
-.frpSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-half);
-}
-
-.frpHeader {
+.sectionHead {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
 }
 
-.title {
+.sectionTitle {
   margin: 0;
   color: var(--color-text);
+  font-size: 12px;
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-xs);
 }
 
-.paletteMeta {
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
+.meta {
+  color: var(--color-text-muted);
   font-size: var(--font-size-2xs);
   white-space: nowrap;
+}
+
+.note {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-tight);
 }
 
 .ramp {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  height: 8px;
-  border-radius: var(--radius-sm);
+  height: 10px;
+  border-radius: 5px;
   overflow: hidden;
-  border: var(--border-width) solid var(--color-border);
 }
 
 .swatch {
@@ -430,31 +184,247 @@
   content: "";
 }
 
-.rangeRow {
+.chipRow {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 2px 10px 2px 6px;
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--dur-ui) var(--ease-standard),
+    border-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--color-active);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.chip[aria-pressed="false"] .markWrap {
+  opacity: 0.45;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.chip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.chip:focus-visible,
+.segmentButton:focus-visible,
+.resetButton:focus-visible,
+.slider:focus-visible {
+  outline: 2px solid var(--map-focus, var(--color-focus));
+  outline-offset: 1px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2xs);
+}
+
+.rangeWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--color-accent, #f26a1b);
+}
+
+.value {
+  min-width: 64px;
+  text-align: right;
   font-family: var(--font-mono);
   font-size: var(--font-size-2xs);
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
+  color: var(--color-text);
 }
 
-.dotNote {
-  margin: 0;
+.segment {
+  display: flex;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.segmentButton {
+  flex: 1;
+  min-height: 26px;
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
   color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+.segmentButton + .segmentButton {
+  border-left: var(--border-width) solid var(--color-border);
+}
+
+.segmentButton:hover {
+  background: var(--color-hover);
+}
+
+.segmentButton[aria-pressed="true"] {
+  background: var(--color-active);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.resetButton {
+  align-self: flex-start;
+  padding: 2px 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
   font-size: var(--font-size-2xs);
-  line-height: var(--line-height-tight);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.resetButton:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.resetButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .toggleButton,
+  .chip,
+  .segmentButton,
+  .resetButton {
+    min-height: 44px;
+  }
+
+  .slider {
+    min-height: 44px;
+  }
+}
+
+.ringRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text);
+}
+
+.ringRow[hidden] {
+  display: none;
+}
+
+.markWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: opacity var(--dur-ui) var(--ease-standard);
+}
+
+.modis {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.6px solid var(--map-modis, var(--color-sensor-modis));
+}
+
+.viirs {
+  width: 7px;
+  height: 7px;
+  background: var(--map-viirs, var(--color-sensor-viirs));
+}
+
+.ring {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.25px dashed var(--map-duplicate-ring, var(--color-duplicate-ring));
+}
+
+/*
+ * On the globe the marks sit on satellite imagery: a bright "on imagery" fill (the lighter of
+ * --map-ink / --map-halo-light) inside a dark casing. The flat map keeps the plain marks above.
+ */
+:global([data-surface="globe"]) .legend {
+  --mark-fill: var(--map-ink);
+  --mark-casing: var(--map-halo-light);
+}
+
+:global(:root[data-theme="light"]) :global([data-surface="globe"]) .legend {
+  --mark-fill: var(--map-halo-light);
+  --mark-casing: var(--map-ink);
+}
+
+:global([data-surface="globe"]) .modis {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--mark-fill);
+  box-shadow:
+    0 0 0 1.25px var(--mark-casing),
+    inset 0 0 0 1.25px var(--mark-casing),
+    0 0 3px 1px var(--mark-casing);
+}
+
+:global([data-surface="globe"]) .viirs {
+  width: 8px;
+  height: 8px;
+  background: var(--mark-fill);
+  box-shadow:
+    0 0 0 1.25px var(--mark-casing),
+    0 0 3px 1px var(--mark-casing);
+}
+
+:global([data-surface="globe"]) .ring {
+  border: 1.5px dashed var(--mark-fill);
+  box-shadow:
+    0 0 0 1px var(--mark-casing),
+    inset 0 0 0 1px var(--mark-casing);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .toggleButton,
-  .rawSection,
-  .harmonizedSection,
-  .ringsSection,
-  .sensorChip,
+  .chip,
+  .segmentButton,
   .markWrap {
     transition: none;
   }

@@ -11,6 +11,7 @@ import {
   type RegionId,
   type ViewMode,
 } from "../types";
+import { parsePanel, type PanelId } from "./dock";
 import { monthKey } from "./format";
 import {
   DEFAULT_PIPELINE_CONFIG,
@@ -67,6 +68,7 @@ export interface UrlState {
   overrides?: PipelineOverrides;
   minConfidence: MinConfidence;
   fusionModel?: FusionModel;
+  panel?: PanelId | null;
 }
 
 const FUSION_HASH_VALUES: Readonly<Record<string, FusionModel>> = {
@@ -108,6 +110,8 @@ export function parseHash(hash: string): Partial<UrlState> {
     result.region = trimmed;
     explicitHashRegion = trimmed;
   }
+
+  result.panel = parsePanel(params.get("panel"));
 
   const mode = params.get("mode");
   if (mode === "raw" || mode === "harmonized") result.mode = mode;
@@ -181,6 +185,7 @@ export function serializeHash(
       params.set(spec.hashKey, formatted);
     }
   }
+  if (state.panel) params.set("panel", state.panel);
   const fmCode = FUSION_HASH_CODES[state.fusionModel ?? DEFAULT_FUSION_MODEL];
   if (fmCode) params.set("fm", fmCode);
   if (state.minConfidence && state.minConfidence !== "low") {

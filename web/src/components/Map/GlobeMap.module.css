@@ -25,7 +25,8 @@
   pointer-events: none;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: var(--font-size-2xs);
+  font-size: 10px;
+  opacity: 0.7;
   line-height: var(--line-height-snug);
   text-align: right;
 }
@@ -58,4 +59,3 @@
   width: 14px;
   border-top: var(--border-width) dashed var(--color-text-muted);
 }
-

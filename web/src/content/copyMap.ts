@@ -108,6 +108,9 @@ export const mapCopyEn = {
   mapFootprintExplainRawNone:
     "Raw data: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels. No VIIRS detection falls inside it within ±{window} min at this swath position.",
   mapFootprintRefs: "Pixel sizes [01, 09, 16] · thresholds [16, Conclusions] · flare-chronos sample ratio: {flare}×",
+  mapWorldHint: "Click a country to explore it",
+  mapWorldButton: "World",
+  mapWorldButtonLabel: "Back to the whole Earth",
 } as const;
 
 export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
@@ -218,6 +221,9 @@ export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
   mapFootprintExplainRawNone:
     "Ham veri: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar. Bu tarama konumunda ±{window} dk içinde içine hiçbir VIIRS tespiti düşmüyor.",
   mapFootprintRefs: "Piksel boyutları [01, 09, 16] · eşikler [16, Sonuç] · flare-chronos örnek oranı: {flare}×",
+  mapWorldHint: "Keşfetmek için bir ülkeye tıkla",
+  mapWorldButton: "Dünya",
+  mapWorldButtonLabel: "Tüm Dünya görünümüne dön",
 };
 
 export const MAP_CONTEXT_NAMES_TR: Readonly<Record<string, string>> = {

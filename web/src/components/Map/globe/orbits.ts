@@ -1,20 +1,51 @@
-// Decorative sun-synchronous-looking rings; an illustration, not real satellite tracks.
+// Representative tracks of the five satellites behind the FIRMS data; an illustration, not real ephemerides.
 
 import * as THREE from "three";
 
 const DEG = Math.PI / 180;
 
-const ORBITS = [
-  { radius: 1.13, inclination: 98.2, raan: 20, phase: 0, speed: 0.07 },
-  { radius: 1.15, inclination: 98.7, raan: 75, phase: 2.1, speed: 0.06 },
-  { radius: 1.17, inclination: 98.7, raan: 130, phase: 4.2, speed: 0.065 },
-] as const;
+const MODIS_COLOR = "#ff9a3c";
+const VIIRS_COLOR = "#3fd8e8";
+
+/** Shared visual angular speed (rad/s); every satellite moves alike, only the phases differ. */
+const SPEED = 0.065;
+
+interface PlaneSpec {
+  readonly radius: number;
+  /** Ascending-node longitude (deg). Every plane passes through both poles. */
+  readonly raan: number;
+}
+
+// Five meridian planes, 36° apart (180° / 5), so each satellite gets its own great circle over the poles.
+const PLANES: readonly PlaneSpec[] = [
+  { radius: 1.14, raan: 0 },
+  { radius: 1.14, raan: 36 },
+  { radius: 1.16, raan: 72 },
+  { radius: 1.16, raan: 108 },
+  { radius: 1.16, raan: 144 },
+];
+
+interface SatelliteSpec {
+  readonly name: string;
+  readonly sensor: "modis" | "viirs";
+  readonly plane: number;
+  readonly phase: number;
+}
+
+// Phases are staggered so the craft never bunch up over one pole at the same moment.
+const SATELLITES: readonly SatelliteSpec[] = [
+  { name: "Terra", sensor: "modis", plane: 0, phase: 0 },
+  { name: "Aqua", sensor: "modis", plane: 1, phase: Math.PI * 0.4 },
+  { name: "S-NPP", sensor: "viirs", plane: 2, phase: Math.PI * 0.8 },
+  { name: "NOAA-20", sensor: "viirs", plane: 3, phase: Math.PI * 1.2 },
+  { name: "NOAA-21", sensor: "viirs", plane: 4, phase: Math.PI * 1.6 },
+];
 
 interface Satellite {
-  readonly mesh: THREE.Mesh;
+  readonly anchor: THREE.Group;
+  readonly icon: THREE.Group;
   readonly radius: number;
   angle: number;
-  readonly speed: number;
 }
 
 export interface OrbitColors {
@@ -26,10 +57,10 @@ export interface OrbitColors {
 export class Orbits {
   readonly group = new THREE.Group();
   private readonly lineMaterial: THREE.LineDashedMaterial;
-  private readonly bodyMaterial: THREE.MeshBasicMaterial;
+  private readonly bodyMaterials: Record<"modis" | "viirs", THREE.MeshBasicMaterial>;
   private readonly satellites: Satellite[] = [];
   private readonly geometries: THREE.BufferGeometry[] = [];
-  private lineOpacity = 0.5;
+  private lineOpacity = 0.3;
   private fade = 1;
 
   constructor() {
@@ -40,52 +71,63 @@ export class Orbits {
       transparent: true,
       depthWrite: false,
     });
-    this.bodyMaterial = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
+    this.bodyMaterials = {
+      modis: new THREE.MeshBasicMaterial({ color: MODIS_COLOR, transparent: true, depthWrite: false }),
+      viirs: new THREE.MeshBasicMaterial({ color: VIIRS_COLOR, transparent: true, depthWrite: false }),
+    };
 
-    for (const orbit of ORBITS) {
+    const bodyGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.02);
+    const panelGeometry = new THREE.BoxGeometry(0.058, 0.004, 0.016);
+    this.geometries.push(bodyGeometry, panelGeometry);
+
+    const rings: THREE.Group[] = PLANES.map((plane) => {
       const ring = new THREE.Group();
-      ring.rotation.order = "YXZ";
-      ring.rotation.y = orbit.raan * DEG;
-      ring.rotation.x = (orbit.inclination - 90) * DEG;
+      ring.rotation.y = plane.raan * DEG;
 
       const points: THREE.Vector3[] = [];
       for (let step = 0; step <= 180; step += 1) {
         const angle = (step / 180) * Math.PI * 2;
-        points.push(new THREE.Vector3(orbit.radius * Math.cos(angle), orbit.radius * Math.sin(angle), 0));
+        points.push(new THREE.Vector3(plane.radius * Math.cos(angle), plane.radius * Math.sin(angle), 0));
       }
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const path = new THREE.Line(geometry, this.lineMaterial);
       path.computeLineDistances();
-
-      const bodyGeometry = new THREE.BoxGeometry(0.018, 0.018, 0.018);
-      const panelGeometry = new THREE.BoxGeometry(0.05, 0.003, 0.014);
-      const body = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
-      body.add(new THREE.Mesh(panelGeometry, this.bodyMaterial));
-      body.position.set(orbit.radius * Math.cos(orbit.phase), orbit.radius * Math.sin(orbit.phase), 0);
-
-      this.geometries.push(geometry, bodyGeometry, panelGeometry);
-      ring.add(path, body);
+      this.geometries.push(geometry);
+      ring.add(path);
       this.group.add(ring);
-      this.satellites.push({ mesh: body, radius: orbit.radius, angle: orbit.phase, speed: orbit.speed });
+      return ring;
+    });
+
+    for (const spec of SATELLITES) {
+      const radius = PLANES[spec.plane].radius;
+      const material = this.bodyMaterials[spec.sensor];
+      const icon = new THREE.Group();
+      icon.add(new THREE.Mesh(bodyGeometry, material), new THREE.Mesh(panelGeometry, material));
+
+      const anchor = new THREE.Group();
+      anchor.add(icon);
+      anchor.position.set(radius * Math.cos(spec.phase), radius * Math.sin(spec.phase), 0);
+      icon.rotation.z = spec.phase;
+      rings[spec.plane].add(anchor);
+      this.satellites.push({ anchor, icon, radius, angle: spec.phase });
     }
   }
 
   update(delta: number): void {
     for (const satellite of this.satellites) {
-      satellite.angle += delta * satellite.speed;
-      satellite.mesh.position.set(
+      satellite.angle += delta * SPEED;
+      satellite.anchor.position.set(
         satellite.radius * Math.cos(satellite.angle),
         satellite.radius * Math.sin(satellite.angle),
         0,
       );
-      satellite.mesh.rotation.z = satellite.angle;
+      satellite.icon.rotation.z = satellite.angle;
     }
   }
 
   setColors(colors: OrbitColors): void {
     this.lineMaterial.color.set(colors.line);
-    this.bodyMaterial.color.set(colors.body);
-    this.lineOpacity = colors.dark ? 0.5 : 0.45;
+    this.lineOpacity = colors.dark ? 0.3 : 0.27;
     this.setFade(this.fade);
   }
 
@@ -94,7 +136,8 @@ export class Orbits {
     this.fade = fade;
     this.group.visible = fade > 0.01;
     this.lineMaterial.opacity = this.lineOpacity * fade;
-    this.bodyMaterial.opacity = 0.95 * fade;
+    this.bodyMaterials.modis.opacity = 0.95 * fade;
+    this.bodyMaterials.viirs.opacity = 0.95 * fade;
   }
 
   /** True once the rings are clear enough on screen to warrant their legend note. */
@@ -105,6 +148,7 @@ export class Orbits {
   dispose(): void {
     for (const geometry of this.geometries) geometry.dispose();
     this.lineMaterial.dispose();
-    this.bodyMaterial.dispose();
+    this.bodyMaterials.modis.dispose();
+    this.bodyMaterials.viirs.dispose();
   }
 }

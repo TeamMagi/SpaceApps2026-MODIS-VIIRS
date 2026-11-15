@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getPanel, setPanel, subscribePanel } from "../lib/dockPanel";
 import { DEFAULT_PIPELINE_CONFIG } from "../lib/pipelineOverrides";
 import { isRouteHash } from "../lib/route";
 import { parseHash, serializeHash, syncUrlHash, type UrlState } from "../lib/urlState";
@@ -7,6 +8,7 @@ import { useAppStore, type AppState } from "../store/useAppStore";
 function urlStateOf(state: AppState): UrlState {
   return {
     region: state.region,
+    panel: getPanel(),
     mode: state.mode,
     month: state.selectedMonth,
     lang: state.lang,
@@ -51,18 +53,23 @@ export function useUrlSync(): void {
       }
     });
 
+    const unsubscribePanel = subscribePanel(() => write(useAppStore.getState()));
+
     const onHashChange = () => {
       if (isRouteHash(window.location.hash)) return;
       const state = useAppStore.getState();
       const defaults = state.serverConfig ?? DEFAULT_PIPELINE_CONFIG;
       if (window.location.hash === serializeHash(urlStateOf(state), defaults)) return;
-      state.applyUrlState(parseHash(window.location.hash));
+      const parsed = parseHash(window.location.hash);
+      setPanel(parsed.panel ?? null);
+      state.applyUrlState(parsed);
       write(useAppStore.getState());
     };
     window.addEventListener("hashchange", onHashChange);
 
     return () => {
       unsubscribe();
+      unsubscribePanel();
       window.removeEventListener("hashchange", onHashChange);
     };
   }, []);

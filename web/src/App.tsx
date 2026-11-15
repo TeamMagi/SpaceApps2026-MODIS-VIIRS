@@ -1,19 +1,15 @@
 import { lazy, Suspense } from "react";
 import AppShell from "./components/Layout/AppShell";
 import BottomBar from "./components/BottomBar/BottomBar";
-import BurnCalendar from "./components/Calendar/BurnCalendar";
-import ChartPanel from "./components/Charts/ChartPanel";
+import InsightDock from "./components/Dock/InsightDock";
 import BriefingDrawer from "./components/Drawers/BriefingDrawer";
 import CellDiagnosticDrawer from "./components/Drawers/CellDiagnosticDrawer";
-import MethodsDrawer from "./components/Drawers/MethodsDrawer";
 import SettingsDrawer from "./components/Drawers/SettingsDrawer";
 import GuidedTour from "./components/Tour/GuidedTour";
 import Header from "./components/Header/Header";
 import Headline from "./components/Headline/Headline";
 import MethodsPage from "./components/Methods/MethodsPage";
 import MapStateOverlay from "./components/Map/MapStateOverlay";
-import OrbitalDriftStrip from "./components/OrbitalDrift/OrbitalDriftStrip";
-import PipelineStrip from "./components/Pipeline/PipelineStrip";
 import CountDelta from "./components/Stats/CountDelta";
 import ViewToggle from "./components/Toggle/ViewToggle";
 import { useDataModeProbe } from "./hooks/useDataModeProbe";
@@ -21,6 +17,7 @@ import { useDocumentSync } from "./hooks/useDocumentSync";
 import { useGuidedTour } from "./hooks/useGuidedTour";
 import { useHarmonizeClock } from "./hooks/useHarmonizeTransition";
 import { useRoute } from "./hooks/useRoute";
+import { useAppStore } from "./store/useAppStore";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUrlSync } from "./hooks/useUrlSync";
 
@@ -39,6 +36,7 @@ export default function App() {
   useDocumentSync();
   useGuidedTour();
   const route = useRoute();
+  const worldView = !useAppStore((state) => state.regionPicked);
 
   if (route.name === "methods") {
     return (
@@ -51,23 +49,22 @@ export default function App() {
 
   return (
     <AppShell
+      worldView={worldView}
       header={<Header />}
       headline={<Headline />}
       toggle={<ViewToggle />}
       count={<CountDelta />}
-      pipeline={<PipelineStrip />}
-      drift={<OrbitalDriftStrip />}
       map={
-        <Suspense fallback={<MapStateOverlay state="loading" />}>
-          <HotspotMap />
-        </Suspense>
+        <>
+          <Suspense fallback={<MapStateOverlay state="loading" />}>
+            <HotspotMap />
+          </Suspense>
+          <InsightDock />
+        </>
       }
-      chart={<ChartPanel />}
-      calendar={<BurnCalendar />}
       bottomBar={<BottomBar />}
       overlays={
         <>
-          <MethodsDrawer />
           <SettingsDrawer />
           <BriefingDrawer />
           <CellDiagnosticDrawer />

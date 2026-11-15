@@ -18,7 +18,7 @@ import { resolveMonthForYear, useAppStore } from "../../store/useAppStore";
 import type { YearlyPoint } from "../../types";
 import styles from "./CliffChart.module.css";
 
-const PAD_LEFT = 44;
+const PAD_LEFT = 54;
 const PAD_RIGHT = 8;
 const PAD_TOP = 20;
 const PAD_BOTTOM = 20;

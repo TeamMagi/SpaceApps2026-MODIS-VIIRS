@@ -8,15 +8,15 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-half);
-  min-height: 28px;
+  gap: 6px;
+  min-height: 24px;
   max-width: 100%;
-  padding: 2px var(--space-1);
+  padding: 0 10px;
   border: var(--border-width) solid var(--color-border-subtle);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-2xs);
   line-height: var(--line-height-tight);
   white-space: nowrap;
   cursor: pointer;
@@ -59,4 +59,10 @@
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-snug);
+}
+
+@media (pointer: coarse) {
+  .badge {
+    min-height: 44px;
+  }
 }

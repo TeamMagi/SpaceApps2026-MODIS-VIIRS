@@ -6,8 +6,8 @@ interface Flight {
   readonly duration: number;
   readonly fromDirection: THREE.Vector3;
   readonly rotation: THREE.Quaternion;
-  readonly fromDistance: number;
-  readonly toDistance: number;
+  fromDistance: number;
+  toDistance: number;
 }
 
 /** Moves the camera along the great circle toward a direction while easing its distance. */
@@ -35,6 +35,20 @@ export class CameraFlight {
       toDistance,
     };
     if (duration <= 0) this.step(this.flight.start);
+  }
+
+  /**
+   * Aims the running flight at a new final distance (the view was resized) without touching its
+   * direction or remaining time; the start distance is re-derived so the camera does not jump.
+   */
+  retargetDistance(toDistance: number, now = performance.now()): void {
+    const flight = this.flight;
+    if (!flight) return;
+    const progress = flight.duration > 0 ? Math.min(1, (now - flight.start) / flight.duration) : 1;
+    const eased = easeInOutCubic(progress);
+    const current = this.camera.position.length();
+    flight.fromDistance = eased < 0.999 ? (current - toDistance * eased) / (1 - eased) : current;
+    flight.toDistance = toDistance;
   }
 
   cancel(): void {

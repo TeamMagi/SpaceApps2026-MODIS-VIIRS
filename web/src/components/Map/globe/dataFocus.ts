@@ -4,14 +4,14 @@ import { makeSelectionMask } from "./textures";
 
 /*
  * "Imagery yields to data": once the camera is near the region, the photo is dimmed and
- * desaturated — lightly inside the selected region, more outside it — so hotspots carry the
+ * desaturated — only outside the selected region, with a soft feathered edge — so hotspots carry the
  * contrast. One set of uniforms is shared by the base photo and every tile material.
  */
 
-const INSIDE_DARKEN = 0.18;
-const INSIDE_DESATURATE = 0.35;
-const OUTSIDE_DARKEN = 0.4;
-const OUTSIDE_DESATURATE = 0.6;
+const INSIDE_DARKEN = 0.0;
+const INSIDE_DESATURATE = 0.0;
+const OUTSIDE_DARKEN = 0.15;
+const OUTSIDE_DESATURATE = 0.25;
 
 const FRAGMENT_DECL = /* glsl */ `
 uniform sampler2D uYieldMask;
@@ -26,13 +26,13 @@ const FRAGMENT_APPLY = /* glsl */ `
 if (uYieldStrength > 0.0) {
   float lon = uLonLatFromUv.x + vMapUv.x * uLonLatFromUv.y;
   float lat = uLonLatFromUv.z + vMapUv.y * uLonLatFromUv.w;
-  vec2 maskUv = vec2(mod(lon - uYieldBounds.x + 720.0, 360.0) / uYieldBounds.z, (lat - uYieldBounds.y) / uYieldBounds.w);
+  vec2 maskUv = vec2(mod(lon - uYieldBounds.x + 720.0, 360.0) / max(uYieldBounds.z, 1e-4), (lat - uYieldBounds.y) / max(uYieldBounds.w, 1e-4));
   // The mask's padded border is black and clamps to the edge, so outside the window reads 0.
-  float inside = texture2D(uYieldMask, maskUv).r;
+  float inside = smoothstep(0.0, 1.0, clamp(texture2D(uYieldMask, maskUv).r, 0.0, 1.0));
   float darken = mix(${OUTSIDE_DARKEN.toFixed(3)}, ${INSIDE_DARKEN.toFixed(3)}, inside) * uYieldStrength;
   float desaturate = mix(${OUTSIDE_DESATURATE.toFixed(3)}, ${INSIDE_DESATURATE.toFixed(3)}, inside) * uYieldStrength;
   float luma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luma), desaturate) * (1.0 - darken);
+  diffuseColor.rgb = clamp(mix(diffuseColor.rgb, vec3(luma), desaturate) * (1.0 - darken), 0.0, 1.0);
 }
 #endif
 `;

@@ -1,11 +1,9 @@
 /**
- * BottomBar — 44 px strip; where the Z-scan ends.
+ * BottomBar — 36 px strip; where the Z-scan ends. Shown only while a country is selected;
+ *   hidden in the opening world view.
  *
  * Left: the single honest limit — disclaimer (never repeated next to numbers).
- * Right: secondary actions (low-confidence filter switch, compact CSV and GeoJSON downloads with filename in
- *   title/aria-description, copy link) and primary briefMe action (opens "briefing").
- * The filter switch lives here rather than in a drawer so its state stays visible next to every
- *   number it changes; while it is on, the strip also says how many detections it removed.
+ * Right: CSV and GeoJSON downloads, secondary actions, and the primary briefing action.
  * Mobile: stacked, actions full width, above the docked toggle. Neutral styling; the briefing
  * button is the single primary action and never uses the accent.
  */
@@ -15,7 +13,6 @@ import { useValidationGate } from "../../hooks/useValidationGate";
 import { useCopyLink } from "../../hooks/useCopyLink";
 import { useExportView } from "../../hooks/useExportView";
 import { EXPORT_FORMATS } from "../../lib/export";
-import { useMapPoints } from "../../hooks/useRegionData";
 import MethodsLink from "../Methods/MethodsLink";
 import { useAppStore } from "../../store/useAppStore";
 import styles from "./BottomBar.module.css";
@@ -34,17 +31,8 @@ export default function BottomBar() {
   const briefingOpen = useAppStore((state) => state.openDrawer === "briefing");
   const { fileNames, statuses, canDownload, failed, download } = useExportView();
   const { copied, copyLink } = useCopyLink();
-  const minConfidence = useAppStore((state) => state.minConfidence);
-  const setMinConfidence = useAppStore((state) => state.setMinConfidence);
   const startTour = useAppStore((state) => state.startTour);
   const tourDescription = t("tourStartDescription");
-  const points = useMapPoints();
-  const filterOn = minConfidence !== "low";
-  const filterDescription = t("confidenceFilterDescription");
-  const excludedHere =
-    filterOn && points.hasData && points.filters.minConfidence === minConfidence
-      ? points.filters.excludedDetections
-      : null;
 
   return (
     <div className={styles.bar}>
@@ -59,21 +47,6 @@ export default function BottomBar() {
         </span>
       </p>
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.action}
-          aria-pressed={filterOn}
-          title={filterDescription}
-          aria-description={filterDescription}
-          onClick={() => setMinConfidence(filterOn ? "low" : "nominal")}
-        >
-          {filterOn ? t("confidenceFilterOn") : t("confidenceFilterOff")}
-        </button>
-        {excludedHere !== null && (
-          <span className={styles.filterNote} role="status">
-            {t("confidenceFilterExcluded", { count: excludedHere })}
-          </span>
-        )}
         {EXPORT_FORMATS.map((format) => {
           const description = t("exportCsvDescription", { file: fileNames[format] });
           const loading = statuses[format] === "loading";
@@ -93,26 +66,28 @@ export default function BottomBar() {
             </button>
           );
         })}
-        {failed && (
-          <span className={styles.filterNote} role="alert">
-            {t("exportFailed")}
-          </span>
-        )}
-        <button type="button" className={styles.action} data-copied={copied} onClick={copyLink}>
-          {copied ? t("briefingLinkCopied") : t("briefingCopyLink")}
-        </button>
-        <span className="sr-only" role="status">
-          {copied ? t("briefingLinkCopied") : ""}
-        </span>
-        <button
-          type="button"
-          className={styles.action}
-          title={tourDescription}
-          aria-description={tourDescription}
-          onClick={startTour}
-        >
-          {t("tourStart")}
-        </button>
+        {failed && <span className={styles.filterNote} role="alert">{t("exportFailed")}</span>}
+        <details className={styles.more}>
+          <summary className={styles.action}>{t("bottomBarMore")}</summary>
+          <div className={styles.moreMenu}>
+            <button type="button" className={styles.menuAction} data-copied={copied} onClick={copyLink}>
+              {copied ? t("briefingLinkCopied") : t("briefingCopyLink")}
+            </button>
+            <button
+              type="button"
+              className={styles.menuAction}
+              title={tourDescription}
+              aria-description={tourDescription}
+              onClick={startTour}
+            >
+              {t("tourStart")}
+            </button>
+            {failed && <span className={styles.filterNote} role="alert">{t("exportFailed")}</span>}
+            <span className="sr-only" role="status">
+              {copied ? t("briefingLinkCopied") : ""}
+            </span>
+          </div>
+        </details>
         <button
           type="button"
           className={styles.primary}

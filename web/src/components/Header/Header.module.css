@@ -10,29 +10,19 @@
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 8px;
   margin-right: auto;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  font-size: 0.9375rem;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
 .logo {
-  position: relative;
-  width: 14px;
-  height: 14px;
   flex: none;
-  border-radius: 50%;
-  border: 2px solid var(--color-text);
-}
-
-.logo::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: var(--color-text);
+  width: 16px;
+  height: 16px;
+  color: var(--frp-6);
 }
 
 .regions {
@@ -55,7 +45,11 @@
 
 .methods {
   order: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 32px;
+  text-decoration: none;
   padding: var(--space-half) var(--space-1);
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
@@ -71,7 +65,7 @@
   color: var(--color-text);
 }
 
-.methods[aria-expanded="true"] {
+button.methods[aria-expanded="true"] {
   background: var(--color-active);
   color: var(--color-text);
 }
@@ -122,10 +116,24 @@
 }
 
 @media (min-width: 1024px) {
+  .tools {
+    gap: var(--space-1);
+  }
+
   .header {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto auto minmax(0, 1fr);
     grid-template-areas: "brand regions tools";
+    align-items: center;
+    column-gap: var(--space-2);
     min-height: var(--h-header);
-    padding: var(--space-half) var(--space-3);
+    padding: 0 var(--space-2);
+  }
+
+  .methods {
+    min-height: 28px;
+    padding: 0 12px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
   }
 }

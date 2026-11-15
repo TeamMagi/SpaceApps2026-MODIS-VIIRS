@@ -4,7 +4,6 @@ export const methodsPageCopyEn = {
   methodsPageTitle: "Methods and data flow",
   methodsPageLead:
     "From five satellites (MODIS on Terra and Aqua; VIIRS on S-NPP, NOAA-20 and NOAA-21) to one consistent fire calendar.",
-  methodsFullPageLink: "Open full methods page →",
   methodsBackToMap: "← Back to map",
   methodsPrint: "Print methods",
   methodsNavLabel: "Methods sections",
@@ -109,7 +108,6 @@ export const methodsPageCopyTr: { readonly [K in keyof typeof methodsPageCopyEn]
   methodsPageTitle: "Yöntem ve veri akışı",
   methodsPageLead:
     "Beş uydudan (Terra ve Aqua üzerinde MODIS; S-NPP, NOAA-20 ve NOAA-21 üzerinde VIIRS) tek tutarlı yangın takvimine.",
-  methodsFullPageLink: "Tam yöntem sayfasını aç →",
   methodsBackToMap: "← Haritaya dön",
   methodsPrint: "Yöntemleri yazdır",
   methodsNavLabel: "Yöntem bölümleri",

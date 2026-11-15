@@ -1,61 +1,69 @@
 /**
- * ViewToggle — THE primary action and the only saturated, moving element (Von Restorff).
+ * ViewToggle — segmented pill control for Raw vs. Harmonized (Von Restorff primary action).
  *
- * aria-checked follows `targetMode`, which flips synchronously on press, so the switch answers
- * within one frame even though the choreography is still running. H does the same
- * (hooks/useKeyboardShortcuts); pressing again mid-transition reverses it (handled by the clock).
- * Never red/green.
+ * `aria-pressed` follows `targetMode`, which flips synchronously on press, so the control answers
+ * within one frame while the choreography runs. Pressing H toggles the same store action.
  */
 
 import { useId } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import styles from "./ViewToggle.module.css";
 
 export default function ViewToggle() {
   const { t } = useCopy();
-  const { targetMode, toggle } = useHarmonizeTransition((v) => ({ targetMode: v.targetMode, toggle: v.toggle }));
-  const reduceMotion = useReducedMotion();
+  const { targetMode, toggle } = useHarmonizeTransition((v) => ({
+    targetMode: v.targetMode,
+    toggle: v.toggle,
+  }));
   const hintId = useId();
   const harmonized = targetMode === "harmonized";
+  const hintText = harmonized ? t("toggleHintRaw") : t("toggleHint");
 
   return (
     <div className={styles.wrap}>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={harmonized}
-        aria-label={t("toggleAriaLabel")}
-        aria-describedby={hintId}
-        className={styles.switch}
-        data-on={harmonized}
-        onClick={toggle}
-      >
-        <span className={styles.side} data-active={!harmonized}>
+      <div className={styles.segmented} role="group" aria-label={t("toggleAriaLabel")}>
+        <button
+          type="button"
+          className={styles.button}
+          data-side="raw"
+          aria-pressed={!harmonized}
+          title={hintText}
+          aria-describedby={hintId}
+          onClick={() => {
+            if (harmonized) toggle();
+          }}
+        >
+          <span className={styles.dots} aria-hidden="true">
+            <span className={`${styles.dot} ${styles.rawDot} ${styles.dot1}`} />
+            <span className={`${styles.dot} ${styles.rawDot} ${styles.dot2}`} />
+            <span className={`${styles.dot} ${styles.rawDot} ${styles.dot3}`} />
+          </span>
           <span className={styles.label}>{t("toggleRawLabel")}</span>
-          <span className={styles.sub}>{t("toggleRawSub")}</span>
-        </span>
-        <span className={styles.track} aria-hidden="true">
-          <motion.span
-            className={styles.thumb}
-            initial={false}
-            animate={{ x: harmonized ? 20 : 0 }}
-            transition={
-              reduceMotion
-                ? { duration: 0.15 }
-                : { type: "spring", stiffness: 520, damping: 34, mass: 0.8 }
-            }
-          />
-        </span>
-        <span className={styles.side} data-active={harmonized}>
+        </button>
+
+        <button
+          type="button"
+          className={styles.button}
+          data-side="harmonized"
+          aria-pressed={harmonized}
+          title={hintText}
+          aria-describedby={hintId}
+          onClick={() => {
+            if (!harmonized) toggle();
+          }}
+        >
+          <span className={styles.dots} aria-hidden="true">
+            <span className={`${styles.dot} ${styles.harmDot} ${styles.dot1}`} />
+            <span className={`${styles.dot} ${styles.harmDot} ${styles.dot2}`} />
+            <span className={`${styles.dot} ${styles.harmDot} ${styles.dot3}`} />
+          </span>
           <span className={styles.label}>{t("toggleHarmonizedLabel")}</span>
-          <span className={styles.sub}>{t("toggleHarmonizedSub")}</span>
-        </span>
-      </button>
-      <p id={hintId} className={styles.hint}>
-        {harmonized ? t("toggleHintRaw") : t("toggleHint")}
-      </p>
+        </button>
+      </div>
+      <span id={hintId} className="sr-only">
+        {hintText}
+      </span>
     </div>
   );
 }

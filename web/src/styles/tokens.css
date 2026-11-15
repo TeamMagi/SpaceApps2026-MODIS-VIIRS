@@ -306,16 +306,16 @@
   --radius-pill: 999px;
 
   /* Layout (desktop reference 1366x768) */
-  --h-header: 48px;
-  --h-command: 100px;
+  --h-header: 44px;
+  --h-command: 180px;
   --h-pipeline: 42px;
   --h-chart: 220px;
   --h-calendar: 260px;
-  --h-bottom: 48px;
+  --h-bottom: 36px;
   --w-map: 58%;
   --w-drawer: 420px;
   --toggle-w: 260px;
-  --toggle-h: 48px;
+  --toggle-h: 60px;
   --h-map-mobile: clamp(360px, 60dvh, 640px);
   --calendar-cell-mobile: 26px;
   --border-width: 1px;

@@ -24,10 +24,12 @@ import {
   projectToScreen,
   type GeoFrame,
 } from "./globe/geoMath";
-import { buildGlobeLayer, LONLAT_PROJECTION } from "./globe/pointAttributes";
+import { buildGlobeLayer, LONLAT_PROJECTION, type GlobePointLayer } from "./globe/pointAttributes";
 import { GlobeScene, ZOOM_STEP, type GlobeViewState } from "./globe/scene";
+import { worldFrame } from "./globe/worldView";
 import type { TileId } from "./globe/tileMath";
 import MapControls from "./MapControls";
+import MapExploreOverlay from "./MapExploreOverlay";
 import MapCountryTooltip from "./MapCountryTooltip";
 import MapLegend from "./MapLegend";
 import MapStateOverlay from "./MapStateOverlay";
@@ -48,6 +50,16 @@ const COUNTRY_CLICK_MAX_MOVE_PX = 4;
 const TOOLTIP_OFFSET_X_PX = 14;
 const TOOLTIP_OFFSET_Y_PX = 16;
 const TOOLTIP_EDGE_PX = 8;
+
+const EMPTY_GLOBE_LAYER: GlobePointLayer = {
+  count: 0,
+  positions: new Float32Array(0),
+  kinds: new Float32Array(0),
+  sensors: new Float32Array(0),
+  duplicates: new Float32Array(0),
+  uncertTiers: new Float32Array(0),
+  drawOrder: null,
+};
 
 const INITIAL_VIEW: GlobeViewState = {
   canZoomIn: true,
@@ -97,10 +109,11 @@ export interface GlobeMapProps {
 function GlobeMap({ onUnsupported }: GlobeMapProps) {
   const model = useMapModel();
   const dataMode = useAppStore((state) => state.dataMode);
+  const regionPicked = useAppStore((state) => state.regionPicked);
+  const pickRegion = useAppStore((state) => state.pickRegion);
   const {
     t,
     region,
-    setRegion,
     points,
     rawFrpBreaks,
     harmonizedFrpBreaks,
@@ -201,8 +214,8 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
   }, [scene, geo.dataset]);
 
   useEffect(() => {
-    scene?.setSelection(regionFeatures);
-  }, [scene, regionFeatures]);
+    scene?.setSelection(regionPicked ? regionFeatures : []);
+  }, [scene, regionFeatures, regionPicked]);
 
   useEffect(() => {
     const feature = highlightedFeature !== null ? (geo.dataset?.features[highlightedFeature] ?? null) : null;
@@ -226,8 +239,9 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
   );
 
   useEffect(() => {
-    scene?.setPointLayers(globeLayers.raw, globeLayers.harmonized);
-  }, [scene, globeLayers]);
+    if (regionPicked) scene?.setPointLayers(globeLayers.raw, globeLayers.harmonized);
+    else scene?.setPointLayers(EMPTY_GLOBE_LAYER, EMPTY_GLOBE_LAYER);
+  }, [scene, globeLayers, regionPicked]);
 
   useEffect(() => {
     scene?.setPointStyle({
@@ -243,14 +257,15 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
     if (fallbackGeoBBox) return frameForBBox(fallbackGeoBBox, []);
     return null;
   }, [hasRegionGeo, regionFeatures, fallbackGeoBBox]);
-  const currentFrameKey = frameKey(frame);
+  const viewFrame = useMemo(() => (regionPicked ? frame : worldFrame()), [regionPicked, frame]);
+  const currentFrameKey = `${regionPicked ? "region" : "world"}:${frameKey(viewFrame)}`;
   const hasFramedRef = useRef(false);
 
   // The first framing jumps; every later region change flies there.
   useEffect(() => {
     if (!scene) return;
-    scene.setFrame(frame, hasFramedRef.current);
-    if (frame) hasFramedRef.current = true;
+    scene.setFrame(viewFrame, hasFramedRef.current);
+    if (viewFrame) hasFramedRef.current = true;
     // Keyed on the frame's value: a new array identity for the same region must not re-fly.
   }, [scene, currentFrameKey]);
 
@@ -274,7 +289,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
   const nearestPointAt = useCallback(
     (x: number, y: number, maxPx: number): number | null => {
       const current = sceneRef.current;
-      if (!current || activeGlobeLayer.count === 0) return null;
+      if (!current || activeGlobeLayer.count === 0 || !regionPicked) return null;
       const idx = nearestScreenPoint(
         activeGlobeLayer.positions,
         activeGlobeLayer.count,
@@ -286,7 +301,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
       );
       return idx >= 0 ? idx : null;
     },
-    [activeGlobeLayer, isPointVisible],
+    [activeGlobeLayer, isPointVisible, regionPicked],
   );
 
   const pickFeatures = useMemo(
@@ -302,10 +317,10 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
         pickFeatures,
         lonLat[0],
         lonLat[1],
-        (idx) => (regionMatch?.regionByFeature[idx] ?? null) !== region.id,
+        (idx) => !regionPicked || (regionMatch?.regionByFeature[idx] ?? null) !== region.id,
       );
     },
-    [pickFeatures, regionMatch, region.id],
+    [pickFeatures, regionMatch, region.id, regionPicked],
   );
 
   const [drawStats, setDrawStats] = useState<DrawStats>({ drawn: 0, inView: 0, total: 0 });
@@ -566,7 +581,11 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
 
       if (Math.hypot(x - down.x, y - down.y) >= COUNTRY_CLICK_MAX_MOVE_PX) return;
       const feature = countryAt(x, y);
-      const targetRegion = feature >= 0 ? selectableRegionFor(feature) : null;
+      const targetRegion =
+        feature >= 0
+          ? (selectableRegionFor(feature) ??
+            (!regionPicked && regionMatch?.regionByFeature[feature] === region.id ? region.id : null))
+          : null;
       if (targetRegion === null) return;
 
       // Wait out the double-tap/double-click window so a zoom gesture never switches region first;
@@ -574,7 +593,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
       pendingCountryTapRef.current = setTimeout(() => {
         pendingCountryTapRef.current = null;
         clearHoveredFeature();
-        setRegion(targetRegion);
+        pickRegion(targetRegion);
       }, DOUBLE_TAP_MS);
     },
     [
@@ -583,7 +602,10 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
       setSelectedIndex,
       countryAt,
       selectableRegionFor,
-      setRegion,
+      regionPicked,
+      regionMatch,
+      region.id,
+      pickRegion,
       clearHoveredFeature,
       scheduleHover,
     ],
@@ -707,24 +729,6 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
         {liveAnnouncement}
       </div>
 
-      <MapStatusBar
-        regionName={region.displayName}
-        periodText={periodText}
-        revealAnswer={revealAnswer}
-        sensorFilter={effectiveSensorFilter}
-        status={overlayState}
-        error={points.error}
-        onRetry={points.retry}
-        rawTotal={rawTotal}
-        harmonizedTotal={harmonizedTotal}
-        rawLoaded={visibleRawLoaded}
-        harmonizedLoaded={visibleHarmonizedLoaded}
-        truncated={points.truncated}
-        drawStats={drawStats}
-        selectedMonth={selectedMonth}
-        onClearMonth={() => selectMonth(null)}
-      />
-
       <div
         ref={viewportRef}
         className={styles.viewport}
@@ -743,15 +747,37 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
       >
         <div ref={hostRef} className={globeStyles.host} aria-hidden="true" />
 
-        <MapControls
-          canZoomIn={viewState.canZoomIn}
-          canZoomOut={viewState.canZoomOut}
-          isAtFit={viewState.isAtFit}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
-          onReset={fit}
-          rotates
-        />
+        {regionPicked && (
+          <MapControls
+            canZoomIn={viewState.canZoomIn}
+            canZoomOut={viewState.canZoomOut}
+            isAtFit={viewState.isAtFit}
+            onZoomIn={zoomIn}
+            onZoomOut={zoomOut}
+            onReset={fit}
+            rotates
+          />
+        )}
+
+        <MapExploreOverlay regionName={region.displayName}>
+          <MapStatusBar
+            regionName={region.displayName}
+            periodText={periodText}
+            revealAnswer={revealAnswer}
+            sensorFilter={effectiveSensorFilter}
+            status={overlayState}
+            error={points.error}
+            onRetry={points.retry}
+            rawTotal={rawTotal}
+            harmonizedTotal={harmonizedTotal}
+            rawLoaded={visibleRawLoaded}
+            harmonizedLoaded={visibleHarmonizedLoaded}
+            truncated={points.truncated}
+            drawStats={drawStats}
+            selectedMonth={selectedMonth}
+            onClearMonth={() => selectMonth(null)}
+          />
+        </MapExploreOverlay>
 
         {hoveredCountry && !activeDetail.rawPoint && !activeDetail.harmPoint && (
           <MapCountryTooltip
@@ -779,13 +805,15 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
           />
         )}
 
-        <div className={styles.legendDock} data-map-ui="true">
-          <MapLegend
-            sensorFilter={effectiveSensorFilter}
-            onSensorFilterChange={setSensorFilter}
-            frpBreaks={frpBreaks}
-          />
-        </div>
+        {regionPicked && (
+          <div className={styles.legendDock} data-map-ui="true">
+            <MapLegend
+              sensorFilter={effectiveSensorFilter}
+              onSensorFilterChange={setSensorFilter}
+              frpBreaks={frpBreaks}
+            />
+          </div>
+        )}
 
         <div className={globeStyles.credits}>
           {viewState.orbitsVisible && (

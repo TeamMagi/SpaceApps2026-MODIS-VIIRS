@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { setPanel } from "../lib/dockPanel";
 import { isRouteHash, methodsHash } from "../lib/route";
 import { nextTourStep, TOUR_STEP_MS, TOUR_STEPS } from "../lib/tour";
 import { useAppStore } from "../store/useAppStore";
@@ -13,6 +14,17 @@ function ensureDashboardRoute(): void {
   if (isRouteHash(window.location.hash)) window.location.hash = dashboardHashFromStore();
 }
 
+/** The chart and calendar steps point at dock panels, which exist only once a country is picked. */
+function revealDock(stepId: string): void {
+  if (stepId !== "toggle" && stepId !== "case") {
+    return;
+  }
+  const store = useAppStore.getState() as { regionPicked?: boolean; setRegionPicked?: (value: boolean) => void };
+  if (store.regionPicked === false) store.setRegionPicked?.(true);
+  // After the region change has been applied, which closes any open panel.
+  window.setTimeout(() => setPanel(stepId === "toggle" ? "detections" : "calendar"), 50);
+}
+
 function enterStep(index: number): void {
   const step = TOUR_STEPS[index];
   if (!step) return;
@@ -23,6 +35,7 @@ function enterStep(index: number): void {
     return;
   }
   ensureDashboardRoute();
+  revealDock(step.id);
 
   if (step.id === "toggle") {
     store.applyUrlState({ mode: "raw" });

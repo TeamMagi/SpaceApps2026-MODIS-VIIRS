@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { flushPipelineOverrides, useMapPoints } from "../../hooks/useRegionData";
@@ -10,8 +10,9 @@ import {
   type PipelineParamSpec,
   type PipelineUnitKind,
 } from "../../lib/pipelineOverrides";
+import { monthName } from "../../lib/format";
 import { useAppStore } from "../../store/useAppStore";
-import { DEFAULT_FUSION_MODEL, type FusionModel, type PipelineOverrideKey } from "../../types";
+import { DEFAULT_FUSION_MODEL, type FusionModel, type Palette, type PipelineOverrideKey, type Theme } from "../../types";
 import Drawer from "./Drawer";
 import styles from "./SettingsDrawer.module.css";
 
@@ -34,6 +35,18 @@ const FUSION_OPTIONS: readonly {
   { value: "viirs_preferred", label: "fusionViirsPreferred", hint: "fusionViirsPreferredHint" },
   { value: "equal_weight", label: "fusionEqualWeight", hint: "fusionEqualWeightHint" },
   { value: "modis_calibrated", label: "fusionModisCalibrated", hint: "fusionModisCalibratedHint" },
+];
+
+const THEMES: readonly Theme[] = ["dark", "light"];
+
+const PALETTES: ReadonlyArray<{
+  readonly id: Palette;
+  readonly labelKey: "paletteDefault" | "paletteViridis" | "paletteCividis";
+  readonly descKey: "paletteDefaultDesc" | "paletteViridisDesc" | "paletteCividisDesc";
+}> = [
+  { id: "default", labelKey: "paletteDefault", descKey: "paletteDefaultDesc" },
+  { id: "viridis", labelKey: "paletteViridis", descKey: "paletteViridisDesc" },
+  { id: "cividis", labelKey: "paletteCividis", descKey: "paletteCividisDesc" },
 ];
 
 const LABEL_KEY: Record<PipelineOverrideKey, SettingsLabelKey> = {
@@ -64,7 +77,7 @@ function clampUiValue(spec: PipelineParamSpec, raw: number): number {
 }
 
 export default function SettingsDrawer() {
-  const { t, fmt } = useCopy();
+  const { t, fmt, lang } = useCopy();
   const baseId = useId();
   const openDrawer = useAppStore((state) => state.openDrawer);
   const pipelineOverrides = useAppStore((state) => state.pipelineOverrides);
@@ -74,7 +87,13 @@ export default function SettingsDrawer() {
   const fusionModel = useAppStore((state) => state.fusionModel);
   const setFusionModel = useAppStore((state) => state.setFusionModel);
   const { revealAnswer } = useHarmonizeTransition((v) => ({ revealAnswer: v.revealAnswer }));
-  const { overrideError, fusionComparison, fusionModel: shownModel, hasData } = useMapPoints();
+  const theme = useAppStore((state) => state.theme);
+  const setTheme = useAppStore((state) => state.setTheme);
+  const palette = useAppStore((state) => state.palette);
+  const setPalette = useAppStore((state) => state.setPalette);
+  const presentation = useAppStore((state) => state.presentation);
+  const setPresentation = useAppStore((state) => state.setPresentation);
+  const { overrideError, fusionComparison, fusionModel: shownModel, hasData, period, stages } = useMapPoints();
 
   const [draftTexts, setDraftTexts] = useState<Partial<Record<PipelineOverrideKey, string>>>({});
 
@@ -88,6 +107,19 @@ export default function SettingsDrawer() {
     revealAnswer && hasData && fusionModel !== DEFAULT_FUSION_MODEL && shownModel === fusionModel;
   const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const hasOverrides = hasPipelineOverrides(pipelineOverrides, defaults);
+
+  // The default-threshold count is only known while no override is active, so it is remembered per month.
+  const periodKey = `${period.year}-${period.month}`;
+  const baseline = useRef<{ key: string; n: number } | null>(null);
+  const customActive = hasOverrides || fusionModel !== DEFAULT_FUSION_MODEL;
+  if (hasData && !customActive) baseline.current = { key: periodKey, n: stages.harmonized };
+  const defaultCount = baseline.current?.key === periodKey ? baseline.current.n : null;
+  const monthLabel =
+    period.year === null
+      ? ""
+      : period.month === null
+        ? String(period.year)
+        : `${monthName(lang, period.month, "long")} ${period.year}`;
 
   const commitUi = (spec: PipelineParamSpec, uiValue: number) => {
     setPipelineOverride(spec.key, spec.uiToApi(uiValue));
@@ -122,6 +154,78 @@ export default function SettingsDrawer() {
         </p>
       )}
 
+      <h3 className={styles.sectionTitle}>{t("settingsAppearanceTitle")}</h3>
+      <fieldset className={styles.paletteFieldset}>
+        <legend className={styles.settingLabel}>{t("paletteLabel")}</legend>
+        <div className={styles.paletteList}>
+          {PALETTES.map((option) => {
+            const selected = palette === option.id;
+            return (
+              <label
+                key={option.id}
+                className={styles.paletteOption}
+                data-selected={selected ? "true" : undefined}
+              >
+                <input
+                  type="radio"
+                  name={`${baseId}-palette`}
+                  value={option.id}
+                  checked={selected}
+                  onChange={() => setPalette(option.id)}
+                  className={styles.paletteRadio}
+                />
+                <span className={styles.paletteText}>
+                  <span className={styles.paletteTitle}>{t(option.labelKey)}</span>
+                  <span className={styles.paletteDesc}>{t(option.descKey)}</span>
+                  <span className={styles.swatch} data-palette-preview={option.id} aria-hidden="true" />
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
+      <div className={styles.setting} role="group" aria-label={t("themeLabel")}>
+        <span className={styles.settingLabel}>{t("themeLabel")}</span>
+        <div className={styles.options}>
+          {THEMES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={styles.option}
+              aria-pressed={theme === option}
+              onClick={() => setTheme(option)}
+            >
+              {option === "dark" ? t("themeDark") : t("themeLight")}
+            </button>
+          ))}
+        </div>
+      </div>
+      <label className={styles.setting}>
+        <span className={styles.checkLabel}>
+          <input type="checkbox" checked={presentation} onChange={(event) => setPresentation(event.target.checked)} />
+          <span>{t("presentationMode")}</span>
+        </span>
+        <span className={styles.hint}>{t("presentationModeHint")}</span>
+      </label>
+
+      <details className={styles.advanced}>
+        <summary className={styles.advancedSummary}>{t("settingsAdvancedTitle")}</summary>
+        <p className={styles.hint}>{t("settingsAdvancedScope")}</p>
+        {hasData && (
+          <p className={styles.live} aria-live="polite">
+            {t("settingsAdvancedLive", { month: monthLabel, n: fmt.number(stages.harmonized) })}
+            {customActive &&
+              (defaultCount !== null ? (
+                <span className={styles.liveDefault}>
+                  {" ("}
+                  {t("settingsAdvancedDefault", { n: fmt.number(defaultCount) })}
+                  {")"}
+                </span>
+              ) : (
+                <span className={styles.badge}>{t("settingsAdvancedCustom")}</span>
+              ))}
+          </p>
+        )}
       <fieldset className={styles.fusion}>
         <legend className={styles.fusionLegend}>{t("fusionTitle")}</legend>
         <p className={styles.hint}>{t("fusionNote")}</p>
@@ -254,6 +358,7 @@ export default function SettingsDrawer() {
           );
         })}
       </div>
+      </details>
     </Drawer>
   );
 }
