@@ -270,7 +270,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [X] |
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [X] |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [X] |
-| Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [ ] |
+| Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [X] |
 | Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [ ] |
 | K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [X] |
 | K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [X] |
@@ -1196,12 +1196,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** takvim hücresine tıklanınca tanı modalı tüm kırılımları gösteriyor ve arayüzde geçiş saati medyanlarından beslenen `Orbital Drift` bilgi şeridi görünüyor.
 - **Kapanış (Serhat, 2026-11-15):** **Tanı çekmecesi:** takvimde "Ayrıntılar" düğmesi veya odaklı ayda `D` tuşu `CellDiagnosticDrawer`'ı açıyor (tıklama eskisi gibi yalnız ay filtresini değiştiriyor). Çekmece ham MODIS/VIIRS, harmonize ve eşleşen / yalnız MODIS / yalnız VIIRS sayılarını, `Ω` ve efor-normalize sayımı, toplam FRP aralığını, S10 Mondrian (conformal) bandını, anomali z'yi ve beş kalite bayrağının EN/TR etiketlerini gösteriyor; 2002-07 öncesi Terra-only aylarda "kıyaslanamaz" açıklaması ve K12 kurtarım tahmini çıkıyor. Ham modda yalnız ham sayılar ve bayraklar görünüyor. **Orbital Drift şeridi:** `/api/points` yanıtına istek anında hesaplanan `overpass` alanı eklendi (platform × gündüz/gece yerel güneş saati medyanı, en az 30 tespit; `crates/core/src/overpass.rs`). Şerit, dönem hücreleri `modis_orbital_drift` taşıdığında veya Terra/Aqua medyanı nominalden en az 20 dk saptığında pipeline şeridinin altında görünüyor, oturum boyunca kapatılabiliyor; medyanın bölgesel bir gösterge olduğu, ekvator geçiş saati olmadığı açıkça yazılıyor. **R12 eki:** turun 4. adımı artık Mondrian bandını ve drift şeridini anlatıyor, Methods sayfasında ilgili blok vurgulanıyor. `PipelineConfig`, `DERIVED_SCHEMA_VERSION` ve `data/derived` etkilenmedi. `cargo test --workspace`, clippy, `npm run typecheck`, `npm test`, `npm run build` temiz; demo modunda ve sentetik bir canlı-mod sunucu taklidiyle headless Chrome'da kontrol edildi. **Sınırlar:** API aylık sayıları platform bazında vermediği için Terra/Aqua/S-NPP kırılımı yok; `k_c` değeri hücre başına sunulmadığı için çekmece yalnız uygulanıp uygulanmadığını söylüyor; demo modunda takvim hücresi olmadığından `Ω`, FRP ve bantlar "—", şerit sayısız (bayrak mesajı) görünüyor; gerçek arşivle tarayıcıda denenmedi.
 
-### [ ] Y10 — Dış doğrulama pilotu (yanmış alan)
+### [X] Y10 — Dış doğrulama pilotu (yanmış alan)
 - **Bekler:** G12 · **Açar:** —
 - 4 biyomda (Türkiye, Brezilya, Kanada/Rusya, Hindistan) harmonize aktif yangın/FRP serisinin yüksek çözünürlüklü yanmış alan ürünleriyle (`ESA Fire_cci`, `Sentinel-2 20 m dNBR` 300 m tampon `[25, Böl. 2.2]`, `30 m Landsat` `[01, 10]`) karşılaştırılması
 - **Lin's Concordance Correlation Coefficient (CCC)** (`fire-harmony` referansı `0.87 → 0.94`) ve omisyon/komisyon metriklerinin (`IOE/ICE` `[10, Tablo 3–5]`) ölçülmesi (kendi serilerimizdeki CCC değerleri ölçülecek)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6, Yol Haritası #8 (+ `[01, 10, 25]`, `fire-harmony`)
 - **Bitti sayılır:** 4 biyomda `ESA Fire_cci` / `Sentinel-2` / `Landsat` ile Lin's CCC ve omisyon/komisyon pilot raporu depoda.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Araç `crates/firms-client/examples/burned_area_validation.rs` (+ `tools/firecci_extract.py`), rapor `docs/DIS_DOGRULAMA_YANMIS_ALAN.md`, veri `docs/vaka/firecci_validation_*`. Referans: ESA Fire_cci v5.1 0,25° aylık ızgara, 2012–2020 (CEDA, girişsiz). Bölge aylık toplamında sayım CCC ham → harmonize: Türkiye 0,839 → 0,873, Brezilya 0,952 → 0,965, Kanada 0,916 → 0,935, Hindistan 0,890 → 0,921 (mevsimsellik çıkarılınca 0,57–0,88 → 0,76–0,92); FRP CCC ve hücre-ay IOE/ICE neredeyse değişmiyor. Fire_cci MODIS türevi olduğu için tam bağımsız değil. Yapılmadı: Sentinel-2/Landsat, Rusya, 2012 öncesi, bootstrap güven aralıkları.
 
 ### [ ] Y8 — Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti
 - **Bekler:** — · **Açar:** G5

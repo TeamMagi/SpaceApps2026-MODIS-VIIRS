@@ -36,3 +36,4 @@ Base URL: `https://firms.modaps.eosdis.nasa.gov/api/area/csv`
 ## Örnekler
 
 - `examples/fleet_trend.rs` (K7): tam filo trend ve seviye kayması ölçümü. Bayraklar: `--noaa21` (NOAA-21'i area API'den ekler, `FIRMS_API_KEY` gerekir), `--noaa21-union` (birleşik sınır kutusu, ülkelere çokgenle kırpılır), `--regions-geo`, `--yearly-omega`, `--out`. Rapor: `docs/TAM_FILO_TREND.md`.
+- `examples/burned_area_validation.rs` (Y10): ESA Fire_cci 0.25° aylık yanmış alanına karşı ham vs harmonize Lin's CCC ve hücre-ay IOE/ICE, 4 bölge 2012–2020. Girdi `tools/firecci_extract.py` CSV'si. Rapor: `docs/DIS_DOGRULAMA_YANMIS_ALAN.md`.

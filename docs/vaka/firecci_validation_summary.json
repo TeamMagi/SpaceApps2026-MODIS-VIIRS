@@ -1,0 +1,514 @@
+{
+  "config": "PipelineConfig::default()",
+  "presence": "burned_area > 0 vs >= 1 detection in the cell-month",
+  "reference": "ESA Fire_cci v5.1 (FireCCI51) grid, 0.25 deg monthly burned_area",
+  "regions": [
+    {
+      "boxes_wsen": [
+        [
+          27.25,
+          37.25,
+          43.0,
+          41.0
+        ]
+      ],
+      "burned_cell_months": 3417,
+      "cells": 945,
+      "country_file": "Turkey",
+      "effort_omega": [
+        {
+          "era": "2012-01..2018-03",
+          "omega": 4.030843598939654
+        },
+        {
+          "era": "2018-04..2020-12",
+          "omega": 6.547236614853195
+        }
+      ],
+      "firecci_ba_km2": 28100.321408999993,
+      "id": "turkey",
+      "label": "Türkiye (Anadolu iç kutusu)",
+      "series": {
+        "harmonized": {
+          "cell_month": {
+            "ccc_count": 0.5298807996107177,
+            "ccc_frp": 0.6019474636408115,
+            "pearson_count": 0.5769422568165358,
+            "pearson_frp": 0.6336137236262992
+          },
+          "confusion": {
+            "both": 3226,
+            "burned_without_hotspot": 191,
+            "dice": 0.19399260350581798,
+            "hotspot_without_burned": 26616,
+            "ice": 0.8918973259164935,
+            "ioe": 0.055896985659935616
+          },
+          "region_month": {
+            "ccc_count": 0.8729965801889711,
+            "ccc_count_deseasonalized": 0.7551720685376456,
+            "ccc_frp": 0.9079097490130799,
+            "ccc_frp_deseasonalized": 0.7376045341339983,
+            "pearson_count": 0.8954181920326889,
+            "pearson_frp": 0.921171442062806
+          }
+        },
+        "raw_all": {
+          "cell_month": {
+            "ccc_count": 0.5522226348318079,
+            "ccc_frp": 0.6326313304917894,
+            "pearson_count": 0.5955063546503442,
+            "pearson_frp": 0.6587139816444939
+          },
+          "confusion": {
+            "both": 3233,
+            "burned_without_hotspot": 184,
+            "dice": 0.1937552439170562,
+            "hotspot_without_burned": 26722,
+            "ice": 0.8920714404940745,
+            "ioe": 0.053848405033655254
+          },
+          "region_month": {
+            "ccc_count": 0.8390226892403667,
+            "ccc_count_deseasonalized": 0.5716656197089677,
+            "ccc_frp": 0.9102407267255158,
+            "ccc_frp_deseasonalized": 0.721554056023589,
+            "pearson_count": 0.8543817390139035,
+            "pearson_frp": 0.9178232783881132
+          }
+        },
+        "raw_modis": {
+          "cell_month": {
+            "ccc_count": 0.5671810266390944,
+            "ccc_frp": 0.6564403784135799,
+            "pearson_count": 0.5953898899269479,
+            "pearson_frp": 0.6698742244415534
+          },
+          "confusion": {
+            "both": 2902,
+            "burned_without_hotspot": 515,
+            "dice": 0.3790243583882975,
+            "hotspot_without_burned": 8994,
+            "ice": 0.7560524546065904,
+            "ioe": 0.15071700321919812
+          },
+          "region_month": {
+            "ccc_count": 0.8573917854366808,
+            "ccc_count_deseasonalized": 0.7826149114877917,
+            "ccc_frp": 0.9361766650188453,
+            "ccc_frp_deseasonalized": 0.8262717022215997,
+            "pearson_count": 0.8852392675974099,
+            "pearson_frp": 0.9420487742747278
+          }
+        },
+        "raw_snpp": {
+          "cell_month": {
+            "ccc_count": 0.5506974161846954,
+            "ccc_frp": 0.6023215010187203,
+            "pearson_count": 0.591152601309868,
+            "pearson_frp": 0.6280590435651665
+          },
+          "confusion": {
+            "both": 3123,
+            "burned_without_hotspot": 294,
+            "dice": 0.21852914421663985,
+            "hotspot_without_burned": 22042,
+            "ice": 0.875899066163322,
+            "ioe": 0.08604038630377524
+          },
+          "region_month": {
+            "ccc_count": 0.8897725240647014,
+            "ccc_count_deseasonalized": 0.7596887526865047,
+            "ccc_frp": 0.9208148231372546,
+            "ccc_frp_deseasonalized": 0.7936970940999502,
+            "pearson_count": 0.9033094177132225,
+            "pearson_frp": 0.9270402418980749
+          }
+        }
+      }
+    },
+    {
+      "boxes_wsen": [
+        [
+          -58.0,
+          -15.0,
+          -44.0,
+          -5.0
+        ]
+      ],
+      "burned_cell_months": 52038,
+      "cells": 2240,
+      "country_file": "Brazil",
+      "effort_omega": [
+        {
+          "era": "2012-01..2018-03",
+          "omega": 4.0109009991607865
+        },
+        {
+          "era": "2018-04..2020-12",
+          "omega": 5.810660832524377
+        }
+      ],
+      "firecci_ba_km2": 951259.4039559999,
+      "id": "brazil",
+      "label": "Brezilya (Cerrado / ormansızlaşma yayı)",
+      "series": {
+        "harmonized": {
+          "cell_month": {
+            "ccc_count": 0.7974056666435666,
+            "ccc_frp": 0.8170361231407068,
+            "pearson_count": 0.8145241055119442,
+            "pearson_frp": 0.8252900081264727
+          },
+          "confusion": {
+            "both": 51097,
+            "burned_without_hotspot": 941,
+            "dice": 0.533126747631568,
+            "hotspot_without_burned": 88553,
+            "ice": 0.6341066953097029,
+            "ioe": 0.018082939390445443
+          },
+          "region_month": {
+            "ccc_count": 0.9649697993924042,
+            "ccc_count_deseasonalized": 0.8781498635682786,
+            "ccc_frp": 0.9745906686778987,
+            "ccc_frp_deseasonalized": 0.8623584624295246,
+            "pearson_count": 0.9777552776948208,
+            "pearson_frp": 0.9811193621055946
+          }
+        },
+        "raw_all": {
+          "cell_month": {
+            "ccc_count": 0.8118285976050769,
+            "ccc_frp": 0.8287019818630296,
+            "pearson_count": 0.8241943229612735,
+            "pearson_frp": 0.833202541616936
+          },
+          "confusion": {
+            "both": 51149,
+            "burned_without_hotspot": 889,
+            "dice": 0.5328076334128481,
+            "hotspot_without_burned": 88811,
+            "ice": 0.6345455844527008,
+            "ioe": 0.01708366962604251
+          },
+          "region_month": {
+            "ccc_count": 0.9517827581984998,
+            "ccc_count_deseasonalized": 0.6577144288361951,
+            "ccc_frp": 0.9755459387374847,
+            "ccc_frp_deseasonalized": 0.808965154784728,
+            "pearson_count": 0.9595877313712726,
+            "pearson_frp": 0.978423631578474
+          }
+        },
+        "raw_modis": {
+          "cell_month": {
+            "ccc_count": 0.8006344721872377,
+            "ccc_frp": 0.8235508369010041,
+            "pearson_count": 0.8158671770706718,
+            "pearson_frp": 0.8261869513390593
+          },
+          "confusion": {
+            "both": 48966,
+            "burned_without_hotspot": 3072,
+            "dice": 0.636910529978343,
+            "hotspot_without_burned": 52757,
+            "ice": 0.518633937260993,
+            "ioe": 0.059033783004727315
+          },
+          "region_month": {
+            "ccc_count": 0.9648364186358901,
+            "ccc_count_deseasonalized": 0.9056008581409919,
+            "ccc_frp": 0.9893582223825419,
+            "ccc_frp_deseasonalized": 0.9434363888939573,
+            "pearson_count": 0.988165605956421,
+            "pearson_frp": 0.992652029782121
+          }
+        },
+        "raw_snpp": {
+          "cell_month": {
+            "ccc_count": 0.8192190200210763,
+            "ccc_frp": 0.8193825747578213,
+            "pearson_count": 0.8300738537767829,
+            "pearson_frp": 0.8235749704370893
+          },
+          "confusion": {
+            "both": 49443,
+            "burned_without_hotspot": 2595,
+            "dice": 0.5735880138515884,
+            "hotspot_without_burned": 70918,
+            "ice": 0.589210790870797,
+            "ioe": 0.04986740458895422
+          },
+          "region_month": {
+            "ccc_count": 0.9784127179725521,
+            "ccc_count_deseasonalized": 0.914377924893435,
+            "ccc_frp": 0.9838820827164273,
+            "ccc_frp_deseasonalized": 0.9164418742292039,
+            "pearson_count": 0.9843200272989276,
+            "pearson_frp": 0.9860643563444174
+          }
+        }
+      }
+    },
+    {
+      "boxes_wsen": [
+        [
+          -120.0,
+          50.0,
+          -95.0,
+          60.0
+        ]
+      ],
+      "burned_cell_months": 5982,
+      "cells": 4000,
+      "country_file": "Canada",
+      "effort_omega": [
+        {
+          "era": "2012-01..2018-03",
+          "omega": 4.786300242083288
+        },
+        {
+          "era": "2018-04..2020-12",
+          "omega": 5.936134789557805
+        }
+      ],
+      "firecci_ba_km2": 72545.559635,
+      "id": "canada",
+      "label": "Kanada (Alberta/Saskatchewan/Manitoba boreal)",
+      "series": {
+        "harmonized": {
+          "cell_month": {
+            "ccc_count": 0.6279532091853149,
+            "ccc_frp": 0.7210869584332384,
+            "pearson_count": 0.6524964580735957,
+            "pearson_frp": 0.7254987041235349
+          },
+          "confusion": {
+            "both": 4820,
+            "burned_without_hotspot": 1162,
+            "dice": 0.2269516903663245,
+            "hotspot_without_burned": 31674,
+            "ice": 0.8679234942730312,
+            "ioe": 0.19424941491140088
+          },
+          "region_month": {
+            "ccc_count": 0.9346560893238857,
+            "ccc_count_deseasonalized": 0.9192174775679967,
+            "ccc_frp": 0.9370792354294307,
+            "ccc_frp_deseasonalized": 0.9026283354920066,
+            "pearson_count": 0.944857764212821,
+            "pearson_frp": 0.9381643710792116
+          }
+        },
+        "raw_all": {
+          "cell_month": {
+            "ccc_count": 0.6511204250626735,
+            "ccc_frp": 0.7433670775620317,
+            "pearson_count": 0.6704216183445789,
+            "pearson_frp": 0.7448094087137637
+          },
+          "confusion": {
+            "both": 4843,
+            "burned_without_hotspot": 1139,
+            "dice": 0.22667914813948045,
+            "hotspot_without_burned": 31905,
+            "ice": 0.8682105148579514,
+            "ioe": 0.1904045469742561
+          },
+          "region_month": {
+            "ccc_count": 0.9157637908052001,
+            "ccc_count_deseasonalized": 0.8750351723219362,
+            "ccc_frp": 0.9309158469015258,
+            "ccc_frp_deseasonalized": 0.8881793909570295,
+            "pearson_count": 0.9235781649660364,
+            "pearson_frp": 0.9310952317276394
+          }
+        },
+        "raw_modis": {
+          "cell_month": {
+            "ccc_count": 0.6317670471772874,
+            "ccc_frp": 0.7439449807248077,
+            "pearson_count": 0.6555023312519515,
+            "pearson_frp": 0.7444015400942439
+          },
+          "confusion": {
+            "both": 4482,
+            "burned_without_hotspot": 1500,
+            "dice": 0.38684619368203005,
+            "hotspot_without_burned": 12708,
+            "ice": 0.7392670157068063,
+            "ioe": 0.25075225677031093
+          },
+          "region_month": {
+            "ccc_count": 0.9122981888081176,
+            "ccc_count_deseasonalized": 0.8998148245819935,
+            "ccc_frp": 0.9304895478391646,
+            "ccc_frp_deseasonalized": 0.8897307043610643,
+            "pearson_count": 0.9267116594778555,
+            "pearson_frp": 0.9307251071807783
+          }
+        },
+        "raw_snpp": {
+          "cell_month": {
+            "ccc_count": 0.6593777684830238,
+            "ccc_frp": 0.7278981608551149,
+            "pearson_count": 0.6758729800299587,
+            "pearson_frp": 0.7301117717320662
+          },
+          "confusion": {
+            "both": 4641,
+            "burned_without_hotspot": 1341,
+            "dice": 0.24528950080600406,
+            "hotspot_without_burned": 27218,
+            "ice": 0.8543268778053298,
+            "ioe": 0.22417251755265796
+          },
+          "region_month": {
+            "ccc_count": 0.9404662075835307,
+            "ccc_count_deseasonalized": 0.9180476610485041,
+            "ccc_frp": 0.9443055031798964,
+            "ccc_frp_deseasonalized": 0.912297356067411,
+            "pearson_count": 0.9456159341152465,
+            "pearson_frp": 0.9447281199205668
+          }
+        }
+      }
+    },
+    {
+      "boxes_wsen": [
+        [
+          74.0,
+          16.0,
+          84.0,
+          27.0
+        ],
+        [
+          74.75,
+          27.0,
+          79.5,
+          30.75
+        ]
+      ],
+      "burned_cell_months": 16381,
+      "cells": 2045,
+      "country_file": "India",
+      "effort_omega": [
+        {
+          "era": "2012-01..2018-03",
+          "omega": 7.469700464476796
+        },
+        {
+          "era": "2018-04..2020-12",
+          "omega": 11.255575137260218
+        }
+      ],
+      "firecci_ba_km2": 361704.6868299999,
+      "id": "india",
+      "label": "Hindistan (orta Hindistan + Pencap/Haryana)",
+      "series": {
+        "harmonized": {
+          "cell_month": {
+            "ccc_count": 0.6527346020371037,
+            "ccc_frp": 0.6612369878579311,
+            "pearson_count": 0.6868017836321555,
+            "pearson_frp": 0.6867952473435206
+          },
+          "confusion": {
+            "both": 16222,
+            "burned_without_hotspot": 159,
+            "dice": 0.2706711717348684,
+            "hotspot_without_burned": 87262,
+            "ice": 0.843241467279966,
+            "ioe": 0.009706367132653684
+          },
+          "region_month": {
+            "ccc_count": 0.9213510611023972,
+            "ccc_count_deseasonalized": 0.791179009013167,
+            "ccc_frp": 0.8976388414931672,
+            "ccc_frp_deseasonalized": 0.7132818692586678,
+            "pearson_count": 0.9428146412852824,
+            "pearson_frp": 0.9101248708808516
+          }
+        },
+        "raw_all": {
+          "cell_month": {
+            "ccc_count": 0.6598503547391281,
+            "ccc_frp": 0.6782195960108892,
+            "pearson_count": 0.6893852418157672,
+            "pearson_frp": 0.6979891912601272
+          },
+          "confusion": {
+            "both": 16230,
+            "burned_without_hotspot": 151,
+            "dice": 0.27039184326269494,
+            "hotspot_without_burned": 87437,
+            "ice": 0.8434410178745406,
+            "ioe": 0.009217996459312618
+          },
+          "region_month": {
+            "ccc_count": 0.8898381305109947,
+            "ccc_count_deseasonalized": 0.6367659097622198,
+            "ccc_frp": 0.8911982465650794,
+            "ccc_frp_deseasonalized": 0.6751202929416162,
+            "pearson_count": 0.9045212056730904,
+            "pearson_frp": 0.8993888891113794
+          }
+        },
+        "raw_modis": {
+          "cell_month": {
+            "ccc_count": 0.6633110009967365,
+            "ccc_frp": 0.681444530932641,
+            "pearson_count": 0.6796572341895337,
+            "pearson_frp": 0.6897176597156127
+          },
+          "confusion": {
+            "both": 14671,
+            "burned_without_hotspot": 1710,
+            "dice": 0.4826066218194378,
+            "hotspot_without_burned": 29747,
+            "ice": 0.6697059750551578,
+            "ioe": 0.10438923142665282
+          },
+          "region_month": {
+            "ccc_count": 0.8611701056748868,
+            "ccc_count_deseasonalized": 0.7793663318212082,
+            "ccc_frp": 0.9091298412507995,
+            "ccc_frp_deseasonalized": 0.7826937338867734,
+            "pearson_count": 0.8878255156358504,
+            "pearson_frp": 0.9186904632394441
+          }
+        },
+        "raw_snpp": {
+          "cell_month": {
+            "ccc_count": 0.6662307769911424,
+            "ccc_frp": 0.6737637496566394,
+            "pearson_count": 0.6963857629573678,
+            "pearson_frp": 0.695721635432445
+          },
+          "confusion": {
+            "both": 16076,
+            "burned_without_hotspot": 305,
+            "dice": 0.28655716080961846,
+            "hotspot_without_burned": 79744,
+            "ice": 0.8322270924650386,
+            "ioe": 0.018619131921128136
+          },
+          "region_month": {
+            "ccc_count": 0.9329221410730089,
+            "ccc_count_deseasonalized": 0.8070228225435103,
+            "ccc_frp": 0.9208880191135391,
+            "ccc_frp_deseasonalized": 0.7895228133704715,
+            "pearson_count": 0.9497086009966675,
+            "pearson_frp": 0.9308018445698241
+          }
+        }
+      }
+    }
+  ],
+  "transform": "ln(1 + x / mean(x)) per series before CCC and Pearson",
+  "years": [
+    2012,
+    2020
+  ]
+}

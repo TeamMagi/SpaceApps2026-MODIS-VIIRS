@@ -27,6 +27,7 @@
 | `DOGRULAMA_PAKETI.md` | G12 iç doğrulama paketi referans ölçümü: 10 ülkede placebo adım testi, LOYO normalizasyon testi ve Model vs Baseline kapısı |
 | `KONFORMAL_KAPSAMA.md` | S10 conformal tablosunun (`data/conformal.json`) kalibrasyonu ve ölçülen kapsaması (LOYO, LOCO, bootstrap), dürüst sınırlar; `conformal_calibration fit` üretir, elle düzenlenmez |
 | `crates/firms-client/examples/event_recall.rs` | `DOGRULAMA_PAKETI.md` bölüm D: belgelenmiş yangın aylarının ham/harmonize z ve sıra ölçümü, 2012 sonrası alarm oranları |
+| `DIS_DOGRULAMA_YANMIS_ALAN.md` | Y10 dış doğrulama pilotu: ESA Fire_cci 0.25° yanmış alanına karşı ham vs harmonize Lin's CCC ve hücre-ay IOE/ICE, 4 bölge 2012–2020; `burned_area_validation.rs` + `tools/firecci_extract.py`, veri `vaka/firecci_validation_*` |
 | `REFERENCES.md` | Bilimsel referans listesi taslağı: 32 makalelik envanter, referans projeler, doğrulanması gereken iddialar, pipeline aşaması → kaynak tablosu (S13, S8 içeriği için) |
 | `test/TEST_PLANI.md` | IEEE 829 ana test planı: kapsam, seviyeler, giriş/çıkış ölçütleri, riskler, hata yönetimi, metrikler, geçerleme planı |
 | `test/TEST_TASARIMI.md` | ID'li test vakaları: EP/BVA, karar tabloları, durum geçişi (0-switch), geçerleme vakaları (`TC-VAL`); otomatik testi olmayanlar `EKSİK` |
