@@ -466,6 +466,8 @@ struct CompareCounts {
     harmonized_total: usize,
     removed_total: usize,
     removed_pct: f64,
+    static_masked: usize,
+    sama_removed: usize,
     by_source: SourceBreakdown,
 }
 
@@ -515,6 +517,8 @@ struct CompareResponse {
 struct StatsTotals {
     raw_detections: usize,
     harmonized_records: usize,
+    static_masked: usize,
+    sama_removed: usize,
     calendar_months: usize,
     distinct_platforms: usize,
 }
@@ -580,6 +584,8 @@ struct PipelineRun {
     bbox: BBox,
     modis_count: usize,
     viirs_count: usize,
+    static_masked: usize,
+    sama_removed: usize,
     // Keep filtered raw detections even when include_raw=false so /api/compare and /api/stats can reuse this helper.
     raw: Vec<Hotspot>,
     harmonized: Vec<HarmonizedHotspot>,
@@ -1120,6 +1126,16 @@ async fn availability(
     Ok(Json(entries))
 }
 
+fn mask_from_builder(
+    config: &PipelineConfig,
+    builder: pyrosync_core::static_mask::StaticMaskBuilder,
+) -> Option<pyrosync_core::static_mask::StaticMask> {
+    config
+        .static_mask
+        .enabled
+        .then(|| builder.build(&config.static_mask))
+}
+
 async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<PipelineRun, ApiError> {
     let bbox = parse_bbox(params)?;
     let window = parse_time_window(params)?;
@@ -1145,6 +1161,16 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
 
     pyrosync_firms::parse::retain_wildfires(&mut modis);
     pyrosync_firms::parse::retain_wildfires(&mut viirs);
+
+    // Build static-mask persistence before confidence filtering so chronic low-confidence
+    // flare cells still accumulate active months, matching /api/calendar, /api/series, and /api/points.
+    let mut mask_builder = pyrosync_core::static_mask::StaticMaskBuilder::new();
+    if state.config.static_mask.enabled {
+        mask_builder.add_detections(&modis);
+        mask_builder.add_detections(&viirs);
+    }
+    let static_mask = mask_from_builder(&state.config, mask_builder);
+
     let excluded_detections = min_confidence.retain(&mut modis) + min_confidence.retain(&mut viirs);
 
     let modis_count = modis.len();
@@ -1154,7 +1180,13 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
     raw.extend(modis.iter().cloned());
     raw.extend(viirs.iter().cloned());
 
-    let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &state.config);
+    let links = pyrosync_core::harmonize::harmonize_with_links_masked(
+        modis,
+        viirs,
+        &state.config,
+        static_mask.as_ref(),
+    );
+    let harmonized = links.hotspots;
     let calendar = pyrosync_core::calendar::build_calendar_with(
         &harmonized,
         &state.config.uncertainty,
@@ -1181,6 +1213,8 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
         bbox,
         modis_count,
         viirs_count,
+        static_masked: links.static_masked,
+        sama_removed: links.sama_removed,
         raw,
         harmonized,
         calendar,
@@ -1445,6 +1479,8 @@ async fn harmonize(
             "raw": raw,
             "harmonized": {
                 "count": run.harmonized.len(),
+                "static_masked": run.static_masked,
+                "sama_removed": run.sama_removed,
                 "hotspots": run.harmonized,
             },
             "calendar": run.calendar,
@@ -1663,6 +1699,8 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
             harmonized_total,
             removed_total,
             removed_pct,
+            static_masked: run.static_masked,
+            sama_removed: run.sama_removed,
             by_source,
         },
         frp: CompareFrp {
@@ -1800,6 +1838,8 @@ fn build_stats_response(run: PipelineRun) -> StatsResponse {
         totals: StatsTotals {
             raw_detections,
             harmonized_records: run.harmonized.len(),
+            static_masked: run.static_masked,
+            sama_removed: run.sama_removed,
             calendar_months,
             distinct_platforms: distinct_platforms.len(),
         },
@@ -2136,10 +2176,7 @@ async fn run_calendar_pipeline(
     let query = query.clone();
     tokio::task::spawn_blocking(move || {
         let raw_detections = modis.len() + viirs.len();
-        let mask = config
-            .static_mask
-            .enabled
-            .then(|| mask_builder.build(&config.static_mask));
+        let mask = mask_from_builder(&config, mask_builder);
         let harmonized = pyrosync_core::harmonize::harmonize_with_links_masked(
             modis,
             viirs,
@@ -2412,6 +2449,8 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 0,
             viirs_count: 0,
+            static_masked: 0,
+            sama_removed: 0,
             raw: Vec::new(),
             harmonized: Vec::new(),
             calendar: Vec::new(),
@@ -2507,6 +2546,8 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 2,
             viirs_count: 3,
+            static_masked: 0,
+            sama_removed: 0,
             raw,
             harmonized,
             calendar: Vec::new(),
@@ -2561,6 +2602,8 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 0,
             viirs_count: 0,
+            static_masked: 0,
+            sama_removed: 0,
             raw: Vec::new(),
             harmonized: Vec::new(),
             calendar: Vec::new(),
@@ -2662,6 +2705,8 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 1,
             viirs_count: 3,
+            static_masked: 0,
+            sama_removed: 0,
             raw,
             harmonized,
             calendar,
@@ -3906,6 +3951,8 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
             bbox: sample_bbox(),
             modis_count: 2,
             viirs_count: 0,
+            static_masked: 0,
+            sama_removed: 0,
             raw: vec![
                 make_raw(Sensor::ModisTerra, 100.0, 10, DayNight::Day),
                 make_raw(Sensor::ModisAqua, 100.0, 11, DayNight::Day),

@@ -248,7 +248,11 @@ pub fn tropical_belt_share(south: f64, north: f64) -> f64 {
         return 0.0;
     }
     let sin = |deg: f64| deg.to_radians().sin();
-    ((sin(hi) - sin(lo)) / (sin(north) - sin(south))).clamp(0.0, 1.0)
+    let denom = sin(north) - sin(south);
+    if !denom.is_finite() || denom == 0.0 {
+        return ((hi - lo) / (north - south)).clamp(0.0, 1.0);
+    }
+    ((sin(hi) - sin(lo)) / denom).clamp(0.0, 1.0)
 }
 
 /// `tropical_swath_gap` flag carried by calendar and effort metadata.
@@ -727,5 +731,12 @@ mod tests {
         let factors = estimate_effort(&hotspots);
         assert_eq!(factors[0].months, 4);
         assert_eq!(omega_for_month(&factors, &hotspots, 2001, 2), Some(1.0));
+    }
+
+    #[test]
+    fn tropical_belt_share_subnormal_span_avoids_nan() {
+        let share = tropical_belt_share(0.0, 5e-324);
+        assert!(!share.is_nan(), "expected finite share, got NaN");
+        assert_eq!(share, 1.0);
     }
 }

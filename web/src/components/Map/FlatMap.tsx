@@ -801,6 +801,7 @@ function FlatMap() {
 
         {(activeDetail.rawPoint || activeDetail.harmPoint) && (
           <PointDetail
+            key={`${activeDetail.rawPoint?.id ?? ""}:${activeDetail.harmPoint?.id ?? ""}`}
             rawPoint={activeDetail.rawPoint}
             harmPoint={activeDetail.harmPoint}
             isDuplicateInRaw={activeDetail.isDuplicateInRaw}

@@ -25,11 +25,11 @@ check("an active filter round-trips through the URL hash", () => {
   });
   assert.match(hash, /conf=nominal/);
   assert.equal(parseHash(hash).minConfidence, "nominal");
-  assert.equal(parseHash("#region=Turkey&conf=high").minConfidence, "high");
 });
 
-check("an unknown conf value is ignored rather than guessed", () => {
+check("unknown or unsupported conf values are ignored rather than guessed", () => {
   assert.equal(parseHash("#region=Turkey&conf=medium").minConfidence, undefined);
+  assert.equal(parseHash("#region=Turkey&conf=high").minConfidence, undefined);
 });
 
 check("store applies the filter from the URL and toggles it", () => {

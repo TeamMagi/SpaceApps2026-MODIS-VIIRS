@@ -570,6 +570,8 @@ Not: `$.raw.hotspots` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
   },
   "harmonized": {
     "count": 3,
+    "static_masked": 0,
+    "sama_removed": 0,
     "hotspots": [
       {
         "acquired": "2026-11-15T10:30:00Z",
@@ -804,6 +806,8 @@ Not: Bu yanıt bir excerpt'tir; yalnızca `effort.reliable`, `effort.reason`, `w
 | `raw.total_raw` | integer | `modis_count + viirs_count` |
 | `raw.hotspots` | array | Yalnızca `include_raw=true` ile döner. Öğeler: `lat`, `lon`, `frp`, `sensor` (Sensor), `acquired`, `daynight` |
 | `harmonized.count` | integer | `hotspots` dizisinin uzunluğu |
+| `harmonized.static_masked` | integer | Kalıcı sıcak hücre (statik maske) nedeniyle elenen tespit sayısı (maske güven filtresinden önce kurulur) |
+| `harmonized.sama_removed` | integer | Güney Atlantik Anomalisi (SAMA) gece filtresiyle elenen VIIRS tespit sayısı |
 | `harmonized.hotspots` | array | Bkz. "Harmonize edilmiş kayıt" |
 | `calendar` | array of CalendarCell | Aylık takvim. Bkz. "CalendarCell" |
 | `effort` | object | Bkz. "effort ve effort.reliable" |
@@ -908,6 +912,8 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
     "harmonized_total": 3,
     "removed_total": 2,
     "removed_pct": 40,
+    "static_masked": 0,
+    "sama_removed": 0,
     "by_source": {
       "modis_only": 1,
       "viirs_only": 1,
@@ -989,6 +995,8 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
 | `counts.harmonized_total` | integer | Harmonize kayıt sayısı |
 | `counts.removed_total` | integer | `raw_total - harmonized_total` (sıfırın altına düşmez) |
 | `counts.removed_pct` | number | Kaldırılan kayıtların ham toplama oranı (%) |
+| `counts.static_masked` | integer | Kalıcı sıcak hücre (statik maske) nedeniyle elenen tespit sayısı |
+| `counts.sama_removed` | integer | Güney Atlantik Anomalisi (SAMA) gece filtresiyle elenen VIIRS tespit sayısı |
 | `counts.by_source` | object | `modis_only`, `viirs_only`, `matched` harmonize kaynaklarına göre sayımlar |
 | `frp.raw_sum` | number | Ham FRP toplamı |
 | `frp.harmonized_raw_sum` | number | Harmonize kayıtların `frp` toplamı |
@@ -1039,6 +1047,8 @@ Not: `$.sensor_breakdown` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
   "totals": {
     "raw_detections": 5,
     "harmonized_records": 3,
+    "static_masked": 0,
+    "sama_removed": 0,
     "calendar_months": 1,
     "distinct_platforms": 3
   },
@@ -1127,6 +1137,8 @@ Not: `$.sensor_breakdown` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
 | `filters` | object | Bkz. "Güven filtresi" |
 | `totals.raw_detections` | integer | Ham kayıt sayısı (tip ve güven filtresinden sonra) |
 | `totals.harmonized_records` | integer | Harmonize kayıt sayısı |
+| `totals.static_masked` | integer | Kalıcı sıcak hücre (statik maske) nedeniyle elenen tespit sayısı |
+| `totals.sama_removed` | integer | Güney Atlantik Anomalisi (SAMA) gece filtresiyle elenen VIIRS tespit sayısı |
 | `totals.calendar_months` | integer | Takvimdeki ay hücresi sayısı (en az bir tespiti olan aylar) |
 | `totals.distinct_platforms` | integer | Harmonize kayıtlarda geçen farklı uydu sayısı |
 | `sensor_breakdown[]` | array | Beş sensörün her biri için bir öğe (her zaman beş öğe). Alanlar: `sensor`, `firms_source`, `raw_detections`, `share_pct` |

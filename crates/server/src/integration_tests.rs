@@ -1418,3 +1418,76 @@ async fn harmonize_effort_reports_no_swath_gap_outside_the_belt() {
     assert!(effort.as_object().unwrap().contains_key("tropical_swath_gap"));
     assert!(effort["tropical_swath_gap"].is_null());
 }
+
+#[tokio::test]
+async fn nrt_static_mask_uses_low_confidence_detections_and_reports_counts() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path(format!("/api/data_availability/csv/{KEY}/ALL")))
+        .respond_with(ResponseTemplate::new(200).set_body_string(
+            "data_id,min_date,max_date\nMODIS_NRT,2025-01-01,2025-11-05\n",
+        ))
+        .mount(&server)
+        .await;
+
+    let mut csv = format!("{MODIS_HEADER}\n");
+    for month in 1..=10u32 {
+        csv.push_str(&format!(
+            "37.0000,30.0000,330.5,1.0,1.0,2025-{month:02}-01,1000,Terra,MODIS,20,6.1NRT,295.0,50.0,D\n"
+        ));
+    }
+    csv.push_str(
+        "37.0000,30.0000,330.5,1.0,1.0,2025-11-01,1000,Terra,MODIS,80,6.1NRT,295.0,50.0,D\n",
+    );
+    csv.push_str(
+        "38.0000,30.0000,330.5,1.0,1.0,2025-11-02,1000,Terra,MODIS,80,6.1NRT,295.0,50.0,D\n",
+    );
+
+    mount_area(
+        &server,
+        "MODIS_NRT",
+        ResponseTemplate::new(200).set_body_string(format!("{MODIS_HEADER}\n")),
+    )
+    .await;
+    Mock::given(method("GET"))
+        .and(path(format!(
+            "/api/area/csv/{KEY}/MODIS_NRT/26,36,45,42/5/2025-01-01"
+        )))
+        .respond_with(ResponseTemplate::new(200).set_body_string(csv))
+        .with_priority(1)
+        .mount(&server)
+        .await;
+
+    let app = app(
+        Some(firms_client(&server)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let query = format!("{BBOX}&start=2025-01-01&end=2025-11-02&min_confidence=nominal");
+
+    let harmonize = call(&app, &format!("/api/harmonize?{query}")).await;
+    assert_eq!(harmonize.status, StatusCode::OK, "body: {}", harmonize.body);
+    let h = harmonize.json();
+    assert_eq!(h["raw"]["total_raw"], 2);
+    assert_eq!(h["harmonized"]["count"], 1);
+    assert_eq!(h["harmonized"]["static_masked"], 1);
+    assert_eq!(h["harmonized"]["sama_removed"], 0);
+    assert_eq!(
+        h["filters"],
+        json!({"min_confidence": "nominal", "excluded_detections": 10})
+    );
+
+    let compare = call(&app, &format!("/api/compare?{query}")).await;
+    assert_eq!(compare.status, StatusCode::OK, "body: {}", compare.body);
+    let c = compare.json();
+    assert_eq!(c["counts"]["harmonized_total"], 1);
+    assert_eq!(c["counts"]["static_masked"], 1);
+    assert_eq!(c["counts"]["sama_removed"], 0);
+
+    let stats = call(&app, &format!("/api/stats?{query}")).await;
+    assert_eq!(stats.status, StatusCode::OK, "body: {}", stats.body);
+    let s = stats.json();
+    assert_eq!(s["totals"]["harmonized_records"], 1);
+    assert_eq!(s["totals"]["static_masked"], 1);
+    assert_eq!(s["totals"]["sama_removed"], 0);
+}

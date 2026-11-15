@@ -90,7 +90,7 @@ export function parseHash(hash: string): Partial<UrlState> {
 
   const conf = params.get("conf");
   if (conf === null || conf === "low") result.minConfidence = "low";
-  else if (conf === "nominal" || conf === "high") result.minConfidence = conf;
+  else if (conf === "nominal") result.minConfidence = conf;
   return result;
 }
 

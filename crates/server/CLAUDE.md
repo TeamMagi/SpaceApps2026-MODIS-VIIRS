@@ -43,6 +43,7 @@
 | `PYROSYNC_VZA_A`, `PYROSYNC_VZA_B`, `PYROSYNC_VZA_C` | `0.2017`, `0.0168`, `1.0` | MODIS VZA düzeltme polinomu `R_rel(θ)` katsayıları (Zheng et al. 2026 Eq. 9 & Fig. 4 nadir normalize) |
 | `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre (gaz meşalesi) maskesi: bir yıl içinde ≥ N farklı ayda tespit olan H3 r7 hücresi o yıl için elenir |
 | `PYROSYNC_SAMA_ENABLED` | `false` | SAMA kutusundaki gece VIIRS tespitlerini eler (C2 arşivinde fazla gürültü ölçülmediği için kapalı) |
+| `PYROSYNC_TROPICAL_SWATH_GAP_COMPENSATION` | `false` | 30°G–30°K MODIS swath boşluğu için VIIRS-siz takvim `total_frp` telafisini açar |
 
 ## Teknik Notlar
 

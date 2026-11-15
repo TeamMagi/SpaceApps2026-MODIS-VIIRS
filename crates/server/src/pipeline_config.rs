@@ -55,6 +55,11 @@ fn override_from_env(
         &mut config.static_mask.min_active_months,
     )?;
     set(env, "PYROSYNC_SAMA_ENABLED", &mut config.sama.enabled)?;
+    set(
+        env,
+        "PYROSYNC_TROPICAL_SWATH_GAP_COMPENSATION",
+        &mut config.uncertainty.tropical_swath_gap_compensation,
+    )?;
     Ok(())
 }
 
@@ -182,12 +187,14 @@ mod tests {
             "PYROSYNC_STATIC_MASK_ENABLED" => Some("true".to_string()),
             "PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS" => Some("12".to_string()),
             "PYROSYNC_SAMA_ENABLED" => Some("false".to_string()),
+            "PYROSYNC_TROPICAL_SWATH_GAP_COMPENSATION" => Some("true".to_string()),
             _ => None,
         };
         let config = load(Some(&file.0), env).unwrap();
         assert!(config.static_mask.enabled);
         assert_eq!(config.static_mask.min_active_months, 12);
         assert!(!config.sama.enabled);
+        assert!(config.uncertainty.tropical_swath_gap_compensation);
     }
 
     #[test]
