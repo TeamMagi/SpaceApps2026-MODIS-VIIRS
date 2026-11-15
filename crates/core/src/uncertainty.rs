@@ -262,6 +262,40 @@ pub fn frp_uncertainty_for_obs(
     }
 }
 
+/// Birden çok pikselin FRP toplamından oluşan kayıt için güven aralığı üretir.
+///
+/// Eşit olmayan piksellerin toplamında göreli rastgele hata `1/√n` gibi küçülmez
+/// (`√(Σ f_i²) / Σ f_i`); bu yüzden her üye kendi `n_obs` belirsizliğiyle karesel birleştirilir.
+pub fn frp_uncertainty_for_sum(
+    parts: &[(f64, u16)],
+    sensor_family: SensorFamily,
+    params: &UncertaintyParams,
+) -> UncertaintyEstimate {
+    let confidence = confidence_from_z(params.z);
+    let total_frp: f64 = parts.iter().map(|&(frp, _)| frp).sum();
+    if parts.is_empty() || !total_frp.is_finite() || total_frp <= 0.0 {
+        return UncertaintyEstimate {
+            lower: 0.0,
+            upper: 0.0,
+            confidence,
+        };
+    }
+
+    let items: Vec<(f64, f64, f64)> = parts
+        .iter()
+        .map(|&(frp, n_obs)| {
+            let rel = relative_uncertainty_for_obs(None, sensor_family, None, n_obs, params);
+            (frp, rel.random, rel.systematic)
+        })
+        .collect();
+
+    aggregate_uncertainty(&items, 1.0, params).unwrap_or(UncertaintyEstimate {
+        lower: 0.0,
+        upper: 0.0,
+        confidence,
+    })
+}
+
 fn aggregate_uncertainty(
     items: &[(f64, f64, f64)],
     divisor: f64,
@@ -742,5 +776,92 @@ mod tests {
         assert_eq!(p.vza_error_coeff, 0.05);
         assert_eq!(p.modis_scale_sigma, 0.10);
         assert_eq!(p.z, 1.0);
+    }
+
+    #[test]
+    fn sum_uncertainty_single_part_matches_obs_uncertainty() {
+        let params = UncertaintyParams::default();
+        for family in FAMILIES {
+            for frp in [0.4, 30.0, 106.0, 500.0] {
+                for n in [0, 1, 2, 4] {
+                    let sum_est = frp_uncertainty_for_sum(&[(frp, n)], family, &params);
+                    let obs_est = frp_uncertainty_for_obs(frp, None, family, None, n, &params);
+                    assert!(
+                        (sum_est.lower - obs_est.lower).abs() <= 1e-9 * frp,
+                        "{family:?} frp={frp} n={n}: {sum_est:?} vs {obs_est:?}"
+                    );
+                    assert!(
+                        (sum_est.upper - obs_est.upper).abs() <= 1e-9 * frp,
+                        "{family:?} frp={frp} n={n}: {sum_est:?} vs {obs_est:?}"
+                    );
+                    assert_eq!(sum_est.confidence, obs_est.confidence);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sum_uncertainty_three_equal_parts_matches_n_three_relative_width() {
+        let params = UncertaintyParams::default();
+        for family in FAMILIES {
+            let sum_est =
+                frp_uncertainty_for_sum(&[(10.0, 1), (10.0, 1), (10.0, 1)], family, &params);
+            let obs_est = frp_uncertainty_for_obs(30.0, None, family, None, 3, &params);
+            let sum_half_rel = (sum_est.upper - sum_est.lower) / (2.0 * 30.0);
+            let obs_half_rel = (obs_est.upper - obs_est.lower) / (2.0 * 30.0);
+            assert!(
+                (sum_half_rel - obs_half_rel).abs() <= 1e-9,
+                "{family:?}: {sum_half_rel} vs {obs_half_rel}"
+            );
+        }
+    }
+
+    #[test]
+    fn sum_uncertainty_unequal_parts_exceeds_sqrt_n_and_matches_quadrature() {
+        let params = UncertaintyParams::default();
+        let parts = [(100.0, 1), (2.0, 1), (2.0, 1), (2.0, 1)];
+        let sum_frp = 106.0;
+        let sum_est = frp_uncertainty_for_sum(&parts, SensorFamily::Viirs, &params);
+        let naive_est =
+            frp_uncertainty_for_obs(sum_frp, None, SensorFamily::Viirs, None, 4, &params);
+
+        let sum_half_rel = (sum_est.upper - sum_est.lower) / (2.0 * sum_frp);
+        let naive_half_rel = (naive_est.upper - naive_est.lower) / (2.0 * sum_frp);
+        assert!(
+            sum_half_rel > naive_half_rel,
+            "expected {sum_half_rel} > {naive_half_rel}"
+        );
+
+        let sigma =
+            relative_uncertainty_for_obs(None, SensorFamily::Viirs, None, 1, &params).random;
+        let expected_rand_rel =
+            sigma * (100.0_f64.powi(2) + 3.0 * 2.0_f64.powi(2)).sqrt() / sum_frp;
+        let actual_rand_rel = (sum_est.upper - sum_frp) / (sum_frp * params.z);
+        assert!(
+            (actual_rand_rel - expected_rand_rel).abs() <= 1e-9,
+            "expected {expected_rand_rel}, got {actual_rand_rel}"
+        );
+    }
+
+    #[test]
+    fn sum_uncertainty_empty_or_non_positive_returns_zero_bounds() {
+        let params = UncertaintyParams {
+            z: 2.0,
+            ..UncertaintyParams::default()
+        };
+        let expected_conf = confidence_from_z(params.z);
+        for parts in [
+            &[][..],
+            &[(0.0, 1)][..],
+            &[(0.0, 1), (0.0, 2)][..],
+            &[(-5.0, 1)][..],
+            &[(10.0, 1), (f64::NAN, 1)][..],
+            &[(10.0, 1), (f64::INFINITY, 1)][..],
+        ] {
+            let est = frp_uncertainty_for_sum(parts, SensorFamily::Viirs, &params);
+            assert_eq!(est.lower, 0.0);
+            assert_eq!(est.upper, 0.0);
+            assert!((est.confidence - expected_conf).abs() < 1e-12);
+        }
     }
 }
