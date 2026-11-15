@@ -10,6 +10,7 @@
 | Dosya | İçerik |
 |-------|--------|
 | `MIMARI.md` | Proje mimarisi, dizin yapısı, pipeline açıklaması, tech stack |
+| `API.md` | Sunucu API referansı: 11 endpoint, parametreler, örnek istek/yanıt, hata kodları, ortam değişkenleri, bilinen sorunlar |
 | `UI-UX-KONSEPT.md` | UI/UX konsepti, wireframe'ler, kullanıcı akışı, bileşen ağacı (C1) |
 | `TASARIM_KONSEPT.md` | UI/UX tasarım konsepti, geçiş koreografisi, yerleşim ve ekran listesi |
 | `UX_YAZIM.md` | Ses tonu, mikro metin kuralları, EN/TR metin tablosu ve biçim standartları |
