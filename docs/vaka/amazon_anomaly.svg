@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Amazon 2019-2021 anomaly vs 2012-2018</title>
+<desc id="d">Percent change of each annual metric against the 2012-2018 mean.</desc>
+<rect width="1000" height="560" fill="#0d0f13"/>
+<text x="40" y="44" fill="#f1f3f7" font-size="24" font-weight="600">Amazon 2019-2021 anomaly vs 2012-2018 mean</text>
+<text x="40" y="68" fill="#949cab" font-size="14">Same forest-biome cells, four metrics. Raw all-sensor counts inflate the anomaly with the NOAA-20 step.</text>
+<line x1="80" x2="960" y1="440.0" y2="440.0" stroke="#222731"/><text x="74" y="444.0" fill="#949cab" font-size="12" text-anchor="end">+0%</text>
+<line x1="80" x2="960" y1="392.9" y2="392.9" stroke="#222731"/><text x="74" y="396.9" fill="#949cab" font-size="12" text-anchor="end">+20%</text>
+<line x1="80" x2="960" y1="345.7" y2="345.7" stroke="#222731"/><text x="74" y="349.7" fill="#949cab" font-size="12" text-anchor="end">+40%</text>
+<line x1="80" x2="960" y1="298.6" y2="298.6" stroke="#222731"/><text x="74" y="302.6" fill="#949cab" font-size="12" text-anchor="end">+60%</text>
+<line x1="80" x2="960" y1="251.4" y2="251.4" stroke="#222731"/><text x="74" y="255.4" fill="#949cab" font-size="12" text-anchor="end">+80%</text>
+<line x1="80" x2="960" y1="204.3" y2="204.3" stroke="#222731"/><text x="74" y="208.3" fill="#949cab" font-size="12" text-anchor="end">+100%</text>
+<line x1="80" x2="960" y1="157.1" y2="157.1" stroke="#222731"/><text x="74" y="161.1" fill="#949cab" font-size="12" text-anchor="end">+120%</text>
+<line x1="80" x2="960" y1="110.0" y2="110.0" stroke="#222731"/><text x="74" y="114.0" fill="#949cab" font-size="12" text-anchor="end">+140%</text>
+<text x="226.7" y="462" fill="#f1f3f7" font-size="15" text-anchor="middle">2019</text>
+<rect x="129.7" y="239.5" width="44" height="200.5" fill="#d4d9e2"/><text x="151.7" y="233.5" fill="#f1f3f7" font-size="12" text-anchor="middle">+85%</text>
+<rect x="179.7" y="406.4" width="44" height="33.6" fill="#8d96a6"/><text x="201.7" y="400.4" fill="#f1f3f7" font-size="12" text-anchor="middle">+14%</text>
+<rect x="229.7" y="420.3" width="44" height="19.7" fill="#3cc8f0"/><text x="251.7" y="414.3" fill="#f1f3f7" font-size="12" text-anchor="middle">+8%</text>
+<rect x="279.7" y="343.6" width="44" height="96.4" fill="#f37819"/><text x="301.7" y="337.6" fill="#f1f3f7" font-size="12" text-anchor="middle">+41%</text>
+<text x="520.0" y="462" fill="#f1f3f7" font-size="15" text-anchor="middle">2020</text>
+<rect x="423.0" y="128.3" width="44" height="311.7" fill="#d4d9e2"/><text x="445.0" y="122.3" fill="#f1f3f7" font-size="12" text-anchor="middle">+132%</text>
+<rect x="473.0" y="365.3" width="44" height="74.7" fill="#8d96a6"/><text x="495.0" y="359.3" fill="#f1f3f7" font-size="12" text-anchor="middle">+32%</text>
+<rect x="523.0" y="354.8" width="44" height="85.2" fill="#3cc8f0"/><text x="545.0" y="348.8" fill="#f1f3f7" font-size="12" text-anchor="middle">+36%</text>
+<rect x="573.0" y="251.4" width="44" height="188.6" fill="#f37819"/><text x="595.0" y="245.4" fill="#f1f3f7" font-size="12" text-anchor="middle">+80%</text>
+<text x="813.3" y="462" fill="#f1f3f7" font-size="15" text-anchor="middle">2021</text>
+<rect x="716.3" y="325.5" width="44" height="114.5" fill="#d4d9e2"/><text x="738.3" y="319.5" fill="#f1f3f7" font-size="12" text-anchor="middle">+49%</text>
+<rect x="766.3" y="440.0" width="44" height="1.0" fill="#8d96a6"/><text x="788.3" y="434.0" fill="#f1f3f7" font-size="12" text-anchor="middle">-8%</text>
+<rect x="816.3" y="440.0" width="44" height="1.0" fill="#3cc8f0"/><text x="838.3" y="434.0" fill="#f1f3f7" font-size="12" text-anchor="middle">-12%</text>
+<rect x="866.3" y="386.8" width="44" height="53.2" fill="#f37819"/><text x="888.3" y="380.8" fill="#f1f3f7" font-size="12" text-anchor="middle">+23%</text>
+<rect x="100" y="469" width="14" height="14" fill="#d4d9e2"/><text x="122" y="480" fill="#f1f3f7" font-size="13">Raw, all sensors</text>
+<rect x="520" y="469" width="14" height="14" fill="#8d96a6"/><text x="542" y="480" fill="#f1f3f7" font-size="13">Raw, MODIS only</text>
+<rect x="100" y="491" width="14" height="14" fill="#3cc8f0"/><text x="122" y="502" fill="#f1f3f7" font-size="13">Harmonised count_normalized</text>
+<rect x="520" y="491" width="14" height="14" fill="#f37819"/><text x="542" y="502" fill="#f1f3f7" font-size="13">Harmonised total_frp</text>
+<text x="40" y="545" fill="#949cab" font-size="12">Baseline = mean of 2012-2018 per metric. Rainfall not measured here: normal 2019-2021 rainfall is cited from [20]. docs/vaka/amazon_summary.json</text>
+</svg>

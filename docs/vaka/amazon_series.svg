@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Amazon fire activity 2012-2021, raw vs harmonised</title>
+<desc id="d">Annual index, 2012-2018 mean = 100, Legal Amazon forest-biome cells.</desc>
+<rect width="1000" height="560" fill="#0d0f13"/>
+<text x="40" y="44" fill="#f1f3f7" font-size="24" font-weight="600">Amazon forest cells 2012-2021: raw vs harmonised</text>
+<text x="40" y="68" fill="#949cab" font-size="14">Annual index, 2012-2018 mean = 100. Raw sums add S-NPP in 2012 and NOAA-20 in 2018; count_normalized removes both steps.</text>
+<text x="80" y="96" fill="#f1f3f7" font-size="16" font-weight="600"></text>
+<line x1="80" x2="960" y1="440.0" y2="440.0" stroke="#222731"/><text x="74" y="444.0" fill="#949cab" font-size="12" text-anchor="end">0</text>
+<line x1="80" x2="960" y1="374.0" y2="374.0" stroke="#222731"/><text x="74" y="378.0" fill="#949cab" font-size="12" text-anchor="end">50</text>
+<line x1="80" x2="960" y1="308.0" y2="308.0" stroke="#222731"/><text x="74" y="312.0" fill="#949cab" font-size="12" text-anchor="end">100</text>
+<line x1="80" x2="960" y1="242.0" y2="242.0" stroke="#222731"/><text x="74" y="246.0" fill="#949cab" font-size="12" text-anchor="end">150</text>
+<line x1="80" x2="960" y1="176.0" y2="176.0" stroke="#222731"/><text x="74" y="180.0" fill="#949cab" font-size="12" text-anchor="end">200</text>
+<line x1="80" x2="960" y1="110.0" y2="110.0" stroke="#222731"/><text x="74" y="114.0" fill="#949cab" font-size="12" text-anchor="end">250</text>
+<line x1="80" x2="960" y1="308.0" y2="308.0" stroke="#949cab" stroke-dasharray="2 4"/>
+<text x="124.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2012</text>
+<text x="212.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2013</text>
+<text x="300.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2014</text>
+<text x="388.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2015</text>
+<text x="476.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2016</text>
+<text x="564.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2017</text>
+<text x="652.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2018</text>
+<text x="740.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2019</text>
+<text x="828.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2020</text>
+<text x="916.0" y="458" fill="#949cab" font-size="12" text-anchor="middle">2021</text>
+<polyline points="124.0,312.9 212.0,369.2 300.0,330.8 388.0,265.9 476.0,314.3 564.0,280.3 652.0,282.7 740.0,195.7 828.0,133.5 916.0,243.9" fill="none" stroke="#d4d9e2" stroke-width="2.5"/>
+<circle cx="124.0" cy="312.9" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="212.0" cy="369.2" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="300.0" cy="330.8" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="388.0" cy="265.9" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="476.0" cy="314.3" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="564.0" cy="280.3" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="652.0" cy="282.7" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="740.0" cy="195.7" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="828.0" cy="133.5" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<circle cx="916.0" cy="243.9" r="3.5" fill="#0d0f13" stroke="#d4d9e2" stroke-width="2"/>
+<polyline points="124.0,302.8 212.0,362.2 300.0,322.8 388.0,259.1 476.0,300.1 564.0,267.6 652.0,341.2 740.0,289.2 828.0,266.2 916.0,318.6" fill="none" stroke="#8d96a6" stroke-width="2.5"/>
+<circle cx="124.0" cy="302.8" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="212.0" cy="362.2" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="300.0" cy="322.8" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="388.0" cy="259.1" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="476.0" cy="300.1" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="564.0" cy="267.6" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="652.0" cy="341.2" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="740.0" cy="289.2" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="828.0" cy="266.2" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<circle cx="916.0" cy="318.6" r="3.5" fill="#0d0f13" stroke="#8d96a6" stroke-width="2"/>
+<polyline points="124.0,307.5 212.0,359.9 300.0,321.4 388.0,249.2 476.0,305.7 564.0,273.7 652.0,338.7 740.0,297.0 828.0,260.3 916.0,324.0" fill="none" stroke="#3cc8f0" stroke-width="2.5"/>
+<circle cx="124.0" cy="307.5" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="212.0" cy="359.9" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="300.0" cy="321.4" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="388.0" cy="249.2" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="476.0" cy="305.7" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="564.0" cy="273.7" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="652.0" cy="338.7" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="740.0" cy="297.0" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="828.0" cy="260.3" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<circle cx="916.0" cy="324.0" r="3.5" fill="#0d0f13" stroke="#3cc8f0" stroke-width="2"/>
+<polyline points="124.0,306.4 212.0,364.0 300.0,318.4 388.0,273.4 476.0,308.2 564.0,271.8 652.0,313.9 740.0,254.0 828.0,202.4 916.0,278.2" fill="none" stroke="#f37819" stroke-width="2.5" stroke-dasharray="6 4"/>
+<circle cx="124.0" cy="306.4" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="212.0" cy="364.0" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="300.0" cy="318.4" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="388.0" cy="273.4" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="476.0" cy="308.2" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="564.0" cy="271.8" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="652.0" cy="313.9" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="740.0" cy="254.0" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="828.0" cy="202.4" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<circle cx="916.0" cy="278.2" r="3.5" fill="#0d0f13" stroke="#f37819" stroke-width="2"/>
+<line x1="100" x2="128" y1="475" y2="475" stroke="#d4d9e2" stroke-width="2.5"/><text x="136" y="479" fill="#f1f3f7" font-size="13">Raw count, all sensors</text>
+<line x1="100" x2="128" y1="497" y2="497" stroke="#8d96a6" stroke-width="2.5"/><text x="136" y="501" fill="#f1f3f7" font-size="13">Raw count, MODIS only (one sensor)</text>
+<line x1="520" x2="548" y1="475" y2="475" stroke="#3cc8f0" stroke-width="2.5"/><text x="556" y="479" fill="#f1f3f7" font-size="13">Harmonised count_normalized</text>
+<line x1="520" x2="548" y1="497" y2="497" stroke="#f37819" stroke-width="2.5" stroke-dasharray="6 4"/><text x="556" y="501" fill="#f1f3f7" font-size="13">Harmonised total_frp (sensor step remains)</text>
+<text x="40" y="540" fill="#949cab" font-size="12">Source: NASA FIRMS SP country archive, Brazil; PyroSync default pipeline. docs/vaka/amazon_annual.csv</text>
+</svg>

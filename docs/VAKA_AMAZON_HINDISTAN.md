@@ -4,13 +4,35 @@
 > **Üretici:** `crates/firms-client/examples/amazon_india_case.rs` · **Çıktılar:** `docs/vaka/amazon_*`, `docs/vaka/india_*`
 > **(Ölçüm)** = kendi arşivimizden hesaplanan değer; **(Literatür)** = makaleden aktarılan değer.
 
-## 1. Amazon 2019–2021 — DURUM: ölçülmedi
+## 1. Amazon 2019–2021 (Ölçüm)
 
-**Tasarım:** Brezilya dosyaları, Legal Amazon sınır kutusu `[-74, -18, -44, 5.3]` ve bunun içindeki orman-biyom hücreleri (`crates/core/src/biome.rs`, `Forest`), 2012–2021. 2012–2018 ortalaması taban; ham toplam sayım, ham MODIS sayımı, ham FRP, harmonize `count_normalized` ve `total_frp` için 2019–2021 anomalisi (yüzde ve taban standart sapmasına göre z). Ω dönemleri C11 ile aynı (`2012-01..2018-03`, `2018-04..2021-12`). Manşet metrik `count_normalized`; `total_frp` C11 §3.5'teki Ω uyarısıyla birlikte verilir (Ω FRP'ye uygulanmaz, NOAA-20 girişinin FRP etkisi harmonizasyondan sonra da kısmen kalır).
+![Amazon ham vs harmonize](vaka/amazon_series.svg)
 
-**Yağış:** bu çalışmada yağış verisi **indirilmedi ve ölçülmedi**. 2019–2021'in normal yağışlı yıllar olduğu iddiası yalnız `[20, Şek. 10–11]`'den (Rizza et al. 2026, hakemsiz ön baskı) aktarılır; `[20]`'nin `VIIRS=high` filtresi burada kullanılmaz, kendi tam arşivimiz kullanılır.
+![Amazon anomali](vaka/amazon_anomaly.svg)
 
-**Sonuç sayıları:** program bu belge yazılırken Brezilya için takvim aşamasında (Ω havuzlama, 2012–2018 dönemi) çalışıyordu; ~10 dakikada tamamlanmadığı için **Amazon sayıları bu belgeye girmedi (ölçülmedi)**. Üretim sonrası `docs/vaka/amazon_summary.json`, `amazon_annual.csv`, `amazon_monthly.csv`, `amazon_series.svg`, `amazon_anomaly.svg` oluşur ve sayılar buraya aktarılmalıdır. Not: Brezilya VIIRS yılı ~116 MB; yıl başına yükleme+harmonizasyon 12–33 sn, takvim kurulumu (iki bölge) dakikalar sürer.
+**Tasarım:** Brezilya dosyaları, Legal Amazon sınır kutusu `[-74, -18, -44, 5.3]` ve içindeki orman-biyom hücreleri (`crates/core/src/biome.rs`, `Forest`), 2012–2021. Taban: 2012–2018 ortalaması. Ω dönemleri C11 ile aynı (`2012-01..2018-03`, `2018-04..2021-12`); orman hücrelerinde Ω `4.089 / 5.929`, bbox'ta `4.074 / 5.856`. Manşet metrik `count_normalized`.
+
+**Yağış:** yağış verisi **indirilmedi ve ölçülmedi**. 2019–2021'in normal yağışlı yıllar olduğu iddiası yalnız `[20, Şek. 10–11]`'den (Rizza et al. 2026, hakemsiz ön baskı) aktarılır; `[20]`'nin `VIIRS=high` filtresi kullanılmaz, kendi tam arşivimiz kullanılır.
+
+### Orman hücreleri, 2019–2021 anomalisi (2012–2018 ortalamasına göre, yıllık)
+| Metrik | Taban ort. | 2019 | 2020 | 2021 |
+|---|---|---|---|---|
+| Ham sayım, tüm sensörler | 738.187 | +85% (z 3,2) | +132% (z 4,9) | +49% (z 1,8) |
+| Ham sayım, yalnız MODIS | 139.802 | +14% | +32% | −8% |
+| Harmonize `count_normalized` | 114.834 | **+8% (z 0,3)** | **+36% (z 1,3)** | **−12% (z −0,4)** |
+| Harmonize `total_frp` | 7,96 GW | +41% (z 1,7) | +80% (z 3,4) | +23% (z 1,0) |
+| Temmuz–Ekim `count_normalized` | 79.455 | +9% | +66% (z 2,4) | +5% |
+
+Legal Amazon bbox'ında aynı tablo: ham tüm sensör `+77 / +111 / +46%`, `count_normalized` `+4,5 / +23,6 / −13,6%`, `total_frp` `+29 / +61 / +12%`.
+
+**Okuma:** ham seri 2019–2021'i çok büyük bir anomali gösterir (z 3–5), ama bunun büyük kısmı 2018'de NOAA-20'nin seriye girmesidir (taban 2012–2018'in çoğunu NOAA-20'siz kapsar). Sensör sürekliliği sağlanınca (`count_normalized`, tek sensörlü MODIS) 2019 hafif (`+8%`), 2021 negatif; **belirgin anomali yalnız 2020'dir (`+36%`, Temmuz–Ekim `+66%`)**. Yani ham seri "2019–2021 üç yıl boyunca yüksek yangın" izlenimi verirken harmonize seri bunun çoğunu uydu filosuna atfeder ve tek tepe yılı 2020 olarak bırakır. `total_frp`, C11 §3.5'teki gibi Ω ile normalize edilmediğinden NOAA-20 etkisinin bir kısmını taşır (`+41/+80/+23%`); manşet olarak kullanılmaz.
+
+**İklim-insan ayrışması hakkında:** yağışı ölçmedik; "normal yağış" `[20]`'den alınır. Bu çalışmanın katkısı yalnızca anomalinin boyutunu filo etkisinden arındırmaktır; 2020 tepesinin nedeni (insan kaynaklı orman temizleme vs iklim) burada **ayrıştırılmadı**. 2020'de Terra/Aqua yörünge kayması (`REFERENCES.md`) Ω'ya yansımaz; küçük bir yanlılık olabilir.
+
+### Sınırlar
+- Legal Amazon bbox'ı cerrado geçiş hücrelerini içerir; orman-biyom bölgesi 0,25° IGBP ızgarasıyla kesilir (kaba).
+- 2012 tabanı S-NPP'nin erken algoritma dönemini içerir; taban 7 yıl ve standart sapması büyüktür (`z` değerleri gösterge niteliğindedir).
+- Statik maske ve harmonizasyon bbox'a kırpılmış satırlar üzerinde çalışır (`/api/calendar` bbox davranışıyla aynı), ülke geneli maskesinden hafif farklı olabilir.
 
 ## 2. Hindistan — şehir kutularında duman maruziyeti (Ölçüm)
 
@@ -44,6 +66,6 @@
 ## 3. Yeniden üretim
 ```bash
 cargo run --release -p pyrosync-firms --example amazon_india_case -- india    # ~1 dk
-cargo run --release -p pyrosync-firms --example amazon_india_case -- amazon   # uzun, bkz. §1
+cargo run --release -p pyrosync-firms --example amazon_india_case -- amazon   # ~5 dk (Brezilya)
 ```
-Şehir dosyası: `.cache/geonames/cities15000.txt`. Çıktılar: `vaka/india_annual.csv`, `india_cities.csv`, `india_summary.json`, `india_ratio.svg`, `india_cities.svg`; Amazon için `vaka/amazon_*`.
+Şehir dosyası: `.cache/geonames/cities15000.txt`. Çıktılar: `vaka/india_annual.csv`, `india_cities.csv`, `india_summary.json`, `india_ratio.svg`, `india_cities.svg`; Amazon için `vaka/amazon_annual.csv`, `amazon_monthly.csv`, `amazon_summary.json`, `amazon_series.svg`, `amazon_anomaly.svg`.
