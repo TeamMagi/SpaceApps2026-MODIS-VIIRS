@@ -81,22 +81,23 @@ make docker-down      # Docker durdur
 
 ### Rol Dağılımı
 - **Sen (Claude Code):** Planlama, görev parçalama, prompt yazma, review, birleştirme. **Asla bizzat kod üretme** — kod üretimini her zaman bir alt ajana delege et.
-- **DeepSeek V4.1 Flash (High):** Ana işgücü. `/deepseek` skill'i ile çağır (OpenCode CLI). Ücretsiz/sınırsız.
-- **Gemini 4 Hydrogen (High):** Güçlü kodlama, geniş context, multimodal/görsel. `/gemini` skill'i ile çağır (Antigravity CLI).
-- **Gemini 4 Argon (High):** Opus seviye muhakeme. `/gemini-argon` skill'i ile çağır. **KISITLI KOTA** — sadece kritik mimari kararlarda.
+- **Codex CLI (`/codex`, ChatGPT üyeliği):** Kod ve dosya yazan birincil ajan; `-s workspace-write` ile headless modda doğrudan repoya yazar. Modeller: `gpt-6-luna` (Seviye 1, hızlı), `gpt-6.1-sol` (Seviye 2–3, ana işgücü), `gpt-6-astra` (çok zorlu Seviye 3 ve Seviye 4, kotayı koru). Modeli her zaman `-m` ile açıkça ver.
+- **Gemini 4 Hydrogen (High):** Geniş context okuma, multimodal/görsel analiz, UI/UX, kod review. `/gemini` skill'i ile çağır (Antigravity CLI). **Headless modda dosya yazamaz** — kod gerekirse yalnız patch metni istenir.
+- **Gemini 4 Argon (High):** Opus seviye muhakeme. `/gemini-argon` skill'i ile çağır. **KISITLI KOTA** — sadece Seviye 4 mimari konseyde.
+- **Claude Haiku / Sonnet (dahili):** Yalnız dış servisler (Codex, Antigravity) hata verdiğinde acil yedek.
 
 ### Görev Seviyeleri
-1. **Basit işler** (regex, boilerplate, format, dokümantasyon) → `/deepseek`
-2. **Orta backend** (API, CRUD, test, algoritma) → `/deepseek`, geniş context gerekirse `/gemini`
-3. **Üst seviye / görsel / UI** (entegrasyon, multimodal, UI/UX) → `/gemini`
-4. **Mimari konsey** (riskli/belirsiz kararlar) → `/gemini-argon` + `/deepseek` paralel → senin sentezin
+1. **Basit işler** (regex, boilerplate, format, dokümantasyon) → `/codex` `gpt-6-luna`
+2. **Orta backend** (API, CRUD, test, algoritma) → `/codex` `gpt-6.1-sol` yazar; geniş context analizi ve review için `/gemini`
+3. **Üst seviye / görsel / UI** (entegrasyon, multimodal, UI/UX) → `/gemini` analiz/görsel doğrulama + `/codex` `gpt-6.1-sol` (çok zorsa `gpt-6-astra`) yazım
+4. **Mimari konsey** (riskli/belirsiz kararlar) → `/gemini-argon` + `/codex` `gpt-6-astra` paralel → senin sentezin
 
 ### Fallback Zinciri
-Dış servis hata verirse (429, kota, timeout, boş yanıt):
-- Tier 1: DeepSeek → Claude Haiku alt ajanı
-- Tier 2: DeepSeek → Hydrogen → Haiku (rutin) veya Sonnet (karmaşık)
-- Tier 3: Hydrogen → Claude Sonnet alt ajanı
-- Tier 4: Yanıt veremeyen modelin yerine "Eleştirel Sistem Mimarı" rolüyle Claude Sonnet
+Dış servis hata verirse (429, kota/usage limit, timeout, boş yanıt):
+- Tier 1: Codex `gpt-6-luna` → Claude Haiku alt ajanı
+- Tier 2: Codex `gpt-6.1-sol` → Hydrogen (patch metni) → Haiku (rutin) veya Sonnet (karmaşık)
+- Tier 3: Codex → Claude Sonnet (kod yazımı); Hydrogen → Claude Sonnet (analiz/görsel)
+- Tier 4: Yanıt veremeyen modelin (Argon veya `gpt-6-astra`) yerine "Eleştirel Sistem Mimarı" rolüyle Claude Sonnet
 
 ### Devre Kesici
-Kota/rate-limit hatası alan servis oturum boyunca `EXHAUSTED` işaretlenir, tekrar istek atılmaz. Doğrudan fallback rotasına geçilir. Kullanıcıya tek satır bilgi verilir.
+Kota/rate-limit hatası alan servis oturum boyunca `EXHAUSTED` işaretlenir, tekrar istek atılmaz (Codex'in üç modeli aynı üyelik kotasını paylaşır). Doğrudan fallback rotasına geçilir. Kullanıcıya tek satır bilgi verilir. Hydrogen'ın dosya yazamaması kota hatası değil kalıcı sınırdır; `--dangerously-*` bayraklarıyla aşılmaz.
