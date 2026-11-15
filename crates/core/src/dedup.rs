@@ -9,8 +9,8 @@ pub(crate) const MIN_OVERLAP_RATIO: f64 = 0.30;
 
 /// Remove interscan duplicate detections within a single sensor's data.
 ///
-/// Two detections are duplicates when |Δt| < 8s AND pixel footprint
-/// overlap > 30%. Keeps the highest-confidence record and assigns
+/// Two detections are duplicates when |Δt| <= max_time_diff_secs (default 8 s) AND pixel
+/// footprint overlap > 30%. Keeps the highest-confidence record and assigns
 /// the group's mean FRP (Li et al. 2018).
 pub fn remove_interscan_duplicates(hotspots: &mut Vec<Hotspot>) {
     remove_interscan_duplicates_with(hotspots, &DedupConfig::default());
@@ -44,6 +44,11 @@ pub fn remove_interscan_duplicates_indexed_with(
     hotspots.extend(origin.iter().map(|&i| slots[i].take().expect("each index taken once")));
 
     let mut to_remove = vec![false; hotspots.len()];
+    // Per-record raw FRP accumulator: (sum of raw FRPs, number of raw observations). A survivor
+    // can anchor a later group, so averaging its already-averaged FRP would silently down-weight
+    // the observations folded into it; carrying the accumulator keeps every raw observation equal.
+    let mut frp_sum: Vec<f64> = hotspots.iter().map(|h| h.frp).collect();
+    let mut frp_count: Vec<u32> = vec![1; hotspots.len()];
 
     let mut max_pixel_km = 0.0_f64;
     for h in hotspots.iter() {
@@ -138,9 +143,17 @@ pub fn remove_interscan_duplicates_indexed_with(
                 }
             }
 
-            let mean_frp: f64 =
-                group.iter().map(|&idx| hotspots[idx].frp).sum::<f64>() / group.len() as f64;
-            hotspots[best].frp = mean_frp;
+            let mut sum = 0.0_f64;
+            let mut count = 0_u32;
+            // `group` is in ascending index order (index candidates are sorted, the fallback scan
+            // walks upward), which keeps the f64 summation order deterministic.
+            for &idx in &group {
+                sum += frp_sum[idx];
+                count += frp_count[idx];
+            }
+            frp_sum[best] = sum;
+            frp_count[best] = count;
+            hotspots[best].frp = sum / f64::from(count);
 
             for &idx in &group {
                 if idx != best {
@@ -485,6 +498,10 @@ mod tests {
         hotspots.extend(origin.iter().map(|&i| slots[i].take().expect("each index taken once")));
 
         let mut to_remove = vec![false; hotspots.len()];
+        // Same per-record raw FRP accumulator semantics as the indexed implementation, so the
+        // bit-equality test compares the two traversal strategies and not two averaging rules.
+        let mut frp_sum: Vec<f64> = hotspots.iter().map(|h| h.frp).collect();
+        let mut frp_count: Vec<u32> = vec![1; hotspots.len()];
 
         for i in 0..hotspots.len() {
             if to_remove[i] {
@@ -520,9 +537,15 @@ mod tests {
                     }
                 }
 
-                let mean_frp: f64 =
-                    group.iter().map(|&idx| hotspots[idx].frp).sum::<f64>() / group.len() as f64;
-                hotspots[best].frp = mean_frp;
+                let mut sum = 0.0_f64;
+                let mut count = 0_u32;
+                for &idx in &group {
+                    sum += frp_sum[idx];
+                    count += frp_count[idx];
+                }
+                frp_sum[best] = sum;
+                frp_count[best] = count;
+                hotspots[best].frp = sum / f64::from(count);
 
                 for &idx in &group {
                     if idx != best {
@@ -655,6 +678,99 @@ mod tests {
         }
 
         out
+    }
+
+    fn frp_values(hotspots: &[Hotspot]) -> Vec<f64> {
+        hotspots.iter().map(|h| h.frp).collect()
+    }
+
+    #[test]
+    fn eight_seconds_apart_is_inside_time_window() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 15.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 25.0, Confidence::High, Sensor::ModisTerra, 8),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+    }
+
+    #[test]
+    fn interscan_mean_frp_weights_every_raw_observation_equally() {
+        // Synthetic counterpart of Greece 2007-08-25 (MODIS): the first group keeps a member that
+        // then anchors a second group, so its mean FRP must carry the raw observation count.
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 31.1, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 1626.7, Confidence::High, Sensor::ModisTerra, 6),
+            make_hotspot(37.0, 29.0, 39.5, Confidence::Low, Sensor::ModisTerra, 7),
+            make_hotspot(
+                37.0,
+                29.0,
+                1699.3,
+                Confidence::Nominal,
+                Sensor::ModisTerra,
+                8,
+            ),
+            make_hotspot(
+                37.0,
+                29.0,
+                104.4,
+                Confidence::Nominal,
+                Sensor::ModisTerra,
+                9,
+            ),
+            make_hotspot(37.0, 29.0, 94.0, Confidence::Low, Sensor::ModisTerra, 13),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(hotspots[0].confidence, Confidence::High);
+        let expected = (31.1 + 1626.7 + 39.5 + 1699.3 + 104.4 + 94.0) / 6.0;
+        assert!(
+            (hotspots[0].frp - expected).abs() < 1e-9,
+            "expected {expected}, got {}",
+            hotspots[0].frp
+        );
+        assert!((hotspots[0].frp - 599.166_666_666_666_7).abs() < 1e-9);
+    }
+
+    #[test]
+    fn chained_groups_accumulate_raw_observation_weights() {
+        // anchor 0 -> best 1 -> best 2 -> group anchored at 2 (best == anchor).
+        let data = vec![
+            make_hotspot(37.0, 29.0, 10.0, Confidence::Low, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 20.0, Confidence::Nominal, Sensor::ModisTerra, 6),
+            make_hotspot(37.0, 29.0, 30.0, Confidence::High, Sensor::ModisTerra, 12),
+            make_hotspot(37.0, 29.0, 40.0, Confidence::High, Sensor::ModisTerra, 18),
+        ];
+
+        let mut hotspots = data.clone();
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(frp_values(&hotspots), vec![25.0]);
+
+        let mut expected = data;
+        reference_dedup(&mut expected, &DedupConfig::default());
+        assert_eq!(expected.len(), 1);
+        assert_eq!(hotspots[0].frp.to_bits(), expected[0].frp.to_bits());
+    }
+
+    #[test]
+    fn group_anchored_at_highest_confidence_keeps_plain_mean() {
+        let mut hotspots = vec![
+            make_hotspot(37.0, 29.0, 10.0, Confidence::High, Sensor::ModisTerra, 0),
+            make_hotspot(37.0, 29.0, 20.0, Confidence::Low, Sensor::ModisTerra, 3),
+            make_hotspot(37.0, 29.0, 30.0, Confidence::Nominal, Sensor::ModisTerra, 6),
+        ];
+
+        remove_interscan_duplicates(&mut hotspots);
+
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(hotspots[0].confidence, Confidence::High);
+        assert_eq!(frp_values(&hotspots), vec![20.0]);
     }
 
     #[test]
