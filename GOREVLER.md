@@ -219,9 +219,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | [X] |
 | G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | [X] |
 | G10 | Export engine + /api/export | Görkem | G4 | R7, S6 | [X] |
-| G11 | Yeni metriklerin süreklilik analizi | Görkem | R10, K11 | G12 | [ ] |
-| G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [ ] |
-| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1 [X], G12/R12/Y8 bekliyor) |
+| G11 | Yeni metriklerin süreklilik analizi | Görkem | R10, K11 | G12 | [X] |
+| G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [X] |
+| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1, G12, R12 [X]; Y8 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
@@ -286,7 +286,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [X] |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`G12, R12, Y8`; `R5, C8, C11, Y1` tamamlandı).
+- **Görkem:** G1–G4 ve G7–G12 tamamlandı. Açık: G5 (yalnız `Y8` bekliyor; `R5, C8, C11, Y1, G12, R12` tamamlandı) ve G6 (final precompute + teslim).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
@@ -504,7 +504,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** curl ile `/api/export?format=csv` → geçerli CSV dosyası iniyor; GeoJSON QGIS'te açılıyor; 10,000+ satır sorunsuz.
 - **Durum (2026-11-15):** Sadık tarafından tamamlandı (`cae9664`). CSV ve GeoJSON export, `/api/export`. Belirsizlik (uncertainty) sütunları G9 ile eklenecek.
 
-### [ ] G11 — Yeni metriklerin süreklilik analizi
+### [X] G11 — Yeni metriklerin süreklilik analizi
 - **Bekler:** R10, K11 · **Açar:** G12
 - 238 ülke içinden biyom çeşitliliği ve yangın hacmi dengesi olan ~10 ülkede (düşük `<10/yıl` ve yüksek `≥1000/yıl` hacim katmanlarını ayırarak, `fire-harmony`) `2002-07` (Aqua), `2012-01` (SNPP) ve `2018-04` (NOAA-20) dikiş noktalarındaki adım büyüklüğünü ölçme
 - `crates/core/src/calendar.rs` çıktılarındaki `count_normalized`, `total_frp` ve `frp_per_detection_eq` serilerini ham (`count`, `mean_frp_raw`) seriyle karşılaştırma
@@ -512,8 +512,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ P4, `fire-harmony`)
 - **Bitti sayılır:** ~10 biyom-çeşitli ülkede `2002-07`, `2012-01` ve `2018-04` dikişlerinde ham vs harmonize (`count_normalized`, `total_frp`, `frp_per_detection_eq`) adım büyüklükleri ölçülüp tablo olarak raporlanıyor.
 - **Durum (2026-11-15):** Referans ölçüm yapıldı — araç `crates/firms-client/examples/seam_continuity.rs`, sonuçlar `docs/SUREKLILIK_ANALIZI.md` (10 ülke, 2000–2025). Ülkeler üzerinden medyan |log adım|, 2012 SNPP dikişi (2011→2012): ham sayım 1,77 → `count_normalized` 0,13 (Ω sayım sıçramasının ~%92'sini gideriyor); `total_frp` 0,59 (hâlâ belirgin adım); `frp_per_detection_eq` 0,14 ama 4/10 ülkede doğal dalgalanmanın (p90) dışında; 2018 NOAA-20 dikişinde F 10/10 ülkede yukarı kayıyor (+0,08 ile +0,42). Aqua 2002 dikişi için normalize metrikler Aqua öncesi ay kuralı nedeniyle NA. Görev, bağımlılıkları R10 ve K11 bittikten sonra aynı komutla yeniden ölçülüp karşılaştırılınca kapanacak.
+- **Kapanış (Görkem, 2026-11-15):** R10 (+ MODIS ayak izi sınırı) ve K11 sonrası aynı komut ve aynı 10 ülkeyle yeniden ölçüldü (`main` @ `a1e53b3`, 5489 sn); tablo `docs/SUREKLILIK_ANALIZI.md` Bölüm 6. Medyan `|log adım|` / p90 dışı ülke: 2012 (1 yıl) ham 1,80 (8/10) → `count_normalized` 0,13 (1/10), `total_frp` 0,63 (1/10), F 0,14 (4/10); 2018 ham 0,50 (5/10) → `count_normalized` 0,25 (0/10), `total_frp` 0,30 (2/10), F 0,16 (4/10). R10 süreklilik metriklerini anlamlı değiştirmedi. F'nin yukarı yönlü kalıntı adımı için denenen çoklu VIIRS FRP cetveli, filo birleştirmenin FRP'yi zaten ortaladığı için 2018 sonrası FRP'yi iki kez düzelttiğinden geri alındı. Manşet metrik `count_normalized`.
 
-### [ ] G12 — İç doğrulama paketi
+### [X] G12 — İç doğrulama paketi
 - **Bekler:** G11, S10 · **Açar:** G5, S12, Y10
 - Dikiş yeri Placebo Adım Testi (`fire-harmony`): `2002-07`, `2012-01` ve `2018-04` dikişlerindeki adım büyüklüğünü sıradan aylardaki placebo adım dağılımıyla (`fire-harmony` referansı: `+0.55%` vs placebo SD `%1.2`) kıyaslama ve `<10/yıl` vs `≥1000/yıl` hacim katmanlarını ayırma
 - Yıl-bloklu Leave-One-Year-Out (LOYO, `[24]`, `eg-firetrack`) ve blok bootstrap out-of-sample güven aralığı testi (`flare-chronos` CI dersi: out-of-sample kazanç aralığı sıfırı kesmemeli)
@@ -521,6 +522,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ `[24]`, `fire-harmony`, `flare-chronos`, `eg-firetrack`)
 - **Bitti sayılır:** placebo adım testi, yıl-bloklu LOYO ve Model vs Baseline Gate otomatik doğrulama testleri koşuyor; baz çizgiyi yenemeyen bölge/dönemler arayüzde işaretleniyor.
 - **Durum (2026-11-15):** Araç ve referans ölçüm hazır — `crates/firms-client/examples/validation_suite.rs`, sonuçlar `docs/DOGRULAMA_PAKETI.md` (10 ülke, 2000–2025). Placebo (10 ülke birleşik sıra testi): ham sayım üç dikişte de placebo'dan ayrışıyor (pozitif kontrol; Wilcoxon p = 0,002–0,039); `count_normalized` 2012 ve 2018'de placebo'dan ayırt edilemiyor (ortalama sıra 0,49 ve 0,51); `total_frp` 2012'de 0,52; F 2012'de 0,61, 2018'de 0,69 (anlamlı değil ama tropik ülkelerde dağılımın üst ucunda — R10/K11 ile beklenen iyileşme). LOYO: Ω modelinin yıl-dışarıda hatası 0,052, normalizasyonsuz baseline 1,79, kalıcılık baseline'ı 0,41; kapı 10/10 ülkede iki baseline'a karşı da GEÇTİ. Açık kalanlar: testlerin otomatik koşması (CI) ve baseline'ı yenemeyen bölge/dönemlerin arayüzde işaretlenmesi; R10 ve K11 sonrası yeniden ölçüm.
+- **Kapanış (Görkem, 2026-11-15):** (1) Placebo sıra testi, LOYO ve baseline kapısının istatistik fonksiyonları sentetik veriyle 5 birim testine bağlandı; `crates/firms-client/Cargo.toml` içinde `[[example]] validation_suite, test = true` ile `cargo test --workspace` (dolayısıyla CI) her koşuda çalıştırıyor (`69d7bd1`). (2) `validation_suite --gate-json` bölge başına kapı kararını yazıyor; `web/public/validation/gate.json` 10 ülkelik referans koşudan (Bölüm 4.4) dolduruldu ve alt şerit seçili bölge için "iki baseline'ı da yeniyor / belirsiz / yenemiyor, dikkatli okuyun / henüz doğrulanmadı" durumunu gösteriyor. (3) Dış referans olarak "Bilinen Olay Testi" eklendi (`event_recall.rs`, `DOGRULAMA_PAKETI.md` Bölüm D): 9 belgelenmiş aşırı olay-ayının 8'i harmonize FRP'de, 7'si harmonize sayımda ilk iki sırada; 2012 sonrası z ≥ 2 ay payı sayımda %9,7 → %5,2 (FRP'de %10,1 → %8,2). Bağımlılıklar G11 ve S10 kapalı. Sınır: kapı dosyası R10 öncesi referans koşudan; final pipeline ile `validation_suite --gate-json` yeniden üretilebilir.
 
 ### [ ] G5 — Sunum materyali + demo senaryosu
 - **Bekler:** G4, R5, Y1 · **Açar:** G6
@@ -1240,6 +1242,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, Yol Haritası #9 (+ `[15, Şek. 6], [23, Eq. 3–6]`, `fire-harmony`)
 - **Bitti sayılır:** `calibration.rs` ay × biyom × gündüz/gece tablosu ve güç-yasası küçük yangın bütçesi ile savan/orman/tarım ayrımı yapıyor; mevcut testler fallback ile geçiyor.
 - **Veri kararı (Serhat, 2026-11-15):** Arazi örtüsü katmanı depoya eklendi; görevin asıl mantığı (ay × biyom × gündüz/gece tablosu, güç yasası) Sadık'ta, kutu açık. **Veri:** ham MCD12Q1 (500 m, yılda yüzlerce HDF karosu, Earthdata girişi) yerine ondan türetilmiş, girişsiz inen WRF/WPS `modis_landuse_20class_5m_with_lakes` (MODIS IGBP, 20 sınıf + göller, 5 yay dakikası, 8 MB). K14 piksel bazında arazi örtüsü değil, hücre/bölge başına tek biyom etiketi istiyor. **Çözünürlük:** depoda 0,25° (1440 × 720) çoğunluk ızgarası, `data/landcover/biome_0p25.rle` (126 KB) ve kaynak notu `data/landcover/SOURCE.md`. Üretim: `python3 tools/build_biome_grid.py --download` (deterministik). **Gruplar:** `non_burnable` (IGBP 13, 15, 16, 17, 21), `forest` (1–5), `shrubland` (6–7), `savanna` (8–9), `grassland` (10), `cropland` (12, 14), `wetland` (11), `tundra` (18–20). Yanabilir sınıf içeren hücrede çoğunluk yalnız yanabilir sınıflar arasında alınıyor (kıyı hücreleri suya kaybedilmiyor). **Kullanım:** `crates/core/src/biome.rs` — `biome_at(lat, lon)`, `dominant_biome(noktalar)`, `Biome::is_burnable`. Izgara `include_bytes!` ile gömülü; çalışma anında dosya yolu ve config alanı yok, `PipelineConfig` özeti değişmiyor. `calibration.rs`, `calendar.rs`, `effort.rs` ve `DERIVED_SCHEMA_VERSION`'a dokunulmadı. **Kontrol:** Amazon orman, Sahra yanmaz, Ukrayna ve Pencap tarım, Cerrado ve Kuzey Avustralya savan, Sibirya orman. Türkiye bbox kara hücreleri: otlak %33,6, tarım %31,7, çalılık %19,3, orman %14,5; Antalya ve Muğla kıyıları orman. **Sınırlar:** tek dönemlik statik harita, yıllık değişimi (ormansızlaşma) izlemiyor; kaynak hangi MODIS koleksiyonu/yıllarından türetildiğini belirtmiyor; lisans koşulları kaynak sayfasında doğrulanmadı; Konya ovası çalılık çıkıyor (kaynak veri öyle); sulak alan dünya genelinde yalnız 153 hücre; Dockerfile'a ızgarayı kopyalayan satır eklendi ama `docker build` denenmedi.
+- **Teslim kararı (Görkem, 2026-11-15, konsey: Argon, GPT-6-Astra, Opus oybirliği):** K14'ün sayısal kısmı (ay × biyom × gündüz/gece `k_c` tablosu, güç yasası küçük yangın bütçesi) bu teslimin kapsamı dışında; freeze'den önce ölçülüp hold-out ile doğrulanamaz ve mevcut enlem bandlı `k_c` (2019 fit / 2020 hold-out, fark %4–9) ile yapılan G11 ve bilinen olay doğrulamalarını geçersiz kılar. Biyom etiketi arayüzde de gösterilmiyor: aynı enlemdeki savan ve ormana aynı `k_c` uygulanırken etiket göstermek tutarsız olur. Biyom ızgarası ve `biome.rs` hazır altyapı olarak kalıyor; gelecek çalışma olarak belgelenir. Kutu `[ ]` kalır.
 
 ### [X] K12 — Aqua öncesi dönem kurtarımı ve kesinti etiketleri
 - **Bekler:** — · **Açar:** —
