@@ -253,7 +253,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
 | S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [X] |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [X] |
-| S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
+| S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [X] |
 | S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [X] |
 | S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [X] |
 | S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [X] |
@@ -567,7 +567,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `rust` ve `coverage` blokları. Samet `on:` ve `web` bloklarına dokunur; her değişiklikten önce `git pull --rebase`.
 - **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket A
 - **Bitti sayılır:** A1–A4 tamam; rapor §6 tablosunda Rust satırları dolu ve A3 kararı yazılı; üst üste 3 CI koşusunda `rust` ve `coverage` job'ları ≤ 30 dk.
-- **Durum (Samet, 2026-11-15):** Bu paket Görkem yerine Samet tarafından yapıldı. A1 (`cargo check` kaldırıldı), A2 (`cache-on-failure: true`; rust-cache anahtarı job kimliğini zaten içerir) ve A3 (karar: çift test yürütmesi korunur, çünkü soğuk önbellekle `rust` 136–158 sn, `coverage` 100–107 sn) tamamlandı. A4 yerel soğuk provayla yapıldı (temiz Linux klonu, 2 CPU / 7 GB); GitHub'daki ilk gerçek koşunun süreleri `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §6 tablosuna yazılmayı bekliyor. Kutu, üst üste 3 gerçek koşu ≤ 30 dk görülene kadar açık.
+- **Durum (Samet, 2026-11-15):** Bu paket Görkem yerine Samet tarafından yapıldı. A1 (`cargo check` kaldırıldı), A2 (`cache-on-failure: true`; rust-cache anahtarı job kimliğini zaten içerir) ve A3 (karar: çift test yürütmesi korunur, çünkü soğuk önbellekle `rust` 136–158 sn, `coverage` 100–107 sn) tamamlandı. A4 yerel soğuk provayla yapıldı (temiz Linux klonu, 2 CPU / 7 GB); GitHub'daki gerçek koşular (#63–#65) toplam 1 dk 36 sn ile 2 dk 15 sn sürdü (`docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §6); job bazlı süreler tabloda eksik. Kutu, üst üste 3 gerçek koşu ≤ 30 dk görülene kadar açık.
 
 ---
 
@@ -964,7 +964,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 >   - `australia`: Sydney havzası ve Blue Mountains, bbox `149,-34.5,151,-33`; MODIS 2.019, VIIRS 21.793 satır; 5,4 MB.
 > - CSV'ler yalnız tip-0 (bitki yangını) satırlarını ve özgün FIRMS başlıklarını taşır; `viirs.csv` S-NPP ile NOAA-20'yi birleştirir (NOAA-21 arşivde yok). `harmonized.json`, `/api/harmonize` ile aynı üst düzey şekle ek bir `meta` bloğu ekler; `raw.hotspots` ve `uncertainty` yoktur. Küçük bbox'ta MODIS tespiti olmayan aylar yalnız-VIIRS sayıldığından bazı takvim hücrelerinde `effort_omega`, `count_normalized` ve `anomaly` `null`'dır. Ayrıntı ve yeniden üretim komutları: `data/sample/README.md`.
 
-### [ ] S5 — GitHub Actions CI/CD kurulumu
+### [X] S5 — GitHub Actions CI/CD kurulumu
 - **Bekler:** S1 · **Açar:** —
 - Her push'ta otomatik kontrol:
   - `cargo check` — derleme hatası yok
@@ -979,6 +979,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > **Güncelleme (Samet, 2026-11-15):** İnceleme sonrası `ci.yml` sertleştirildi: Rust araç zinciri 1.100'e sabitlendi (yeni stable'ın `clippy -D warnings`'i kod değişmeden kırmasını önler), job zaman aşımları eklendi, kapsam kapısı %80'den **%90**'a çıkarıldı (ölçülen satır kapsamı %94,7), kapı kırmızı olsa da kapsam özeti yazdırılıyor. GitHub'da yeşil tik henüz doğrulanmadı (repo özel); doğrulanınca kutu işaretlenecek.
 >
 > **Süre bütçesi (Samet, 2026-11-15):** CI'ın en çok 30 dk'da bitmesi için ölçülenler, ölçülmeyenler ve iki kişiye eşit bölünmüş iki iş paketi `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` içinde: Paket A (Rust hattı) = Görkem, görev **G13**; Paket B (web ve tetikleyiciler) = Samet, görev **S14**. `coverage` job'unun `timeout-minutes` değeri 40 olduğundan hedefin üstünde; S14'ün B2 işi bunu 30'a çeker.
+>
+> **Kapanış notu (Samet, 2026-11-15):** GitHub Actions'ta `main` üzerindeki CI koşuları doğrulandı (#63–#66). **Yeşil tik var:** #65 (`bba155f`) yeşil, toplam 1 dk 36 sn. **Başarısız yapıda hata görünüyor:** #63 (`85d40df`, 2 dk 15 sn) ve #64 (`a1e37ff`, 1 dk 37 sn) kırmızı; yerel prova bu kırmızıları önceden öngörmüştü (web `typecheck` hataları ve Node 20'nin `node --test` glob'unu genişletmemesi, `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §4), log'larla ayrıca doğrulanmadı. `ci.yml` web job'ı Node 22'ye alınınca koşu yeşile döndü. Toplam süre 30 dk hedefinin çok altında. Son değişiklik `ddd4ba6` (runner'lar `ubuntu-24.04`, `main`'de koşu iptali kapalı, `lcov` her zaman yükleniyor) koşusu #66 de yeşil, 1 dk 58 sn.
 
 ### [X] S9 — Belirsizlik tabanının kaynakla güncellenmesi
 - **Bekler:** — · **Açar:** S10
@@ -1099,7 +1101,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `on:` ve `web` blokları. Görkem `rust` ve `coverage` bloklarına dokunur.
 - **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket B
 - **Bitti sayılır:** B1–B4 tamam; rapor §6 web satırı dolu; `ci.yml`'de en büyük `timeout-minutes` 30 ve `actionlint` temiz; yalnız `docs/` değişen commit'te CI çalışmıyor, `crates/` ya da `data/` değişince çalışıyor. S5 kutusu, GitHub'da yeşil bir koşu görüldüğünde ayrıca kapanır.
-- **Durum (Samet, 2026-11-15):** B2 (`coverage` zaman aşımı 40 → 30), B3 (`paths-ignore`: `docs/**`, `**/*.md`, `GOREVLER.md`; `data/**` ve `web/**` dışarıda) ve web job'ının Node 22'ye alınması yapıldı; Node 20 `node --test` glob'unu genişletmediği için web testleri CI'da her koşuda kırılacaktı. Soğuk önbellekli Linux provasında web job'ı 47–58 sn (B1), sorun giderme tablosu rapor §7'de (B4). Açık kalan: GitHub'daki ilk gerçek koşunun süreleri ve `paths-ignore` davranışının orada doğrulanması; kutu bu yüzden açık.
+- **Durum (Samet, 2026-11-15):** B2 (`coverage` zaman aşımı 40 → 30), B3 (`paths-ignore`: `docs/**`, `**/*.md`, `GOREVLER.md`; `data/**` ve `web/**` dışarıda) ve web job'ının Node 22'ye alınması yapıldı; Node 20 `node --test` glob'unu genişletmediği için web testleri CI'da her koşuda kırılacaktı. Soğuk önbellekli Linux provasında web job'ı 47–58 sn (B1), sorun giderme tablosu rapor §7'de (B4). Açık kalan: job bazlı gerçek süreler (toplam koşu süreleri 1 dk 36 sn ile 2 dk 15 sn) ve `paths-ignore` davranışının orada doğrulanması (yalnız belge değişen bir push'ta CI'ın çalışmaması); kutu bu yüzden açık.
 
 ---
 
@@ -1389,6 +1391,6 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Görkem | 13 (G1–G13) | 10 (`G1–G4, G7–G12`) | 3 (`G5, G6, G13`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon, CI Rust hattı süre bütçesi |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 14 (S1–S14) | 11 (`S1–S4, S6–S11, S13`) | 3 (`S5, S12, S14`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
+| Samet | 14 (S1–S14) | 12 (`S1–S11, S13`) | 2 (`S12, S14`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
 | Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 13 (`K1–K13`) | 1 (`K14`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
