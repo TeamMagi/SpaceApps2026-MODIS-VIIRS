@@ -36,6 +36,7 @@ Son doğrulama: 2026-11-15 · commit 8846819 · örnekler bu sürümden yakaland
 | `GET /api/regions` | Arşivdeki ülkeler, yıl aralıkları, boyut | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
 | `GET /api/series` | Bir bölgenin yıllık ve aylık serisi | Yerel arşiv; türetilmiş seri önbelleği | Gerekmez | Yok (`X-Series-Source` başlığı var) |
 | `GET /api/points` | Bir bölge ve yılın (opsiyonel ay) nokta verisi | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
+| `GET /api/density` | Bir bölge ve yılın aylık yoğunluk ızgarası (örneklemesiz) | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
 
 `calendar`, `regions`, `series` ve `points` hiçbir zaman arşiv dışına indirme yapmaz. Eksik arşiv dosyaları `make data` ile hazırlanır.
 
@@ -2273,13 +2274,55 @@ Ham satır sayısı `limit` değerini aşarsa sunucu, her `k`-inci harmonize kay
 - `month` verildiğinde yalnızca o ayın satırları işlenir.
 - Frontend `fetchPoints` ile alır.
 
+## GET /api/density
+
+Bir bölgenin tek bir yılı için aylık yangın yoğunluk ızgarasını döndürür. Değerler yılın **tüm** verisinden (örnekleme yok) sunucu tarafında hesaplanır; `/api/points` ise 4k-20k noktaya örneklendiği için yoğunluk hesabına uygun değildir. Yalnızca yerel arşiv okunur.
+
+### Parametreler
+
+| Ad | Tip | Zorunlu | Varsayılan | Kural |
+|----|-----|---------|------------|-------|
+| `region` | string | Evet | — | `/api/regions` içindeki bir `id` |
+| `year` | integer | Evet | — | Bölge için arşivde bir dosya olmalı |
+| `cell` | number | Hayır | `0.25` | Hücre boyutu (derece). Yalnızca `0.1`, `0.25`, `0.5`, `1.0`; diğer değerler 400 döner |
+
+### Örnek istek
+
+```bash
+curl -s "http://localhost:3001/api/density?region=Turkey&year=2021&cell=0.5"
+```
+
+### Yanıt alanları
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `region`, `year`, `cell_deg` | string, integer, number | İstek parametreleri |
+| `grid` | string | Her zaman `"global_latlon"` |
+| `months` | array | Her zaman 12 öğe (ay 1..12) |
+| `months[].month` | integer | 1..12 (UTC takvim ayı, `acquired` alanına göre) |
+| `months[].raw_total` | integer | O aydaki ham MODIS+VIIRS satır sayısı |
+| `months[].harmonized_total` | integer | O aydaki harmonize kayıt sayısı |
+| `months[].cells` | array | Yalnızca dolu hücreler, `(row, col)` sırasıyla. Her öğe `[row, col, raw_count, raw_frp, harm_count, harm_frp]` |
+| `max` | object | Yılın tüm ay ve hücreleri üzerinden `raw_count`, `raw_frp`, `harm_count`, `harm_frp` en büyük değerleri (sabit renk ölçeği için) |
+| `bbox` | object \| null | Ham tespitlerin `west`/`south`/`east`/`north` kapsamı |
+| `covered_months` | array | Yılın arşiv kapsamına giren ayları (`/api/points` içindeki `no_detection_days` ile aynı kapsam bilgisi) |
+
+Izgara tanımı: `row = floor((lat + 90) / cell_deg)`, `col = floor((lon + 180) / cell_deg)`; `lat = 90` ve `lon = 180` son satır/sütuna alınır. `raw_*` ham girdi satırlarından (ham `frp`, MW), `harm_*` harmonize kayıtlardan (`frp_corrected`, MW) gelir. FRP değerleri 0.1 MW'a yuvarlanır. Bir ayda dolu hücre tek kez, dört değerle birlikte yer alır (bir taraf boşsa 0).
+
+### Notlar
+
+- Tüm yıl bir kez harmonize edilir, sonuç harmonize kaydın kendi UTC ayına yazılır. Ay sınırını aşan eşleşmeler (ör. 31 Ocak gecesi ile 1 Şubat sabahı) harmonize kaydın ayına atanır; bu yüzden bir ayın ham ve harmonize toplamları aylık sınırda küçük kaymalar gösterebilir. Yıl toplamları `/api/points` `stages` değerleriyle (`raw_modis + raw_viirs`, `harmonized`) aynıdır.
+- Hücreler eşit açılıdır (equal-angle), eşit alanlı değildir. km² başına yoğunluk gösterilecekse hücre alanı `row`'dan istemcide hesaplanmalıdır (alan yaklaşık `cos(enlem)` ile küçülür).
+- Yıl verisi `/api/points` ile aynı yıl önbelleğini kullanır; yoğunluk yanıtının ayrı bir önbelleği yoktur.
+- Hatalar: 400 (`year` eksik/hatalı, `cell` izin verilmeyen değer), 404 (bilinmeyen bölge veya o yılda dosya yok), 413 (`ARCHIVE_MAX_REGION_MB`), 503, 504.
+
 ## Hata kodları
 
 | Kod | Hangi endpoint'ler | Ne zaman | Gövde |
 |-----|--------------------|----------|-------|
 | 400 | harmonize, compare, stats, export, calendar | Bbox geçersiz, `days` aralık dışı, `start`/`end` eksik veya tarih biçimi yanlış, `days` ile `start`/`end` birlikte, `format` geçersiz, calendar `country` geçersiz, `from > to`, bbox parçaları eksik | JSON `{"error": "..."}` |
 | 400 | harmonize, compare, stats, export, calendar | Zorunlu sorgu parametresi yok veya tipi hatalı | JSON: `Failed to deserialize query string: ...` |
-| 400 | series, points | `region`/`year` eksik; `year`/`month`/`limit` sayı değil; `month` aralık dışı; `limit=0` | JSON |
+| 400 | series, points, density | `region`/`year` eksik; density `cell` geçersiz; `year`/`month`/`limit` sayı değil; `month` aralık dışı; `limit=0` | JSON |
 | 404 | (herhangi) | `/api/` altında bilinmeyen yol: `Unknown API endpoint: /api/...` | JSON |
 | 404 | calendar | Yerel arşivde istenen aralıkta hiçbir dosya yok | JSON |
 | 404 | series, points | Bilinmeyen bölge; bölge için o yılda arşiv dosyası yok | JSON |

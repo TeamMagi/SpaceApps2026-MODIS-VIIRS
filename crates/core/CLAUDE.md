@@ -22,6 +22,7 @@
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
 | `events.rs` | Yangın olayı kümeleme (ST-DBSCAN + ardışık gün kuralı) ve `no_detection_days` (bilinen Terra kesintileri dahil) |
+| `density.rs` | Eşit açılı global enlem/boylam ızgarası (`cell_index`) ve aylık hücre bazlı ham/harmonize sayı ve FRP toplamı (`aggregate_density`) |
 
 ## Teknik Kısıtlar
 

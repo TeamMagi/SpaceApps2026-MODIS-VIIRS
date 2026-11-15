@@ -11,3 +11,4 @@ pub mod effort;
 pub mod export;
 pub mod uncertainty;
 pub mod events;
+pub mod density;

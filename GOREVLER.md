@@ -265,7 +265,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [X] |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
-| Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
+| Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [X] |
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
 | Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [ ] |
@@ -1015,7 +1015,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Pie/donut: sensor breakdown (MODIS-only, VIIRS-only, Matched)
 - **Bitti sayılır:** en az 2 farklı chart tipi çalışıyor; sensörler arası fark görsel olarak açık.
 
-### [ ] Y3 — Aylık yangın yoğunluk heatmap'i
+### [X] Y3 — Aylık yangın yoğunluk heatmap'i
 - **Bekler:** R1, Y5 · **Açar:** —
 - Serhat'ın R3'ünden farklı olarak bu bir bölgesel yoğunluk haritası:
   - Grid tabanlı renk haritası (hexbin veya kare grid)
@@ -1023,6 +1023,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Zaman slider'ı ile ay ay ilerleme
   - Raw vs Harmonized modda farklı dağılım
 - **Bitti sayılır:** mock veriyle heatmap render oluyor; zaman slider'ı çalışıyor; renk skalası anlamlı.
+- **Kapanış notu (15 Kasım 2026):** Backend `GET /api/density?region&year&cell` (`crates/core/src/density.rs` + `archive_api.rs`): örneklemesiz tam veriden sabit küresel kare grid (`cell ∈ {0.1, 0.25, 0.5, 1.0}°`), tek istekte 12 ay, hücre başına ham/harmonize tespit sayısı ve FRP toplamı, yıllık `max`, `covered_months`. Frontend `web/src/components/Map/DensityGrid.tsx` + `web/src/lib/density.ts`: canvas, ülke sınırı, ortak store'a bağlı ay slider'ı, Raw/Harmonized, tespit/FRP metriği, km² alanlı tooltip. Renk sınıfları C7 §5.1'e göre 8 sınıf quantile (eşitlik/az veri durumunda sabit log aralıkları) ve yıl + iki mod için **tek** skala; aylar ve ham/harmonize karşılaştırılabilir. Mock ve gerçek veride `web/mock.html` önizlemesinde doğrulandı: Türkiye 2021 toplamları `/api/points` ile birebir (69.619 ham / 43.338 harmonize), Ağustos'un en yoğun hücresi 37.25K/28.25D (Muğla). 5 core + 1 server + `density.test.ts`; testler, clippy, typecheck, build temiz; tarayıcıda 1366 px ve 375 px, açık/koyu tema. Sınırlar: grid eşit açılı (eşit alan değil, alan tooltip'te); büyük ülkelerde ilk istek yavaş (Brezilya 2020: 3.67 M ham tespit, ~35 sn), yanıt cache'i yok; ana ekran yerleşimi Can/Serhat ile belirlenecek; R3 dairesel takvimin yerine geçmez.
 
 ### [ ] Y4 — İstatistik dashboard kartları
 - **Bekler:** R1, Y5 · **Açar:** —

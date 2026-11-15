@@ -1,0 +1,38 @@
+.grid { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; padding: var(--space-2); background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); }
+.header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.title { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+.segmented { display: inline-flex; flex-wrap: wrap; border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-sm); overflow: hidden; }
+.segmented button { background: var(--color-surface); color: var(--color-text-secondary); border: 0; padding: var(--space-half) var(--space-1); font: inherit; font-size: var(--font-size-sm); min-height: 32px; }
+.segmented button + button { border-left: var(--border-width) solid var(--color-border-strong); }
+.segmented button[aria-pressed="true"] { background: var(--color-text); color: var(--color-text-inverse); }
+.monthRow { display: grid; gap: var(--space-1); }
+.monthLabel { display: grid; gap: var(--space-half); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+.monthLabel input { width: 100%; min-height: 32px; }
+.monthButtons { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; }
+.monthButtons button { background: var(--color-surface); color: var(--color-text-secondary); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-half) 0; font: inherit; font-size: var(--font-size-2xs); min-height: 32px; overflow: hidden; }
+.monthButtons button[aria-pressed="true"] { background: var(--color-text); color: var(--color-text-inverse); }
+.monthButtons button:disabled { color: var(--color-text-disabled); border-style: dashed; }
+.segmented button:focus-visible, .monthButtons button:focus-visible, .monthLabel input:focus-visible, .canvasWrap:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.canvasWrap { position: relative; width: 100%; touch-action: pan-y; }
+.canvas { display: block; max-width: 100%; border-radius: var(--radius-sm); }
+.emptyMonth { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--space-2); text-align: center; color: var(--color-text-secondary); pointer-events: none; }
+.tooltipTop, .tooltipBottom { position: absolute; z-index: 2; display: grid; gap: var(--space-half); min-width: 180px; max-width: calc(100% - var(--space-2)); padding: var(--space-1); pointer-events: none; background: var(--color-surface-raised); color: var(--color-text); border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-md); font-size: var(--font-size-xs); }
+.tooltipTop { top: 0; }
+.tooltipBottom { bottom: 0; }
+.tooltipRow { display: flex; flex-wrap: wrap; gap: var(--space-half) var(--space-1); }
+.tooltipMeta { color: var(--color-text-muted); }
+.legend { display: grid; gap: var(--space-half); }
+.legendHead { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+.swatches { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: 320px; height: 12px; border: var(--border-width) solid var(--color-border-strong); }
+.swatches span { display: block; }
+.class1 { background: var(--frp-1); }
+.class2 { background: var(--frp-2); }
+.class3 { background: var(--frp-3); }
+.class4 { background: var(--frp-4); }
+.class5 { background: var(--frp-5); }
+.class6 { background: var(--frp-6); }
+.class7 { background: var(--frp-7); }
+.class8 { background: var(--frp-8); }
+.note { color: var(--color-text-secondary); font-size: var(--font-size-xs); line-height: var(--line-height-body); }
+.empty { color: var(--color-text-secondary); }
+@media (max-width: 480px) { .monthButtons button { font-size: 0.625rem; } }

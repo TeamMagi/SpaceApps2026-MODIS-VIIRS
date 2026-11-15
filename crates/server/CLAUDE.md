@@ -17,6 +17,7 @@
 | `/api/stats` | GET | Genel istatistikler, sensör kırılımı, pipeline metrikleri (query params: /api/harmonize ile aynı) |
 | `/api/calendar` | GET | Arşivden tarihsel aylık yanma takvimi (`total_frp`, `total_frp_lower`/`total_frp_upper`, `frp_per_detection_eq`, `mean_frp*` + `uncertainty: { confidence, note }`; query params: country, from, to, opsiyonel bbox) |
 | `/api/export` | GET | Harmonize edilmiş hotspot'ları dosya olarak indirir (query params: /api/harmonize ile aynı + `format=csv\|geojson`, varsayılan csv) |
+| `/api/density` | GET | Arşivden bir bölge/yılın aylık yoğunluk ızgarası, örneklemesiz tam veri (`global_latlon`, aylık `[row, col, raw_count, raw_frp, harm_count, harm_frp]` hücreleri, `max`, `bbox`, `covered_months`; query params: region, year, opsiyonel cell ∈ {0.1, 0.25, 0.5, 1.0}) |
 
 ## Konfigürasyon (Env Vars)
 

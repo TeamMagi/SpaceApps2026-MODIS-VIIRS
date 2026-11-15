@@ -20,6 +20,7 @@ use tokio::task::JoinSet;
 
 use pyrosync_core::calendar::compute_anomalies;
 use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::density::{ALLOWED_CELL_DEGREES, aggregate_density};
 use pyrosync_core::events::{
     EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
 };
@@ -187,6 +188,7 @@ pub fn api_routes(state: Arc<ArchiveState>) -> Router {
         .route("/regions", get(regions))
         .route("/series", get(series))
         .route("/points", get(points))
+        .route("/density", get(density))
         .layer(middleware::from_fn_with_state(timeout, request_timeout))
         .with_state(state)
 }
@@ -1845,6 +1847,148 @@ async fn points(
     Ok(Json(response))
 }
 
+// ---------- density ----------
+
+const DEFAULT_DENSITY_CELL_DEG: f64 = 0.25;
+
+#[derive(Deserialize)]
+struct DensityParams {
+    region: Option<String>,
+    year: Option<String>,
+    cell: Option<String>,
+}
+
+#[derive(Serialize)]
+struct DensityMonth {
+    month: u32,
+    raw_total: u64,
+    harmonized_total: u64,
+    /// `[row, col, raw_count, raw_frp, harm_count, harm_frp]`
+    cells: Vec<(u32, u32, u64, f64, u64, f64)>,
+}
+
+#[derive(Serialize)]
+struct DensityMaxResponse {
+    raw_count: u64,
+    raw_frp: f64,
+    harm_count: u64,
+    harm_frp: f64,
+}
+
+#[derive(Serialize)]
+struct DensityResponse {
+    region: String,
+    year: i32,
+    cell_deg: f64,
+    grid: &'static str,
+    months: Vec<DensityMonth>,
+    max: DensityMaxResponse,
+    bbox: Option<Extent>,
+    covered_months: Vec<u32>,
+}
+
+/// Months of `year` that overlap the archive coverage of either sensor family.
+fn covered_months(region: &RegionInfo, year: i32, coverage: &Coverage) -> Vec<u32> {
+    let (modis, viirs) = family_coverage(region, year, coverage);
+    (1..=12)
+        .filter(|&m| {
+            let (first, last) = month_bounds(year, Some(m));
+            [modis, viirs]
+                .into_iter()
+                .flatten()
+                .any(|(from, to)| from <= last && to >= first)
+        })
+        .collect()
+}
+
+async fn density(
+    State(state): State<Arc<ArchiveState>>,
+    Query(params): Query<DensityParams>,
+) -> Result<Json<DensityResponse>, ApiError> {
+    let started = Instant::now();
+    let region = find_region(&state, params.region.as_deref()).await?;
+    let id = region.id.clone();
+
+    let year: i32 = parse_param("year", params.year.as_deref())?
+        .ok_or_else(|| ApiError::new(StatusCode::BAD_REQUEST, "missing 'year' parameter"))?;
+    let cell_deg = parse_param::<f64>("cell", params.cell.as_deref())?.unwrap_or(DEFAULT_DENSITY_CELL_DEG);
+    if !ALLOWED_CELL_DEGREES.contains(&cell_deg) {
+        return Err(ApiError::new(
+            StatusCode::BAD_REQUEST,
+            "'cell' must be one of 0.1, 0.25, 0.5, 1.0",
+        ));
+    }
+    if !region.modis_years.contains(&year)
+        && !region.viirs_years.contains(&year)
+        && !region.noaa20_years.contains(&year)
+    {
+        return Err(ApiError::new(
+            StatusCode::NOT_FOUND,
+            format!("the archive has no {id} file for {year}"),
+        ));
+    }
+    state.admit_year(&region, year)?;
+
+    let slot = state
+        .load_slots
+        .clone()
+        .acquire_owned()
+        .await
+        .expect("semaphore is never closed");
+    let data = load_year(&state, &region, year).await?;
+    let coverage = load_coverage(&state).await?;
+    let config = state.config.clone();
+    let response = tokio::task::spawn_blocking(move || {
+        let _slot = slot;
+        let bbox = extent(data.modis.iter().chain(&data.viirs).map(|h| (h.lat, h.lon)));
+        let linked = harmonize_with_links_config(data.modis.clone(), data.viirs.clone(), &config);
+        let merged = aggregate_density(data.modis.iter().chain(&data.viirs), &linked.hotspots, cell_deg);
+
+        DensityResponse {
+            region: id,
+            year,
+            cell_deg,
+            grid: "global_latlon",
+            months: merged
+                .months
+                .into_iter()
+                .map(|m| DensityMonth {
+                    month: m.month,
+                    raw_total: m.raw_total,
+                    harmonized_total: m.harmonized_total,
+                    cells: m
+                        .cells
+                        .into_iter()
+                        .map(|c| {
+                            let s = c.stats;
+                            (c.row, c.col, s.raw_count, s.raw_frp, s.harm_count, s.harm_frp)
+                        })
+                        .collect(),
+                })
+                .collect(),
+            max: DensityMaxResponse {
+                raw_count: merged.max.raw_count,
+                raw_frp: merged.max.raw_frp,
+                harm_count: merged.max.harm_count,
+                harm_frp: merged.max.harm_frp,
+            },
+            bbox,
+            covered_months: covered_months(&region, year, &coverage),
+        }
+    })
+    .await
+    .map_err(join_error)?;
+
+    tracing::debug!(
+        region = %response.region,
+        year,
+        cell_deg,
+        elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+        "served /api/density"
+    );
+    Ok(Json(response))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2797,6 +2941,93 @@ mod tests {
         let big3 = find_entry(&list3, "Big");
         assert!(big3.too_large);
         assert!(!big3.precomputed);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn density_validates_params_and_matches_points_totals() {
+        let dir = temp_archive("density");
+        write_file(
+            &dir,
+            "modis",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (35.95, "2021-03-05", 0)],
+        );
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (36.0, "2021-07-02", 0), (36.3, "2021-12-31", 0)],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        let params = |year: Option<&str>, cell: Option<&str>| {
+            Query(DensityParams {
+                region: Some("Malta".into()),
+                year: year.map(Into::into),
+                cell: cell.map(Into::into),
+            })
+        };
+
+        for bad in ["0.3", "2", "abc", "0"] {
+            let err = density(State(state.clone()), params(Some("2021"), Some(bad)))
+                .await
+                .err()
+                .expect("bad cell must fail");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST, "cell={bad}");
+        }
+        let err = density(State(state.clone()), params(None, None))
+            .await
+            .err()
+            .expect("missing year must fail");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+
+        let Json(d) = density(State(state.clone()), params(Some("2021"), None))
+            .await
+            .ok()
+            .unwrap();
+        assert_eq!(d.cell_deg, 0.25);
+        assert_eq!(d.grid, "global_latlon");
+        assert_eq!(d.months.len(), 12);
+        assert!(d.months.iter().enumerate().all(|(i, m)| m.month == i as u32 + 1));
+
+        let Json(p) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: None,
+                limit: None,
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        let raw_sum: u64 = d.months.iter().map(|m| m.raw_total).sum();
+        let harm_sum: u64 = d.months.iter().map(|m| m.harmonized_total).sum();
+        assert_eq!(raw_sum as usize, p.stages.raw_modis + p.stages.raw_viirs);
+        assert_eq!(harm_sum as usize, p.stages.harmonized);
+        assert_eq!(d.bbox, p.bbox);
+
+        let (mut max_rc, mut max_rf, mut max_hc, mut max_hf) = (0, 0.0f64, 0, 0.0f64);
+        for m in &d.months {
+            assert!(m.cells.windows(2).all(|w| (w[0].0, w[0].1) < (w[1].0, w[1].1)));
+            assert_eq!(m.cells.iter().map(|c| c.2).sum::<u64>(), m.raw_total);
+            assert_eq!(m.cells.iter().map(|c| c.4).sum::<u64>(), m.harmonized_total);
+            for c in &m.cells {
+                max_rc = max_rc.max(c.2);
+                max_rf = max_rf.max(c.3);
+                max_hc = max_hc.max(c.4);
+                max_hf = max_hf.max(c.5);
+            }
+        }
+        assert_eq!(
+            (d.max.raw_count, d.max.raw_frp, d.max.harm_count, d.max.harm_frp),
+            (max_rc, max_rf, max_hc, max_hf)
+        );
+        assert!(!d.covered_months.is_empty() || d.months.iter().any(|m| m.raw_total > 0));
 
         let _ = std::fs::remove_dir_all(dir);
     }
