@@ -62,6 +62,8 @@
 
 ## 3. Yeniden Çalıştırma Komutu
 
+Sentetik placebo, LOYO ve kapı testleri artık CI içinde `cargo test --workspace` ile arşiv veya ağ erişimi gerektirmeden çalışır. Doğrulama komutuna `--gate-json web/public/validation/gate.json` eklenerek arayüzün kullandığı dosya yeniden üretilir; arayüz seçilen bölgenin doğrulama durumunu model uyarısının yanında gösterir.
+
 Araç: [validation_suite.rs](file:///C:/Users/user/Desktop/SpaceApps2026-MODIS-VIIRS/crates/firms-client/examples/validation_suite.rs)
 
 ```powershell

@@ -147,6 +147,27 @@ export type MapState = AsyncStatus;
 
 export type RegionId = string;
 
+export type ValidationDecision = "pass" | "inconclusive" | "fail";
+
+export interface ValidationBaseline {
+  name: "b0_unnormalized" | "b1_persistence";
+  baselineError: number;
+  ci90: readonly [number, number];
+  decision: ValidationDecision;
+}
+
+export interface ValidationRegionGate {
+  modelError: number;
+  baselines: readonly ValidationBaseline[];
+  decision: ValidationDecision;
+}
+
+export interface ValidationGate {
+  generated: string;
+  method: string;
+  regions: Readonly<Record<string, ValidationRegionGate>>;
+}
+
 export interface BBox {
   west: number;
   south: number;

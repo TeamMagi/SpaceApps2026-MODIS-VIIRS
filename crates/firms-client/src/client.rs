@@ -310,6 +310,34 @@ impl FirmsClient {
         (modis, viirs, report)
     }
 
+    /// Fetches exactly the given (source, window) pairs, with no availability lookup. Measurement
+    /// tools use it to pin SP sources and to skip windows before a sensor's first day.
+    /// Returns (modis, viirs, report); `uncovered` stays empty because the caller chose the windows.
+    pub async fn fetch_source_windows(
+        &self,
+        bbox: &BBox,
+        windows: &[(FirmsSource, NaiveDate, DayRange)],
+    ) -> (Vec<Hotspot>, Vec<Hotspot>, FetchReport) {
+        let bbox_str = bbox.to_firms_string();
+        let tasks = windows
+            .iter()
+            .map(|&(source, start, days)| WindowTask {
+                group: if source.sensor.is_modis() {
+                    SensorGroup::Modis
+                } else {
+                    SensorGroup::Viirs
+                },
+                source,
+                bbox_str: bbox_str.clone(),
+                start,
+                days,
+            })
+            .collect();
+        let mut report = FetchReport::default();
+        let (modis, viirs) = self.run_windows(tasks, &mut report).await;
+        (modis, viirs, report)
+    }
+
     /// Backwards-compatible convenience kept for the existing server handler:
     /// last `days` days, all sensors, partial failures tolerated.
     pub async fn fetch_all(

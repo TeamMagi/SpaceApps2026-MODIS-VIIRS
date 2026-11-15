@@ -11,6 +11,7 @@
  */
 
 import { useCopy } from "../../hooks/useCopy";
+import { useValidationGate } from "../../hooks/useValidationGate";
 import { useCopyLink } from "../../hooks/useCopyLink";
 import { useExportView } from "../../hooks/useExportView";
 import { EXPORT_FORMATS } from "../../lib/export";
@@ -20,7 +21,15 @@ import { useAppStore } from "../../store/useAppStore";
 import styles from "./BottomBar.module.css";
 
 export default function BottomBar() {
-  const { t } = useCopy();
+  const { t, fmt } = useCopy();
+  const gate = useValidationGate();
+  const gateText = gate?.decision === "pass"
+    ? t("validationGatePass", { error: fmt.number(gate.modelError, 4) })
+    : gate?.decision === "inconclusive"
+      ? t("validationGateInconclusive")
+      : gate?.decision === "fail"
+        ? t("validationGateFail")
+        : t("validationGateUnavailable");
   const showDrawer = useAppStore((state) => state.showDrawer);
   const briefingOpen = useAppStore((state) => state.openDrawer === "briefing");
   const { fileNames, statuses, canDownload, failed, download } = useExportView();
@@ -44,6 +53,10 @@ export default function BottomBar() {
         <MethodsLink section="limits" className={styles.disclaimerLink}>
           {t("disclaimerLink")}
         </MethodsLink>
+        {" "}
+        <span className={styles.gate} data-decision={gate?.decision} role="status" aria-live="polite" aria-atomic="true">
+          {gateText}
+        </span>
       </p>
       <div className={styles.actions}>
         <button
