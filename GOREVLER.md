@@ -261,7 +261,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [X] |
-| S14 | CI süre bütçesi: web, tetikleyiciler ve doğrulama | Samet | — | — | [ ] |
+| S14 | CI süre bütçesi: web, tetikleyiciler ve doğrulama | Samet | — | — | [X] |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
@@ -1091,7 +1091,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 >   - **32 Makalelik Envanter ve Doğrulanması Gereken İddialar:** Makale 04 bulguları dahil güncellendi.
 > - **Frontend entegrasyonu (`web/src/content/references.ts`):** Tüm referanslar doğrulanmış APA 7 künyeleri ve DOI bağlantılarıyla `complete: true` olarak frontend'e aktarıldı, typecheck ve 42 test suite'i başarıyla geçti.
 
-### [ ] S14 — CI süre bütçesi: web, tetikleyiciler ve doğrulama (Paket B)
+### [X] S14 — CI süre bütçesi: web, tetikleyiciler ve doğrulama (Paket B)
 - **Bekler:** — · **Açar:** —
 - Amaç: G13 ile aynı hedef, iş bölüşümünün diğer yarısı (Paket B = Samet). Ayrıntı: `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5–§7.
   - **B1** (10 dk): Web job'ını ölç; `npm` önbelleği isabeti, `npm ci`, `typecheck`, `test`, `build` süreleri (toplam 5 dk altı beklenir)
@@ -1102,6 +1102,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket B
 - **Bitti sayılır:** B1–B4 tamam; rapor §6 web satırı dolu; `ci.yml`'de en büyük `timeout-minutes` 30 ve `actionlint` temiz; yalnız `docs/` değişen commit'te CI çalışmıyor, `crates/` ya da `data/` değişince çalışıyor. S5 kutusu, GitHub'da yeşil bir koşu görüldüğünde ayrıca kapanır.
 - **Durum (Samet, 2026-11-15):** B2 (`coverage` zaman aşımı 40 → 30), B3 (`paths-ignore`: `docs/**`, `**/*.md`, `GOREVLER.md`; `data/**` ve `web/**` dışarıda) ve web job'ının Node 22'ye alınması yapıldı; Node 20 `node --test` glob'unu genişletmediği için web testleri CI'da her koşuda kırılacaktı. Soğuk önbellekli Linux provasında web job'ı 47–58 sn (B1), sorun giderme tablosu rapor §7'de (B4). Açık kalan: job bazlı gerçek süreler (toplam koşu süreleri 1 dk 36 sn ile 2 dk 15 sn) ve `paths-ignore` davranışının orada doğrulanması (yalnız belge değişen bir push'ta CI'ın çalışmaması); kutu bu yüzden açık.
+>
+> **Kapanış notu (Samet, 2026-11-15):** **B1:** GitHub Actions'ta #63–#66 toplam 1 dk 36 sn ile 2 dk 15 sn sürdü; job'lar paralel çalıştığından web job'ı da en çok o kadar sürmüştür (üst sınır, 5 dk beklentisinin çok altında). Job bazlı tek tek süreler ve `npm` önbelleği isabeti log'dan doğrulanmadı. **B2:** en büyük `timeout-minutes` 30, `actionlint` temiz. **B3:** `paths-ignore` (`docs/**`, `**/*.md`, `GOREVLER.md`) GitHub'da doğrulandı: yalnız belge değiştiren `d7a9903` push'u yeni koşu açmadı; `.github/` değiştiren push'lar (#66) koşuyu tetikledi; `crates/` ve `data/` filtre dışında. **B4:** sorun giderme tablosu `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §7'de, bu oturumda gerçekten görülen kırıklarla (Node 20 test glob'u, kopya çeviri anahtarı, `main`'de iptal edilen koşular).
 
 ---
 
@@ -1391,6 +1393,6 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Görkem | 13 (G1–G13) | 10 (`G1–G4, G7–G12`) | 3 (`G5, G6, G13`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon, CI Rust hattı süre bütçesi |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 14 (S1–S14) | 12 (`S1–S11, S13`) | 2 (`S12, S14`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
+| Samet | 14 (S1–S14) | 13 (`S1–S11, S13, S14`) | 1 (`S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
 | Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 13 (`K1–K13`) | 1 (`K14`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
