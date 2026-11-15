@@ -2662,6 +2662,7 @@ Pipeline yapılandırması şu sırayla oluşturulur: kodda tanımlı varsayıla
 
 - **FIRMS availability tablosu süreç başına bir kez alınır.** Tablo bir `OnceCell` içinde tutulur. Sunucu UTC gece yarısını geçtikten sonra en yeni günler `uncovered` olarak raporlanabilir ve `/api/availability` eski tarihleri gösterir. Çözüm sunucuyu yeniden başlatmaktır.
 - **Takvimde yangınsız aylar yoktur.** `/api/calendar` yalnızca en az bir tespiti olan ayları döndürür. Bu nedenle yangınsız aylar ne takvimde görünür ne de anomali tabanına girer. Buna karşın `/api/series` aynı ayları sıfırla doldurur.
+- **Örneklerdeki güven aralığı sayıları eskidir.** Bu belgedeki örnek yanıtlar S9'dan önce (MODIS sensör σ = 0,12) yakalandı; güncel varsayılan 0,266'dır. Özellikle MODIS kayıtlarının `*_lower`/`*_upper` değerleri bu yüzden örneklerde gerçekte dönenden dardır. Alan adları ve yapı doğrudur, sayılar yaklaşıktır. Örnekler, paket yenilemesi (G6) sırasında yeniden yakalanabilir.
 
 ## Frontend notu
 
