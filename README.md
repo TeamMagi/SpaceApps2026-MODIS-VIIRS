@@ -22,8 +22,8 @@ PyroSync implements a seven-stage harmonization pipeline built in **Rust** for p
 3. **MODIS Fleet Consolidation** — Merge Terra/Aqua observations of the same fire within a **180-minute** window
 4. **VIIRS Fleet Consolidation** — Merge SNPP/NOAA-20/NOAA-21 observations within a **60-minute** window
 5. **H3-Indexed Cross-Sensor Matching** — Index detections onto **H3 resolution 8** hexagons and match MODIS/VIIRS pairs within 2 km (k-ring 3 lookup) and **180 minutes** (across 26,505 co-located live pairs, zero fell below 30 min; min 34 min, median ~158 min). `Matched` means dual-sensor observation of the same fire event, not simultaneous overpass
-6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events, retain unmatched detections from both sensors, and apply per-record VZA normalization to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA); polynomial coefficients remain uncalibrated placeholders (no simultaneous MODIS/VIIRS calibration pairs exist in FIRMS), so correction magnitude is **indicative**
-7. **Monthly Calendar & Effort Normalization (Ω)** — Aggregate detections into a monthly activity calendar and normalize counts against the MODIS reference channel using an empirically measured effort factor **Ω**
+6. **Quality-Priority Fusion & VZA Correction** — Prefer VIIRS (375 m) for matched events, retain unmatched detections from both sensors, and apply a per-record VZA correction to MODIS FRP. Because FIRMS does not publish VZA directly, VZA is derived from the along-scan pixel size anchored to three documented MODIS values (1.0 km at nadir, 4.833 km at the 55° scan edge, 65.4° max VZA). MODIS FRP is **multiplied** by the nadir-normalized ratio of Zheng et al. (2026), `R_rel(θ) = 0.2017θ² + 0.0168θ + 1.0` (θ in radians), so the correction raises off-nadir FRP rather than lowering it
+7. **Monthly Calendar & Effort Normalization (Ω)** — Aggregate detections into a monthly activity calendar and normalize counts against the MODIS reference channel using an empirically measured effort factor **Ω**. Each month also reports `total_frp` and `frp_per_detection_eq` (MODIS-equivalent FRP per normalized detection), the metric that stays continuous across the 2012 VIIRS transition. Before VIIRS, cell totals are scaled by a measured latitude-band completeness factor `k_c` (1.11 / 1.18 / 1.28)
 
 ### Effort Normalization (Ω)
 
@@ -77,13 +77,15 @@ tools/              Utility scripts (archive verification, data fetching)
 | `GET /api/config` | Effective pipeline configuration (thresholds used by the harmonization) as JSON |
 | `GET /api/availability` | Date coverage per FIRMS source |
 | `GET /api/harmonize` | Harmonized hotspots, calendar and effort factors (`west`, `south`, `east`, `north`, and either `days` or `start`+`end`; optional `include_raw=true`) |
-| `GET /api/compare` | Raw versus harmonized statistics for the same query |
+| `GET /api/compare` | Raw versus harmonized statistics for the same query; `vza.mean_frp_adjustment_pct` is the mean VZA change to MODIS FRP (positive = increase) |
 | `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
-| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox) |
+| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox); cells carry `total_frp`, `frp_per_detection_eq`, `mean_frp` and their `_lower`/`_upper` bounds |
 | `GET /api/export` | Download harmonized hotspots as a file (same query as `/api/harmonize` plus `format=csv\|geojson`, default `csv`) |
 
 - Responses include an `X-Cache: HIT|MISS` header.
 - Responses include a `warnings` array and an `effort.reliable` flag; if a FIRMS source fails to fetch, effort normalization is marked unreliable and surfaced in the response.
+- `/api/compare` still returns `vza.mean_frp_reduction_pct` for backward compatibility, but it is now negative because the VZA correction increases FRP; use `mean_frp_adjustment_pct`.
+- In `/api/calendar`, `mean_frp` is the native-pixel mean and drops at the 2012 VIIRS transition because VIIRS pixels are smaller; use `frp_per_detection_eq` as the headline FRP metric.
 - `/api/calendar` reads from the local archive and requires **no API key**, though it covers a smaller satellite fleet than live endpoints because the country archive includes MODIS, VIIRS SNPP, and VIIRS NOAA-20 (`viirs-jpss1`) and does not include NOAA-21.
 
 ## Configuration
