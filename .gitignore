@@ -35,6 +35,8 @@ data/sample/*
 !data/sample/README.md
 # Per-region demo sets produced by the sample_region example (see data/sample/README.md).
 !data/sample/*/
+# Derived Turkey case-study files (see data/case-study/turkey/README.md).
+!data/case-study/
 !data/archive-set.json
 !data/archive-manifest.sha256
 !data/derived/
