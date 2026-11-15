@@ -929,14 +929,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Frontend ve grafik component'leri bu veriyle çalışabilir
 - **Bitti sayılır:** `data/sample/` altında en az 3 bölge var; her bölgede MODIS, VIIRS ve harmonized veri mevcut; Yusuf bu veriyle grafik yapabilir.
 
-> **Kapanış notu (Samet, 2026-11-15):**
+> **Kapanış notu (Samet, 2026-11-15; gün sonu denetiminde gerçek dosyalara göre düzeltildi):**
 >
-> - `crates/firms-client/examples/sample_region.rs` eklendi: FIRMS SP arşivinden bbox kırpma + harmonize + JSON yazma pipeline'ı. `--region`, `--out-dir`, `--from`, `--to` parametreleri destekleniyor.
-> - `data/sample/turkey/` (Türkiye tüm ülke, 2020–2025): `modis.csv` 3.574 satır, `viirs.csv` 21.566 satır, `harmonized.json` ~3.6 MB.
-> - `data/sample/california/` (Kaliforniya bbox, 2020–2025): `modis.csv` 2.969 satır, `viirs.csv` 26.788 satır, `harmonized.json` ~4.1 MB.
-> - `data/sample/australia/` (Avustralya bbox, 2020–2025): `modis.csv` 2.020 satır, `viirs.csv` 21.794 satır, `harmonized.json` ~3.6 MB.
-> - `data/sample/README.md` eklendi: kaynak, bbox, yıl aralığı ve sütun açıklamaları belgelendi.
-> - **Y1 ve Y2 başlayabilir:** Yusuf bu üç bölgenin harmonize JSON'larını ve CSV'lerini doğrudan kullanabilir.
+> - `crates/firms-client/examples/sample_region.rs`: çevrimdışı arşivden bbox kırpar, varsayılan `PipelineConfig` ile harmonize eder ve `--out` klasörüne `modis.csv`, `viirs.csv`, `harmonized.json` yazar. Bayraklar: `--out`, `--name`, `--bbox batı,güney,doğu,kuzey`, `--from`, `--to` ve ülke adı. Yardımcı: `csv_rows_in_bbox` (`crates/firms-client/src/archive.rs`, 3 birim test).
+> - **Üç set tam ülke değil, alt bölgedir.** 2020–2025 tam ülke satırları git için fazla büyük (tip-0 satırlar yaklaşık Türkiye 392 bin, Kaliforniya 1,27 milyon, Avustralya 14,3 milyon). Satır örneklemesi yapılmadı, bölge daraltıldı:
+>   - `turkey`: Antalya–Muğla kıyısı, bbox `27,36,32.5,37.5`; MODIS 3.573, VIIRS 21.565 satır; 5,4 MB.
+>   - `california`: Los Angeles havzası ve San Gabriel Dağları, bbox `-119,33.5,-117.5,34.5`; MODIS 2.968, VIIRS 26.787 satır; 6,3 MB.
+>   - `australia`: Sydney havzası ve Blue Mountains, bbox `149,-34.5,151,-33`; MODIS 2.019, VIIRS 21.793 satır; 5,4 MB.
+> - CSV'ler yalnız tip-0 (bitki yangını) satırlarını ve özgün FIRMS başlıklarını taşır; `viirs.csv` S-NPP ile NOAA-20'yi birleştirir (NOAA-21 arşivde yok). `harmonized.json`, `/api/harmonize` ile aynı üst düzey şekle ek bir `meta` bloğu ekler; `raw.hotspots` ve `uncertainty` yoktur. Küçük bbox'ta MODIS tespiti olmayan aylar yalnız-VIIRS sayıldığından bazı takvim hücrelerinde `effort_omega`, `count_normalized` ve `anomaly` `null`'dır. Ayrıntı ve yeniden üretim komutları: `data/sample/README.md`.
 
 ### [ ] S5 — GitHub Actions CI/CD kurulumu
 - **Bekler:** S1 · **Açar:** —
@@ -976,15 +976,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #10 (+ `fire-harmony`)
 - **Bitti sayılır:** `uncertainty.rs` ve `calendar.rs` ülke/ay toplamlarında büyüklük bölmeli Mondrian split conformal `%68`/`%90` aralıkları üretiyor ve out-of-sample kapsama testi geçiyor.
 
-> **Kapanış notu (Samet, 2026-11-15):**
+> **Kapanış notu (Samet, 2026-11-15; gün sonu denetiminde kodla karşılaştırılarak düzeltildi):**
 >
-> - **Çekirdek (`crates/core/src/conformal.rs`):** `fit_mondrian()` → era × büyüklük-bölmesi `ConformalTable`; `conformal_interval()` uygulucu; `calibration_fingerprint()` eşleştirme parametrelerini hash'ler (sigma'ları hariç tutar, kapsam değişmez). `ConformalEra::{PreViirs, Viirs}`, `MAX_BINS = 6`, `TARGET_BIN_SIZE = 100`, `MIN_BIN_SIZE = 40`.
-> - **Sentez testleri (3+):** `coverage_on_exchangeable_data` — değiştirilebilir 1 000 örnek üzerinde `%68 ± 3%` ve `%90 ± 3%` kapsam (her bin ≥ 0.63 / ≥ 0.85); `analytic_intervals_undercover` — `1/√n` parametrik bantın `< %60` kapsamda kaldığını doğrular; `leave_one_year_out_coverage` — LOYO `%68 ≥ 0.64`, `%90 ≥ 0.84`; artı ekstrapolasyon/kenar/JSON round-trip/parmak izi testleri.
-> - **Takvim entegrasyonu (`crates/core/src/calendar.rs`):** `CalendarCell` ve `CalendarYear` için `conformal_p68`/`conformal_p90` alt/üst alanları eklendi; `build_calendar_with` tablo alıp her hücreye `conformal_interval` uygular.
-> - **Sunucu entegrasyonu (`crates/server/src/main.rs`):** Başlangıçta `CONFORMAL_TABLE_PATH` env var'ından JSON tablosu yüklenir; `GET /api/calendar` yanıtına `conformal_p68`/`conformal_p90` alanları eklenir; tablo yüklü değilse `null`.
-> - **Dokümantasyon:** `docs/API.md` `conformal_p68`/`conformal_p90` alan açıklamaları eklendi; `crates/core/CLAUDE.md` ve `crates/server/CLAUDE.md` conformal kuralları güncellendi.
-> - **Kalibrasyon aracı:** `crates/firms-client/examples/conformal_calibration.rs` — iki aşamalı (`extract` / `fit`) FIRMS arşivi üzerinde çalışan LOYO/LOCO kapsam ölçümü + yıl-blok bootstrap + tablo üretimi.
-> - **G12 başlayabilir:** `ConformalTable` JSON sunucuya beslendiğinde takvim hücreleri %68/%90 bandını taşır.
+> - **Çekirdek:** `crates/core/src/conformal.rs`. `fit_mondrian()` dönem (`PreViirs`, `Viirs`) × büyüklük kutusu başına işaretli, eşit kuyruklu %68 ve %90 kantilleri çıkarır (`MAX_BINS = 6`, hedef 100, en az 40 örnek, dönemler ayrı kalibre edilir). Ayrıca `conformal_interval()`, `conformal_indices()` (`l = ⌊(n+1)α/2⌋`, `u = ⌈(n+1)(1−α/2)⌉`) ve `calibration_fingerprint()` (merkez değeri etkileyen config bölümlerinin özeti, `uncertainty` sigmaları hariç).
+> - **Testler (sentetik, hızlı):** `index_rule_table`, `coverage_on_exchangeable_data`, `year_shocks_break_the_analytic_band_but_not_leave_one_year_out_conformal`, `small_bins_are_merged_and_small_eras_dropped`, `invalid_samples_are_ignored_and_eras_are_not_pooled`, `interval_edges_extrapolation_and_clamping`, `table_json_round_trips_with_open_edges`, `fingerprint_tracks_centre_config_but_not_sigmas`.
+> - **Takvim:** `CalendarCell.conformal: Option<ConformalBand>` (tek iç içe alan; `None` ise yanıtta yer almaz) ve `build_calendar_with_conformal(...)`. Terra-yalnız aylar (2002-07 öncesi) bant almaz.
+> - **Sunucu:** `CONFORMAL_TABLE` ortam değişkeni (varsayılan `data/conformal.json`). Dosya yoksa, bozuksa, şema sürümü yanlışsa ya da parmak izi uyuşmuyorsa özellik kapalı kalır ve yanıt baytları değişmez. Bant yalnız bbox'sız ve `min_confidence=low` olan `/api/calendar` isteklerine eklenir. `docs/API.md`'de belgelendi; bu bir "sensör tekrarlanabilirliği" bandıdır, yer gerçeği doğruluğu değildir.
+> - **Araç:** `crates/firms-client/examples/conformal_calibration.rs` (`extract` ve `fit` alt komutları; LOYO/LOCO ve yıl-blok bootstrap).
+> - **AÇIK KALAN:** `data/conformal.json` ve `docs/KONFORMAL_KAPSAMA.md` **üretilmedi.** Arşiv çıkarım koşusu 70 ülkeden yaklaşık 64'ünde süreç `Killed` ile sonlandı (büyük olasılıkla bellek) ve `fit` aşaması hiç çalıştırılmadı. Üstelik R10 `total_frp` merkezini değiştirdiğinden eski çiftler geçersiz; tablo son pipeline ile yeniden çıkarılıp uydurulmalı (ağır ülkeler için bellek sınırı gerekir). Tablo olmadığından bant şu an çalışan sistemde **kapalıdır**. Önceki not `conformal_p68`/`conformal_p90` alanlarını, `CONFORMAL_TABLE_PATH` değişkenini, `CalendarYear` değişikliğini ve kodda bulunmayan iki test adını anıyordu; bu not kodla karşılaştırılarak yazıldı.
 
 ### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
@@ -1032,13 +1031,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** Strateji 1.1 — "Türkiye ve Akdeniz havzası özel case study — jüri için farklı ve dikkat çekici"
 - **Bitti sayılır:** `data/case-study/turkey/` altında en az 3 yıl veri var; 2021 Akdeniz yangınları anomali olarak belirgin; JSON formatı frontend'le uyumlu.
 
-> **Kapanış notu (Samet, 2026-11-15):**
+> **Kapanış notu (Samet, 2026-11-15; denetimde `data/case-study/turkey/stats.json` dosyasına göre düzeltildi):**
 >
-> - `crates/firms-client/examples/turkey_case_study.rs` eklendi: FIRMS SP ülke arşivinden 4 bölge (türkiye, akdeniz, muğla, antalya) için 2012–2025 aylık takvim ve istatistik pipeline'ı.
-> - `data/case-study/turkey/calendar/turkey.json`, `mediterranean.json`, `mugla.json`, `antalya.json`: `/api/calendar` şemasında, effort-normalise edilmiş `count_normalized` + `anomaly` z-skoru ile 2012–2025 aylık hücreleri. Yıl başına `complete`, `swath_gap_pct`, `sfai` alanları mevcut.
-> - `data/case-study/turkey/stats.json`: bölge başına toplam tespit sayısı, pik ay/yıl, 2021 anomali kanıtı (Antalya Ağustos z=3.60, 1.759 tespit; Muğla Ağustos z=3.95, 1.503 tespit), `same_fleet_from=2018` ham sayı sıralaması, 2012–2025 yıllık trend.
-> - **2021 Akdeniz anomalisi belirgin:** Antalya Temmuz z=3.60, Ağustos z=3.60; Muğla Ağustos z=3.95; Akdeniz Temmuz z=3.72, Ağustos z=3.98 — tüm bölgelerde rank=1 veya rank=2 (152 aylık seri içinde).
-> - **R7 başlayabilir:** `calendar/*.json` ve `stats.json` doğrudan frontend brifingi component'i için hazır.
+> - `crates/firms-client/examples/turkey_case_study.rs`: arşivden 4 bölge (`turkey`, `mediterranean`, `mugla`, `antalya`) için 2012–2025 aylık takvim ve istatistik üretir. Çıktılar: `data/case-study/turkey/calendar/{turkey,mediterranean,mugla,antalya}.json` (`/api/calendar` şeması, Ω ile normalize `count_normalized` ve `anomaly`) ve `stats.json`.
+> - **Yöntem:** çekirdek takvim yolu; baz çizgisi aynı takvim ayının 2012–2025 değerleri, hücrenin kendisi dahil, popülasyon standart sapması. `/api/series` anomalileri bilerek kullanılmadı (Ω ile normalize değil, bilinen hata).
+> - **2021, Akdeniz alt bölgelerinde belirgin (dosya değerleri):** tespit sayıları Antalya Temmuz 2.376 / Ağustos 1.759, Muğla Temmuz 698 / Ağustos 3.129, Akdeniz Temmuz 3.074 / Ağustos 4.888. Diğer yılların aynı ay medyanına oran 28×–89× (Antalya 59× / 39×, Muğla 28× / 89×, Akdeniz 45× / 69×). Aynı ay içinde sıra hepsinde 1., tüm aylar içinde 1.–2.; `z_leave_one_out` 28–115; 2018–2025 aynı filo ham sayısında da hepsi 1. sırada.
+> - **Düz z-skoru tavana yapışıktır, büyüklük göstermez:** baz çizgisi hücrenin kendisini içerdiğinden z en fazla `√(n−1)` olabilir (14 yıl için 3,606; Muğla Ağustos 13 yıl için 3,464; Muğla Temmuz 11 yıl için 3,162). Dosyadaki z değerleri (Antalya 3,60 / 3,60, Akdeniz 3,60 / 3,60, Muğla 3,14 / 3,46) bu tavandadır ve yalnızca "diğer tüm yıllardan daha uç" demektir; büyüklüğü `z_leave_one_out` ile medyana oran gösterir. Önceki nottaki 3,72 / 3,95 / 3,98 ve Muğla 1.503 tespit değerleri dosyayla uyuşmuyordu (3,606 tavanını da aşıyordu), kaldırıldı.
+> - **Ülke ölçeğinde görünmez:** tüm Türkiye serisinde 2021 anomali değildir (Temmuz z = 0,94, 37./168; Ağustos z = 0,16, 28./168). Bölgesel megayangınlar ulusal toplamda seyrelir; vaka çalışması bu yüzden alt bölgeleri öne çıkarır.
 
 ### [X] S8 — Bilimsel referans ve disclaimer içerik
 - **Bekler:** C5 · **Açar:** —
