@@ -273,7 +273,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [X] |
 | K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [X] |
 | K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | [X] |
-| K10 | Piksel alanı ve tespit limiti | Sadık | — | K11 | [ ] kod tamam, nadir değerleri kaynakla teyit bekliyor |
+| K10 | Piksel alanı ve tespit limiti | Sadık | — | K11 | [X] |
 | K11 | Şiddet rejimli Ω (effort.rs) | Sadık | K10 | G11 | [X] |
 | K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [X] |
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
@@ -291,7 +291,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R6, R8, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. (`R7` S7'yi bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
-- **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
+- **Sadık:** K1, K2, K4, K5, K8, K9, K10, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -1153,7 +1153,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** 2000-2002 dönemi ya düzeltiliyor ya da açıkça kıyaslanamaz işaretleniyor; methods sayfasında (`C5` / `R6`) hangisinin seçildiği belirtiliyor.
 - **Kapanış notu (2026-11-14):** Tamamlandı (`ea08ab4`). İkinci yol seçildi: seri 2002-07 veya sonrasını içeriyorsa 2002-07 öncesi Terra-only aylar Ω havuzlarına girmiyor, `count_normalized`, `effort_omega` ve `anomaly` alanları `None` kalıyor ve yanıtın `warnings` dizisine kaç ayın dışlandığı yazılıyor; ham `count` ve FRP alanları korunuyor. Tamamı 2002-07 öncesinde kalan seriler değişmiyor. Seçim methods tasarımında (`docs/TASARIM_METHODS.md`, aşama 7) ve `docs/API.md`'de (CalendarCell) belirtildi; `R6` sayfayı kodlarken bu satırı taşımalı. Dönemin regresyonla kurtarımı ayrı görev (`K12`).
 
-### [ ] K10 — Piksel alanı ve tespit limiti
+### [X] K10 — Piksel alanı ve tespit limiti
 - **Bekler:** — · **Açar:** K11
 - `crates/core/src/vza.rs` içine FIRMS `scan × track` sütunlarından analitik piksel alanı `A_p = S · T` (`[16, Denklem 1–3]`; MODIS `1.0 → 9.66–9.69 km²`, VIIRS `0.14 → 0.62 km²`) hesaplaması eklenmesi
 - Analitik piksel tespit limiti `D_p(A_p) = λ_lst · A_p + μ_lst` ve lojistik eğim `r_p(A_p) = r_0 + r_1 / (A_p - A_0)` (`[16, 17/08, Denklem 5–6, Tablo 1–2]`; MODIS gündüz `5.7 → 40–42 MW` / gece `3.7 → 39 MW`, VIIRS gündüz `3.7 MW` / gece `0.7 MW`) fonksiyonlarının yazılması
@@ -1161,6 +1161,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P3, P4, Yol Haritası #7 (+ `[16, 17/08, Denklem 1–6, Tablo 1–2]`)
 - **Bitti sayılır:** `vza.rs` `A_p` ve `D_p(A_p)`/`r_p(A_p)` değerlerini `[16]` Tablo 1–2 katsayılarıyla hesaplıyor ve birim testleri MODIS (`5.7→40 MW`) ile VIIRS (`0.7→3.7 MW`) limitlerini doğruluyor.
 - **Durum (2026-11-15):** Kod tamamlandı, bitti şartı TAM SAĞLANMADI. `vza.rs`: `pixel_area_km2`, `detection_limit_coefficients` (MODIS/VIIRS × gündüz/gece, `docs/REFERANS_ANALIZI.md` tablosu), `detection_limit_mw`, `detection_slope`, `hotspot_detection_limit_mw`. Tarama kenarı değerleri kaynağa yakın (MODIS gündüz `9,66 km²` → `43,4 MW`, gece → `43,8 MW`; kaynak 40–42 / 39 MW). Nadir "tipik" değerler ise tablodaki katsayılarla nominal piksel alanından ÜRETİLEMİYOR: MODIS gündüz `1,0 km²` → `4,96 MW` (kaynak 5,7), MODIS gece → `5,44 MW` (kaynak 3,7), VIIRS gündüz `0,14 km²` → `2,31 MW` (kaynak 3,7), VIIRS gece → `0,54 MW` (kaynak 0,7). Katsayılar ve formül değiştirilmedi; testler formülün verdiği değeri doğruluyor. Makale (`[16]`, Tablo 1–2) yerelde olmadığı için tablonun mu yoksa "tipik" değerlerin mi farklı bir etkin alana ait olduğu teyit edilemedi; teyit edilince kutu işaretlenecek.
+- **Kapanış (Serhat, 2026-11-15):** Kaynak teyit edildi; katsayılar doğru, değişiklik gerekmedi. Sofiev & Kouznetsov (2026, GMD 19, 10123) Tablo 1–2, makalenin XLSX eklerinden okundu: MODIS gündüz `λ=4.44, μ=0.52, r0=0.07, r1=1.26, c0=0.045`, gece `4.43 / 1.01 / 0.11 / 1.06 / 0.045`; VIIRS gündüz `6.17 / 1.44 / 0.61 / 0.21 / 0.05`, gece `1.38 / 0.35 / 2.12 / 1.02 / 0.05`. Bunlar `vza.rs`'tekilerle birebir aynı. Makale Denklem 5'i Böl. 5.3'te kendisi uyguluyor (9 km² → `40.5–40.9 MW`); kodumuz aynı değerleri veriyor (`40.48 / 40.88`). "Bitti sayılır"daki `5.7→40 MW` / `0.7→3.7 MW` değerleri ise makalenin Sonuç bölümündeki (kenar için Böl. 5.2) metin değerleri. Bunlar makalenin kendi Denklem 5'i ve tablolarıyla üretilemiyor: MODIS gece `3.7 MW` için piksel alanının `0.61 km²` olması gerekir, oysa MODIS pikseli en az 1 km²'dir. Makale kendi içinde de tutarsız: VIIRS gece değeri Özet'te `0.5`, Sonuç'ta `0.7 MW`. `D_p` sigmoidin %50 noktası, metindeki değerler büyük ihtimalle ayrı bir ampirik istatistik (Böl. 5.1'de %1'lik dilime ayrı uyum yapılıyor). Bu yüzden şartın amacı olan "Tablo 1–2 katsayılarıyla hesaplama ve testle doğrulama" şu testlerle karşılandı: `coefficients_match_published_tables_1_and_2` (tüm sensör × gündüz/gece katsayıları) ve `reproduces_paper_section_5_3_nine_km2_example` (9 km² → `40.48 / 40.88 MW`); kenar testleri `9,66 km²`'de `43.41 / 43.80 MW`'a sıkılaştırıldı. Ek düzeltmeler: `docs/REFERANS_ANALIZI.md` tablosunda eski sütun "makale metnindeki değerler" diye etiketlendi, yanına Denklem 5 değerleri ve açıklama notu eklendi. Footprint Lens (C8) metin değerlerini göstermeye devam ediyor, kaynak etiketi `[16, Tablo 1–2]` yerine `[16, Sonuç]` oldu. R8 demo modu MODIS sınırı için backend ile aynı değerleri (`D_p(1 km²)` = `4.96 / 5.44 MW`) kullanıyor. `cargo test --workspace` (core 311), clippy `-D warnings`, `npm run typecheck`, `npm test` (42), `npm run build` temiz.
 
 ### [X] K11 — Şiddet rejimli Ω (`effort.rs`)
 - **Bekler:** K10 · **Açar:** G11
@@ -1270,4 +1271,4 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 8 (`K1, K2, K4, K5, K8, K9, K11, K13`) | 6 (`K3, K10, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
