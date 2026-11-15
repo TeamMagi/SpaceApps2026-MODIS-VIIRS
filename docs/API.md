@@ -120,6 +120,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
 | `sfai` | number \| null | `count_normalized` için dayanıklı z-skoru (SFAI): `(x − medyan) / (0.65 × 1.4826 × MAD + 0.35 × σ)`; σ popülasyon standart sapmasıdır. Payda ağırlıkları flare-chronos referans projesinden gelir, medyan payı bize aittir. `anomaly` ile aynı havuz (aynı takvim ayı); en az 3 değer gerekir, payda 0 ise `null` |
 | `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz |
+| `conformal` | object \| yok | Mondrian split conformal bandı (`total_frp` için): `p68_lower`/`p68_upper`, `p90_lower`/`p90_upper` (MW, alt sınır 0'a kırpılır), `era` (`pre_viirs` \| `viirs`), `bin`, `n_cal`, `extrapolated`. Yalnızca kalibre tablo yüklüyse ve hücre uygunsa bulunur; Terra-only aylarda (2002-07 öncesi) yoktur. Analitik `total_frp_lower`/`total_frp_upper` yerine geçmez, ayrı anlamdadır. Ayrıntı için "Belirsizlik" bölümüne bakın |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
 
@@ -166,6 +167,16 @@ Yanıtlarda üst düzey bir `uncertainty` nesnesi bulunur (`harmonize` ve `calen
 | `note` | string | Model varsayımlarını ve sınırlılıklarını açıklayan sabit metin |
 | `atmospheric_bias` | object | Tek yönlü (aşağı) atmosferik/bulut sapma notu; aşağıya bakın |
 
+
+#### Conformal bant (`calendar[].conformal`)
+
+`GET /api/calendar` hücrelerinde, sunucu kalibre bir tablo yüklemişse `conformal` nesnesi döner. Tablo `CONFORMAL_TABLE` ortam değişkeninden (varsayılan `data/conformal.json`) açılışta okunur; dosya yoksa özellik kapalıdır ve yanıt baytları değişmez. Tablodaki `calibration_fingerprint`, etkin `PipelineConfig`'in merkezi etkileyen bölümlerinin (dedup, fleet, matching, vza, calibration, static_mask, sama, `tropical_swath_gap_compensation`) özetiyle eşleşmezse özellik kapanır ve sunucu günlüğüne uyarı yazılır; `uncertainty` σ değerleri parmak izine girmez.
+
+Bant yalnızca ülke toplamı sorgularında (`bbox` yok) ve `min_confidence=low` (varsayılan) iken eklenir; tablo bu kapsamda kalibre edilmiştir. Aksi halde alan hiç dönmez. Aralık `μ·(1+e)` biçimindedir: `μ` hücrenin `total_frp` değeri, `e` ise (dönem, `μ` büyüklük kutusu) başına ölçülen işaretli göreli kalıntı kantilleridir. `extrapolated: true`, `μ` değerinin kalibrasyon aralığı dışında kaldığını ve en yakın kutunun kullanıldığını gösterir.
+
+**Dürüst sınırlama:** Bu bant bir sensör/filo tekrarlanabilirlik bandıdır, gerçek (ground-truth) doğruluk değildir. `pre_viirs` kalıntıları MODIS-only emülasyon ile tam pipeline arasındaki farktan, `viirs` kalıntıları SNPP-only ile NOAA-20-only arasındaki farktan gelir; gerçek yayılan enerji ve VIIRS'in kendi doğruluğu ölçülmez. Kapsama yalnızca kalibrasyon dönemlerinde ölçülmüştür; 2002-07–2011 veya 2012–2017 için ölçüm yapılmamıştır, oradaki bant bir aktarım varsayımıdır. Garanti yalnızca marjinal ve değiştirilebilirlik altındadır; yıl şokları kapsamayı düşürebilir.
+
+Üst düzey `uncertainty.conformal` özet nesnesi henüz yoktur (sonraki iş).
 `atmospheric_bias` FIRMS verisinde 4 µm duman optik derinliği (`τ_4`) ve bulut kesri (`β`) bulunmadığı için FRP'nin kabaca `%7–22` düşük tahmin edilebileceğini bildirir. Bu bir nottur: `frp_lower`/`frp_upper` ve diğer bantlar bu terimi **içermez** ve hiçbir sayı düzeltilmez (`applied: false`).
 
 ```json
@@ -2137,6 +2148,7 @@ Bir bölgenin tek bir yılına (opsiyonel olarak tek bir ayına) ait ham ve harm
 | `match_window_secs` | integer | Hayır | Sunucu yapılandırması (`10800`) | `>= 0` (`matching.window_secs` değerini bu istek için ezer) |
 | `fleet_radius_km` | number | Hayır | Sunucu yapılandırması (`2.0`) | `> 0.0`, sonlu (`fleet.radius_km` değerini bu istek için ezer) |
 | `min_confidence` | string | Hayır | `low` | `low`, `nominal` veya `high`. Seçilen yıl/ayda harmonizasyondan ve örneklemeden önce uygulanır; `stages` filtrelenmiş girdiye göredir. Bkz. "Güven filtresi" |
+| `fusion_model` | string | Hayır | `viirs_preferred` | `viirs_preferred`, `equal_weight` veya `modis_calibrated`. Harmonizasyondan **sonra** uygulanan bir görünüm seçeneğidir (`PipelineConfig`'i ve `config_overridden`'ı değiştirmez; `/api/series` ve `/api/calendar` etkilenmez). `equal_weight`: eşleşen kayıtta MODIS (VZA düzeltmeli) ve VIIRS grup FRP ortalamalarının aritmetik ortalaması, konum iki grup ortalamasının orta noktası. `modis_calibrated`: eşleşen kayıt MODIS grup değerini alır; MODIS nadir %50 tespit limitinin (gündüz/gece) altındaki `ViirsOnly` kayıtlar çıkarılır. Geçersiz değer 400 döner |
 
 ### Örnek istek
 
@@ -2363,6 +2375,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `no_detection_days` | array | Bir sensör ailesinin hiç tespit döndürmediği günler (aşağıda) |
 | `config` | object | Bu yanıt üretilirken kullanılan etkin `PipelineConfig` (varsayılan sunucu yapılandırması + istek geçersiz kılmaları; şema `/api/config` ile aynıdır) |
 | `config_overridden` | boolean | İstek bazlı eşik parametrelerinden en az biri verildiyse `true`, aksi halde `false` |
+| `fusion_model` | string | Uygulanan füzyon modeli; her zaman bulunur |
+| `fusion_comparison` | object \| null | `viirs_preferred` için `null`. Aksi halde `{ model, baseline_count, baseline_total_frp, count, total_frp, dropped_below_modis_limit }`: harmonize kayıt sayısı ve `frp_corrected` toplamı (MW, sonlu değerler); seçilen model ve `viirs_preferred` taban çizgisi için, `limit` örneklemesinden önce tüm istenen dönem üzerinden. `dropped_below_modis_limit`, `modis_calibrated` ile çıkarılan kayıt sayısıdır. `raw[]`, `harmonized[]`, `events` ve `stages` seçilen modele göredir |
 
 `raw[]` öğeleri:
 

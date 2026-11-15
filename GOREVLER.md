@@ -240,10 +240,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
-| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] sürüyor |
+| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] kod bitti, merge + precompute Görkem'de |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
-| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] (G7, K1, R1 [X]) |
+| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [X] |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
 | R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [X] |
@@ -251,20 +251,20 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | [X] |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
 | S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [X] |
-| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [ ] |
+| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [X] |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
 | S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [X] |
-| S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [ ] |
+| S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [X] |
 | S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [X] |
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
-| S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
+| S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
-| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
-| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
+| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] (R1 bekliyor) |
+| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] (R1 bekliyor) |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10 sürüyor (hazır sonuçların yeniden üretilmesini bekliyor). Şu an başlanabilecek: R8 (`K1` bitti). (`R7` S7'yi bekliyor.)
+- **Serhat:** R1–R6, R8, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. (`R7` S7'yi bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
@@ -760,6 +760,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P5, Yol Haritası #3 (+ `[01, 02, 03, 14, 23]`, `flare-chronos`, `FireHarmonize`)
 - **Bitti sayılır:** aynı MODIS ayak izindeki çoklu VIIRS alt-pikselleri tek `Matched` kaydında toplanıyor (`ViirsOnly` artığı kalmıyor); birim testleri ve canlı/arşiv veride `Matched` FRP toplamı doğrulanıyor.
 - **Durum (Serhat, 2026-11-15):** Kod yazıldı ve birim testleri geçiyor. Henüz `main`'e alınmadı, Serhat'ın makinesindeki yerel `r10-footprint-aggregation` branch'inde duruyor. Sebep: yeni `matching.simultaneous_window_secs` alanı `PipelineConfig` hash'ini değiştiriyor. Bu yüzden repodaki hazır `/api/series` sonuçlarının hepsi (`data/derived/series`) geçersiz sayılıyor; arşivi olmayan biri harita ve takvim verisini göremez. **Gereken:** arşivi olan biri (`make data`) R10 ile `make precompute-local` ve `make bundle-derived` çalıştırmalı, `DERIVED_SCHEMA_VERSION` 3'e çıkarılmalı. Ondan sonra R10 ve yeni hazır sonuçlar birlikte merge edilecek. Arşiv verisiyle `Matched` FRP doğrulaması da o adımda yapılacak.
+- **Devir (Serhat → Görkem, 2026-11-15):** Kod tarafı bitti; branch artık remote'ta (`origin/r10-footprint-aggregation`, `9414e97`) ve güncel `main`'e çakışmasız birleşiyor. Bu arada K3 `DERIVED_SCHEMA_VERSION`'ı 4'e çıkardığı için yukarıdaki "3'e çıkar" adımı geçersiz. Kalan adımları arşivi olan Görkem üstlendi: branch'i merge et, `DERIVED_SCHEMA_VERSION`'ı 5'e çıkar, `make precompute` → `make bundle-derived` çalıştırıp `data/derived`'ı commit'le, push öncesi `make smoke`, arşiv verisinde `Matched` FRP toplamını doğrula ve "Bitti sayılır" sağlanınca kutuyu `[X]` yap.
 - **Güncelleme (Görkem, 2026-11-15):** R10 `main`'e alındı (`23ff7dc`, yazar Serhat); uzak `r10-footprint-aggregation` branch'i silindi. Takip commit'i (`5f6fbdf`): `viirs_aggregated` `/api/series` `years[]` ve `/api/points` `stages` alanlarına eklendi, arayüzde eşleştirme aşaması ve fiş satırı artık `matched + viirs_aggregated` gösteriyor, Methods metni, README, `crates/core/CLAUDE.md`, `docs/API.md`, `.env.example` ve `pyrosync.example.toml` güncellendi. Sadık'ın K11 (aylık `mean_frp*`) değişikliği de şemayı 4'e çıkardığı için birleşik `DERIVED_SCHEMA_VERSION` **5** oldu (Serhat'ın notundaki "3'e çıkar" eski tabana göreydi). Ekip kararıyla (Can, 2026-11-15) precompute + bundle sona bırakıldı; repodaki `data/derived` final adımına kadar bayat kabul ediliyor. Kapanış için kalan: arşiv verisinde `Matched` FRP / ViirsOnly değişiminin doğrulanması. İnceleme bulguları: toplam kayıtlarda `1/√n_obs` belirsizlik ölçeklemesi eşitsiz piksellerde aralığı fazla daraltıyor (ayrı commit ile düzeltiliyor); 2 km yarıçapın geniş cephelerde `Matched` FRP'yi MODIS ayak izine göre şişirip şişirmediği arşiv doğrulamasında ölçülecek.
 
 ### [X] R11 — Seed-anchored zaman penceresi
@@ -779,7 +780,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `web/` içinde `mean_frp_adjustment_pct`, `total_frp`, `frp_per_detection_eq` ve `*_lower/upper` alanları kullanılıyor; `mean_frp` manşette değil; `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 - **Kapanış (Serhat, 2026-11-15):** Yeni `web/src/hooks/useCalendarFrp.ts` hook'u seçili bölge için `/api/calendar`'ı çağırıyor. Bölge kimliği arşivdeki ülke adıyla aynı olduğu için `country` parametresine olduğu gibi gidiyor. Sonuç oturum boyunca bölge başına cache'leniyor. İstek yüklenirken veya hata verdiğinde takvim eskisi gibi `/api/series` verisiyle çiziliyor. Harmonize modda `CalendarTooltip` ve dilim aria-label'ı sırasıyla şunları gösteriyor: manşet olarak `frpPerDetectionEq`, ardından `totalFrp` ve olası aralığı (`totalFrpLower/Upper`), en son ikincil bilgi olarak native-pixel `meanFrp` ve aralığı. VZA düzeltmesi `CountDelta`'daki canlı karşılaştırma satırına eklendi (`meanFrpAdjustmentPct`, işaretli %). UI'da "azaltım" metni yoktu. `tsc`, `build` ve `npm test` temiz. **Sınır:** yerelde arşiv indirilmediği için `/api/calendar` ile canlı birleştirme denenmedi. C7'deki geniş bant tarama (hatch) deseni uygulanmadı.
 
-### [ ] R8 — Çoklu harmonizasyon model seçimi
+### [X] R8 — Çoklu harmonizasyon model seçimi
 - **Bekler:** G7, K1, R1 · **Açar:** —
 - Kullanıcının farklı harmonizasyon yaklaşımlarını karşılaştırabilmesi:
   - Dropdown/toggle: "Standard" (VIIRS-preferred) vs "Equal-weight" vs "MODIS-calibrated"
@@ -789,6 +790,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Fallback modunda (K1) da çalışmalı
 - **Kaynak:** Strateji 1.2 — "Çoklu harmonizasyon modeli seçimi — kullanıcı yöntemi seçip farkı görebilecek"
 - **Bitti sayılır:** en az 2 farklı model arasında geçiş yapılabiliyor; sonuçlar gözle görülür şekilde farklı; istatistik farkı gösteriliyor.
+- **Kapanış (Serhat, 2026-11-15):** Üç model var: Standart (VIIRS öncelikli; bugünkü davranış), Eşit ağırlık ve MODIS kalibreli. Backend: yeni `crates/core/src/fusion.rs` (`FusionModel`, `apply_fusion_model`) harmonizasyondan **sonra** uygulanıyor. Eşit ağırlık modelinde `Matched` kayıt, VZA düzeltmeli MODIS FRP ile VIIRS FRP'sinin ortalamasını alıyor ve konumu iki grubun orta noktasına taşınıyor. MODIS kalibreli modelde `Matched` kayıt MODIS değerini ve konumunu alıyor; MODIS'in nadir %50 tespit sınırının (`D_p`, K10 katsayıları, 1 km²) altında kalan `ViirsOnly` kayıtlar atılıyor. Bu yüzden bu modelde kayıt sayısı da değişiyor. `/api/points` yeni `fusion_model` parametresini alıyor (geçersiz değer HTTP 400). Yanıtta `fusion_model` ve `fusion_comparison` alanları var: Standart modele göre kayıt sayısı, toplam FRP ve atılan tespit sayısı. Ayrıntı `docs/API.md`'de. Model bilinçli olarak `PipelineConfig` dışında tutuldu, `harmonize.rs` ve `config.rs`'e dokunulmadı. Böylece config hash'i ve `data/derived` hazır sonuçları değişmiyor, R10 branch'i de çakışmasız birleşebiliyor. Frontend: model seçimi K2 Ayarlar çekmecesinin başında, radyo grubu olarak duruyor. Seçim URL hash'ine yazılıyor (`fm=eq|mc`, Standart'ta yazılmıyor), "Varsayılana dön" modeli de sıfırlıyor. Pipeline şeridinde ve fişte "Model: …" rozeti görünüyor. Harmonize modda çekmecede fark satırı gösteriliyor (ör. "115 kayıt / Standart'ta 118 (−%2,5), toplam FRP −%9,2; 3 VIIRS-only tespit atıldı"); Ham modda bu sayılar gizleniyor. Demo modunda (K1) `lib/demoData.ts` aynı modelleri sentetik veriye istemci tarafında yaklaşık olarak uyguluyor. `cargo test --workspace` (core 298, server 188), clippy `-D warnings`, `npm run typecheck`, `npm test` (42) ve `npm run build` temiz. Headless Chrome'da demo modunda üç model arasında geçiş, fark satırı, rozet, URL ve sıfırlama kontrol edildi; konsolda hata yok. **Sınırlar:** Model, K2 eşikleri gibi yalnız seçili ayın harita noktalarını ve aşama sayılarını değiştiriyor; yıllık seri, takvim ve istatistikler Standart modelde kalıyor (yıllık hesap için hazır sonuçların model başına üretilmesi gerekir). Görev metnindeki "harita + takvim + stats anlık güncellenir" maddesi bu yüzden kısmen karşılandı. Gerçek arşivle (backend açık) tarayıcıda deneme yapılmadı; backend davranışı birim ve sunucu testleriyle doğrulandı.
 
 ### [X] R6 — Methods/About sayfası implementasyonu
 - **Bekler:** C5, R1 · **Açar:** —
@@ -904,7 +906,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - Hata bulunmadı. Görev metni ile kod arasındaki fark: "bilinmeyen bölge → default" kuralı NaN, sonsuz ve |enlem| > 90 için geçerli. İlk bandın altındaki enlem ise ilk banda sabitleniyor. Varsayılan bantlar 0°'dan başladığı için pratikte etkisi yok; davranış `latitude_below_first_band_clamps_to_first_band` testiyle belgelendi.
 > - TOML parse ve env var override testleri sunucu tarafında zaten vardı (`crates/server/src/pipeline_config.rs`, 8 test); tekrarlanmadı.
 
-### [ ] S4 — Sample/demo veri pipeline'ı
+### [X] S4 — Sample/demo veri pipeline'ı
 - **Bekler:** G1 · **Açar:** Y1, Y2
 - Offline geliştirme ve demo için hazır veri seti:
   - FIRMS API'den birkaç bölge (Türkiye, Kaliforniya, Avustralya) için 2020–2025 verisi çekme
@@ -913,6 +915,15 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - `data/sample/` altında organize
   - Frontend ve grafik component'leri bu veriyle çalışabilir
 - **Bitti sayılır:** `data/sample/` altında en az 3 bölge var; her bölgede MODIS, VIIRS ve harmonized veri mevcut; Yusuf bu veriyle grafik yapabilir.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - `crates/firms-client/examples/sample_region.rs` eklendi: FIRMS SP arşivinden bbox kırpma + harmonize + JSON yazma pipeline'ı. `--region`, `--out-dir`, `--from`, `--to` parametreleri destekleniyor.
+> - `data/sample/turkey/` (Türkiye tüm ülke, 2020–2025): `modis.csv` 3.574 satır, `viirs.csv` 21.566 satır, `harmonized.json` ~3.6 MB.
+> - `data/sample/california/` (Kaliforniya bbox, 2020–2025): `modis.csv` 2.969 satır, `viirs.csv` 26.788 satır, `harmonized.json` ~4.1 MB.
+> - `data/sample/australia/` (Avustralya bbox, 2020–2025): `modis.csv` 2.020 satır, `viirs.csv` 21.794 satır, `harmonized.json` ~3.6 MB.
+> - `data/sample/README.md` eklendi: kaynak, bbox, yıl aralığı ve sütun açıklamaları belgelendi.
+> - **Y1 ve Y2 başlayabilir:** Yusuf bu üç bölgenin harmonize JSON'larını ve CSV'lerini doğrudan kullanabilir.
 
 ### [ ] S5 — GitHub Actions CI/CD kurulumu
 - **Bekler:** S1 · **Açar:** —
@@ -944,13 +955,23 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - `docs/API.md`'deki MODIS `*_lower`/`*_upper` örnekleri ve `docs/TASARIM_METHODS.md` içindeki iki `0.12` ifadesi (Can) güncellenmeli.
 > - **Durum (Can, 2026-11-15):** `docs/TASARIM_METHODS.md` güncellendi: G9 satırı ve $\sigma_{\text{modis}}$ formülü `0.266`, örnek değerler tablosundaki toplam MODIS $\sigma_{\text{rand}}$ sütunu ve ASCII grafik notu `%26,6` olarak yeniden hesaplandı. `docs/API.md` örnekleri bu kapsamda değil.
 
-### [ ] S10 — Mondrian split conformal aralıkları
+### [X] S10 — Mondrian split conformal aralıkları
 - **Bekler:** S9 · **Açar:** G12
 - `fire-harmony` (`harmonize.py:320-322`, `area_intervals.json`) bulgusu doğrultusunda ülke/ay toplamlarında mekansal otokorelasyon nedeniyle `~%50` kapsamada kalan `1/√n` parametrik bantların yerine büyüklük bölmeli **Mondrian split conformal** aralık katmanı eklenmesi (`crates/core/src/uncertainty.rs`, `calendar.rs`)
 - Gözlenen vs tahmin göreli kalıntıları `e = (y - μ) / μ` üzerinden büyüklük bölmeleriyle ampirik `%68` ve `%90` aralıklarının üretilmesi; `2012+` VIIRS döneminin de kalibre edilmesi (`docs/REFERANS_ANALIZI.md` P3(d) risk notu)
 - Out-of-sample kapsama oranının ölçülmesi (`fire-harmony` referansı `%92–100` kapsama; bizim serideki oran ölçülecek)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #10 (+ `fire-harmony`)
 - **Bitti sayılır:** `uncertainty.rs` ve `calendar.rs` ülke/ay toplamlarında büyüklük bölmeli Mondrian split conformal `%68`/`%90` aralıkları üretiyor ve out-of-sample kapsama testi geçiyor.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - **Çekirdek (`crates/core/src/conformal.rs`):** `fit_mondrian()` → era × büyüklük-bölmesi `ConformalTable`; `conformal_interval()` uygulucu; `calibration_fingerprint()` eşleştirme parametrelerini hash'ler (sigma'ları hariç tutar, kapsam değişmez). `ConformalEra::{PreViirs, Viirs}`, `MAX_BINS = 6`, `TARGET_BIN_SIZE = 100`, `MIN_BIN_SIZE = 40`.
+> - **Sentez testleri (3+):** `coverage_on_exchangeable_data` — değiştirilebilir 1 000 örnek üzerinde `%68 ± 3%` ve `%90 ± 3%` kapsam (her bin ≥ 0.63 / ≥ 0.85); `analytic_intervals_undercover` — `1/√n` parametrik bantın `< %60` kapsamda kaldığını doğrular; `leave_one_year_out_coverage` — LOYO `%68 ≥ 0.64`, `%90 ≥ 0.84`; artı ekstrapolasyon/kenar/JSON round-trip/parmak izi testleri.
+> - **Takvim entegrasyonu (`crates/core/src/calendar.rs`):** `CalendarCell` ve `CalendarYear` için `conformal_p68`/`conformal_p90` alt/üst alanları eklendi; `build_calendar_with` tablo alıp her hücreye `conformal_interval` uygular.
+> - **Sunucu entegrasyonu (`crates/server/src/main.rs`):** Başlangıçta `CONFORMAL_TABLE_PATH` env var'ından JSON tablosu yüklenir; `GET /api/calendar` yanıtına `conformal_p68`/`conformal_p90` alanları eklenir; tablo yüklü değilse `null`.
+> - **Dokümantasyon:** `docs/API.md` `conformal_p68`/`conformal_p90` alan açıklamaları eklendi; `crates/core/CLAUDE.md` ve `crates/server/CLAUDE.md` conformal kuralları güncellendi.
+> - **Kalibrasyon aracı:** `crates/firms-client/examples/conformal_calibration.rs` — iki aşamalı (`extract` / `fit`) FIRMS arşivi üzerinde çalışan LOYO/LOCO kapsam ölçümü + yıl-blok bootstrap + tablo üretimi.
+> - **G12 başlayabilir:** `ConformalTable` JSON sunucuya beslendiğinde takvim hücreleri %68/%90 bandını taşır.
 
 ### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
@@ -986,7 +1007,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - **Kutu bu yüzden işaretlenmedi:** Doğru PDF MDPI'den otomatik indirilemedi (403) ve `academic-papers/` gitignore'da, bu makinede yok. PDF elle indirilip `academic-papers/04` yerine konunca görev kapanır.
 > - Envanterde yazar, yayın yeri ve DOI çoğu makale için yok (`—`); PDF'lerden doğrulanmalı. Ayrıca [18] "Zhang2014" aslında Remy & Kaiser (2014), [07] yılı 2025 değil 2026.
 
-### [ ] S7 — Türkiye/Akdeniz case study veri seti
+### [X] S7 — Türkiye/Akdeniz case study veri seti
 - **Bekler:** G1 · **Açar:** R7
 - Demo ve sunum için hazır Türkiye yangın verisi:
   - FIRMS API'den Türkiye bbox (26°–45° E, 36°–42° N) için 2020–2025 verisi
@@ -997,6 +1018,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Brifingi component'i (R7) bu veriyle demo yapacak
 - **Kaynak:** Strateji 1.1 — "Türkiye ve Akdeniz havzası özel case study — jüri için farklı ve dikkat çekici"
 - **Bitti sayılır:** `data/case-study/turkey/` altında en az 3 yıl veri var; 2021 Akdeniz yangınları anomali olarak belirgin; JSON formatı frontend'le uyumlu.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - `crates/firms-client/examples/turkey_case_study.rs` eklendi: FIRMS SP ülke arşivinden 4 bölge (türkiye, akdeniz, muğla, antalya) için 2012–2025 aylık takvim ve istatistik pipeline'ı.
+> - `data/case-study/turkey/calendar/turkey.json`, `mediterranean.json`, `mugla.json`, `antalya.json`: `/api/calendar` şemasında, effort-normalise edilmiş `count_normalized` + `anomaly` z-skoru ile 2012–2025 aylık hücreleri. Yıl başına `complete`, `swath_gap_pct`, `sfai` alanları mevcut.
+> - `data/case-study/turkey/stats.json`: bölge başına toplam tespit sayısı, pik ay/yıl, 2021 anomali kanıtı (Antalya Ağustos z=3.60, 1.759 tespit; Muğla Ağustos z=3.95, 1.503 tespit), `same_fleet_from=2018` ham sayı sıralaması, 2012–2025 yıllık trend.
+> - **2021 Akdeniz anomalisi belirgin:** Antalya Temmuz z=3.60, Ağustos z=3.60; Muğla Ağustos z=3.95; Akdeniz Temmuz z=3.72, Ağustos z=3.98 — tüm bölgelerde rank=1 veya rank=2 (152 aylık seri içinde).
+> - **R7 başlayabilir:** `calendar/*.json` ve `stats.json` doğrudan frontend brifingi component'i için hazır.
 
 ### [ ] S8 — Bilimsel referans ve disclaimer içerik
 - **Bekler:** C5 · **Açar:** —
@@ -1265,7 +1294,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 |------|-------------|------------|------|---------|------|
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
-| Serhat | 12 (R1–R12) | 9 (`R1–R6, R9, R11, R12`) | 3 (`R10, R8, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
+| Samet | 13 (S1–S13) | 7 (`S1–S4, S6, S7, S9–S11`) | 6 (`S5, S8, S12, S13`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 8 (`K1, K2, K4, K5, K8, K9, K11, K13`) | 6 (`K3, K10, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |

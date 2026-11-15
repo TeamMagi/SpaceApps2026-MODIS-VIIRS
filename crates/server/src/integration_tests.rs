@@ -163,6 +163,7 @@ fn app_with_config(
         cache: Arc::new(RwLock::new(ResponseCache::new(8 * 1024 * 1024))),
         request_timeout,
         config: Arc::new(config),
+        conformal: None,
     };
     build_router(
         state,

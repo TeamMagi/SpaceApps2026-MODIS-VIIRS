@@ -14,12 +14,13 @@ function urlStateOf(state: AppState): UrlState {
     data: state.dataMode === "demo" && state.dataModeSource === "manual" ? "demo" : undefined,
     overrides: state.pipelineOverrides,
     minConfidence: state.minConfidence,
+    fusionModel: state.fusionModel,
   };
 }
 
 /**
- * Keeps region, committed mode, selected month, language, palette, pipeline overrides, manual
- * demo flag and the confidence filter in `location.hash` so any view is a shareable link. The
+ * Keeps region, committed mode, selected month, language, palette, pipeline overrides, harmonization
+ * model, manual demo flag and the confidence filter in `location.hash` so any view is a shareable link. The
  * store reads the hash once at load; this hook writes on change (replaceState, so toggling does
  * not flood the back button) and applies manual hash edits. Mount once (App does).
  */
@@ -41,7 +42,8 @@ export function useUrlSync(): void {
         state.dataModeSource !== prev.dataModeSource ||
         state.pipelineOverrides !== prev.pipelineOverrides ||
         state.serverConfig !== prev.serverConfig ||
-        state.minConfidence !== prev.minConfidence
+        state.minConfidence !== prev.minConfidence ||
+        state.fusionModel !== prev.fusionModel
       ) {
         // Read fresh state: the transition clock sets state from inside listeners, so `state`
         // may already be stale by the time this listener runs.

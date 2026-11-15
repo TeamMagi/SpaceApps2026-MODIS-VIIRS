@@ -1,13 +1,15 @@
-import type {
-  DataMode,
-  Lang,
-  MinConfidence,
-  MonthRef,
-  Palette,
-  PipelineConfig,
-  PipelineOverrides,
-  RegionId,
-  ViewMode,
+import {
+  DEFAULT_FUSION_MODEL,
+  type DataMode,
+  type FusionModel,
+  type Lang,
+  type MinConfidence,
+  type MonthRef,
+  type Palette,
+  type PipelineConfig,
+  type PipelineOverrides,
+  type RegionId,
+  type ViewMode,
 } from "../types";
 import { monthKey } from "./format";
 import {
@@ -64,7 +66,19 @@ export interface UrlState {
   data?: DataMode;
   overrides?: PipelineOverrides;
   minConfidence: MinConfidence;
+  fusionModel?: FusionModel;
 }
+
+const FUSION_HASH_VALUES: Readonly<Record<string, FusionModel>> = {
+  eq: "equal_weight",
+  mc: "modis_calibrated",
+};
+
+const FUSION_HASH_CODES: Readonly<Record<FusionModel, string | null>> = {
+  viirs_preferred: null,
+  equal_weight: "eq",
+  modis_calibrated: "mc",
+};
 
 function parseMonth(value: string): MonthRef | null | undefined {
   const match = /^(\d{4})-(\d{2})$/.exec(value);
@@ -135,6 +149,9 @@ export function parseHash(hash: string): Partial<UrlState> {
     result.overrides = overrides;
   }
 
+  const fm = params.get("fm");
+  result.fusionModel = fm === "eq" || fm === "mc" ? FUSION_HASH_VALUES[fm] : DEFAULT_FUSION_MODEL;
+
   const conf = params.get("conf");
   if (conf === null || conf === "low") result.minConfidence = "low";
   else if (conf === "nominal") result.minConfidence = conf;
@@ -164,6 +181,8 @@ export function serializeHash(
       params.set(spec.hashKey, formatted);
     }
   }
+  const fmCode = FUSION_HASH_CODES[state.fusionModel ?? DEFAULT_FUSION_MODEL];
+  if (fmCode) params.set("fm", fmCode);
   if (state.minConfidence && state.minConfidence !== "low") {
     params.set("conf", state.minConfidence);
   }

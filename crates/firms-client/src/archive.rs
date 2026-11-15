@@ -340,6 +340,51 @@ pub fn filter_bbox(hotspots: Vec<Hotspot>, bbox: &BBox) -> Vec<Hotspot> {
         .collect()
 }
 
+/// Split a FIRMS country CSV into its header line and the data rows inside the inclusive
+/// bounding box, borrowing from `csv_text`. Unlike [`filter_bbox`] it keeps the original text
+/// of each row, so a caller can write a region cut-out with every FIRMS column intact.
+pub fn csv_rows_in_bbox<'a>(
+    csv_text: &'a str,
+    bbox: &BBox,
+) -> anyhow::Result<(&'a str, Vec<&'a str>)> {
+    let mut lines = csv_text.lines();
+    let header = lines
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("archive CSV is empty"))?;
+    let column = |name: &str| {
+        header
+            .split(',')
+            .position(|c| c.trim() == name)
+            .ok_or_else(|| anyhow::anyhow!("archive CSV has no `{name}` column"))
+    };
+    let lat_idx = column("latitude")?;
+    let lon_idx = column("longitude")?;
+
+    let mut rows = Vec::new();
+    for (index, line) in lines.enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let lat = csv_number(line, lat_idx, "latitude", index + 1)?;
+        let lon = csv_number(line, lon_idx, "longitude", index + 1)?;
+        if lon >= bbox.west && lon <= bbox.east && lat >= bbox.south && lat <= bbox.north {
+            rows.push(line);
+        }
+    }
+    Ok((header, rows))
+}
+
+fn csv_number(line: &str, idx: usize, name: &str, row: usize) -> anyhow::Result<f64> {
+    let value = line
+        .split(',')
+        .nth(idx)
+        .ok_or_else(|| anyhow::anyhow!("CSV data row {row}: missing `{name}` field"))?;
+    value
+        .trim()
+        .parse()
+        .map_err(|_| anyhow::anyhow!("CSV data row {row}: invalid `{name}` value {value:?}"))
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ArchiveError {
     #[error("archive has no data for {sensor:?} {year}")]
@@ -701,6 +746,65 @@ mod tests {
         assert!(filter_bbox(Vec::new(), &bbox).is_empty());
         let kept = filter_bbox(vec![hotspot(2.0, 1.0), hotspot(2.0, 1.0001)], &bbox);
         assert_eq!(kept.len(), 1);
+    }
+
+    const BBOX_CSV: &str = concat!(
+        "latitude,longitude,brightness,acq_date,type
+",
+        "38.0,28.0,300,2021-08-01,0
+",
+        "36.0,26.0,300,2021-08-02,0
+",
+        "37.0,30.0,300,2021-08-03,2
+",
+        "42.0001,30.0,300,2021-08-04,0
+",
+        "37.0,45.5,300,2021-08-05,0
+",
+    );
+
+    #[test]
+    fn csv_rows_in_bbox_keeps_inclusive_boundary_rows_verbatim() {
+        let bbox = BBox { west: 26.0, south: 36.0, east: 45.0, north: 42.0 };
+        let (header, rows) = csv_rows_in_bbox(BBOX_CSV, &bbox).unwrap();
+        assert_eq!(header, "latitude,longitude,brightness,acq_date,type");
+        assert_eq!(
+            rows,
+            ["38.0,28.0,300,2021-08-01,0", "36.0,26.0,300,2021-08-02,0", "37.0,30.0,300,2021-08-03,2"]
+        );
+    }
+
+    #[test]
+    fn csv_rows_in_bbox_handles_crlf_blank_lines_and_a_header_only_file() {
+        let bbox = BBox { west: 0.0, south: 0.0, east: 10.0, north: 10.0 };
+        let (_, rows) = csv_rows_in_bbox("latitude,longitude
+1,1
+
+20,1
+", &bbox).unwrap();
+        assert_eq!(rows, ["1,1"]);
+        let (header, rows) = csv_rows_in_bbox("latitude,longitude
+", &bbox).unwrap();
+        assert_eq!(header, "latitude,longitude");
+        assert!(rows.is_empty());
+    }
+
+    #[test]
+    fn csv_rows_in_bbox_rejects_malformed_input() {
+        let bbox = BBox { west: 0.0, south: 0.0, east: 10.0, north: 10.0 };
+        assert!(csv_rows_in_bbox("", &bbox).is_err());
+        let no_lon = csv_rows_in_bbox("latitude,frp
+1,2
+", &bbox).unwrap_err();
+        assert!(no_lon.to_string().contains("longitude"));
+        let bad = csv_rows_in_bbox("latitude,longitude
+1,abc
+", &bbox).unwrap_err();
+        assert!(bad.to_string().contains("row 1") && bad.to_string().contains("longitude"));
+        let short = csv_rows_in_bbox("frp,latitude,longitude
+1,2
+", &bbox).unwrap_err();
+        assert!(short.to_string().contains("missing"));
     }
 
     #[test]

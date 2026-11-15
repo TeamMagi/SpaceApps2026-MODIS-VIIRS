@@ -123,6 +123,12 @@
   gap: var(--space-1);
 }
 
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-half);
+}
+
 .customBadge {
   padding: 1px var(--space-half);
   border: var(--border-width) solid var(--color-border-strong);

@@ -105,3 +105,47 @@
   border-color: var(--color-border);
   cursor: not-allowed;
 }
+
+.fusion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.fusionLegend {
+  padding: 0 var(--space-half);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.fusionOption {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.fusionRadio {
+  flex: none;
+  margin-top: 3px;
+}
+
+.fusionText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fusionResult {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  padding-top: var(--space-1);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+}

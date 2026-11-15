@@ -1,0 +1,2140 @@
+{
+  "meta": {
+    "anomaly": "core calendar path: z-score of the effort-normalised monthly count (count_normalized) against the same calendar month over 2012-2025, population standard deviation, the cell itself included in its baseline",
+    "case_study": "turkey",
+    "config": "PipelineConfig::default()",
+    "country_file": "Turkey",
+    "event_year": 2021,
+    "mediterranean_hotspots": "data/sample/turkey (sample_region, 2020-2025, bbox 27,36,32.5,37.5): same box, same pipeline, so its per-year and per-day harmonized counts equal this file's",
+    "same_fleet_from": 2018,
+    "source": "FIRMS country archive (SP): modis, viirs-snpp, viirs-jpss1",
+    "wildfire_only": true,
+    "years": [
+      2012,
+      2025
+    ]
+  },
+  "regions": {
+    "antalya": {
+      "anomaly_2021": {
+        "august": {
+          "anomaly_z": 3.5982389238817514,
+          "baseline_mean": 34.54969245892064,
+          "baseline_sd": 89.15272321407508,
+          "baseline_years": 14,
+          "count": 1759,
+          "count_normalized": 355.3424912978618,
+          "effort_omega": 4.950153846153846,
+          "frp_per_detection_eq": 97.46219191936275,
+          "month": 8,
+          "of_all_months": 152,
+          "of_same_month": 14,
+          "others_median": 9.090626553953257,
+          "rank_all_months": 2,
+          "rank_same_month": 1,
+          "ratio_to_others_median": 39.088888888888896,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 2.645084343016681
+          },
+          "total_frp_mw": 34632.45808397669,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 58.66039118794437
+        },
+        "july": {
+          "anomaly_z": 3.6036213772541146,
+          "baseline_mean": 42.92270300375918,
+          "baseline_sd": 121.28421198844296,
+          "baseline_years": 14,
+          "count": 2376,
+          "count_normalized": 479.985082048732,
+          "effort_omega": 4.950153846153846,
+          "frp_per_detection_eq": 171.1996343490011,
+          "month": 7,
+          "of_all_months": 152,
+          "of_same_month": 14,
+          "others_median": 8.08055693684734,
+          "rank_all_months": 1,
+          "rank_same_month": 1,
+          "ratio_to_others_median": 59.4,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 2.6448705189333555
+          },
+          "total_frp_mw": 82173.2705397182,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 114.31237751233245
+        }
+      },
+      "bbox": {
+        "east": 32.5,
+        "north": 37.5,
+        "south": 36.0,
+        "west": 29.4
+      },
+      "climatology": [
+        {
+          "mean_count": 7.083333333333333,
+          "mean_count_normalized": 2.075781427129402,
+          "month": 1,
+          "years_with_data": 12,
+          "years_with_normalized": 5
+        },
+        {
+          "mean_count": 21.642857142857142,
+          "mean_count_normalized": 5.040354256323611,
+          "month": 2,
+          "years_with_data": 14,
+          "years_with_normalized": 12
+        },
+        {
+          "mean_count": 31.285714285714285,
+          "mean_count_normalized": 6.433538344008357,
+          "month": 3,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 23.642857142857142,
+          "mean_count_normalized": 4.865989987975824,
+          "month": 4,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 18.357142857142858,
+          "mean_count_normalized": 3.7746173085789367,
+          "month": 5,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 51.142857142857146,
+          "mean_count_normalized": 10.677177234546424,
+          "month": 6,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 211.57142857142858,
+          "mean_count_normalized": 42.92270300375918,
+          "month": 7,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 169.57142857142858,
+          "mean_count_normalized": 34.54969245892064,
+          "month": 8,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 69.57142857142857,
+          "mean_count_normalized": 15.056255893304076,
+          "month": 9,
+          "years_with_data": 14,
+          "years_with_normalized": 13
+        },
+        {
+          "mean_count": 78.21428571428571,
+          "mean_count_normalized": 16.126026364952434,
+          "month": 10,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 56.857142857142854,
+          "mean_count_normalized": 11.66917024494329,
+          "month": 11,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 10.692307692307692,
+          "mean_count_normalized": 2.6140705907925574,
+          "month": 12,
+          "years_with_data": 13,
+          "years_with_normalized": 10
+        }
+      ],
+      "daily_2021": [
+        {
+          "date": "2021-07-20",
+          "harmonized_count": 3,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 6.93
+        },
+        {
+          "date": "2021-07-21",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-22",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-23",
+          "harmonized_count": 4,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 7.029999999999999
+        },
+        {
+          "date": "2021-07-24",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-25",
+          "harmonized_count": 4,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 3.41
+        },
+        {
+          "date": "2021-07-26",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-27",
+          "harmonized_count": 2,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 35.27011801266074
+        },
+        {
+          "date": "2021-07-28",
+          "harmonized_count": 408,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 26047.764147909787
+        },
+        {
+          "date": "2021-07-29",
+          "harmonized_count": 852,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 32383.565891574333
+        },
+        {
+          "date": "2021-07-30",
+          "harmonized_count": 543,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 13466.317833333356
+        },
+        {
+          "date": "2021-07-31",
+          "harmonized_count": 515,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 9992.973708333322
+        },
+        {
+          "date": "2021-08-01",
+          "harmonized_count": 469,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 8517.91504215629
+        },
+        {
+          "date": "2021-08-02",
+          "harmonized_count": 542,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 14088.65229783365
+        },
+        {
+          "date": "2021-08-03",
+          "harmonized_count": 245,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 5208.582486363407
+        },
+        {
+          "date": "2021-08-04",
+          "harmonized_count": 357,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 3228.081802939139
+        },
+        {
+          "date": "2021-08-05",
+          "harmonized_count": 56,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 474.0520019618261
+        },
+        {
+          "date": "2021-08-06",
+          "harmonized_count": 26,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 547.7766666666669
+        },
+        {
+          "date": "2021-08-07",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-08-08",
+          "harmonized_count": 2,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 81.595
+        },
+        {
+          "date": "2021-08-09",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.5249999999999999
+        },
+        {
+          "date": "2021-08-10",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-08-11",
+          "harmonized_count": 40,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 2304.2052809063935
+        },
+        {
+          "date": "2021-08-12",
+          "harmonized_count": 3,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 9.985
+        },
+        {
+          "date": "2021-08-13",
+          "harmonized_count": 6,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 118.99499999999999
+        },
+        {
+          "date": "2021-08-14",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.92
+        },
+        {
+          "date": "2021-08-15",
+          "harmonized_count": 3,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 19.235
+        }
+      ],
+      "name": "Antalya (Manavgat, Kemer, Alanya, Gundogmus)",
+      "per_year": [
+        {
+          "count_normalized_sum": 77.72626176218989,
+          "harmonized": 364,
+          "months_with_data": 11,
+          "months_with_normalized": 10,
+          "peak_month": 8,
+          "peak_month_count": 131,
+          "raw_modis": 99,
+          "raw_total": 455,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 356,
+          "total_frp_mw": 3603.098490487065,
+          "year": 2012
+        },
+        {
+          "count_normalized_sum": 95.33276304533788,
+          "harmonized": 445,
+          "months_with_data": 11,
+          "months_with_normalized": 10,
+          "peak_month": 9,
+          "peak_month_count": 125,
+          "raw_modis": 112,
+          "raw_total": 557,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 445,
+          "total_frp_mw": 7990.075312855226,
+          "year": 2013
+        },
+        {
+          "count_normalized_sum": 42.29854576561163,
+          "harmonized": 201,
+          "months_with_data": 12,
+          "months_with_normalized": 10,
+          "peak_month": 10,
+          "peak_month_count": 48,
+          "raw_modis": 38,
+          "raw_total": 225,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 187,
+          "total_frp_mw": 1612.0667400450816,
+          "year": 2014
+        },
+        {
+          "count_normalized_sum": 66.3464499572284,
+          "harmonized": 310,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 10,
+          "peak_month_count": 53,
+          "raw_modis": 87,
+          "raw_total": 441,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 354,
+          "total_frp_mw": 2451.2293056145795,
+          "year": 2015
+        },
+        {
+          "count_normalized_sum": 111.43627031650982,
+          "harmonized": 519,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 6,
+          "peak_month_count": 114,
+          "raw_modis": 142,
+          "raw_total": 891,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 749,
+          "total_frp_mw": 6289.158000519791,
+          "year": 2016
+        },
+        {
+          "count_normalized_sum": 102.41830624465355,
+          "harmonized": 480,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 6,
+          "peak_month_count": 171,
+          "raw_modis": 115,
+          "raw_total": 562,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 447,
+          "total_frp_mw": 10255.583456439581,
+          "year": 2017
+        },
+        {
+          "count_normalized_sum": 114.06402606451513,
+          "harmonized": 564,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 11,
+          "peak_month_count": 109,
+          "raw_modis": 74,
+          "raw_total": 728,
+          "raw_viirs_noaa20": 349,
+          "raw_viirs_snpp": 305,
+          "total_frp_mw": 4634.080271900375,
+          "year": 2018
+        },
+        {
+          "count_normalized_sum": 84.23980606663352,
+          "harmonized": 417,
+          "months_with_data": 11,
+          "months_with_normalized": 11,
+          "peak_month": 10,
+          "peak_month_count": 84,
+          "raw_modis": 70,
+          "raw_total": 517,
+          "raw_viirs_noaa20": 236,
+          "raw_viirs_snpp": 211,
+          "total_frp_mw": 2383.4197238933166,
+          "year": 2019
+        },
+        {
+          "count_normalized_sum": 92.16914710750412,
+          "harmonized": 464,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 11,
+          "peak_month_count": 94,
+          "raw_modis": 65,
+          "raw_total": 576,
+          "raw_viirs_noaa20": 280,
+          "raw_viirs_snpp": 231,
+          "total_frp_mw": 2602.8852930733156,
+          "year": 2020
+        },
+        {
+          "count_normalized_sum": 928.6580059671805,
+          "harmonized": 4605,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 7,
+          "peak_month_count": 2376,
+          "raw_modis": 1499,
+          "raw_total": 10296,
+          "raw_viirs_noaa20": 4742,
+          "raw_viirs_snpp": 4055,
+          "total_frp_mw": 119889.79455321393,
+          "year": 2021
+        },
+        {
+          "count_normalized_sum": 68.07869219293885,
+          "harmonized": 373,
+          "months_with_data": 12,
+          "months_with_normalized": 10,
+          "peak_month": 10,
+          "peak_month_count": 84,
+          "raw_modis": 37,
+          "raw_total": 421,
+          "raw_viirs_noaa20": 204,
+          "raw_viirs_snpp": 180,
+          "total_frp_mw": 1660.0315708978499,
+          "year": 2022
+        },
+        {
+          "count_normalized_sum": 105.65328194927896,
+          "harmonized": 544,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 10,
+          "peak_month_count": 107,
+          "raw_modis": 92,
+          "raw_total": 734,
+          "raw_viirs_noaa20": 344,
+          "raw_viirs_snpp": 298,
+          "total_frp_mw": 4184.947692141965,
+          "year": 2023
+        },
+        {
+          "count_normalized_sum": 114.33988065638985,
+          "harmonized": 569,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 10,
+          "peak_month_count": 135,
+          "raw_modis": 97,
+          "raw_total": 708,
+          "raw_viirs_noaa20": 302,
+          "raw_viirs_snpp": 309,
+          "total_frp_mw": 4143.743806985522,
+          "year": 2024
+        },
+        {
+          "count_normalized_sum": 124.23856290402786,
+          "harmonized": 615,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 168,
+          "raw_modis": 145,
+          "raw_total": 889,
+          "raw_viirs_noaa20": 388,
+          "raw_viirs_snpp": 356,
+          "total_frp_mw": 6042.300660306601,
+          "year": 2025
+        }
+      ],
+      "totals": {
+        "fleet_merged": 3160,
+        "harmonized": 10470,
+        "interscan_removed": 2882,
+        "matched_pairs": 1223,
+        "raw_modis": 2672,
+        "raw_total": 18000,
+        "raw_viirs_noaa20": 6845,
+        "raw_viirs_snpp": 8483,
+        "static_masked": 265
+      },
+      "trend": null
+    },
+    "mediterranean": {
+      "anomaly_2021": {
+        "august": {
+          "anomaly_z": 3.6033286532711855,
+          "baseline_mean": 87.76681371383344,
+          "baseline_sd": 255.85285522684467,
+          "baseline_years": 14,
+          "count": 4888,
+          "count_normalized": 1009.6887379739671,
+          "effort_omega": 4.841095890410959,
+          "frp_per_detection_eq": 101.55831499048425,
+          "month": 8,
+          "of_all_months": 155,
+          "of_same_month": 14,
+          "others_median": 14.620415647921762,
+          "rank_all_months": 1,
+          "rank_same_month": 1,
+          "ratio_to_others_median": 69.06019379260881,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 2.6449579249746953
+          },
+          "total_frp_mw": 102542.28689350467,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 106.51264604479022
+        },
+        "july": {
+          "anomaly_z": 3.6032789384501496,
+          "baseline_mean": 59.23782316920939,
+          "baseline_sd": 159.78290303968402,
+          "baseline_years": 14,
+          "count": 3074,
+          "count_normalized": 634.9801924165251,
+          "effort_omega": 4.841095890410959,
+          "frp_per_detection_eq": 148.70635734570035,
+          "month": 7,
+          "of_all_months": 155,
+          "of_same_month": 14,
+          "others_median": 14.252971137521222,
+          "rank_all_months": 2,
+          "rank_same_month": 1,
+          "ratio_to_others_median": 44.55072463768116,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 2.645090468587281
+          },
+          "total_frp_mw": 94425.59140093335,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 105.339955662476
+        }
+      },
+      "bbox": {
+        "east": 32.5,
+        "north": 37.5,
+        "south": 36.0,
+        "west": 27.0
+      },
+      "climatology": [
+        {
+          "mean_count": 10.923076923076923,
+          "mean_count_normalized": 3.971332622114478,
+          "month": 1,
+          "years_with_data": 13,
+          "years_with_normalized": 6
+        },
+        {
+          "mean_count": 33.214285714285715,
+          "mean_count_normalized": 7.493758873604743,
+          "month": 2,
+          "years_with_data": 14,
+          "years_with_normalized": 13
+        },
+        {
+          "mean_count": 39.857142857142854,
+          "mean_count_normalized": 8.363733170571352,
+          "month": 3,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 30.0,
+          "mean_count_normalized": 6.303461548421096,
+          "month": 4,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 24.428571428571427,
+          "mean_count_normalized": 5.125138962438828,
+          "month": 5,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 85.57142857142857,
+          "mean_count_normalized": 18.04053478004499,
+          "month": 6,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 285.57142857142856,
+          "mean_count_normalized": 59.23782316920939,
+          "month": 7,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 422.85714285714283,
+          "mean_count_normalized": 87.76681371383344,
+          "month": 8,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 114.85714285714286,
+          "mean_count_normalized": 24.19228920060226,
+          "month": 9,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 111.35714285714286,
+          "mean_count_normalized": 23.43436132428239,
+          "month": 10,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 73.5,
+          "mean_count_normalized": 15.428002458429377,
+          "month": 11,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 15.5,
+          "mean_count_normalized": 4.2262922320787375,
+          "month": 12,
+          "years_with_data": 14,
+          "years_with_normalized": 10
+        }
+      ],
+      "daily_2021": [
+        {
+          "date": "2021-07-20",
+          "harmonized_count": 4,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 8.965
+        },
+        {
+          "date": "2021-07-21",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-22",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 6.15
+        },
+        {
+          "date": "2021-07-23",
+          "harmonized_count": 4,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 7.029999999999999
+        },
+        {
+          "date": "2021-07-24",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-25",
+          "harmonized_count": 5,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 5.495
+        },
+        {
+          "date": "2021-07-26",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-27",
+          "harmonized_count": 2,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 35.27011801266074
+        },
+        {
+          "date": "2021-07-28",
+          "harmonized_count": 409,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 26049.024147909786
+        },
+        {
+          "date": "2021-07-29",
+          "harmonized_count": 1135,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 38456.423391574266
+        },
+        {
+          "date": "2021-07-30",
+          "harmonized_count": 723,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 16119.01743264389
+        },
+        {
+          "date": "2021-07-31",
+          "harmonized_count": 737,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 13331.960136904749
+        },
+        {
+          "date": "2021-08-01",
+          "harmonized_count": 958,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 25716.7813844244
+        },
+        {
+          "date": "2021-08-02",
+          "harmonized_count": 916,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 23950.274026292635
+        },
+        {
+          "date": "2021-08-03",
+          "harmonized_count": 451,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 13842.696468271368
+        },
+        {
+          "date": "2021-08-04",
+          "harmonized_count": 1319,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 18500.273642525975
+        },
+        {
+          "date": "2021-08-05",
+          "harmonized_count": 413,
+          "same_day_median_other_years": 3.0,
+          "total_frp_mw": 6424.694049883492
+        },
+        {
+          "date": "2021-08-06",
+          "harmonized_count": 463,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 6262.054429652543
+        },
+        {
+          "date": "2021-08-07",
+          "harmonized_count": 194,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 2793.1412499999997
+        },
+        {
+          "date": "2021-08-08",
+          "harmonized_count": 37,
+          "same_day_median_other_years": 3.0,
+          "total_frp_mw": 502.669876332576
+        },
+        {
+          "date": "2021-08-09",
+          "harmonized_count": 13,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 28.57
+        },
+        {
+          "date": "2021-08-10",
+          "harmonized_count": 51,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 1756.1462013124162
+        },
+        {
+          "date": "2021-08-11",
+          "harmonized_count": 45,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 2388.295280906394
+        },
+        {
+          "date": "2021-08-12",
+          "harmonized_count": 7,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 104.48277875393899
+        },
+        {
+          "date": "2021-08-13",
+          "harmonized_count": 6,
+          "same_day_median_other_years": 2.0,
+          "total_frp_mw": 118.99499999999999
+        },
+        {
+          "date": "2021-08-14",
+          "harmonized_count": 2,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 1.3
+        },
+        {
+          "date": "2021-08-15",
+          "harmonized_count": 3,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 19.235
+        }
+      ],
+      "name": "Antalya-Mugla Mediterranean coast",
+      "per_year": [
+        {
+          "count_normalized_sum": 105.83435207823962,
+          "harmonized": 491,
+          "months_with_data": 12,
+          "months_with_normalized": 10,
+          "peak_month": 8,
+          "peak_month_count": 170,
+          "raw_modis": 143,
+          "raw_total": 612,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 469,
+          "total_frp_mw": 4481.301201464889,
+          "year": 2012
+        },
+        {
+          "count_normalized_sum": 131.80195599022008,
+          "harmonized": 610,
+          "months_with_data": 12,
+          "months_with_normalized": 10,
+          "peak_month": 9,
+          "peak_month_count": 147,
+          "raw_modis": 145,
+          "raw_total": 752,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 607,
+          "total_frp_mw": 12670.354808538203,
+          "year": 2013
+        },
+        {
+          "count_normalized_sum": 84.6674816625917,
+          "harmonized": 395,
+          "months_with_data": 12,
+          "months_with_normalized": 10,
+          "peak_month": 10,
+          "peak_month_count": 112,
+          "raw_modis": 86,
+          "raw_total": 523,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 437,
+          "total_frp_mw": 4046.758155691238,
+          "year": 2014
+        },
+        {
+          "count_normalized_sum": 88.37713936430319,
+          "harmonized": 406,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 11,
+          "peak_month_count": 72,
+          "raw_modis": 108,
+          "raw_total": 557,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 449,
+          "total_frp_mw": 3425.595534610489,
+          "year": 2015
+        },
+        {
+          "count_normalized_sum": 154.49633251833743,
+          "harmonized": 708,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 6,
+          "peak_month_count": 143,
+          "raw_modis": 195,
+          "raw_total": 1136,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 941,
+          "total_frp_mw": 8786.214247612173,
+          "year": 2016
+        },
+        {
+          "count_normalized_sum": 140.09413202933985,
+          "harmonized": 646,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 6,
+          "peak_month_count": 180,
+          "raw_modis": 162,
+          "raw_total": 764,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 602,
+          "total_frp_mw": 13294.170197709249,
+          "year": 2017
+        },
+        {
+          "count_normalized_sum": 148.88125170367354,
+          "harmonized": 721,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 11,
+          "peak_month_count": 138,
+          "raw_modis": 91,
+          "raw_total": 933,
+          "raw_viirs_noaa20": 436,
+          "raw_viirs_snpp": 406,
+          "total_frp_mw": 5694.115675625425,
+          "year": 2018
+        },
+        {
+          "count_normalized_sum": 146.0413129598189,
+          "harmonized": 707,
+          "months_with_data": 11,
+          "months_with_normalized": 11,
+          "peak_month": 8,
+          "peak_month_count": 135,
+          "raw_modis": 133,
+          "raw_total": 1042,
+          "raw_viirs_noaa20": 486,
+          "raw_viirs_snpp": 423,
+          "total_frp_mw": 4366.259336552061,
+          "year": 2019
+        },
+        {
+          "count_normalized_sum": 141.80830541730143,
+          "harmonized": 686,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 11,
+          "peak_month_count": 130,
+          "raw_modis": 109,
+          "raw_total": 909,
+          "raw_viirs_noaa20": 394,
+          "raw_viirs_snpp": 406,
+          "total_frp_mw": 5415.105313203771,
+          "year": 2020
+        },
+        {
+          "count_normalized_sum": 1786.1658177702318,
+          "harmonized": 8657,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 8,
+          "peak_month_count": 4888,
+          "raw_modis": 2748,
+          "raw_total": 19165,
+          "raw_viirs_noaa20": 8610,
+          "raw_viirs_snpp": 7807,
+          "total_frp_mw": 202093.3543270878,
+          "year": 2021
+        },
+        {
+          "count_normalized_sum": 180.53763440860214,
+          "harmonized": 883,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 6,
+          "peak_month_count": 305,
+          "raw_modis": 181,
+          "raw_total": 1425,
+          "raw_viirs_noaa20": 651,
+          "raw_viirs_snpp": 593,
+          "total_frp_mw": 13032.825240329417,
+          "year": 2022
+        },
+        {
+          "count_normalized_sum": 137.985285795133,
+          "harmonized": 668,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 10,
+          "peak_month_count": 127,
+          "raw_modis": 117,
+          "raw_total": 885,
+          "raw_viirs_noaa20": 404,
+          "raw_viirs_snpp": 364,
+          "total_frp_mw": 5074.243763079188,
+          "year": 2023
+        },
+        {
+          "count_normalized_sum": 184.87549518958687,
+          "harmonized": 898,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 10,
+          "peak_month_count": 249,
+          "raw_modis": 186,
+          "raw_total": 1251,
+          "raw_viirs_noaa20": 506,
+          "raw_viirs_snpp": 559,
+          "total_frp_mw": 11644.416179552009,
+          "year": 2024
+        },
+        {
+          "count_normalized_sum": 202.43350311262026,
+          "harmonized": 980,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 385,
+          "raw_modis": 232,
+          "raw_total": 1503,
+          "raw_viirs_noaa20": 647,
+          "raw_viirs_snpp": 624,
+          "total_frp_mw": 12142.26189752601,
+          "year": 2025
+        }
+      ],
+      "totals": {
+        "fleet_merged": 6272,
+        "harmonized": 17456,
+        "interscan_removed": 5211,
+        "matched_pairs": 2253,
+        "raw_modis": 4636,
+        "raw_total": 31457,
+        "raw_viirs_noaa20": 12134,
+        "raw_viirs_snpp": 14687,
+        "static_masked": 265
+      },
+      "trend": null
+    },
+    "mugla": {
+      "anomaly_2021": {
+        "august": {
+          "anomaly_z": 3.462401879083464,
+          "baseline_mean": 60.60384417503265,
+          "baseline_sd": 181.80517813415344,
+          "baseline_years": 13,
+          "count": 3129,
+          "count_normalized": 690.0864345738295,
+          "effort_omega": 4.534214618973562,
+          "frp_per_detection_eq": 98.40771446473495,
+          "month": 8,
+          "of_all_months": 116,
+          "of_same_month": 13,
+          "others_median": 7.729411764705882,
+          "rank_all_months": 1,
+          "rank_same_month": 1,
+          "ratio_to_others_median": 89.28058894790792,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 2.6447152526737625
+          },
+          "total_frp_mw": 67909.82880952841,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 115.05390905987247
+        },
+        "july": {
+          "anomaly_z": 3.1408232120923163,
+          "baseline_mean": 20.566749504996803,
+          "baseline_sd": 42.464635373485756,
+          "baseline_years": 11,
+          "count": 698,
+          "count_normalized": 153.94066197907733,
+          "effort_omega": 4.534214618973562,
+          "frp_per_detection_eq": 79.59119250039711,
+          "month": 7,
+          "of_all_months": 116,
+          "of_same_month": 11,
+          "others_median": 5.513634025038586,
+          "rank_all_months": 2,
+          "rank_same_month": 1,
+          "ratio_to_others_median": 27.92,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 2.62735235674699
+          },
+          "total_frp_mw": 12252.320861215307,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 28.327225020991836
+        }
+      },
+      "bbox": {
+        "east": 29.4,
+        "north": 37.5,
+        "south": 36.0,
+        "west": 27.0
+      },
+      "climatology": [
+        {
+          "mean_count": 5.181818181818182,
+          "mean_count_normalized": 2.427547590464757,
+          "month": 1,
+          "years_with_data": 11,
+          "years_with_normalized": 4
+        },
+        {
+          "mean_count": 12.615384615384615,
+          "mean_count_normalized": 2.8899368318756076,
+          "month": 2,
+          "years_with_data": 13,
+          "years_with_normalized": 12
+        },
+        {
+          "mean_count": 8.571428571428571,
+          "mean_count_normalized": 1.9495272394672154,
+          "month": 3,
+          "years_with_data": 14,
+          "years_with_normalized": 6
+        },
+        {
+          "mean_count": 6.357142857142857,
+          "mean_count_normalized": 1.7085255920550038,
+          "month": 4,
+          "years_with_data": 14,
+          "years_with_normalized": 11
+        },
+        {
+          "mean_count": 6.071428571428571,
+          "mean_count_normalized": 2.0656393986165895,
+          "month": 5,
+          "years_with_data": 14,
+          "years_with_normalized": 6
+        },
+        {
+          "mean_count": 34.42857142857143,
+          "mean_count_normalized": 10.951236494597838,
+          "month": 6,
+          "years_with_data": 14,
+          "years_with_normalized": 9
+        },
+        {
+          "mean_count": 74.0,
+          "mean_count_normalized": 20.566749504996803,
+          "month": 7,
+          "years_with_data": 14,
+          "years_with_normalized": 11
+        },
+        {
+          "mean_count": 253.28571428571428,
+          "mean_count_normalized": 60.60384417503265,
+          "month": 8,
+          "years_with_data": 14,
+          "years_with_normalized": 13
+        },
+        {
+          "mean_count": 45.285714285714285,
+          "mean_count_normalized": 10.807839531416962,
+          "month": 9,
+          "years_with_data": 14,
+          "years_with_normalized": 13
+        },
+        {
+          "mean_count": 33.142857142857146,
+          "mean_count_normalized": 8.150038125140165,
+          "month": 10,
+          "years_with_data": 14,
+          "years_with_normalized": 13
+        },
+        {
+          "mean_count": 16.642857142857142,
+          "mean_count_normalized": 4.078874978562854,
+          "month": 11,
+          "years_with_data": 14,
+          "years_with_normalized": 11
+        },
+        {
+          "mean_count": 6.0,
+          "mean_count_normalized": 1.9657721047602712,
+          "month": 12,
+          "years_with_data": 13,
+          "years_with_normalized": 7
+        }
+      ],
+      "daily_2021": [
+        {
+          "date": "2021-07-20",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 2.035
+        },
+        {
+          "date": "2021-07-21",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-22",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 6.15
+        },
+        {
+          "date": "2021-07-23",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-24",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-25",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 2.085
+        },
+        {
+          "date": "2021-07-26",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-27",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-07-28",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 1.26
+        },
+        {
+          "date": "2021-07-29",
+          "harmonized_count": 283,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 6072.857499999995
+        },
+        {
+          "date": "2021-07-30",
+          "harmonized_count": 180,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 2652.6995993105425
+        },
+        {
+          "date": "2021-07-31",
+          "harmonized_count": 222,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 3338.986428571429
+        },
+        {
+          "date": "2021-08-01",
+          "harmonized_count": 489,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 17198.866342268157
+        },
+        {
+          "date": "2021-08-02",
+          "harmonized_count": 374,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 9861.62172845897
+        },
+        {
+          "date": "2021-08-03",
+          "harmonized_count": 206,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 8634.113981907962
+        },
+        {
+          "date": "2021-08-04",
+          "harmonized_count": 962,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 15272.191839586814
+        },
+        {
+          "date": "2021-08-05",
+          "harmonized_count": 357,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 5950.642047921668
+        },
+        {
+          "date": "2021-08-06",
+          "harmonized_count": 437,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 5714.2777629858765
+        },
+        {
+          "date": "2021-08-07",
+          "harmonized_count": 194,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 2793.1412499999997
+        },
+        {
+          "date": "2021-08-08",
+          "harmonized_count": 35,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 421.07487633257614
+        },
+        {
+          "date": "2021-08-09",
+          "harmonized_count": 12,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 28.045
+        },
+        {
+          "date": "2021-08-10",
+          "harmonized_count": 51,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 1756.1462013124162
+        },
+        {
+          "date": "2021-08-11",
+          "harmonized_count": 5,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 84.09
+        },
+        {
+          "date": "2021-08-12",
+          "harmonized_count": 4,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 94.49777875393899
+        },
+        {
+          "date": "2021-08-13",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 1.0,
+          "total_frp_mw": 0.0
+        },
+        {
+          "date": "2021-08-14",
+          "harmonized_count": 1,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.38
+        },
+        {
+          "date": "2021-08-15",
+          "harmonized_count": 0,
+          "same_day_median_other_years": 0.0,
+          "total_frp_mw": 0.0
+        }
+      ],
+      "name": "Mugla (Marmaris, Milas, Bodrum, Koycegiz)",
+      "per_year": [
+        {
+          "count_normalized_sum": 24.991764705882353,
+          "harmonized": 127,
+          "months_with_data": 12,
+          "months_with_normalized": 6,
+          "peak_month": 8,
+          "peak_month_count": 39,
+          "raw_modis": 44,
+          "raw_total": 157,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 113,
+          "total_frp_mw": 878.2027109778262,
+          "year": 2012
+        },
+        {
+          "count_normalized_sum": 38.131764705882354,
+          "harmonized": 165,
+          "months_with_data": 11,
+          "months_with_normalized": 8,
+          "peak_month": 8,
+          "peak_month_count": 43,
+          "raw_modis": 33,
+          "raw_total": 195,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 162,
+          "total_frp_mw": 4680.2794956829775,
+          "year": 2013
+        },
+        {
+          "count_normalized_sum": 45.86117647058824,
+          "harmonized": 194,
+          "months_with_data": 12,
+          "months_with_normalized": 8,
+          "peak_month": 10,
+          "peak_month_count": 64,
+          "raw_modis": 48,
+          "raw_total": 298,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 250,
+          "total_frp_mw": 2434.6914156461557,
+          "year": 2014
+        },
+        {
+          "count_normalized_sum": 15.458823529411763,
+          "harmonized": 96,
+          "months_with_data": 11,
+          "months_with_normalized": 6,
+          "peak_month": 8,
+          "peak_month_count": 21,
+          "raw_modis": 21,
+          "raw_total": 116,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 95,
+          "total_frp_mw": 976.2361199105575,
+          "year": 2015
+        },
+        {
+          "count_normalized_sum": 45.088235294117645,
+          "harmonized": 189,
+          "months_with_data": 12,
+          "months_with_normalized": 10,
+          "peak_month": 6,
+          "peak_month_count": 29,
+          "raw_modis": 53,
+          "raw_total": 245,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 192,
+          "total_frp_mw": 2498.4956611307407,
+          "year": 2016
+        },
+        {
+          "count_normalized_sum": 41.22352941176471,
+          "harmonized": 166,
+          "months_with_data": 12,
+          "months_with_normalized": 9,
+          "peak_month": 9,
+          "peak_month_count": 64,
+          "raw_modis": 47,
+          "raw_total": 202,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 155,
+          "total_frp_mw": 3038.586741269664,
+          "year": 2017
+        },
+        {
+          "count_normalized_sum": 30.58366660950094,
+          "harmonized": 157,
+          "months_with_data": 12,
+          "months_with_normalized": 7,
+          "peak_month": 9,
+          "peak_month_count": 37,
+          "raw_modis": 17,
+          "raw_total": 205,
+          "raw_viirs_noaa20": 87,
+          "raw_viirs_snpp": 101,
+          "total_frp_mw": 1060.0354037250495,
+          "year": 2018
+        },
+        {
+          "count_normalized_sum": 62.78535414165666,
+          "harmonized": 291,
+          "months_with_data": 11,
+          "months_with_normalized": 10,
+          "peak_month": 7,
+          "peak_month_count": 93,
+          "raw_modis": 63,
+          "raw_total": 525,
+          "raw_viirs_noaa20": 250,
+          "raw_viirs_snpp": 212,
+          "total_frp_mw": 2007.8420290802428,
+          "year": 2019
+        },
+        {
+          "count_normalized_sum": 38.23061567484137,
+          "harmonized": 222,
+          "months_with_data": 12,
+          "months_with_normalized": 9,
+          "peak_month": 8,
+          "peak_month_count": 51,
+          "raw_modis": 44,
+          "raw_total": 333,
+          "raw_viirs_noaa20": 114,
+          "raw_viirs_snpp": 175,
+          "total_frp_mw": 2812.220020130455,
+          "year": 2020
+        },
+        {
+          "count_normalized_sum": 893.208712056251,
+          "harmonized": 4052,
+          "months_with_data": 12,
+          "months_with_normalized": 11,
+          "peak_month": 8,
+          "peak_month_count": 3129,
+          "raw_modis": 1249,
+          "raw_total": 8869,
+          "raw_viirs_noaa20": 3868,
+          "raw_viirs_snpp": 3752,
+          "total_frp_mw": 82203.55977387448,
+          "year": 2021
+        },
+        {
+          "count_normalized_sum": 107.18504544675011,
+          "harmonized": 510,
+          "months_with_data": 12,
+          "months_with_normalized": 9,
+          "peak_month": 6,
+          "peak_month_count": 279,
+          "raw_modis": 144,
+          "raw_total": 1004,
+          "raw_viirs_noaa20": 447,
+          "raw_viirs_snpp": 413,
+          "total_frp_mw": 11372.793669431565,
+          "year": 2022
+        },
+        {
+          "count_normalized_sum": 21.945295832618758,
+          "harmonized": 124,
+          "months_with_data": 12,
+          "months_with_normalized": 7,
+          "peak_month": 2,
+          "peak_month_count": 27,
+          "raw_modis": 25,
+          "raw_total": 151,
+          "raw_viirs_noaa20": 60,
+          "raw_viirs_snpp": 66,
+          "total_frp_mw": 889.2960709372231,
+          "year": 2023
+        },
+        {
+          "count_normalized_sum": 64.84033613445378,
+          "harmonized": 329,
+          "months_with_data": 10,
+          "months_with_normalized": 7,
+          "peak_month": 10,
+          "peak_month_count": 114,
+          "raw_modis": 89,
+          "raw_total": 543,
+          "raw_viirs_noaa20": 204,
+          "raw_viirs_snpp": 250,
+          "total_frp_mw": 7500.672372566485,
+          "year": 2024
+        },
+        {
+          "count_normalized_sum": 75.46567998628022,
+          "harmonized": 366,
+          "months_with_data": 12,
+          "months_with_normalized": 9,
+          "peak_month": 9,
+          "peak_month_count": 217,
+          "raw_modis": 87,
+          "raw_total": 614,
+          "raw_viirs_noaa20": 259,
+          "raw_viirs_snpp": 268,
+          "total_frp_mw": 6111.669732948881,
+          "year": 2025
+        }
+      ],
+      "totals": {
+        "fleet_merged": 3112,
+        "harmonized": 6988,
+        "interscan_removed": 2328,
+        "matched_pairs": 1029,
+        "raw_modis": 1964,
+        "raw_total": 13457,
+        "raw_viirs_noaa20": 5289,
+        "raw_viirs_snpp": 6204,
+        "static_masked": 0
+      },
+      "trend": null
+    },
+    "turkey": {
+      "anomaly_2021": {
+        "august": {
+          "anomaly_z": 0.15896767862157998,
+          "baseline_mean": 1259.8306718247607,
+          "baseline_sd": 559.1972552939957,
+          "baseline_years": 14,
+          "count": 8056,
+          "count_normalized": 1348.7249613904064,
+          "effort_omega": 5.973048790981843,
+          "frp_per_detection_eq": 95.42141870305608,
+          "month": 8,
+          "of_all_months": 168,
+          "of_same_month": 14,
+          "others_median": 1115.6781458174862,
+          "rank_all_months": 28,
+          "rank_same_month": 6,
+          "ratio_to_others_median": 1.2088835534213684,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 3,
+            "years": 8,
+            "z": 0.9015179447940682
+          },
+          "total_frp_mw": 128697.24925609711,
+          "total_frp_rank_same_month": 1,
+          "year": 2021,
+          "z_leave_one_out": 0.16512913188776424
+        },
+        "july": {
+          "anomaly_z": 0.9372519028164147,
+          "baseline_mean": 824.0765217126439,
+          "baseline_sd": 298.26290843659893,
+          "baseline_years": 14,
+          "count": 6592,
+          "count_normalized": 1103.6240001844042,
+          "effort_omega": 5.973048790981843,
+          "frp_per_detection_eq": 131.7380728454544,
+          "month": 7,
+          "of_all_months": 168,
+          "of_same_month": 14,
+          "others_median": 702.8236578844248,
+          "rank_all_months": 37,
+          "rank_same_month": 2,
+          "ratio_to_others_median": 1.570271557884707,
+          "same_fleet_raw_count": {
+            "from_year": 2018,
+            "rank": 1,
+            "years": 8,
+            "z": 1.8470904716800796
+          },
+          "total_frp_mw": 145389.29893028483,
+          "total_frp_rank_same_month": 2,
+          "year": 2021,
+          "z_leave_one_out": 1.0072588945918066
+        }
+      },
+      "bbox": {
+        "east": 45.0,
+        "north": 42.0,
+        "south": 36.0,
+        "west": 26.0
+      },
+      "climatology": [
+        {
+          "mean_count": 1140.2142857142858,
+          "mean_count_normalized": 215.51000336213707,
+          "month": 1,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 906.5,
+          "mean_count_normalized": 175.87281045863847,
+          "month": 2,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 1015.2857142857143,
+          "mean_count_normalized": 201.84078238534747,
+          "month": 3,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 843.5714285714286,
+          "mean_count_normalized": 175.53103087438768,
+          "month": 4,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 798.9285714285714,
+          "mean_count_normalized": 154.6958988309281,
+          "month": 5,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 4960.785714285715,
+          "mean_count_normalized": 1017.1183489606794,
+          "month": 6,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 4107.142857142857,
+          "mean_count_normalized": 824.0765217126439,
+          "month": 7,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 6098.5,
+          "mean_count_normalized": 1259.8306718247607,
+          "month": 8,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 7693.214285714285,
+          "mean_count_normalized": 1624.6670438128165,
+          "month": 9,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 6906.071428571428,
+          "mean_count_normalized": 1368.4807396301096,
+          "month": 10,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 4522.0,
+          "mean_count_normalized": 885.5499046122129,
+          "month": 11,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        },
+        {
+          "mean_count": 1935.857142857143,
+          "mean_count_normalized": 368.8262435353382,
+          "month": 12,
+          "years_with_data": 14,
+          "years_with_normalized": 14
+        }
+      ],
+      "daily_2021": [
+        {
+          "date": "2021-07-20",
+          "harmonized_count": 96,
+          "same_day_median_other_years": 123.0,
+          "total_frp_mw": 1435.7221996922208
+        },
+        {
+          "date": "2021-07-21",
+          "harmonized_count": 57,
+          "same_day_median_other_years": 148.0,
+          "total_frp_mw": 354.3966893053301
+        },
+        {
+          "date": "2021-07-22",
+          "harmonized_count": 46,
+          "same_day_median_other_years": 118.0,
+          "total_frp_mw": 450.0801742802428
+        },
+        {
+          "date": "2021-07-23",
+          "harmonized_count": 59,
+          "same_day_median_other_years": 109.0,
+          "total_frp_mw": 374.201490573222
+        },
+        {
+          "date": "2021-07-24",
+          "harmonized_count": 39,
+          "same_day_median_other_years": 119.0,
+          "total_frp_mw": 141.087043313842
+        },
+        {
+          "date": "2021-07-25",
+          "harmonized_count": 47,
+          "same_day_median_other_years": 121.0,
+          "total_frp_mw": 219.38749999999996
+        },
+        {
+          "date": "2021-07-26",
+          "harmonized_count": 67,
+          "same_day_median_other_years": 127.0,
+          "total_frp_mw": 374.62750273747343
+        },
+        {
+          "date": "2021-07-27",
+          "harmonized_count": 81,
+          "same_day_median_other_years": 95.0,
+          "total_frp_mw": 1018.7188023049548
+        },
+        {
+          "date": "2021-07-28",
+          "harmonized_count": 800,
+          "same_day_median_other_years": 97.0,
+          "total_frp_mw": 32676.88775889293
+        },
+        {
+          "date": "2021-07-29",
+          "harmonized_count": 1746,
+          "same_day_median_other_years": 123.0,
+          "total_frp_mw": 56243.123983732985
+        },
+        {
+          "date": "2021-07-30",
+          "harmonized_count": 1018,
+          "same_day_median_other_years": 90.0,
+          "total_frp_mw": 20955.776592981114
+        },
+        {
+          "date": "2021-07-31",
+          "harmonized_count": 837,
+          "same_day_median_other_years": 89.0,
+          "total_frp_mw": 14248.247488974535
+        },
+        {
+          "date": "2021-08-01",
+          "harmonized_count": 1026,
+          "same_day_median_other_years": 86.0,
+          "total_frp_mw": 26265.632145153595
+        },
+        {
+          "date": "2021-08-02",
+          "harmonized_count": 978,
+          "same_day_median_other_years": 125.0,
+          "total_frp_mw": 25220.88430773966
+        },
+        {
+          "date": "2021-08-03",
+          "harmonized_count": 488,
+          "same_day_median_other_years": 135.0,
+          "total_frp_mw": 14422.324320434662
+        },
+        {
+          "date": "2021-08-04",
+          "harmonized_count": 1427,
+          "same_day_median_other_years": 125.0,
+          "total_frp_mw": 19491.96971042203
+        },
+        {
+          "date": "2021-08-05",
+          "harmonized_count": 459,
+          "same_day_median_other_years": 136.0,
+          "total_frp_mw": 6774.7850449379575
+        },
+        {
+          "date": "2021-08-06",
+          "harmonized_count": 485,
+          "same_day_median_other_years": 140.0,
+          "total_frp_mw": 6461.46694030171
+        },
+        {
+          "date": "2021-08-07",
+          "harmonized_count": 213,
+          "same_day_median_other_years": 132.0,
+          "total_frp_mw": 2927.5845833333337
+        },
+        {
+          "date": "2021-08-08",
+          "harmonized_count": 62,
+          "same_day_median_other_years": 145.0,
+          "total_frp_mw": 594.9991433575274
+        },
+        {
+          "date": "2021-08-09",
+          "harmonized_count": 52,
+          "same_day_median_other_years": 96.0,
+          "total_frp_mw": 256.6958350328134
+        },
+        {
+          "date": "2021-08-10",
+          "harmonized_count": 86,
+          "same_day_median_other_years": 104.0,
+          "total_frp_mw": 1951.0012013124167
+        },
+        {
+          "date": "2021-08-11",
+          "harmonized_count": 92,
+          "same_day_median_other_years": 117.0,
+          "total_frp_mw": 2842.659893443
+        },
+        {
+          "date": "2021-08-12",
+          "harmonized_count": 49,
+          "same_day_median_other_years": 133.0,
+          "total_frp_mw": 426.0511120872722
+        },
+        {
+          "date": "2021-08-13",
+          "harmonized_count": 54,
+          "same_day_median_other_years": 149.0,
+          "total_frp_mw": 412.36198951885365
+        },
+        {
+          "date": "2021-08-14",
+          "harmonized_count": 104,
+          "same_day_median_other_years": 152.0,
+          "total_frp_mw": 939.8006661459805
+        },
+        {
+          "date": "2021-08-15",
+          "harmonized_count": 71,
+          "same_day_median_other_years": 182.0,
+          "total_frp_mw": 519.2049220316202
+        }
+      ],
+      "name": "Turkey, whole-country box",
+      "per_year": [
+        {
+          "count_normalized_sum": 6364.1380876293,
+          "harmonized": 24918,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 5878,
+          "raw_modis": 6950,
+          "raw_total": 31444,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 24494,
+          "total_frp_mw": 233504.54707759983,
+          "year": 2012
+        },
+        {
+          "count_normalized_sum": 10280.236060886386,
+          "harmonized": 40251,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 9992,
+          "raw_modis": 11457,
+          "raw_total": 51362,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 39905,
+          "total_frp_mw": 393870.4410478493,
+          "year": 2013
+        },
+        {
+          "count_normalized_sum": 5797.909090909091,
+          "harmonized": 22701,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 5203,
+          "raw_modis": 6664,
+          "raw_total": 28772,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 22108,
+          "total_frp_mw": 227733.55950961378,
+          "year": 2014
+        },
+        {
+          "count_normalized_sum": 14620.814229249012,
+          "harmonized": 57246,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 15600,
+          "raw_modis": 17958,
+          "raw_total": 74313,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 56355,
+          "total_frp_mw": 626060.7235102031,
+          "year": 2015
+        },
+        {
+          "count_normalized_sum": 11992.714826339248,
+          "harmonized": 46956,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 10606,
+          "raw_modis": 13506,
+          "raw_total": 60545,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 47039,
+          "total_frp_mw": 463847.91059475776,
+          "year": 2016
+        },
+        {
+          "count_normalized_sum": 8293.45420906568,
+          "harmonized": 32472,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 9,
+          "peak_month_count": 6293,
+          "raw_modis": 9532,
+          "raw_total": 41262,
+          "raw_viirs_noaa20": 0,
+          "raw_viirs_snpp": 31730,
+          "total_frp_mw": 332687.6038570958,
+          "year": 2017
+        },
+        {
+          "count_normalized_sum": 6698.064728777474,
+          "harmonized": 39280,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 8,
+          "peak_month_count": 8584,
+          "raw_modis": 7365,
+          "raw_total": 57872,
+          "raw_viirs_noaa20": 24523,
+          "raw_viirs_snpp": 25984,
+          "total_frp_mw": 325292.6696584272,
+          "year": 2018
+        },
+        {
+          "count_normalized_sum": 7436.403343475556,
+          "harmonized": 44418,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 10,
+          "peak_month_count": 9155,
+          "raw_modis": 7698,
+          "raw_total": 65085,
+          "raw_viirs_noaa20": 28515,
+          "raw_viirs_snpp": 28872,
+          "total_frp_mw": 324470.9271848508,
+          "year": 2019
+        },
+        {
+          "count_normalized_sum": 8026.721642117881,
+          "harmonized": 47944,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 10,
+          "peak_month_count": 10418,
+          "raw_modis": 8187,
+          "raw_total": 71816,
+          "raw_viirs_noaa20": 31289,
+          "raw_viirs_snpp": 32340,
+          "total_frp_mw": 391041.5268722922,
+          "year": 2020
+        },
+        {
+          "count_normalized_sum": 7127.6832803171765,
+          "harmonized": 42574,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 8,
+          "peak_month_count": 8056,
+          "raw_modis": 9331,
+          "raw_total": 69557,
+          "raw_viirs_noaa20": 30766,
+          "raw_viirs_snpp": 29460,
+          "total_frp_mw": 474816.56740464334,
+          "year": 2021
+        },
+        {
+          "count_normalized_sum": 4507.413373325958,
+          "harmonized": 26923,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 10,
+          "peak_month_count": 4397,
+          "raw_modis": 5063,
+          "raw_total": 37460,
+          "raw_viirs_noaa20": 16865,
+          "raw_viirs_snpp": 15532,
+          "total_frp_mw": 204373.6040428094,
+          "year": 2022
+        },
+        {
+          "count_normalized_sum": 7761.363019500726,
+          "harmonized": 46359,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 10,
+          "peak_month_count": 8868,
+          "raw_modis": 8280,
+          "raw_total": 65798,
+          "raw_viirs_noaa20": 29008,
+          "raw_viirs_snpp": 28510,
+          "total_frp_mw": 364888.5592418424,
+          "year": 2023
+        },
+        {
+          "count_normalized_sum": 9912.693177627181,
+          "harmonized": 59209,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 10,
+          "peak_month_count": 15421,
+          "raw_modis": 11217,
+          "raw_total": 86019,
+          "raw_viirs_noaa20": 39164,
+          "raw_viirs_snpp": 35638,
+          "total_frp_mw": 526874.5858870266,
+          "year": 2024
+        },
+        {
+          "count_normalized_sum": 6988.390930779338,
+          "harmonized": 41742,
+          "months_with_data": 12,
+          "months_with_normalized": 12,
+          "peak_month": 6,
+          "peak_month_count": 6233,
+          "raw_modis": 8508,
+          "raw_total": 61500,
+          "raw_viirs_noaa20": 26335,
+          "raw_viirs_snpp": 26657,
+          "total_frp_mw": 526716.6327742786,
+          "year": 2025
+        }
+      ],
+      "totals": {
+        "fleet_merged": 74682,
+        "harmonized": 572993,
+        "interscan_removed": 99885,
+        "matched_pairs": 47894,
+        "raw_modis": 131716,
+        "raw_total": 802805,
+        "raw_viirs_noaa20": 226465,
+        "raw_viirs_snpp": 444624,
+        "static_masked": 7351
+      },
+      "trend": {
+        "metric": "annual sum of count_normalized",
+        "pearson_r": -0.25482901654732765,
+        "slope_pct_of_mean_per_year": -1.951171759232605,
+        "slope_per_year": -161.40092792372104,
+        "years": [
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024,
+          2025
+        ]
+      }
+    }
+  }
+}

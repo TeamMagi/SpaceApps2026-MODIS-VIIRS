@@ -1,6 +1,17 @@
 import { mockMetadata, mockPoints, mockSeries } from "../mocks";
 import type { FetchPointsParams, PointsResponse, RegionsResponse, SeriesResponse } from "../services/api";
-import { HotspotSource, type MonthRef, type PointStages } from "../types";
+import {
+  DayNight,
+  DEFAULT_FUSION_MODEL,
+  HotspotSource,
+  type FusionComparison,
+  type FusionModel,
+  type HarmonizedPoint,
+  type MonthRef,
+  type PointStages,
+  type RawPoint,
+} from "../types";
+import { MODIS_THRESHOLD_DAY_NADIR_MW, MODIS_THRESHOLD_NIGHT_NADIR_MW } from "./footprint";
 
 export const DEMO_SOURCE_LABEL = "Synthetic demo data (not NASA FIRMS)";
 
@@ -80,7 +91,7 @@ export function buildDemoSeries(region: string): SeriesResponse {
   };
 }
 
-export function buildDemoPoints(params: FetchPointsParams): PointsResponse {
+function buildStandardDemoPoints(params: FetchPointsParams): PointsResponse {
   if (params.region !== mockPoints.region || params.year !== mockPoints.year) {
     return emptyPointsResponse(params);
   }
@@ -133,6 +144,85 @@ export function buildDemoPoints(params: FetchPointsParams): PointsResponse {
     filters: { minConfidence: "low", excludedDetections: 0 },
     tropicalSwathGap: null,
   };
+}
+
+function meanMemberFrp(members: readonly RawPoint[], family: "MODIS" | "VIIRS"): number | null {
+  const frps = members.filter((m) => m.sensor === family).map((m) => m.frp);
+  return frps.length > 0 ? frps.reduce((sum, v) => sum + v, 0) / frps.length : null;
+}
+
+function withFrp(point: HarmonizedPoint, frp: number): HarmonizedPoint {
+  return { ...point, frp, frpCorrected: frp };
+}
+
+function totalFrp(points: readonly HarmonizedPoint[]): number {
+  return points.reduce((sum, p) => sum + p.frpCorrected, 0);
+}
+
+/**
+ * Client-side approximation of the backend fusion models on the synthetic fixture: raw member
+ * FRPs stand in for the VZA-corrected values, and points without linked members stay as they are.
+ */
+export function applyDemoFusionModel(
+  points: PointsResponse,
+  model: FusionModel,
+): PointsResponse {
+  if (model === DEFAULT_FUSION_MODEL) return points;
+
+  const membersByPoint = new Map<string, RawPoint[]>();
+  for (const r of points.raw) {
+    if (r.harmonizedId === null) continue;
+    const list = membersByPoint.get(r.harmonizedId);
+    if (list) list.push(r);
+    else membersByPoint.set(r.harmonizedId, [r]);
+  }
+
+  let dropped = 0;
+  const harmonized: HarmonizedPoint[] = [];
+  for (const p of points.harmonized) {
+    const members = membersByPoint.get(p.id) ?? [];
+    const modis = meanMemberFrp(members, "MODIS");
+    const viirs = meanMemberFrp(members, "VIIRS");
+    if (p.source === HotspotSource.Matched) {
+      if (model === "equal_weight" && modis !== null && viirs !== null) {
+        harmonized.push(withFrp(p, (modis + viirs) / 2));
+      } else if (model === "modis_calibrated" && modis !== null) {
+        harmonized.push(withFrp(p, modis));
+      } else {
+        harmonized.push(p);
+      }
+      continue;
+    }
+    if (model === "modis_calibrated" && p.source === HotspotSource.ViirsOnly) {
+      const limit =
+        p.daynight === DayNight.Night ? MODIS_THRESHOLD_NIGHT_NADIR_MW : MODIS_THRESHOLD_DAY_NADIR_MW;
+      if (p.frpCorrected < limit) {
+        dropped += 1;
+        continue;
+      }
+    }
+    harmonized.push(p);
+  }
+
+  const comparison: FusionComparison = {
+    model,
+    baselineCount: points.harmonized.length,
+    baselineTotalFrp: totalFrp(points.harmonized),
+    count: harmonized.length,
+    totalFrp: totalFrp(harmonized),
+    droppedBelowModisLimit: dropped,
+  };
+  return {
+    ...points,
+    harmonized,
+    stages: { ...points.stages, harmonized: harmonized.length },
+    fusionModel: model,
+    fusionComparison: comparison,
+  };
+}
+
+export function buildDemoPoints(params: FetchPointsParams): PointsResponse {
+  return applyDemoFusionModel(buildStandardDemoPoints(params), params.fusionModel ?? DEFAULT_FUSION_MODEL);
 }
 
 /**

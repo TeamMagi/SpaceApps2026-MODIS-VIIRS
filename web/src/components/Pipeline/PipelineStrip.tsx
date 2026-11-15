@@ -14,6 +14,8 @@ import {
 } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
 import { useNrtData } from "../../hooks/useNrtData";
+import { DEFAULT_FUSION_MODEL } from "../../types";
+import { FUSION_LABEL_KEY } from "../../lib/fusionModels";
 import { DEFAULT_PIPELINE_CONFIG, hasPipelineOverrides } from "../../lib/pipelineOverrides";
 import { summarizePointStages } from "../../lib/receiptCounts";
 import { PIPELINE_NODE_COUNT, useAppStore } from "../../store/useAppStore";
@@ -34,6 +36,7 @@ export default function PipelineStrip() {
   const selectedMonth = useAppStore((state) => state.selectedMonth);
   const pipelineOverrides = useAppStore((state) => state.pipelineOverrides);
   const serverConfig = useAppStore((state) => state.serverConfig);
+  const fusionModel = useAppStore((state) => state.fusionModel);
   const showDrawer = useAppStore((state) => state.showDrawer);
   const reduceMotion = useReducedMotion();
   const customThresholds = hasPipelineOverrides(
@@ -157,6 +160,16 @@ export default function PipelineStrip() {
             onClick={() => showDrawer("settings")}
           >
             {t("settingsCustomBadge")}
+          </button>
+        )}
+        {fusionModel !== DEFAULT_FUSION_MODEL && (
+          <button
+            type="button"
+            className={styles.customBadge}
+            aria-label={t("fusionBadgeAria", { model: t(FUSION_LABEL_KEY[fusionModel]) })}
+            onClick={() => showDrawer("settings")}
+          >
+            {t("fusionBadge", { model: t(FUSION_LABEL_KEY[fusionModel]) })}
           </button>
         )}
         {nrt.status === "ready" && nrt.stats && (

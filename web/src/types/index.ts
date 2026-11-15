@@ -28,6 +28,21 @@ export type ViewMode = "raw" | "harmonized";
 /** Lowest FIRMS confidence class kept before harmonizing (`min_confidence`); `low` keeps everything. */
 export type MinConfidence = "low" | "nominal" | "high";
 
+/** Harmonization model for matched MODIS+VIIRS records (`fusion_model`); `viirs_preferred` is the standard one. */
+export type FusionModel = "viirs_preferred" | "equal_weight" | "modis_calibrated";
+
+export const DEFAULT_FUSION_MODEL: FusionModel = "viirs_preferred";
+
+/** Non-default model versus the standard one for the same period; null/absent for the standard model. */
+export interface FusionComparison {
+  model: FusionModel;
+  baselineCount: number;
+  baselineTotalFrp: number;
+  count: number;
+  totalFrp: number;
+  droppedBelowModisLimit: number;
+}
+
 /** Echo of the server-side confidence filter, so a filtered response can label itself. */
 export interface ConfidenceFilterInfo {
   minConfidence: MinConfidence;
@@ -234,6 +249,8 @@ export interface MapPointSet {
   limit: number;
   frpAngleCorrectionPct: number | null;
   filters: ConfidenceFilterInfo;
+  fusionModel?: FusionModel;
+  fusionComparison?: FusionComparison | null;
   /** From `/api/points`, measured on the period's whole year; null outside the tropical belt. */
   tropicalSwathGap: TropicalSwathGapInfo | null;
 }

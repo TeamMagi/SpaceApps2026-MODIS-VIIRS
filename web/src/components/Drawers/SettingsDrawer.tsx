@@ -1,6 +1,8 @@
 import { useEffect, useId, useState } from "react";
 import { useCopy } from "../../hooks/useCopy";
+import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { flushPipelineOverrides, useMapPoints } from "../../hooks/useRegionData";
+import type { FusionLabelKey } from "../../lib/fusionModels";
 import {
   DEFAULT_PIPELINE_CONFIG,
   hasPipelineOverrides,
@@ -9,7 +11,7 @@ import {
   type PipelineUnitKind,
 } from "../../lib/pipelineOverrides";
 import { useAppStore } from "../../store/useAppStore";
-import type { PipelineOverrideKey } from "../../types";
+import { DEFAULT_FUSION_MODEL, type FusionModel, type PipelineOverrideKey } from "../../types";
 import Drawer from "./Drawer";
 import styles from "./SettingsDrawer.module.css";
 
@@ -23,6 +25,16 @@ type SettingsLabelKey =
 type SettingsUnitKey = "settingsUnitSec" | "settingsUnitPct" | "settingsUnitKm" | "settingsUnitMin";
 type SettingsHintKey = "settingsHintSec" | "settingsHintPct" | "settingsHintKm" | "settingsHintMin";
 type SettingsValueKey = "settingsValueSec" | "settingsValuePct" | "settingsValueKm" | "settingsValueMin";
+
+const FUSION_OPTIONS: readonly {
+  value: FusionModel;
+  label: FusionLabelKey;
+  hint: "fusionViirsPreferredHint" | "fusionEqualWeightHint" | "fusionModisCalibratedHint";
+}[] = [
+  { value: "viirs_preferred", label: "fusionViirsPreferred", hint: "fusionViirsPreferredHint" },
+  { value: "equal_weight", label: "fusionEqualWeight", hint: "fusionEqualWeightHint" },
+  { value: "modis_calibrated", label: "fusionModisCalibrated", hint: "fusionModisCalibratedHint" },
+];
 
 const LABEL_KEY: Record<PipelineOverrideKey, SettingsLabelKey> = {
   dedupTimeSecs: "settingsDedupTimeLabel",
@@ -42,20 +54,27 @@ const UNIT_KEYS: Record<
   min: { unit: "settingsUnitMin", hint: "settingsHintMin", value: "settingsValueMin" },
 };
 
+function ratioChange(next: number, base: number): number {
+  return base === 0 ? 0 : (next - base) / base;
+}
+
 function clampUiValue(spec: PipelineParamSpec, raw: number): number {
   const clamped = Math.min(spec.uiMax, Math.max(spec.uiMin, raw));
   return spec.uiInteger ? Math.round(clamped) : Math.round(clamped * 100) / 100;
 }
 
 export default function SettingsDrawer() {
-  const { t } = useCopy();
+  const { t, fmt } = useCopy();
   const baseId = useId();
   const openDrawer = useAppStore((state) => state.openDrawer);
   const pipelineOverrides = useAppStore((state) => state.pipelineOverrides);
   const serverConfig = useAppStore((state) => state.serverConfig);
   const setPipelineOverride = useAppStore((state) => state.setPipelineOverride);
   const resetPipelineOverrides = useAppStore((state) => state.resetPipelineOverrides);
-  const { overrideError } = useMapPoints();
+  const fusionModel = useAppStore((state) => state.fusionModel);
+  const setFusionModel = useAppStore((state) => state.setFusionModel);
+  const { revealAnswer } = useHarmonizeTransition((v) => ({ revealAnswer: v.revealAnswer }));
+  const { overrideError, fusionComparison, fusionModel: shownModel, hasData } = useMapPoints();
 
   const [draftTexts, setDraftTexts] = useState<Partial<Record<PipelineOverrideKey, string>>>({});
 
@@ -64,6 +83,9 @@ export default function SettingsDrawer() {
     setDraftTexts({});
   }, [openDrawer]);
 
+  // The comparison carries harmonized numbers, so Raw mode keeps it hidden until the answer is revealed.
+  const showComparison =
+    revealAnswer && hasData && fusionModel !== DEFAULT_FUSION_MODEL && shownModel === fusionModel;
   const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const hasOverrides = hasPipelineOverrides(pipelineOverrides, defaults);
 
@@ -74,6 +96,7 @@ export default function SettingsDrawer() {
   const handleReset = () => {
     setDraftTexts({});
     resetPipelineOverrides();
+    setFusionModel(DEFAULT_FUSION_MODEL);
     flushPipelineOverrides();
   };
 
@@ -86,7 +109,7 @@ export default function SettingsDrawer() {
         <button
           type="button"
           className={styles.resetButton}
-          disabled={!hasOverrides}
+          disabled={!hasOverrides && fusionModel === DEFAULT_FUSION_MODEL}
           onClick={handleReset}
         >
           {t("settingsReset")}
@@ -98,6 +121,46 @@ export default function SettingsDrawer() {
           {overrideError}
         </p>
       )}
+
+      <fieldset className={styles.fusion}>
+        <legend className={styles.fusionLegend}>{t("fusionTitle")}</legend>
+        <p className={styles.hint}>{t("fusionNote")}</p>
+        {FUSION_OPTIONS.map((option) => (
+          <label key={option.value} className={styles.fusionOption}>
+            <input
+              type="radio"
+              name={`${baseId}-fusion`}
+              className={styles.fusionRadio}
+              value={option.value}
+              checked={fusionModel === option.value}
+              onChange={() => setFusionModel(option.value)}
+            />
+            <span className={styles.fusionText}>
+              <span className={styles.paramLabel}>{t(option.label)}</span>
+              <span className={styles.hint}>{t(option.hint)}</span>
+            </span>
+          </label>
+        ))}
+        {showComparison && fusionComparison && (
+          <div className={styles.fusionResult} aria-live="polite">
+            <p className={styles.hint}>
+              {t("fusionComparison", {
+                count: fmt.number(fusionComparison.count),
+                baseline: fmt.number(fusionComparison.baselineCount),
+                delta: fmt.signedPercent(ratioChange(fusionComparison.count, fusionComparison.baselineCount)),
+                frpDelta: fmt.signedPercent(
+                  ratioChange(fusionComparison.totalFrp, fusionComparison.baselineTotalFrp),
+                ),
+              })}
+            </p>
+            {fusionComparison.model === "modis_calibrated" && (
+              <p className={styles.hint}>
+                {t("fusionDropped", { n: fmt.number(fusionComparison.droppedBelowModisLimit) })}
+              </p>
+            )}
+          </div>
+        )}
+      </fieldset>
 
       <div className={styles.list}>
         {PIPELINE_PARAM_SPECS.map((spec) => {
