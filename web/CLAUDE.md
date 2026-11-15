@@ -39,7 +39,7 @@ src/
 │   └── Methods/    → Tam Methods sayfası (#/methods: MethodsPage, MethodsPipeline akordeon, VzaCurveFigure, H3GridFigure, MethodsReferences, DisclaimerBanner, MethodsLink, useMethodsConfig)
 ├── content/
 │   ├── copy.ts     → Ana sözlük (EN + TR, tipli), t(), createTranslator
-│   ├── copyMap.ts, copyRegion.ts, copyState.ts, copyMethods.ts, copyAnalytics.ts, copyTour.ts, copyFusion.ts → copy.ts parçaları
+│   ├── copyMap.ts, copyRegion.ts, copyState.ts, copyMethods.ts, copyAnalytics.ts, copyTour.ts, copyFusion.ts, copyBriefing.ts → copy.ts parçaları
 │   └── references.ts → Methods sayfası kaynakça listesi
 ├── hooks/          → Custom React hooks (useHarmonizeTransition, useCopy, useRoute, vb.)
 ├── lib/
@@ -66,10 +66,11 @@ src/
 - Props interface'leri bileşen dosyasında tanımlanır; paylaşılan tipler `types/index.ts`'te tutulur.
 - API çağrıları bileşenlerde yapılmaz, `services/api.ts` kullanılır. Ana uygulama veriyi backend'den okur; backend'e erişilemezse (ağ hatası, zaman aşımı, `/api/health` 5xx) demo moduna (K1) düşer ve `src/mocks/` fixture'larını YALNIZCA `lib/demoData.ts` üzerinden okur. Demo modunda her kaynak etiketi ve CSV çıktısı verinin sentetik olduğunu söyler; fixture'lar hiçbir yerde NASA verisi gibi sunulmaz. Başka hiçbir modül `src/mocks/`'tan import etmez. HTTP 4xx yanıtları gerçek yanıttır ve demo'ya düşürmez.
 - `src/mocks/` sentetik geliştirme fixture'larını içerir (Y5: `hotspots.json`, `calendar.json`, `stats.json`, `raw-platforms.json`, `metadata.json`, `index.ts`, `preview.tsx`, `README.md`; NASA verisi veya pipeline çıktısı değildir). `npm run dev` altında `http://localhost:5173/mock.html` (`web/mock.html` → `src/mocks/preview.tsx`) ayrı önizleme girişi ve ana uygulamanın demo modu (`lib/demoData.ts`) tarafından kullanılır. JSON fixture'lar elle düzenlenmez; repo kökünden deterministik seed ile `node web/scripts/generate-mocks.mjs` ile yeniden üretilir (ayrıntılar `src/mocks/README.md`).
+- **Dışa aktarma (R7):** `hooks/useExportView` canlı modda `GET /api/export` (`fetchExport`), demo modunda istemcide `lib/csv.ts` / `lib/geojson.ts` ile dosya üretir. Türkiye vaka çalışması (S7) `lib/caseStudy.ts` içinde `data/case-study/turkey/stats.json` dosyasını (web/ dışında) dinamik `import()` ile yükler; `vite.config.ts` `server.fs.allow` ve Dockerfile'daki COPY bu yüzden vardır. Brifing metrikleri `lib/briefingMetrics.ts` içinde saf fonksiyonlardır.
 - State yönetimi için custom hook'lar `hooks/` dizininde oluşturulur.
 - **Yönlendirme (routing):** Hash tabanlıdır (`useRoute`, `lib/route.ts`). Rotalar `#/` ile başlar (`#/methods[/section]`, bölümler `lib/route.ts` içindeki `METHODS_SECTIONS`); dashboard'un kendi URL durumu (`lib/urlState.ts` ile üretilen `#region=...`) asla `/` ile başlamaz. Hash routing bilinçli tercihtir ve korunur; backend artık bilinmeyen yollarda `index.html` döndürse de (K9) dashboard URL durumu hash'te tutulduğu için pathname routing'e geçilmez.
 - **Zorunlu alan ekleme:** `types/index.ts`, bir API yanıt tipi veya `UrlState` içine zorunlu bir alan eklendiğinde bu nesneyi oluşturan tüm yerler güncellenmelidir: `services/api.ts` eşleyicileri, `src/mocks/index.ts`, `hooks/useRoute.ts` (`serializeHash` çağrısı) ve `tests/`. `npm run typecheck` yalnızca `src/` altındakileri yakalar; `tests/` tip kontrolünden geçmediği için elle aranmalıdır.
-- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`, `copyMethods.ts`, `copyAnalytics.ts`, `copyTour.ts`, `copyFusion.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
+- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`, `copyMethods.ts`, `copyAnalytics.ts`, `copyTour.ts`, `copyFusion.ts`, `copyBriefing.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
 - Tüm animasyon zamanlaması `useHarmonizeTransition` (tek saat) üzerinden okunur; bileşenler kendi geçiş zamanlayıcısı kurmaz.
 - Raw modu, `revealAnswer` true olmadan harmonize cevabı (sayı, başlık veya fiş) asla sızdırmaz.
 

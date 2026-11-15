@@ -1937,12 +1937,25 @@ fn resolve_points_config(
     Ok((config, overridden))
 }
 
-async fn points(
-    State(state): State<Arc<ArchiveState>>,
-    Query(params): Query<PointsParams>,
-) -> Result<Json<PointsResponse>, ApiError> {
-    let started = Instant::now();
-    let region = find_region(&state, params.region.as_deref()).await?;
+/// Validated request shared by `/api/points` and the archive mode of `/api/export`.
+struct PeriodRequest {
+    region: Arc<RegionInfo>,
+    year: i32,
+    month: Option<u32>,
+    config: PipelineConfig,
+    config_overridden: bool,
+    min_confidence: MinConfidence,
+    fusion_model: FusionModel,
+}
+
+/// `own_checks` runs after the region, year and month checks and before the threshold
+/// overrides, so callers validate their own parameters in the order `/api/points` always has.
+async fn resolve_period(
+    state: &ArchiveState,
+    params: &PointsParams,
+    own_checks: impl FnOnce() -> Result<(), ApiError>,
+) -> Result<PeriodRequest, ApiError> {
+    let region = find_region(state, params.region.as_deref()).await?;
     let id = region.id.clone();
 
     let year: i32 = parse_param("year", params.year.as_deref())?
@@ -1954,17 +1967,8 @@ async fn points(
             "'month' must be within 1..=12",
         ));
     }
-    let limit = match parse_param::<usize>("limit", params.limit.as_deref())? {
-        Some(0) => {
-            return Err(ApiError::new(
-                StatusCode::BAD_REQUEST,
-                "'limit' must be at least 1",
-            ));
-        }
-        Some(n) => n.min(MAX_POINTS_LIMIT),
-        None => DEFAULT_POINTS_LIMIT,
-    };
-    let (config, config_overridden) = resolve_points_config(&state.config, &params)?;
+    own_checks()?;
+    let (config, config_overridden) = resolve_points_config(&state.config, params)?;
     let min_confidence = MinConfidence::parse(params.min_confidence.as_deref())
         .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?;
     let fusion_model = match params.fusion_model.as_deref().map(str::trim) {
@@ -1983,6 +1987,46 @@ async fn points(
         ));
     }
     state.admit_year(&region, year)?;
+    Ok(PeriodRequest {
+        region,
+        year,
+        month,
+        config,
+        config_overridden,
+        min_confidence,
+        fusion_model,
+    })
+}
+
+async fn points(
+    State(state): State<Arc<ArchiveState>>,
+    Query(params): Query<PointsParams>,
+) -> Result<Json<PointsResponse>, ApiError> {
+    let started = Instant::now();
+    let mut limit = DEFAULT_POINTS_LIMIT;
+    let PeriodRequest {
+        region,
+        year,
+        month,
+        config,
+        config_overridden,
+        min_confidence,
+        fusion_model,
+    } = resolve_period(&state, &params, || {
+        limit = match parse_param::<usize>("limit", params.limit.as_deref())? {
+            Some(0) => {
+                return Err(ApiError::new(
+                    StatusCode::BAD_REQUEST,
+                    "'limit' must be at least 1",
+                ));
+            }
+            Some(n) => n.min(MAX_POINTS_LIMIT),
+            None => DEFAULT_POINTS_LIMIT,
+        };
+        Ok(())
+    })
+    .await?;
+    let id = region.id.clone();
 
     let slot = state
         .load_slots
@@ -2157,6 +2201,227 @@ async fn points(
         "served /api/points"
     );
     Ok(Json(response))
+}
+
+// ---------- export (archive mode of /api/export) ----------
+
+/// Guards memory: the export materialises every record of the period in one response body.
+const MAX_EXPORT_RECORDS: usize = 500_000;
+const CSV_BOM: &[u8] = b"\xEF\xBB\xBF";
+
+#[derive(Deserialize, Default, Clone)]
+struct ArchiveExportParams {
+    region: Option<String>,
+    year: Option<String>,
+    month: Option<String>,
+    format: Option<String>,
+    view: Option<String>,
+    dedup_time_secs: Option<String>,
+    dedup_overlap: Option<String>,
+    match_radius_km: Option<String>,
+    match_window_secs: Option<String>,
+    fleet_radius_km: Option<String>,
+    min_confidence: Option<String>,
+    fusion_model: Option<String>,
+}
+
+impl ArchiveExportParams {
+    fn points_params(&self) -> PointsParams {
+        PointsParams {
+            region: self.region.clone(),
+            year: self.year.clone(),
+            month: self.month.clone(),
+            limit: None,
+            dedup_time_secs: self.dedup_time_secs.clone(),
+            dedup_overlap: self.dedup_overlap.clone(),
+            match_radius_km: self.match_radius_km.clone(),
+            match_window_secs: self.match_window_secs.clone(),
+            fleet_radius_km: self.fleet_radius_km.clone(),
+            min_confidence: self.min_confidence.clone(),
+            fusion_model: self.fusion_model.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ExportView {
+    Harmonized,
+    Raw,
+}
+
+impl ExportView {
+    fn parse(value: Option<&str>) -> Result<Self, ApiError> {
+        match value.map(str::to_ascii_lowercase).as_deref() {
+            None | Some("harmonized") => Ok(Self::Harmonized),
+            Some("raw") => Ok(Self::Raw),
+            Some(other) => Err(ApiError::new(
+                StatusCode::BAD_REQUEST,
+                format!("Invalid 'view' value '{other}': expected 'harmonized' or 'raw'"),
+            )),
+        }
+    }
+}
+
+/// Lowercase ASCII file-name stem of a region id (`Korea, South` -> `korea_south`).
+fn region_slug(id: &str) -> String {
+    let mut slug = String::new();
+    for c in id.chars() {
+        if c.is_ascii_alphanumeric() {
+            slug.push(c.to_ascii_lowercase());
+        } else if !slug.is_empty() && !slug.ends_with('_') {
+            slug.push('_');
+        }
+    }
+    let slug = slug.trim_end_matches('_');
+    if slug.is_empty() { "region".to_string() } else { slug.to_string() }
+}
+
+fn export_filename(
+    region_id: &str,
+    year: i32,
+    month: Option<u32>,
+    view: ExportView,
+    extension: &str,
+) -> String {
+    let period = match month {
+        Some(m) => format!("{year:04}-{m:02}"),
+        None => format!("{year:04}"),
+    };
+    let suffix = if view == ExportView::Raw { "_raw" } else { "" };
+    format!("pyrosync_{}_{period}{suffix}.{extension}", region_slug(region_id))
+}
+
+async fn export_archive(
+    state: Arc<ArchiveState>,
+    params: ArchiveExportParams,
+) -> Result<Response, ApiError> {
+    let format = crate::ExportFormat::parse(params.format.as_deref())
+        .map_err(|e| ApiError::new(e.status, e.message))?;
+    let view = ExportView::parse(params.view.as_deref())?;
+    let PeriodRequest {
+        region,
+        year,
+        month,
+        config,
+        min_confidence,
+        fusion_model,
+        ..
+    } = resolve_period(&state, &params.points_params(), || Ok(())).await?;
+
+    let slot = state
+        .load_slots
+        .clone()
+        .acquire_owned()
+        .await
+        .expect("semaphore is never closed");
+    let data = load_year(&state, &region, year).await?;
+    let body = tokio::task::spawn_blocking(move || {
+        let _slot = slot;
+        let mask = config.static_mask.enabled.then(|| {
+            StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
+        });
+        let (mut modis, mut viirs) = match month {
+            Some(m) => (in_month(&data.modis, m), in_month(&data.viirs, m)),
+            None => (data.modis.clone(), data.viirs.clone()),
+        };
+        drop(data);
+        min_confidence.retain(&mut modis);
+        min_confidence.retain(&mut viirs);
+        if modis.len() + viirs.len() > MAX_EXPORT_RECORDS {
+            return Err(ApiError::new(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                format!(
+                    "the period holds {} detections, above the export limit of {MAX_EXPORT_RECORDS}; request a single month or raise 'min_confidence'",
+                    modis.len() + viirs.len()
+                ),
+            ));
+        }
+
+        let text = if view == ExportView::Raw {
+            let raw: Vec<Hotspot> = modis.into_iter().chain(viirs).collect();
+            match format {
+                crate::ExportFormat::Csv => pyrosync_core::export::raw_to_csv(&raw),
+                crate::ExportFormat::GeoJson => pyrosync_core::export::raw_to_geojson(&raw),
+            }
+        } else {
+            let fusion_inputs = (fusion_model != FusionModel::ViirsPreferred)
+                .then(|| (modis.clone(), viirs.clone()));
+            let mut linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
+            let hotspots = match fusion_inputs {
+                None => std::mem::take(&mut linked.hotspots),
+                Some((fusion_modis, fusion_viirs)) => {
+                    apply_fusion_model(&linked, &fusion_modis, &fusion_viirs, fusion_model, &config)
+                        .hotspots
+                }
+            };
+            match format {
+                crate::ExportFormat::Csv => pyrosync_core::export::to_csv(&hotspots),
+                crate::ExportFormat::GeoJson => pyrosync_core::export::to_geojson(&hotspots),
+            }
+        };
+        let mut body = Vec::with_capacity(text.len() + CSV_BOM.len());
+        if matches!(format, crate::ExportFormat::Csv) {
+            body.extend_from_slice(CSV_BOM);
+        }
+        body.extend_from_slice(text.as_bytes());
+        Ok(body)
+    })
+    .await
+    .map_err(join_error)??;
+
+    let filename = export_filename(&region.id, year, month, view, format.extension());
+    let disposition = HeaderValue::from_str(&format!("attachment; filename=\"{filename}\""))
+        .map_err(|e| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok((
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, HeaderValue::from_static(format.content_type())),
+            (header::CONTENT_DISPOSITION, disposition),
+        ],
+        body,
+    )
+        .into_response())
+}
+
+/// Route layer of `/api/export`: a `region` query parameter switches to the archive export,
+/// every other request continues to the live FIRMS handler untouched.
+pub async fn export_dispatch(
+    State(archive): State<Option<Arc<ArchiveState>>>,
+    request: Request,
+    next: Next,
+) -> Response {
+    #[derive(Deserialize)]
+    struct Probe {
+        region: Option<String>,
+    }
+    let archive_mode = Query::<Probe>::try_from_uri(request.uri())
+        .is_ok_and(|Query(probe)| probe.region.is_some());
+    if !archive_mode {
+        return next.run(request).await;
+    }
+    let Some(state) = archive else {
+        return ApiError::new(StatusCode::SERVICE_UNAVAILABLE, "the archive is not available")
+            .into_response();
+    };
+    let params = match Query::<ArchiveExportParams>::try_from_uri(request.uri()) {
+        Ok(Query(params)) => params,
+        Err(rejection) => {
+            return ApiError::new(StatusCode::BAD_REQUEST, rejection.body_text()).into_response();
+        }
+    };
+    let limit = state.limits.request_timeout;
+    match tokio::time::timeout(limit, export_archive(state, params)).await {
+        Ok(Ok(response)) => response,
+        Ok(Err(err)) => err.into_response(),
+        Err(_) => ApiError::new(
+            StatusCode::GATEWAY_TIMEOUT,
+            format!(
+                "archive request timed out after {} s (ARCHIVE_REQUEST_TIMEOUT_SECS)",
+                limit.as_secs()
+            ),
+        )
+        .into_response(),
+    }
 }
 
 #[cfg(test)]
@@ -2783,6 +3048,182 @@ mod tests {
         assert!(err.message.contains("fusion_model") && err.message.contains("equal_weight"));
 
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    async fn export_request(
+        state: &Arc<ArchiveState>,
+        query: &str,
+    ) -> (StatusCode, axum::http::HeaderMap, Vec<u8>) {
+        use tower::ServiceExt;
+
+        let app = Router::new().route(
+            "/export",
+            get(|| async { "live" }).route_layer(middleware::from_fn_with_state(
+                Some(state.clone()),
+                export_dispatch,
+            )),
+        );
+        let request = axum::http::Request::get(format!("/export?{query}"))
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = app.oneshot(request).await.unwrap();
+        let status = response.status();
+        let headers = response.headers().clone();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap()
+            .to_vec();
+        (status, headers, body)
+    }
+
+    fn export_fixture(name: &str) -> (PathBuf, Arc<ArchiveState>) {
+        let dir = temp_archive(name);
+        write_file(
+            &dir,
+            "modis",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (35.95, "2021-08-03", 0)],
+        );
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (36.5, "2021-07-02", 0)],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        (dir, state)
+    }
+
+    fn header_str(headers: &axum::http::HeaderMap, name: header::HeaderName) -> String {
+        headers.get(name).unwrap().to_str().unwrap().to_string()
+    }
+
+    #[tokio::test]
+    async fn export_archive_csv_matches_points_harmonized_count() {
+        let (dir, state) = export_fixture("export-csv");
+        let Json(points) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: Some("7".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        let (status, headers, body) = export_request(&state, "region=Malta&year=2021&month=7").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(header_str(&headers, header::CONTENT_TYPE), "text/csv; charset=utf-8");
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021-07.csv\""
+        );
+        assert!(body.starts_with(CSV_BOM));
+        let text = std::str::from_utf8(&body[CSV_BOM.len()..]).unwrap();
+        let mut lines = text.trim_end_matches("\r\n").split("\r\n");
+        assert_eq!(lines.next(), Some(pyrosync_core::export::CSV_HEADER));
+        assert_eq!(lines.count(), points.stages.harmonized);
+
+        let (_, headers, _) = export_request(&state, "region=Malta&year=2021").await;
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021.csv\""
+        );
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_geojson_and_raw_views() {
+        let (dir, state) = export_fixture("export-geojson-raw");
+        let (status, headers, body) =
+            export_request(&state, "region=Malta&year=2021&month=7&format=geojson").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(header_str(&headers, header::CONTENT_TYPE), "application/geo+json");
+        assert!(!body.starts_with(CSV_BOM));
+        let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(parsed["type"], "FeatureCollection");
+        let features = parsed["features"].as_array().unwrap();
+        assert!(!features.is_empty());
+        assert_eq!(features[0]["geometry"]["type"], "Point");
+
+        let (status, headers, body) =
+            export_request(&state, "region=Malta&year=2021&month=7&view=raw").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021-07_raw.csv\""
+        );
+        let text = std::str::from_utf8(&body[CSV_BOM.len()..]).unwrap();
+        let lines: Vec<&str> = text.trim_end_matches("\r\n").split("\r\n").collect();
+        assert_eq!(lines[0], pyrosync_core::export::RAW_CSV_HEADER);
+        assert_eq!(lines.len() - 1, 3);
+
+        let (status, headers, body) =
+            export_request(&state, "region=Malta&year=2021&view=raw&format=geojson").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            header_str(&headers, header::CONTENT_DISPOSITION),
+            "attachment; filename=\"pyrosync_malta_2021_raw.geojson\""
+        );
+        let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(parsed["features"].as_array().unwrap().len(), 4);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_rejects_bad_params_and_keeps_points_errors() {
+        let (dir, state) = export_fixture("export-errors");
+        for (query, expected) in [
+            ("region=Malta&year=2021&format=xml", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&view=bogus", StatusCode::BAD_REQUEST),
+            ("region=Malta", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&month=13", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=2021&fusion_model=bogus", StatusCode::BAD_REQUEST),
+            ("region=Malta&year=1990", StatusCode::NOT_FOUND),
+            ("region=Atlantis&year=2021", StatusCode::NOT_FOUND),
+        ] {
+            let (status, _, body) = export_request(&state, query).await;
+            assert_eq!(status, expected, "query={query}");
+            let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            assert!(json["error"].as_str().is_some_and(|s| !s.is_empty()), "query={query}");
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn export_archive_honours_fusion_model_and_live_requests_pass_through() {
+        let (dir, state) = export_fixture("export-fusion");
+        let rows = |body: &[u8]| {
+            std::str::from_utf8(&body[CSV_BOM.len()..])
+                .unwrap()
+                .trim_end_matches("\r\n")
+                .split("\r\n")
+                .count()
+                - 1
+        };
+        let (_, _, default) = export_request(&state, "region=Malta&year=2021").await;
+        let (status, _, calibrated) =
+            export_request(&state, "region=Malta&year=2021&fusion_model=modis_calibrated").await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(rows(&calibrated) <= rows(&default));
+
+        let (status, _, body) = export_request(&state, "west=26&south=36&east=45&north=42").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body, b"live");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn region_slug_is_lowercase_ascii() {
+        assert_eq!(region_slug("Turkey"), "turkey");
+        assert_eq!(region_slug("Korea, South"), "korea_south");
+        assert_eq!(region_slug("Côte_d_Ivoire"), "c_te_d_ivoire");
+        assert_eq!(region_slug("!!"), "region");
     }
 
     #[test]

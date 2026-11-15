@@ -16,7 +16,7 @@
 | `/api/compare` | GET | Ham ve harmonize veri karşılaştırma istatistikleri (query params: /api/harmonize ile aynı) |
 | `/api/stats` | GET | Genel istatistikler, sensör kırılımı, pipeline metrikleri (query params: /api/harmonize ile aynı) |
 | `/api/calendar` | GET | Arşivden tarihsel aylık yanma takvimi (`total_frp`, `total_frp_lower`/`total_frp_upper`, `frp_per_detection_eq`, `mean_frp*` + `uncertainty: { confidence, note }`; query params: country, from, to, opsiyonel bbox) |
-| `/api/export` | GET | Harmonize edilmiş hotspot'ları dosya olarak indirir (query params: /api/harmonize ile aynı + `format=csv\|geojson`, varsayılan csv) |
+| `/api/export` | GET | Harmonize edilmiş hotspot'ları dosya olarak indirir (query params: /api/harmonize ile aynı + `format=csv\|geojson`, varsayılan csv). `region` parametresi varsa arşiv modu: `/api/points` ile aynı parametreler + `year`, opsiyonel `month`, `view=harmonized\|raw`, limitsiz (500000 tespit sınırı, aşılırsa 413), BOM'lu CSV veya GeoJSON, `FIRMS_API_KEY` gerekmez |
 
 ## Konfigürasyon (Env Vars)
 

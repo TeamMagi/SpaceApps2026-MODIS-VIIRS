@@ -2,7 +2,7 @@
  * BottomBar — 44 px strip; where the Z-scan ends.
  *
  * Left: the single honest limit — disclaimer (never repeated next to numbers).
- * Right: secondary actions (low-confidence filter switch, compact CSV download with filename in
+ * Right: secondary actions (low-confidence filter switch, compact CSV and GeoJSON downloads with filename in
  *   title/aria-description, copy link) and primary briefMe action (opens "briefing").
  * The filter switch lives here rather than in a drawer so its state stays visible next to every
  *   number it changes; while it is on, the strip also says how many detections it removed.
@@ -13,6 +13,7 @@
 import { useCopy } from "../../hooks/useCopy";
 import { useCopyLink } from "../../hooks/useCopyLink";
 import { useExportView } from "../../hooks/useExportView";
+import { EXPORT_FORMATS } from "../../lib/export";
 import { useMapPoints } from "../../hooks/useRegionData";
 import MethodsLink from "../Methods/MethodsLink";
 import { useAppStore } from "../../store/useAppStore";
@@ -22,9 +23,8 @@ export default function BottomBar() {
   const { t } = useCopy();
   const showDrawer = useAppStore((state) => state.showDrawer);
   const briefingOpen = useAppStore((state) => state.openDrawer === "briefing");
-  const { fileName, canDownload, download } = useExportView();
+  const { fileNames, statuses, canDownload, failed, download } = useExportView();
   const { copied, copyLink } = useCopyLink();
-  const csvDescription = t("exportCsvDescription", { file: fileName });
   const minConfidence = useAppStore((state) => state.minConfidence);
   const setMinConfidence = useAppStore((state) => state.setMinConfidence);
   const startTour = useAppStore((state) => state.startTour);
@@ -61,16 +61,30 @@ export default function BottomBar() {
             {t("confidenceFilterExcluded", { count: excludedHere })}
           </span>
         )}
-        <button
-          type="button"
-          className={styles.action}
-          disabled={!canDownload}
-          title={csvDescription}
-          aria-description={csvDescription}
-          onClick={download}
-        >
-          {t("exportCsvShort")}
-        </button>
+        {EXPORT_FORMATS.map((format) => {
+          const description = t("exportCsvDescription", { file: fileNames[format] });
+          const loading = statuses[format] === "loading";
+          return (
+            <button
+              key={format}
+              type="button"
+              className={styles.action}
+              disabled={!canDownload || loading}
+              aria-busy={loading}
+              aria-label={format === "csv" ? t("exportCsv") : t("exportGeojson")}
+              title={description}
+              aria-description={description}
+              onClick={() => download(format)}
+            >
+              {loading ? t("exportPreparing") : format === "csv" ? t("exportCsvShort") : t("exportGeojsonShort")}
+            </button>
+          );
+        })}
+        {failed && (
+          <span className={styles.filterNote} role="alert">
+            {t("exportFailed")}
+          </span>
+        )}
         <button type="button" className={styles.action} data-copied={copied} onClick={copyLink}>
           {copied ? t("briefingLinkCopied") : t("briefingCopyLink")}
         </button>

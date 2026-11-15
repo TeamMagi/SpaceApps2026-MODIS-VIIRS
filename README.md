@@ -47,6 +47,12 @@ The Settings drawer lets users compare three ways of fusing a matched MODIS/VIIR
 
 The drawer shows how the selected model differs from Standard (record count, total FRP and dropped detections). The choice is kept in the URL hash (`fm=eq|mc`), so shared links reopen with the same model, and "Reset to defaults" clears it. The model is applied after harmonization as a view option. It is not part of the pipeline configuration, so precomputed results stay valid. Like the threshold overrides, it changes only the selected month's map points and stage counts. The yearly chart and calendar stay on the Standard model. Demo mode applies the same models to the synthetic data on the client.
 
+### Export and Regional Briefing
+
+The bottom bar and the briefing drawer have separate **CSV** and **GeoJSON** buttons. They download the current view (Harmonized or Raw) through `/api/export` and show a loading state while the file is prepared. In demo mode the file is built in the browser and labelled as synthetic.
+
+The **regional briefing** lists the detection totals and the removed duplicates, the sensor-cliff change, the peak month and the VZA adjustment. It also shows the last 7 days of the period, the deviation from the historical mean for the same month, the most active sensor and platform, and the trend over the last five complete years. Raw mode shows only the metrics based on raw counts. When Türkiye is selected, a **2021 Mediterranean fires case study** card shows the Antalya, Muğla and Mediterranean anomalies from the S7 data set (`data/case-study/turkey/stats.json`). The briefing can be printed.
+
 ### 60-Second Guided Tour
 
 The "60-s tour" button in the bottom bar (or the `T` key) starts a four-step guided tour that follows the jury demo script. Each step lasts 15 seconds and highlights the related panels:
@@ -108,7 +114,7 @@ tools/              Utility scripts (archive verification, data fetching)
 | `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
 | `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox); cells carry `total_frp`, `frp_per_detection_eq`, `mean_frp` and their `_lower`/`_upper` bounds |
 | `GET /api/points` | Raw and harmonized points of one archive region and period (`region`, `year`, optional `month`, `limit`, `min_confidence`, threshold overrides, and `fusion_model=viirs_preferred\|equal_weight\|modis_calibrated`); non-default models add a `fusion_comparison` against Standard. Details in `docs/API.md` |
-| `GET /api/export` | Download harmonized hotspots as a file (same query as `/api/harmonize` plus `format=csv\|geojson`, default `csv`) |
+| `GET /api/export` | Download hotspots as a CSV (UTF-8 BOM, opens in Excel) or GeoJSON file (`format=csv\|geojson`, default `csv`). Live mode takes the same query as `/api/harmonize`. Archive mode starts when `region` is given: `region`, `year`, optional `month`, `view=harmonized\|raw`, plus the same filters as `/api/points`. It needs no API key and returns every record of the period as `pyrosync_{region}_{period}[_raw].{csv\|geojson}` |
 
 - Responses include an `X-Cache: HIT|MISS` header.
 - Responses include a `warnings` array and an `effort.reliable` flag; if a FIRMS source fails to fetch, effort normalization is marked unreliable and surfaced in the response.

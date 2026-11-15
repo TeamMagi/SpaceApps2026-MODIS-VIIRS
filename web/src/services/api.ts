@@ -1,5 +1,6 @@
 import { decideNextDataMode, type ProbeOrFetchOutcome } from "../lib/dataMode";
 import { buildDemoPoints, buildDemoRegions, buildDemoSeries } from "../lib/demoData";
+import { parseContentDispositionFileName, type ExportFormat, type ExportViewKind } from "../lib/export";
 import { DEFAULT_PIPELINE_CONFIG, overridesToQueryParams } from "../lib/pipelineOverrides";
 import { useAppStore } from "../store/useAppStore";
 import {
@@ -545,11 +546,11 @@ export interface PointsResponse {
 
 // --- Core HTTP helper --------------------------------------------------------
 
-async function requestJson<T>(
+async function requestResponse(
   endpoint: string,
   params?: Record<string, string>,
   signal?: AbortSignal,
-): Promise<T> {
+): Promise<Response> {
   const url = new URL(`${BASE_URL}${endpoint}`, window.location.origin);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
@@ -595,6 +596,15 @@ async function requestJson<T>(
     throw new ApiError(res.statusText || `HTTP ${res.status}`, res.status, "server", "server");
   }
 
+  return res;
+}
+
+async function requestJson<T>(
+  endpoint: string,
+  params?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<T> {
+  const res = await requestResponse(endpoint, params, signal);
   try {
     return (await res.json()) as T;
   } catch (err: unknown) {
@@ -1056,10 +1066,8 @@ export interface FetchPointsParams {
   fusionModel?: FusionModel;
 }
 
-export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
-  if (useAppStore.getState().dataMode === "demo") {
-    return buildDemoPoints(params);
-  }
+/** Query shared by /api/points and /api/export; non-default parameters only, so default URLs stay stable. */
+function buildPointsQuery(params: FetchPointsParams): Record<string, string> {
   const defaults = params.defaults ?? useAppStore.getState().serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const query: Record<string, string> = {
     region: params.region,
@@ -1073,6 +1081,14 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
   if (params.fusionModel && params.fusionModel !== DEFAULT_FUSION_MODEL) {
     query.fusion_model = params.fusionModel;
   }
+  return query;
+}
+
+export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoPoints(params);
+  }
+  const query = buildPointsQuery(params);
   try {
     const wire = await requestJson<WirePointsResponse>("/points", query, signal);
     if (
@@ -1150,6 +1166,27 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
     }
     throw err;
   }
+}
+
+export interface ExportFile {
+  readonly blob: Blob;
+  readonly fileName: string;
+}
+
+/** Archive export from the backend (`GET /api/export`); the file name comes from Content-Disposition. */
+export async function fetchExport(
+  params: FetchPointsParams,
+  format: ExportFormat,
+  view: ExportViewKind,
+  fallbackFileName: string,
+  signal?: AbortSignal,
+): Promise<ExportFile> {
+  const res = await requestResponse("/export", { ...buildPointsQuery(params), format, view }, signal);
+  const blob = await res.blob();
+  return {
+    blob,
+    fileName: parseContentDispositionFileName(res.headers.get("Content-Disposition")) ?? fallbackFileName,
+  };
 }
 
 // --- NRT endpoint fetchers ---

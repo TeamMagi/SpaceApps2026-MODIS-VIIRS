@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { performance } from "node:perf_hooks";
 import type { GeoDataset, GeoFeature } from "../src/lib/geo/types.ts";
-import { buildScenePoints, pointMatchesSensorFilter } from "../src/components/Map/engine/renderer.ts";
+import {
+  alphaForTier,
+  buildScenePoints,
+  pointMatchesSensorFilter,
+  UNCERT_ALPHA_STEPS,
+} from "../src/components/Map/engine/renderer.ts";
 import { PointFlag, PointShape } from "../src/components/Map/engine/types.ts";
 import {
   angularDistance,
@@ -306,6 +311,38 @@ check("globe layer attributes mirror the flat renderer's shapes, buckets and sen
       );
     }
   }
+});
+
+check("globe layer preserves uncertainty tiers per harmonized point and keeps raw tiers at zero", () => {
+  const raw = [
+    { id: "r1", sensor: "MODIS", lon: 30, lat: 40, frp: 12, harmonizedId: "h0" },
+    { id: "r2", sensor: "VIIRS", lon: 31, lat: 41, frp: 20, harmonizedId: "h1" },
+  ];
+  const harmonized = [
+    { id: "h0", source: "ModisOnly", lon: 30, lat: 40, frpCorrected: 100, frpLower: null, frpUpper: null },
+    { id: "h1", source: "Matched", lon: 31, lat: 41, frpCorrected: 100, frpLower: 92, frpUpper: 108 },
+    { id: "h2", source: "ViirsOnly", lon: 32, lat: 42, frpCorrected: 100, frpLower: 85, frpUpper: 115 },
+    { id: "h3", source: "ModisOnly", lon: 33, lat: 43, frpCorrected: 100, frpLower: 70, frpUpper: 130 },
+  ];
+  const scene = buildScenePoints(
+    { raw, harmonized } as unknown as Parameters<typeof buildScenePoints>[0],
+    LONLAT_PROJECTION,
+  );
+  assert.deepEqual([...scene.harmonized.uncertTiers], [0, 0, 1, 2]);
+
+  const rawLayer = buildGlobeLayer(scene.raw, false);
+  assert.ok(rawLayer.uncertTiers instanceof Float32Array);
+  assert.deepEqual([...rawLayer.uncertTiers], [0, 0]);
+
+  const harmLayer = buildGlobeLayer(scene.harmonized, true);
+  assert.ok(harmLayer.uncertTiers instanceof Float32Array);
+  assert.equal(harmLayer.uncertTiers.length, scene.harmonized.count);
+  assert.deepEqual([...harmLayer.uncertTiers], [...scene.harmonized.uncertTiers]);
+
+  assert.equal(alphaForTier(0), 1.0);
+  assert.equal(alphaForTier(1), 0.72);
+  assert.equal(alphaForTier(2), 0.48);
+  assert.deepEqual([alphaForTier(0), alphaForTier(1), alphaForTier(2)], [...UNCERT_ALPHA_STEPS]);
 });
 
 console.log(`globe tests done in ${(performance.now() - t0).toFixed(1)} ms`);
