@@ -25,6 +25,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::EnvFilter;
 
 use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::conformal::{CONFORMAL_SCHEMA_VERSION, ConformalTable, calibration_fingerprint};
 use pyrosync_core::effort::{EffortFactor, TropicalSwathGap};
 use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, SeasonYear,
@@ -67,6 +68,7 @@ struct AppState {
     cache: Arc<RwLock<ResponseCache>>,
     request_timeout: Option<Duration>,
     config: Arc<PipelineConfig>,
+    conformal: Option<Arc<ConformalTable>>,
 }
 
 struct CacheEntry {
@@ -931,6 +933,61 @@ fn archive_cache_dir_from_env() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(DEFAULT_ARCHIVE_CACHE_DIR))
 }
 
+const DEFAULT_CONFORMAL_TABLE: &str = "data/conformal.json";
+
+fn conformal_table_path() -> PathBuf {
+    std::env::var("CONFORMAL_TABLE")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(DEFAULT_CONFORMAL_TABLE))
+}
+
+/// Loads the calibrated conformal table; every failure mode leaves the feature off so the
+/// calendar keeps serving its analytic bounds unchanged.
+fn load_conformal_table(
+    path: &std::path::Path,
+    config: &PipelineConfig,
+) -> Option<Arc<ConformalTable>> {
+    let bytes = match std::fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+            tracing::info!(path = %path.display(), "Conformal table not found; conformal bands disabled");
+            return None;
+        }
+        Err(err) => {
+            tracing::warn!(path = %path.display(), "Cannot read conformal table, bands disabled: {err}");
+            return None;
+        }
+    };
+    let table: ConformalTable = match serde_json::from_slice(&bytes) {
+        Ok(table) => table,
+        Err(err) => {
+            tracing::warn!(path = %path.display(), "Invalid conformal table, bands disabled: {err}");
+            return None;
+        }
+    };
+    if table.schema_version != CONFORMAL_SCHEMA_VERSION {
+        tracing::warn!(
+            path = %path.display(),
+            "Conformal table schema {} != supported {CONFORMAL_SCHEMA_VERSION}; bands disabled",
+            table.schema_version
+        );
+        return None;
+    }
+    let expected = calibration_fingerprint(config);
+    if table.calibration_fingerprint != expected {
+        tracing::warn!(
+            path = %path.display(),
+            "Conformal table fingerprint {} does not match the active pipeline config ({expected}); bands disabled until it is recalibrated",
+            table.calibration_fingerprint
+        );
+        return None;
+    }
+    tracing::info!(path = %path.display(), entries = table.entries.len(), "Conformal table loaded");
+    Some(Arc::new(table))
+}
+
 fn load_pipeline_config() -> anyhow::Result<Arc<PipelineConfig>> {
     // A bad config aborts startup: silently falling back to defaults would change scientific
     // results without anyone noticing.
@@ -1035,6 +1092,7 @@ async fn run_server() -> anyhow::Result<()> {
         archive,
         cache: Arc::new(RwLock::new(ResponseCache::new(cache_budget_bytes))),
         request_timeout,
+        conformal: load_conformal_table(&conformal_table_path(), &pipeline_config),
         config: pipeline_config,
     };
     let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "web/dist".to_string());
@@ -2118,6 +2176,7 @@ enum CountryYearOutcome {
 async fn run_calendar_pipeline(
     archive: &Arc<ArchiveClient>,
     config: &PipelineConfig,
+    conformal: Option<&ConformalTable>,
     query: &ValidatedCalendarQuery,
 ) -> Result<CalendarResponse, ApiError> {
     let mut modis = Vec::new();
@@ -2233,6 +2292,11 @@ async fn run_calendar_pipeline(
     }
 
     let config = config.clone();
+    // The table is calibrated on unfiltered country totals only, so bbox or confidence-filtered
+    // queries must not receive a band.
+    let conformal = conformal
+        .filter(|_| query.bbox.is_none() && query.min_confidence == MinConfidence::Low)
+        .cloned();
     let query = query.clone();
     tokio::task::spawn_blocking(move || {
         let raw_detections = modis.len() + viirs.len();
@@ -2244,10 +2308,11 @@ async fn run_calendar_pipeline(
             mask.as_ref(),
         )
         .hotspots;
-        let calendar_cells = pyrosync_core::calendar::build_calendar_with(
+        let calendar_cells = pyrosync_core::calendar::build_calendar_with_conformal(
             &harmonized,
             &config.uncertainty,
             &config.calibration,
+            conformal.as_ref(),
         );
 
         let mut response = build_calendar_response(
@@ -2272,7 +2337,7 @@ async fn run_calendar_with_timeout(
 ) -> Result<CalendarResponse, ApiError> {
     let archive = require_archive_client(state)?;
     match state.request_timeout {
-        Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, &state.config, query)).await {
+        Some(timeout) => match tokio::time::timeout(timeout, run_calendar_pipeline(archive, &state.config, state.conformal.as_deref(), query)).await {
             Ok(result) => result,
             // Dropping the timed-out future cannot cancel a `spawn_blocking` task already in flight;
             // the blocking CPU work continues running in the background until it finishes.
@@ -2281,7 +2346,7 @@ async fn run_calendar_with_timeout(
                 timeout.as_secs()
             ))),
         },
-        None => run_calendar_pipeline(archive, &state.config, query).await,
+        None => run_calendar_pipeline(archive, &state.config, state.conformal.as_deref(), query).await,
     }
 }
 
@@ -2866,6 +2931,7 @@ mod tests {
             cache: Arc::new(RwLock::new(ResponseCache::new(budget_bytes))),
             request_timeout,
             config: Arc::new(PipelineConfig::default()),
+            conformal: None,
         }
     }
 
@@ -3550,6 +3616,7 @@ mod tests {
             anomaly: None,
             sfai: None,
             quality_flags: Vec::new(),
+            conformal: None,
         }]
     }
 
@@ -3723,6 +3790,7 @@ mod tests {
             cache: Arc::new(RwLock::new(ResponseCache::new(1024 * 1024))),
             request_timeout: Some(Duration::from_secs(30)),
             config: Arc::new(PipelineConfig::default()),
+            conformal: None,
         };
 
         let err = calendar(
@@ -3761,6 +3829,7 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
             cache: Arc::new(RwLock::new(ResponseCache::new(1024 * 1024))),
             request_timeout: Some(Duration::from_secs(30)),
             config: Arc::new(PipelineConfig::default()),
+            conformal: None,
         };
 
         let resp = calendar(
@@ -3797,6 +3866,116 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
             "sample /api/calendar cell: {}",
             serde_json::to_string_pretty(cell).expect("pretty json")
         );
+    }
+
+    fn tiny_conformal_table(fingerprint: String) -> ConformalTable {
+        use pyrosync_core::conformal::{ConformalEntry, ConformalEra};
+        ConformalTable {
+            schema_version: CONFORMAL_SCHEMA_VERSION,
+            calibration_fingerprint: fingerprint,
+            entries: vec![ConformalEntry {
+                era: ConformalEra::PreViirs,
+                bin: 0,
+                mu_lo: None,
+                mu_hi: None,
+                cal_mu_min: 1.0,
+                cal_mu_max: 1e6,
+                n_cal: 120,
+                q68_lower: Some(-0.1),
+                q68_upper: Some(0.1),
+                q90_lower: Some(-0.2),
+                q90_upper: Some(0.2),
+            }],
+            coverage: None,
+            notes: None,
+        }
+    }
+
+    async fn conformal_calendar_json(
+        conformal: Option<ConformalTable>,
+        bbox: Option<[Option<f64>; 4]>,
+    ) -> (Vec<u8>, serde_json::Value) {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let year_dir = dir.path().join("modis").join("2020");
+        std::fs::create_dir_all(&year_dir).expect("create archive year dir");
+        let csv = "\
+latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type
+39.0000,32.0000,330.0,1.5,1.0,2020-07-01,1000,Terra,MODIS,80,6.1,290.0,50.0,D,0
+39.1000,32.1000,328.0,2.0,1.0,2020-07-02,1000,Aqua,MODIS,75,6.1,289.0,60.0,D,0
+";
+        std::fs::write(year_dir.join("modis_2020_Testland.csv"), csv).expect("write archive csv");
+        let state = AppState {
+            firms: None,
+            archive: Some(Arc::new(ArchiveClient::offline(dir.path().to_path_buf()))),
+            cache: Arc::new(RwLock::new(ResponseCache::new(1024 * 1024))),
+            request_timeout: Some(Duration::from_secs(30)),
+            config: Arc::new(PipelineConfig::default()),
+            conformal: conformal.map(Arc::new),
+        };
+        let resp = calendar(
+            State(state),
+            ApiQuery(calendar_params("Testland", Some(2020), Some(2020), bbox)),
+        )
+        .await
+        .expect("offline calendar should succeed");
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("read body")
+            .to_vec();
+        let json = serde_json::from_slice(&body).expect("valid json");
+        (body, json)
+    }
+
+    #[tokio::test]
+    async fn calendar_without_conformal_table_has_no_conformal_field() {
+        let (body, json) = conformal_calendar_json(None, None).await;
+        assert!(json["calendar"][0].get("conformal").is_none());
+        assert!(!String::from_utf8_lossy(&body).contains("conformal"));
+    }
+
+    #[tokio::test]
+    async fn calendar_with_conformal_table_attaches_band_to_country_totals_only() {
+        let table = tiny_conformal_table(calibration_fingerprint(&PipelineConfig::default()));
+        let (_, json) = conformal_calendar_json(Some(table.clone()), None).await;
+        let cell = &json["calendar"][0];
+        let total = cell["total_frp"].as_f64().expect("total_frp");
+        let band = &cell["conformal"];
+        assert_eq!(band["era"], "pre_viirs");
+        assert!((band["p68_lower"].as_f64().unwrap() - total * 0.9).abs() < 1e-9);
+        assert!((band["p90_upper"].as_f64().unwrap() - total * 1.2).abs() < 1e-9);
+        assert_eq!(band["n_cal"], 120);
+        assert!(cell["total_frp_lower"].is_number(), "analytic bounds stay");
+
+        let bbox = Some([Some(30.0), Some(35.0), Some(40.0), Some(45.0)]);
+        let (_, json) = conformal_calendar_json(Some(table), bbox).await;
+        assert!(json["calendar"][0].get("conformal").is_none(), "bbox query gets no band");
+    }
+
+    #[test]
+    fn conformal_table_loader_gates_on_file_schema_and_fingerprint() {
+        let config = PipelineConfig::default();
+        let dir = tempfile::tempdir().expect("temp dir");
+        let path = dir.path().join("conformal.json");
+        assert!(load_conformal_table(&path, &config).is_none(), "missing file");
+
+        let write = |table: &ConformalTable| {
+            std::fs::write(&path, serde_json::to_vec(table).unwrap()).unwrap();
+        };
+        write(&tiny_conformal_table(calibration_fingerprint(&config)));
+        assert!(load_conformal_table(&path, &config).is_some());
+
+        write(&tiny_conformal_table("fnv1a64:0000000000000000".into()));
+        assert!(load_conformal_table(&path, &config).is_none(), "fingerprint mismatch");
+
+        let mut tuned = config.clone();
+        tuned.uncertainty.viirs_sensor_sigma += 0.01;
+        write(&tiny_conformal_table(calibration_fingerprint(&config)));
+        assert!(load_conformal_table(&path, &tuned).is_some(), "sigma change keeps the table");
+        tuned.matching.radius_km += 1.0;
+        assert!(load_conformal_table(&path, &tuned).is_none(), "centre change drops the table");
+
+        std::fs::write(&path, b"not json").unwrap();
+        assert!(load_conformal_table(&path, &config).is_none(), "invalid json");
     }
 
     #[test]

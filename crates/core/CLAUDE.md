@@ -17,6 +17,7 @@
 | `vza.rs` | MODIS FRP görüş açısı düzeltmesi (`R_rel(θ)` kuadratik polinom × ham FRP, `VzaConfig`'ten), piksel alanı (`A_p`) ve analitik tespit limiti (`D_p`, `r_p`) |
 | `calibration.rs` | VIIRS öncesi (2012 öncesi) enlem bandı tamlık katsayısı `k_c` (gözlenen geçiş oranı + interpolasyon) |
 | `uncertainty.rs` | Analitik FRP güven aralığı (`frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*`) yayılımı |
+| `conformal.rs` | Mondrian split conformal aralıkları (saf istatistik): `fit_mondrian`, `conformal_interval`, `calibration_fingerprint`; `uncertainty.rs` üzerinden de dışa açılır. Sensör-dışarıda tekrarlanabilirlik bandıdır, gerçek doğruluk değil |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
 | `effort.rs` | Gözlem eforu (EffortFactor) tahmini, ≥ 40 MW şiddet rejimli Ω (`omega_high_intensity`) ve ayrı raporlanan S-NPP/Aqua gündüz oranı |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |

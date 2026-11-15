@@ -1105,6 +1105,7 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             anomaly: None,
             sfai: None,
             quality_flags: Vec::new(),
+            conformal: None,
         })
         .collect();
     compute_anomalies(&mut cells);
