@@ -11,7 +11,7 @@ import {
   type PointStages,
   type RawPoint,
 } from "../types";
-import { MODIS_THRESHOLD_DAY_NADIR_MW, MODIS_THRESHOLD_NIGHT_NADIR_MW } from "./footprint";
+import { MODIS_NADIR_D50_DAY_MW, MODIS_NADIR_D50_NIGHT_MW } from "./footprint";
 
 export const DEMO_SOURCE_LABEL = "Synthetic demo data (not NASA FIRMS)";
 
@@ -195,7 +195,7 @@ export function applyDemoFusionModel(
     }
     if (model === "modis_calibrated" && p.source === HotspotSource.ViirsOnly) {
       const limit =
-        p.daynight === DayNight.Night ? MODIS_THRESHOLD_NIGHT_NADIR_MW : MODIS_THRESHOLD_DAY_NADIR_MW;
+        p.daynight === DayNight.Night ? MODIS_NADIR_D50_NIGHT_MW : MODIS_NADIR_D50_DAY_MW;
       if (p.frpCorrected < limit) {
         dropped += 1;
         continue;
