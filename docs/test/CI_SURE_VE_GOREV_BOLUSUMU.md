@@ -42,11 +42,11 @@ Başka bilinenler: satır kapsamı %95,5 (kapı %90); 737 Rust testi (2'si `#[ig
 
 ## 5. İki eşit iş paketi
 
-İki paket farklı bloklara dokunur, birbirini beklemez. Tahmini iş yükü eşittir (yaklaşık 55 dk her biri). İsimler doldurulacak: **Kişi A** = ____ , **Kişi B** = ____.
+İki paket farklı bloklara dokunur, birbirini beklemez. Tahmini iş yükü eşittir (yaklaşık 55 dk her biri). **Kişi A = Görkem** (Rust hattı), **Kişi B = Samet** (web, tetikleyiciler ve doğrulama). Görevler `GOREVLER.md` içinde: Görkem için **G13**, Samet için **S14**.
 
-Çakışmayı önlemek için dosya sahipliği: ikisi de `.github/workflows/ci.yml` dosyasında çalışır, ama **A yalnız `rust` ve `coverage` bloklarına, B yalnız `on:` bloğuna ve `web` bloğuna** dokunur. Her değişiklikten önce `git pull --rebase`, küçük commit, hemen push.
+Çakışmayı önlemek için dosya sahipliği: ikisi de `.github/workflows/ci.yml` dosyasında çalışır, ama **Görkem (A) yalnız `rust` ve `coverage` bloklarına, Samet (B) yalnız `on:` bloğuna ve `web` bloğuna** dokunur. Her değişiklikten önce `git pull --rebase`, küçük commit, hemen push.
 
-### Paket A: Rust hattı (yaklaşık 55 dk)
+### Paket A: Rust hattı, Görkem (yaklaşık 55 dk, görev G13)
 
 | # | İş | Süre | Kabul ölçütü |
 |---|----|------|--------------|
@@ -55,7 +55,7 @@ Başka bilinenler: satır kapsamı %95,5 (kapı %90); 737 Rust testi (2'si `#[ig
 | A3 | Çift test yürütmesi kararı: `rust` job'ındaki `cargo test` ile `coverage` job'ı aynı testleri iki kez derleyip koşturur. İlk iki gerçek koşuya bak. `coverage` toplamı 20 dk'dan uzunsa `rust` job'ından `cargo test`'i kaldır (testler zaten kapsam altında koşar, kırmızı olursa hata aynen görünür). 20 dk veya altındaysa ayrımı koru (hata kaynağı daha net) | 20 dk | Karar ve gerekçe §6 tablosunun altına yazılı |
 | A4 | Ölçüm: ilk 3 koşunun adım adım sürelerini §6 tablosuna doldur (soğuk/ısınmış ayrımıyla), en yavaş adımı belirt | 15 dk | §6 Rust satırları dolu |
 
-### Paket B: Web, tetikleyiciler ve doğrulama (yaklaşık 55 dk)
+### Paket B: Web, tetikleyiciler ve doğrulama, Samet (yaklaşık 55 dk, görev S14)
 
 | # | İş | Süre | Kabul ölçütü |
 |---|----|------|--------------|
@@ -84,7 +84,7 @@ A3 kararı: ____
 
 ## 7. Kırmızı CI'da ilk bakılacak yerler (B4 taslağı)
 
-Aşağıdakiler bu projede gerçekten görülen ya da bilinen nedenlerdir. B kişisi doğrular ve tamamlar.
+Aşağıdakiler bu projede gerçekten görülen ya da bilinen nedenlerdir. Samet (Paket B) doğrular ve tamamlar.
 
 | Belirti | Olası neden | Ne yapılır |
 |---------|-------------|------------|
