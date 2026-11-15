@@ -20,6 +20,9 @@ use tokio::task::JoinSet;
 
 use pyrosync_core::calendar::compute_anomalies;
 use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::events::{
+    EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
+};
 use pyrosync_core::harmonize::{harmonize_with_config, harmonize_with_links_config};
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
@@ -963,6 +966,7 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             total_frp_upper: None,
             frp_per_detection_eq: None,
             anomaly: None,
+            sfai: None,
         })
         .collect();
     compute_anomalies(&mut cells);
@@ -1450,6 +1454,8 @@ impl RawPoint {
 #[derive(Serialize)]
 struct HarmonizedPoint {
     id: String,
+    /// Fire event the detection belongs to; `None` for watch points.
+    event_id: Option<usize>,
     #[serde(flatten)]
     hotspot: HarmonizedHotspot,
 }
@@ -1473,6 +1479,77 @@ struct Extent {
 }
 
 #[derive(Serialize)]
+struct EventParamsMeta {
+    eps_km: f64,
+    min_samples: usize,
+    max_day_gap: i64,
+}
+
+/// Events describe the FULL harmonized set of the requested period, not the sampled subset
+/// returned in `harmonized`.
+#[derive(Serialize)]
+struct EventsMeta {
+    params: EventParamsMeta,
+    count: usize,
+    watch_points: usize,
+    items: Vec<FireEvent>,
+    items_truncated: bool,
+}
+
+const MAX_EVENT_ITEMS: usize = 1000;
+
+fn events_meta(clustering: &EventClustering, params: &EventParams) -> EventsMeta {
+    let count = clustering.events.len();
+    let mut items = clustering.events.clone();
+    let items_truncated = count > MAX_EVENT_ITEMS;
+    if items_truncated {
+        items.sort_by(|a, b| b.detections.cmp(&a.detections).then(a.id.cmp(&b.id)));
+        items.truncate(MAX_EVENT_ITEMS);
+        items.sort_by_key(|e| e.id);
+    }
+    EventsMeta {
+        params: EventParamsMeta {
+            eps_km: params.eps_km,
+            min_samples: params.min_samples,
+            max_day_gap: params.max_day_gap,
+        },
+        count,
+        watch_points: clustering.watch_points,
+        items,
+        items_truncated,
+    }
+}
+
+fn month_bounds(year: i32, month: Option<u32>) -> (NaiveDate, NaiveDate) {
+    match month {
+        Some(m) => {
+            let first = ymd(year, m, 1);
+            let next = if m == 12 { ymd(year + 1, 1, 1) } else { ymd(year, m + 1, 1) };
+            (first, next.pred_opt().expect("date has a predecessor"))
+        }
+        None => (ymd(year, 1, 1), ymd(year, 12, 31)),
+    }
+}
+
+type DayRange = Option<(NaiveDate, NaiveDate)>;
+
+/// Per-family archive coverage for this region and year. A sensor counts only when the region
+/// has a file for the year; its date span is the global archive span of that sensor (region
+/// files carry no first/last dates of their own). VIIRS is the hull of SNPP and NOAA-20.
+fn family_coverage(region: &RegionInfo, year: i32, coverage: &Coverage) -> (DayRange, DayRange) {
+    let span = |has: bool, s: Option<DateSpan>| s.filter(|_| has).map(|s| (s.first, s.last));
+    let modis = span(region.modis_years.contains(&year), coverage.modis);
+    let viirs = match (
+        span(region.viirs_years.contains(&year), coverage.snpp),
+        span(region.noaa20_years.contains(&year), coverage.noaa20),
+    ) {
+        (Some(a), Some(b)) => Some((a.0.min(b.0), a.1.max(b.1))),
+        (a, b) => a.or(b),
+    };
+    (modis, viirs)
+}
+
+#[derive(Serialize)]
 struct PointsResponse {
     region: String,
     year: i32,
@@ -1485,6 +1562,8 @@ struct PointsResponse {
     harmonized: Vec<HarmonizedPoint>,
     stages: Stages,
     bbox: Option<Extent>,
+    events: EventsMeta,
+    no_detection_days: Vec<NoDetectionDay>,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1659,6 +1738,7 @@ async fn points(
         .await
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
+    let coverage = load_coverage(&state).await?;
     let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
@@ -1677,7 +1757,23 @@ async fn points(
             .collect();
         let bbox = extent(raw_points.iter().map(|p| (p.lat, p.lon)));
         let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
+        let modis_days: BTreeSet<NaiveDate> =
+            modis.iter().map(|h| h.acquired.date_naive()).collect();
+        let viirs_days: BTreeSet<NaiveDate> =
+            viirs.iter().map(|h| h.acquired.date_naive()).collect();
         let linked = harmonize_with_links_config(modis, viirs, &config);
+
+        let event_params = EventParams::default();
+        let clustering = cluster_events(&linked.hotspots, &event_params);
+        let events = events_meta(&clustering, &event_params);
+        let (modis_cov, viirs_cov) = family_coverage(&region, year, &coverage);
+        let gaps = no_detection_days(
+            &modis_days,
+            &viirs_days,
+            month_bounds(year, month),
+            modis_cov,
+            viirs_cov,
+        );
 
         let links: Vec<Option<usize>> = linked
             .modis_links
@@ -1715,6 +1811,7 @@ async fn points(
             .filter(|(i, _)| keep_out[*i])
             .map(|(i, hotspot)| HarmonizedPoint {
                 id: format!("h{i}"),
+                event_id: clustering.labels[i],
                 hotspot,
             })
             .collect();
@@ -1730,6 +1827,8 @@ async fn points(
             harmonized,
             stages,
             bbox,
+            events,
+            no_detection_days: gaps,
         }
     })
     .await
@@ -2196,6 +2295,108 @@ mod tests {
         }
 
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_reports_events_and_gaps_for_the_full_set_even_when_truncated() {
+        let dir = temp_archive("points-events");
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[
+                (35.9, "2021-07-01", 0),
+                (35.9, "2021-07-02", 0),
+                (35.9, "2021-07-03", 0),
+                (36.5, "2021-07-20", 0),
+            ],
+        );
+        let state = state(dir.clone(), u64::MAX);
+        let Json(pts) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: None,
+                limit: Some("1".into()),
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        assert!(pts.truncated);
+        assert!(pts.harmonized.len() < 4);
+        assert_eq!(pts.events.count, 1);
+        assert_eq!(pts.events.items.len(), 1);
+        assert!(!pts.events.items_truncated);
+        assert_eq!(pts.events.items[0].detections, 3);
+        assert_eq!(pts.events.watch_points, 1);
+        assert_eq!(pts.events.params.eps_km, 2.0);
+        assert!(pts.harmonized.iter().all(|h| h.event_id.is_none() || h.event_id == Some(0)));
+
+        // VIIRS coverage is 07-01..07-20; 07-01..03 and 07-20 have detections.
+        assert_eq!(pts.no_detection_days.len(), 16);
+        assert!(pts.no_detection_days.iter().all(|d| d.family == pyrosync_core::uncertainty::SensorFamily::Viirs
+            && !d.other_family_detected));
+        assert_eq!(pts.no_detection_days[0].date, ymd(2021, 7, 4));
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn events_meta_caps_items_keeping_largest_in_id_order() {
+        use pyrosync_core::events::EventKind;
+        let at = chrono::DateTime::<chrono::Utc>::UNIX_EPOCH;
+        let events: Vec<FireEvent> = (0..MAX_EVENT_ITEMS + 5)
+            .map(|id| FireEvent {
+                id,
+                kind: EventKind::Dense,
+                detections: if id < 5 { 1 } else { 10 },
+                start: at,
+                end: at,
+                days: 1,
+                centroid_lat: 0.0,
+                centroid_lon: 0.0,
+                bbox: pyrosync_core::models::BBox { west: 0.0, south: 0.0, east: 0.0, north: 0.0 },
+                total_frp: 0.0,
+            })
+            .collect();
+        let clustering = EventClustering { labels: Vec::new(), events, watch_points: 7 };
+        let meta = events_meta(&clustering, &EventParams::default());
+        assert_eq!(meta.count, MAX_EVENT_ITEMS + 5);
+        assert!(meta.items_truncated);
+        assert_eq!(meta.items.len(), MAX_EVENT_ITEMS);
+        assert!(meta.items.iter().all(|e| e.detections == 10));
+        assert!(meta.items.windows(2).all(|w| w[0].id < w[1].id));
+    }
+
+    #[test]
+    fn month_bounds_and_family_coverage() {
+        assert_eq!(month_bounds(2021, Some(2)), (ymd(2021, 2, 1), ymd(2021, 2, 28)));
+        assert_eq!(month_bounds(2021, Some(12)), (ymd(2021, 12, 1), ymd(2021, 12, 31)));
+        assert_eq!(month_bounds(2021, None), (ymd(2021, 1, 1), ymd(2021, 12, 31)));
+
+        let region = RegionInfo {
+            id: "X".into(),
+            name: "X".into(),
+            modis_years: BTreeSet::from([2021]),
+            viirs_years: BTreeSet::from([2021]),
+            noaa20_years: BTreeSet::new(),
+            bytes: 0,
+            files: Vec::new(),
+        };
+        let cov = Coverage {
+            modis: Some(DateSpan { first: ymd(2000, 11, 1), last: ymd(2022, 1, 1) }),
+            viirs: None,
+            snpp: Some(DateSpan { first: ymd(2012, 1, 20), last: ymd(2022, 1, 1) }),
+            noaa20: Some(DateSpan { first: ymd(2018, 1, 1), last: ymd(2022, 1, 1) }),
+        };
+        let (m, v) = family_coverage(&region, 2021, &cov);
+        assert_eq!(m, Some((ymd(2000, 11, 1), ymd(2022, 1, 1))));
+        assert_eq!(v, Some((ymd(2012, 1, 20), ymd(2022, 1, 1))));
+        assert_eq!(family_coverage(&region, 2019, &cov), (None, None));
     }
 
     #[test]

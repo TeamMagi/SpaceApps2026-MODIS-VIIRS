@@ -26,8 +26,10 @@ use tracing_subscriber::EnvFilter;
 use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::effort::EffortFactor;
 use pyrosync_core::models::{
-    BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
+    BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, SeasonYear,
+    SeasonalityYear, Sensor,
 };
+use pyrosync_core::calendar::seasonality;
 use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_years, filter_bbox};
 use pyrosync_firms::{AreaCache, DayRange, FirmsClient, FirmsSource};
 
@@ -249,6 +251,26 @@ fn uncertainty_metadata(params: &pyrosync_core::uncertainty::UncertaintyParams) 
 }
 
 #[derive(Serialize)]
+struct SeasonalityResponse {
+    metric: &'static str,
+    calendar_year: Vec<SeasonalityYear>,
+    fire_year: Vec<SeasonalityYear>,
+}
+
+// Terra's first FIRMS month; earlier months of the first archive year were never observed, not zero.
+const FIRST_MODIS_MONTH: (i32, u32) = (2000, 11);
+
+fn build_seasonality(cells: &[CalendarCell], years: &CalendarYears) -> SeasonalityResponse {
+    let first = (years.effective_from, 1).max(FIRST_MODIS_MONTH);
+    let coverage = (first, (years.effective_to, 12));
+    SeasonalityResponse {
+        metric: "count",
+        calendar_year: seasonality(cells, SeasonYear::Calendar, coverage),
+        fire_year: seasonality(cells, SeasonYear::FireYear, coverage),
+    }
+}
+
+#[derive(Serialize)]
 struct CalendarResponse {
     country: String,
     years: CalendarYears,
@@ -256,6 +278,7 @@ struct CalendarResponse {
     coverage: ArchiveCoverage,
     counts: CalendarCounts,
     calendar: Vec<CalendarCell>,
+    seasonality: SeasonalityResponse,
     effort: EffortResponse,
     uncertainty: UncertaintyMetadata,
     fetch: ArchiveFetchSummary,
@@ -1817,6 +1840,7 @@ fn build_calendar_response(
             raw_detections,
             harmonized_records: harmonized.len(),
         },
+        seasonality: build_seasonality(&calendar, &query.years),
         calendar,
         effort,
         uncertainty: uncertainty_metadata(uncertainty_params),
@@ -3129,6 +3153,52 @@ mod tests {
     }
 
     #[test]
+    fn calendar_seasonality_labels_fire_year_by_march_year() {
+        let query = parse_calendar_params(&calendar_params("Turkey", Some(2010), Some(2011), None))
+            .expect("valid range");
+        let mut cell = calendar_cells_for_test(2010, 7, 10);
+        cell.extend(calendar_cells_for_test(2011, 1, 4));
+        let resp = build_calendar_response(
+            &query,
+            0,
+            &[],
+            cell,
+            Vec::new(),
+            Vec::new(),
+            &pyrosync_core::uncertainty::UncertaintyParams::default(),
+        );
+        let json = serde_json::to_value(&resp).unwrap();
+        assert_eq!(json["seasonality"]["metric"], "count");
+        let fire = json["seasonality"]["fire_year"].as_array().unwrap();
+        let years: Vec<i64> = fire.iter().map(|y| y["year"].as_i64().unwrap()).collect();
+        assert_eq!(years, vec![2009, 2010, 2011]);
+        assert_eq!(fire[1]["total"], 14);
+        assert_eq!(fire[1]["complete"], true);
+        assert_eq!(fire[0]["complete"], false);
+        assert_eq!(json["seasonality"]["calendar_year"].as_array().unwrap().len(), 2);
+    }
+
+    fn calendar_cells_for_test(year: i32, month: u32, count: u64) -> Vec<CalendarCell> {
+        vec![CalendarCell {
+            year,
+            month,
+            count,
+            count_normalized: Some(count as f64),
+            effort_omega: None,
+            mean_frp: 0.0,
+            mean_frp_raw: 0.0,
+            mean_frp_lower: None,
+            mean_frp_upper: None,
+            total_frp: 0.0,
+            total_frp_lower: None,
+            total_frp_upper: None,
+            frp_per_detection_eq: None,
+            anomaly: None,
+            sfai: None,
+        }]
+    }
+
+    #[test]
     fn calendar_clamps_out_of_range_years_to_archive_coverage() {
         let query = parse_calendar_params(&calendar_params("Turkey", Some(1995), Some(2030), None))
             .expect("out-of-range years should clamp, not fail");
@@ -3149,6 +3219,9 @@ mod tests {
             &default_uncertainty,
         );
         assert!(resp.warnings.iter().any(|w| w.contains("clamped")));
+        assert_eq!(resp.seasonality.metric, "count");
+        assert_eq!(resp.seasonality.calendar_year.first().map(|y| y.year), Some(2000));
+        assert!(!resp.seasonality.calendar_year[0].complete);
 
         let upper_only = parse_calendar_params(&calendar_params("Turkey", Some(2015), Some(2030), None))
             .expect("upper out-of-range year should clamp");

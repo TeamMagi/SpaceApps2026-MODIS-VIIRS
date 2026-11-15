@@ -347,4 +347,131 @@ mod tests {
             .is_err()
         );
     }
+
+    fn accepted(edit: impl FnOnce(&mut PipelineConfig)) {
+        let mut c = PipelineConfig::default();
+        edit(&mut c);
+        assert_eq!(c.validate(), Ok(()));
+    }
+
+    #[test]
+    fn second_fields_reject_negative_and_accept_zero_and_one() {
+        // 3-value BVA around the `>= 0` limit of every seconds field.
+        type Setter = fn(&mut PipelineConfig, i64);
+        let fields: [(&str, Setter); 4] = [
+            ("dedup.max_time_diff_secs", |c, v| c.dedup.max_time_diff_secs = v),
+            ("fleet.viirs_window_secs", |c, v| c.fleet.viirs_window_secs = v),
+            ("fleet.modis_window_secs", |c, v| c.fleet.modis_window_secs = v),
+            ("matching.window_secs", |c, v| c.matching.window_secs = v),
+        ];
+        for (name, set) in fields {
+            rejected(|c| set(c, -1), name);
+            accepted(|c| set(c, 0));
+            accepted(|c| set(c, 1));
+        }
+    }
+
+    #[test]
+    fn overlap_ratio_boundaries_are_inclusive_zero_and_one() {
+        accepted(|c| c.dedup.min_overlap_ratio = 0.0);
+        accepted(|c| c.dedup.min_overlap_ratio = 1.0);
+        rejected(|c| c.dedup.min_overlap_ratio = -f64::EPSILON, "dedup.min_overlap_ratio");
+        rejected(|c| c.dedup.min_overlap_ratio = 1.0 + f64::EPSILON, "dedup.min_overlap_ratio");
+        rejected(|c| c.dedup.min_overlap_ratio = f64::INFINITY, "dedup.min_overlap_ratio");
+    }
+
+    #[test]
+    fn radius_limits_matching_is_capped_but_fleet_is_not() {
+        accepted(|c| c.matching.radius_km = f64::MIN_POSITIVE);
+        accepted(|c| c.matching.radius_km = MAX_MATCH_RADIUS_KM - 0.001);
+        rejected(|c| c.matching.radius_km = MAX_MATCH_RADIUS_KM + 0.001, "matching.radius_km");
+        rejected(|c| c.matching.radius_km = f64::INFINITY, "matching.radius_km");
+        rejected(|c| c.fleet.radius_km = -1.0, "fleet.radius_km");
+        rejected(|c| c.fleet.radius_km = 0.0, "fleet.radius_km");
+        accepted(|c| c.fleet.radius_km = 1000.0);
+    }
+
+    #[test]
+    fn vza_coefficients_each_independently_must_be_finite() {
+        // MC/DC: each coefficient alone flips the outcome; negatives and zero are allowed.
+        rejected(|c| c.vza.c = f64::NEG_INFINITY, "vza.c");
+        rejected(|c| c.vza.a = f64::NAN, "vza.a");
+        rejected(|c| c.vza.b = f64::INFINITY, "vza.b");
+        accepted(|c| (c.vza.a, c.vza.b, c.vza.c) = (-1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn calibration_latitude_bounds_are_inclusive_zero_to_ninety() {
+        let one_band = |min: f64, max: f64| {
+            move |c: &mut PipelineConfig| {
+                c.calibration.bands = vec![CalibrationBand {
+                    min_abs_lat: min,
+                    max_abs_lat: max,
+                    ratio: 1.0,
+                    ratio_sigma: 0.0,
+                }];
+            }
+        };
+        accepted(one_band(0.0, 90.0));
+        accepted(one_band(90.0, 90.0));
+        rejected(one_band(0.0, 90.0 + 1e-9), "bands[0].max_abs_lat");
+        rejected(one_band(-1e-9, 10.0), "bands[0].min_abs_lat");
+        rejected(one_band(f64::NAN, 10.0), "bands[0].min_abs_lat");
+        // min > max by the smallest margin flips only that condition.
+        rejected(one_band(10.0 + 1e-9, 10.0), "must be >= min_abs_lat");
+    }
+
+    #[test]
+    fn calibration_bands_may_touch_but_not_overlap_or_repeat_max() {
+        let band = |min: f64, max: f64| CalibrationBand {
+            min_abs_lat: min,
+            max_abs_lat: max,
+            ratio: 1.1,
+            ratio_sigma: 0.1,
+        };
+        let mut c = PipelineConfig::default();
+        c.calibration.bands = vec![band(0.0, 30.0), band(30.0, 50.0)];
+        assert_eq!(c.validate(), Ok(()));
+        c.calibration.bands = vec![band(0.0, 30.0), band(29.999, 50.0)];
+        assert!(c.validate().unwrap_err().contains("overlaps previous"));
+        c.calibration.bands = vec![band(0.0, 30.0), band(30.0, 30.0)];
+        assert!(c.validate().unwrap_err().contains("strictly greater"));
+    }
+
+    #[test]
+    fn ratio_sigma_zero_is_valid_and_empty_bands_allowed_when_disabled() {
+        accepted(|c| c.calibration.bands[0].ratio_sigma = 0.0);
+        rejected(|c| c.calibration.bands[0].ratio_sigma = f64::INFINITY, "ratio_sigma");
+        accepted(|c| {
+            c.calibration.enabled = false;
+            c.calibration.bands.clear();
+        });
+    }
+
+    #[test]
+    fn malformed_json_and_wrong_types_give_descriptive_errors() {
+        let cases = [
+            (r#"{"matching":{"radius_km":"two"}}"#, "string"),
+            (r#"{"dedup":{"max_time_diff_secs":1.5}}"#, "floating point"),
+            (r#"{"calibration":{"enabled":"yes"}}"#, "boolean"),
+            (r#"{"bogus":1}"#, "bogus"),
+            (r#"{"matching":"#, "EOF"),
+        ];
+        for (json, needle) in cases {
+            let err = serde_json::from_str::<PipelineConfig>(json)
+                .expect_err(json)
+                .to_string();
+            assert!(err.contains(needle), "`{err}` lacks `{needle}` for {json}");
+        }
+    }
+
+    #[test]
+    fn serialization_round_trip_preserves_config() {
+        let mut c = PipelineConfig::default();
+        c.matching.window_secs = 600;
+        c.calibration.enabled = false;
+        let back: PipelineConfig = serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
+        assert_eq!(back, c);
+        assert_eq!(back.validate(), Ok(()));
+    }
 }

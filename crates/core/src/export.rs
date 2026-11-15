@@ -173,4 +173,163 @@ mod tests {
             .collect();
         assert_eq!(to_csv(&hotspots).lines().count(), 10_001);
     }
+
+    const ALL_SENSORS: [Sensor; 5] = [
+        Sensor::ModisTerra,
+        Sensor::ModisAqua,
+        Sensor::ViirsSNPP,
+        Sensor::ViirsNOAA20,
+        Sensor::ViirsNOAA21,
+    ];
+
+    fn csv_rows(csv: &str) -> Vec<Vec<&str>> {
+        csv.trim_end_matches("\r\n")
+            .split("\r\n")
+            .skip(1)
+            .map(|l| l.split(',').collect())
+            .collect()
+    }
+
+    fn col(name: &str) -> usize {
+        CSV_HEADER.split(',').position(|c| c == name).unwrap_or_else(|| panic!("no column {name}"))
+    }
+
+    #[test]
+    fn header_has_thirteen_unique_columns_and_geojson_properties_mirror_them() {
+        let columns: Vec<&str> = CSV_HEADER.split(',').collect();
+        assert_eq!(columns.len(), 13);
+        let unique: std::collections::BTreeSet<_> = columns.iter().collect();
+        assert_eq!(unique.len(), columns.len());
+
+        let parsed: Value =
+            serde_json::from_str(&to_geojson(&[hotspot(Some(1.0), vec![Sensor::ViirsSNPP])])).unwrap();
+        let mut actual: Vec<&str> = parsed["features"][0]["properties"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        actual.sort_unstable();
+        let mut expected: Vec<&str> = columns[2..].to_vec();
+        expected.sort_unstable();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn empty_input_is_valid_empty_output_not_an_error() {
+        let csv = to_csv(&[]);
+        assert_eq!(csv.matches("\r\n").count(), 1);
+        let parsed: Value = serde_json::from_str(&to_geojson(&[])).unwrap();
+        assert_eq!(parsed["type"], "FeatureCollection");
+        assert_eq!(parsed["features"].as_array().map(Vec::len), Some(0));
+    }
+
+    #[test]
+    fn every_single_sensor_exports_one_platform_without_separator() {
+        for sensor in ALL_SENSORS {
+            let hs = [hotspot(Some(1.0), vec![sensor])];
+            let csv = to_csv(&hs);
+            let rows = csv_rows(&csv);
+            assert_eq!(rows[0].len(), 13);
+            assert_eq!(rows[0][col("platforms")], format!("{sensor:?}"));
+            assert_eq!(rows[0][col("n_obs")], "1");
+            let parsed: Value = serde_json::from_str(&to_geojson(&hs)).unwrap();
+            assert_eq!(
+                parsed["features"][0]["properties"]["platforms"],
+                json!([format!("{sensor:?}")])
+            );
+        }
+    }
+
+    #[test]
+    fn all_low_confidence_input_is_exported_unfiltered() {
+        let hs: Vec<_> = (0..4)
+            .map(|_| {
+                let mut h = hotspot(Some(1.1), vec![Sensor::ModisAqua]);
+                h.confidence = Confidence::Low;
+                h
+            })
+            .collect();
+        let csv = to_csv(&hs);
+        let rows = csv_rows(&csv);
+        assert_eq!(rows.len(), 4);
+        assert!(rows.iter().all(|r| r[col("confidence")] == "Low"));
+        let parsed: Value = serde_json::from_str(&to_geojson(&hs)).unwrap();
+        let features = parsed["features"].as_array().unwrap();
+        assert_eq!(features.len(), 4);
+        assert!(features.iter().all(|f| f["properties"]["confidence"] == "Low"));
+    }
+
+    #[test]
+    fn every_enum_combination_keeps_column_count_and_has_no_quoting_characters() {
+        let mut hs = Vec::new();
+        for confidence in [Confidence::Low, Confidence::Nominal, Confidence::High] {
+            for source in [HotspotSource::ModisOnly, HotspotSource::ViirsOnly, HotspotSource::Matched] {
+                for daynight in [DayNight::Day, DayNight::Night] {
+                    let mut h = hotspot(None, ALL_SENSORS.to_vec());
+                    h.confidence = confidence;
+                    h.source = source;
+                    h.daynight = daynight;
+                    hs.push(h);
+                }
+            }
+        }
+        let csv = to_csv(&hs);
+        assert!(!csv.contains('"'));
+        let rows = csv_rows(&csv);
+        assert_eq!(rows.len(), 18);
+        assert!(rows.iter().all(|r| r.len() == 13));
+        assert!(!csv.replace("\r\n", "").contains('\n'));
+    }
+
+    #[test]
+    fn extreme_coordinates_stay_in_range_and_lon_comes_first() {
+        let corners = [(90.0, 180.0), (-90.0, -180.0), (0.0, 0.0), (-33.5, 151.25)];
+        let hs: Vec<_> = corners
+            .iter()
+            .map(|&(lat, lon)| {
+                let mut h = hotspot(Some(1.0), vec![Sensor::ViirsNOAA21]);
+                h.lat = lat;
+                h.lon = lon;
+                h
+            })
+            .collect();
+        let parsed: Value = serde_json::from_str(&to_geojson(&hs)).unwrap();
+        let csv = to_csv(&hs);
+        let rows = csv_rows(&csv);
+        for (i, &(lat, lon)) in corners.iter().enumerate() {
+            let geom = &parsed["features"][i]["geometry"];
+            assert_eq!(geom["type"], "Point");
+            let c = geom["coordinates"].as_array().unwrap();
+            assert_eq!(c.len(), 2);
+            let (glon, glat) = (c[0].as_f64().unwrap(), c[1].as_f64().unwrap());
+            assert_eq!((glon, glat), (lon, lat));
+            assert!((-180.0..=180.0).contains(&glon) && (-90.0..=90.0).contains(&glat));
+            assert_eq!(rows[i][col("lat")].parse::<f64>().unwrap(), lat);
+            assert_eq!(rows[i][col("lon")].parse::<f64>().unwrap(), lon);
+        }
+    }
+
+    #[test]
+    fn row_order_and_values_are_preserved_between_csv_and_geojson() {
+        let hs: Vec<_> = [3.0, 1.0, 2.0]
+            .iter()
+            .map(|&frp| {
+                let mut h = hotspot(Some(1.0), vec![Sensor::ViirsSNPP]);
+                h.frp = frp;
+                h
+            })
+            .collect();
+        let csv = to_csv(&hs);
+        let csv_frp: Vec<f64> = csv_rows(&csv).iter().map(|r| r[col("frp_mw")].parse().unwrap()).collect();
+        let parsed: Value = serde_json::from_str(&to_geojson(&hs)).unwrap();
+        let geo_frp: Vec<f64> = parsed["features"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|f| f["properties"]["frp_mw"].as_f64().unwrap())
+            .collect();
+        assert_eq!(csv_frp, vec![3.0, 1.0, 2.0]);
+        assert_eq!(geo_frp, csv_frp);
+    }
 }

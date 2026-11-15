@@ -514,4 +514,157 @@ mod tests {
         let e4 = frp_uncertainty_for_obs(100.0, Some(2.0), SensorFamily::Modis, cal, 4, &params);
         assert!((e4.upper - e4.lower) < (e1.upper - e1.lower));
     }
+
+    const FACTORS: [Option<f64>; 6] = [None, Some(1.0), Some(1.1), Some(1.32), Some(2.0), Some(4.0)];
+    const FAMILIES: [SensorFamily; 2] = [SensorFamily::Modis, SensorFamily::Viirs];
+
+    fn width(e: UncertaintyEstimate) -> f64 {
+        e.upper - e.lower
+    }
+
+    #[test]
+    fn interval_brackets_frp_strictly_over_input_grid() {
+        let params = UncertaintyParams::default();
+        let cals = [None, Some((1.11, 0.08)), Some((1.28, 0.11))];
+        for frp in [0.001, 0.4, 3.7, 100.0, 5000.0] {
+            for family in FAMILIES {
+                for factor in FACTORS {
+                    for cal in cals {
+                        for n in [0, 1, 2, 4, 16, u16::MAX] {
+                            let e = frp_uncertainty_for_obs(frp, factor, family, cal, n, &params);
+                            assert!(
+                                0.0 < e.lower && e.lower < frp && frp < e.upper,
+                                "{e:?} frp={frp} {family:?} {factor:?} {cal:?} n={n}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn scan_edge_interval_is_wider_than_nadir_for_both_families_and_all_n() {
+        let params = UncertaintyParams::default();
+        for family in FAMILIES {
+            for n in [1, 3, 10] {
+                let nadir = frp_uncertainty_for_obs(50.0, Some(1.0), family, None, n, &params);
+                let edge = frp_uncertainty_for_obs(50.0, Some(1.32), family, None, n, &params);
+                assert!(width(edge) > width(nadir), "{family:?} n={n}");
+            }
+        }
+    }
+
+    #[test]
+    fn width_is_non_decreasing_in_vza_factor_and_nadir_equals_missing_factor() {
+        let params = UncertaintyParams::default();
+        for family in FAMILIES {
+            let mut prev = 0.0;
+            for factor in FACTORS {
+                let w = width(frp_uncertainty(80.0, factor, family, None, &params));
+                assert!(w >= prev, "{family:?} {factor:?}");
+                prev = w;
+            }
+            let none = frp_uncertainty(80.0, None, family, None, &params);
+            let nadir = frp_uncertainty(80.0, Some(1.0), family, None, &params);
+            assert_eq!(none, nadir);
+        }
+    }
+
+    #[test]
+    fn vza_sigma_boundaries_are_zero_up_to_one_then_linear() {
+        // 3-value BVA around factor = 1.0, plus non-finite factors.
+        let p = UncertaintyParams::default();
+        assert_eq!(vza_relative_sigma(Some(0.999), &p), 0.0);
+        assert_eq!(vza_relative_sigma(Some(1.0), &p), 0.0);
+        let just_above = vza_relative_sigma(Some(1.001), &p);
+        assert!(just_above > 0.0 && just_above < 1e-4);
+        assert!((vza_relative_sigma(Some(1.32), &p) - p.vza_error_coeff * 0.32).abs() < 1e-12);
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            assert_eq!(vza_relative_sigma(Some(bad), &p), 0.0, "{bad}");
+        }
+    }
+
+    #[test]
+    fn zero_n_obs_behaves_like_single_observation() {
+        let params = UncertaintyParams::default();
+        let zero = frp_uncertainty_for_obs(10.0, Some(2.0), SensorFamily::Viirs, None, 0, &params);
+        let one = frp_uncertainty_for_obs(10.0, Some(2.0), SensorFamily::Viirs, None, 1, &params);
+        assert_eq!(zero, one);
+    }
+
+    #[test]
+    fn invalid_calibration_is_ignored_like_missing_calibration() {
+        let p = UncertaintyParams::default();
+        let baseline = relative_uncertainty(Some(1.5), SensorFamily::Modis, None, &p);
+        for bad in [(0.0, 0.1), (-1.0, 0.1), (f64::NAN, 0.1), (1.0, f64::NAN), (1.0, 0.0), (1.0, -0.1)] {
+            let rel = relative_uncertainty(Some(1.5), SensorFamily::Modis, Some(bad), &p);
+            assert_eq!(rel, baseline, "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn modis_interval_is_wider_than_viirs_at_same_geometry() {
+        let p = UncertaintyParams::default();
+        let m = frp_uncertainty(20.0, Some(1.2), SensorFamily::Modis, None, &p);
+        let v = frp_uncertainty(20.0, Some(1.2), SensorFamily::Viirs, None, &p);
+        assert!(width(m) > width(v));
+    }
+
+    #[test]
+    fn total_is_quadrature_of_random_and_systematic() {
+        let rel = RelativeUncertainty { random: 0.3, systematic: 0.4 };
+        assert!((rel.total() - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn confidence_from_z_covers_degenerate_and_known_values() {
+        assert_eq!(confidence_from_z(f64::NAN), 0.0);
+        assert_eq!(confidence_from_z(-1.0), 0.0);
+        assert_eq!(confidence_from_z(0.0), 0.0);
+        assert_eq!(confidence_from_z(f64::INFINITY), 1.0);
+        assert!((confidence_from_z(3.0) - 0.9973).abs() < 1e-4);
+        let (a, b, c) = (confidence_from_z(0.5), confidence_from_z(1.0), confidence_from_z(2.0));
+        assert!(0.0 < a && a < b && b < c && c < 1.0);
+    }
+
+    #[test]
+    fn validate_boundaries_zero_is_allowed_and_negative_or_non_finite_rejected() {
+        type Setter = fn(&mut UncertaintyParams, f64);
+        let fields: [(&str, Setter); 4] = [
+            ("modis_sensor_sigma", |p, v| p.modis_sensor_sigma = v),
+            ("viirs_sensor_sigma", |p, v| p.viirs_sensor_sigma = v),
+            ("vza_error_coeff", |p, v| p.vza_error_coeff = v),
+            ("modis_scale_sigma", |p, v| p.modis_scale_sigma = v),
+        ];
+        for (name, set) in fields {
+            let with = |v: f64| {
+                let mut p = UncertaintyParams::default();
+                set(&mut p, v);
+                p.validate()
+            };
+            assert_eq!(with(0.0), Ok(()), "{name}");
+            assert_eq!(with(f64::EPSILON), Ok(()), "{name}");
+            for bad in [-f64::EPSILON, f64::NAN, f64::INFINITY] {
+                assert!(with(bad).unwrap_err().contains(name), "{name} {bad}");
+            }
+        }
+        let z = |v: f64| UncertaintyParams { z: v, ..UncertaintyParams::default() }.validate();
+        assert_eq!(z(f64::MIN_POSITIVE), Ok(()));
+        assert!(z(0.0).is_err() && z(f64::NAN).is_err() && z(f64::INFINITY).is_err());
+    }
+
+    #[test]
+    fn aggregates_bracket_center_and_ignore_invalid_items() {
+        let p = UncertaintyParams::default();
+        let items = [(10.0, 0.1, 0.05), (30.0, 0.2, 0.0)];
+        let mean = mean_frp_uncertainty(&items, &p).unwrap();
+        let total = total_frp_uncertainty(&items, &p).unwrap();
+        assert!(mean.lower < 20.0 && 20.0 < mean.upper);
+        assert!(total.lower < 40.0 && 40.0 < total.upper);
+
+        let junk = [(f64::NAN, 0.1, 0.1), (-5.0, 0.1, 0.1)];
+        let e = total_frp_uncertainty(&junk, &p).unwrap();
+        assert_eq!((e.lower, e.upper), (0.0, 0.0));
+    }
 }

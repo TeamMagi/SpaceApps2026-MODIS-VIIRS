@@ -196,4 +196,95 @@ mod tests {
         let r54 = calibration_for(54.0, &cfg).ratio;
         assert!(1.18 < r51 && r51 < r52 && r52 < r54 && r54 < 1.28);
     }
+
+    fn tuple(lat: f64) -> (f64, f64) {
+        let c = calibration_for(lat, &CalibrationConfig::default());
+        (c.ratio, c.ratio_sigma)
+    }
+
+    #[test]
+    fn k_c_is_symmetric_between_hemispheres_on_a_grid() {
+        for abs in (0..=90).map(f64::from).chain([29.9, 50.5, 52.5, 54.9]) {
+            assert_eq!(tuple(abs), tuple(-abs), "asymmetry at {abs}");
+        }
+    }
+
+    #[test]
+    fn band_edges_use_three_value_bva_around_30_50_55_70() {
+        let near = |lat: f64, expected: f64, tol: f64| {
+            let r = tuple(lat).0;
+            assert!((r - expected).abs() <= tol, "lat {lat}: {r} vs {expected}");
+        };
+        near(29.999, 1.11, 0.0);
+        near(30.0, 1.11, 0.0);
+        near(30.001, 1.18, 0.0);
+        near(49.999, 1.18, 0.0);
+        near(50.0, 1.18, 0.0);
+        near(50.001, 1.18, 1e-3); // start of the 50-55 transition: continuous with 1.18
+        near(54.999, 1.28, 1e-3); // end of the transition: continuous with 1.28
+        near(55.0, 1.28, 0.0);
+        near(55.001, 1.28, 0.0);
+        near(69.999, 1.28, 0.0);
+        near(70.0, 1.28, 0.0);
+        near(70.001, 1.28, 0.0);
+    }
+
+    #[test]
+    fn poles_and_signed_zero_are_valid_latitudes() {
+        assert_eq!(tuple(90.0), (1.28, 0.11));
+        assert_eq!(tuple(-90.0), (1.28, 0.11));
+        assert_eq!(tuple(-0.0), (1.11, 0.08));
+    }
+
+    #[test]
+    fn transition_interpolates_linearly_for_ratio_and_sigma() {
+        for (lat, t) in [(51.0, 0.2), (52.5, 0.5), (54.0, 0.8)] {
+            let (ratio, sigma) = tuple(lat);
+            assert!(approx_eq(ratio, 1.18 + t * (1.28 - 1.18)), "ratio at {lat}");
+            assert!(approx_eq(sigma, 0.15 + t * (0.11 - 0.15)), "sigma at {lat}");
+        }
+    }
+
+    #[test]
+    fn ratio_is_non_decreasing_and_stays_within_band_limits_over_valid_latitudes() {
+        let mut prev = 0.0;
+        for i in 0..=900 {
+            let (ratio, sigma) = tuple(f64::from(i) / 10.0);
+            assert!((1.11..=1.28).contains(&ratio), "ratio {ratio} at {i}");
+            assert!((0.08..=0.15).contains(&sigma), "sigma {sigma} at {i}");
+            assert!(ratio >= prev, "ratio decreased at {i}");
+            prev = ratio;
+        }
+    }
+
+    #[test]
+    fn latitude_below_first_band_clamps_to_first_band() {
+        let cfg = CalibrationConfig {
+            enabled: true,
+            bands: vec![CalibrationBand {
+                min_abs_lat: 10.0,
+                max_abs_lat: 20.0,
+                ratio: 1.5,
+                ratio_sigma: 0.2,
+            }],
+        };
+        assert_eq!(calibration_for(0.0, &cfg), Calibration { ratio: 1.5, ratio_sigma: 0.2 });
+        assert_eq!(calibration_for(85.0, &cfg), Calibration { ratio: 1.5, ratio_sigma: 0.2 });
+    }
+
+    #[test]
+    fn touching_bands_have_no_interpolation_gap() {
+        let band = |min, max, ratio| CalibrationBand {
+            min_abs_lat: min,
+            max_abs_lat: max,
+            ratio,
+            ratio_sigma: 0.0,
+        };
+        let cfg = CalibrationConfig {
+            enabled: true,
+            bands: vec![band(0.0, 30.0, 1.0), band(30.0, 60.0, 2.0)],
+        };
+        assert_eq!(calibration_for(30.0, &cfg).ratio, 1.0);
+        assert_eq!(calibration_for(30.0001, &cfg).ratio, 2.0);
+    }
 }
