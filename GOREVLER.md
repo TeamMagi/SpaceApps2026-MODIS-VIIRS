@@ -266,7 +266,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [X] |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [X] |
-| Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
+| Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [X] |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
 | Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [ ] |
 | Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [ ] |
@@ -1025,7 +1025,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** mock veriyle heatmap render oluyor; zaman slider'ı çalışıyor; renk skalası anlamlı.
 - **Kapanış notu (15 Kasım 2026):** Backend `GET /api/density?region&year&cell` (`crates/core/src/density.rs` + `archive_api.rs`): örneklemesiz tam veriden sabit küresel kare grid (`cell ∈ {0.1, 0.25, 0.5, 1.0}°`), tek istekte 12 ay, hücre başına ham/harmonize tespit sayısı ve FRP toplamı, yıllık `max`, `covered_months`. Frontend `web/src/components/Map/DensityGrid.tsx` + `web/src/lib/density.ts`: canvas, ülke sınırı, ortak store'a bağlı ay slider'ı, Raw/Harmonized, tespit/FRP metriği, km² alanlı tooltip. Renk sınıfları C7 §5.1'e göre 8 sınıf quantile (eşitlik/az veri durumunda sabit log aralıkları) ve yıl + iki mod için **tek** skala; aylar ve ham/harmonize karşılaştırılabilir. Mock ve gerçek veride `web/mock.html` önizlemesinde doğrulandı: Türkiye 2021 toplamları `/api/points` ile birebir (69.619 ham / 43.338 harmonize), Ağustos'un en yoğun hücresi 37.25K/28.25D (Muğla). 5 core + 1 server + `density.test.ts`; testler, clippy, typecheck, build temiz; tarayıcıda 1366 px ve 375 px, açık/koyu tema. Sınırlar: grid eşit açılı (eşit alan değil, alan tooltip'te); büyük ülkelerde ilk istek yavaş (Brezilya 2020: 3.67 M ham tespit, ~35 sn), yanıt cache'i yok; ana ekran yerleşimi Can/Serhat ile belirlenecek; R3 dairesel takvimin yerine geçmez.
 
-### [ ] Y4 — İstatistik dashboard kartları
+### [X] Y4 — İstatistik dashboard kartları
 - **Bekler:** R1, Y5 · **Açar:** —
 - Üst kısımda summary bilgiler:
   - Toplam detection sayısı (raw vs harmonized)
@@ -1035,6 +1035,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Son güncelleme zamanı
   - Kart tasarımı: büyük sayı + trend ok (▲▼) + mini sparkline
 - **Bitti sayılır:** en az 4 istatistik kartı mock veriyle render oluyor; raw/harmonized geçişinde sayılar değişiyor.
+- **Kapanış notu (15 Kasım 2026):** `web/src/components/Stats/StatsCards.tsx` + `web/src/lib/stats.ts`: dört kart (tespit/harmonize kayıt, elenen kayıt oranı, katkı veren platform, ortalama FRP), hepsi seçili ayın aynı kapsamından; büyük sayı + trend oku (geçen yılın aynı ayı, aynı metrik ve mod; karşılaştırılabilir ay yoksa ok yok ve nedeni yazılır; oran kartında yüzde puan, diğerlerinde göreli %) + aynı seriden 12 aylık sparkline. Ortalama FRP: Raw = ham FRP toplamı / ham tespit, Harmonized = `frp_per_detection_eq` (Y1 ile tutarlı). Elenen oran Raw modda gizlidir (`revealAnswer`). "Son güncelleme" yerine "arşiv kapsamı … tarihine kadar" yazılır (arşivde üretim zamanı yok). Backend: `raw_monthly.platform_counts` (arşiv `satellite` sütunu Terra/Aqua'yı ayırır; SNPP/NOAA-20 kaynak dosyadan). Mock ve gerçek veride `web/mock.html` önizlemesinde doğrulandı; Türkiye Ağu 2021: 16.162 ham, 8.142 harmonize, %49.6 elenen, 4 platform (Terra, Aqua, S-NPP, NOAA-20). `stats.test.ts`, server testleri, typecheck/build/clippy temiz. Açık: ana ekran yerleşimi (Can/Serhat); `CountDelta`/`Receipt` ile ortak hesap yardımcısına geçiş R9 sonrası düşünülebilir.
 
 ### [ ] Y9 — Hücre tanı modalı ve yörünge sürüklenmesi şeridi
 - **Bekler:** — · **Açar:** —

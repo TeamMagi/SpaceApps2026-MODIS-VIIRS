@@ -13,14 +13,15 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useAppStore } from '../store/useAppStore';
 import { gridFromPoints, parseDensity, type DensityYear } from '../lib/density';
 import { fromLiveCalendar, type FrpSeriesPoint } from '../lib/frpSeries';
-import { fromMock, mockAnnualStats, mockPoints, mockFrpMonthly, mockMonthlyStats, mockSeries } from './index';
+import { fromLiveStats, type StatsDataset } from '../lib/stats';
+import { fromMock, mockStatsDataset, mockAnnualStats, mockPoints, mockFrpMonthly, mockMonthlyStats, mockSeries } from './index';
 import '../styles/tokens.css';
 import '../styles/global.css';
 import styles from './preview.module.css';
 
 const LIVE_URL = '/api/calendar?country=Turkey&from=2000&to=2025';
 const DENSITY_URL = '/api/density?region=Turkey&year=2021&cell=0.25';
-type LiveState = { status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; points: FrpSeriesPoint[] };
+type LiveState = { status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; points: FrpSeriesPoint[]; stats: StatsDataset };
 
 function useLiveSeries(enabled: boolean): LiveState {
   const [state, setState] = useState<LiveState>({ status: 'idle' });
@@ -31,9 +32,10 @@ function useLiveSeries(enabled: boolean): LiveState {
     fetch(LIVE_URL, { signal: controller.signal })
       .then(async response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return fromLiveCalendar(await response.json());
+        const json: unknown = await response.json();
+        return { points: fromLiveCalendar(json), stats: fromLiveStats(json) };
       })
-      .then(points => setState({ status: 'ready', points }))
+      .then(({ points, stats }) => setState({ status: 'ready', points, stats }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         setState({ status: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -84,7 +86,8 @@ function Preview() {
   const month = selectedMonth?.year === 2021 ? selectedMonth.month : null;
   const snapshot = mockMonthlyStats.find(s => s.scope.month === month) ?? mockAnnualStats;
   const [live, setLive] = useState(false);
-  const liveSeries = useLiveSeries(live);
+  const [liveCards, setLiveCards] = useState(false);
+  const liveSeries = useLiveSeries(live || liveCards);
   const frpPoints = useMemo(() => fromMock(mockFrpMonthly), []);
   const liveDensity = useLiveDensity(live);
   const mockDensity = useMemo(() => gridFromPoints(mockPoints, 0.25), []);
@@ -127,8 +130,20 @@ function Preview() {
       {!live && <DensityGrid data={mockDensity} sourceLabel={t('densSourceMock')} />}
       {live && liveDensity.status === 'ready' && <DensityGrid data={liveDensity.data} sourceLabel={t('densSourceLive')} />}
     </section>
-    <StatsCards snapshot={snapshot} history={mockMonthlyStats} revealAnswer={revealAnswer} />
-    <SensorComparison months={mockSeries.months.filter(m => m.year === 2021)} snapshot={snapshot} revealAnswer={revealAnswer} />
+    <section>
+      <label className={styles.liveToggle}>
+        <input type="checkbox" checked={liveCards} onChange={event => setLiveCards(event.target.checked)} />
+        {t('statsPreviewLive')}
+      </label>
+      {liveCards && liveSeries.status === 'loading' && <p role="status">{t('statsPreviewLoading')}</p>}
+      {liveCards && liveSeries.status === 'error' && <p role="alert" className={styles.notice}>{t('statsPreviewError', { message: liveSeries.message })}</p>}
+      {!liveCards && <StatsCards dataset={mockStatsDataset} selected={selectedMonth} revealAnswer={revealAnswer} sourceLabel={t('statsSourceMock')} />}
+      {liveCards && liveSeries.status === 'ready' && <StatsCards dataset={liveSeries.stats} selected={selectedMonth} revealAnswer={revealAnswer} sourceLabel={t('statsSourceLive')} />}
+    </section>
+    <section>
+      <p className={styles.notice}>{t('statsSensorSource')}</p>
+      <SensorComparison months={mockSeries.months.filter(m => m.year === 2021)} snapshot={snapshot} revealAnswer={revealAnswer} />
+    </section>
   </main>;
 }
 

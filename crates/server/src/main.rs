@@ -281,6 +281,8 @@ struct RawMonthly {
     viirs_covered: bool,
     viirs_count: u64,
     viirs_frp_sum: f64,
+    /// Raw detections per platform (non-zero only); sums to `modis_count + viirs_count`.
+    platform_counts: BTreeMap<Sensor, u64>,
 }
 
 fn aggregate_raw_monthly(
@@ -301,6 +303,7 @@ fn aggregate_raw_monthly(
             viirs_covered: (y, m) >= FIRST_VIIRS_MONTH,
             viirs_count: 0,
             viirs_frp_sum: 0.0,
+            platform_counts: BTreeMap::new(),
         });
         if m == 12 {
             y += 1;
@@ -317,12 +320,14 @@ fn aggregate_raw_monthly(
         if let Some(i) = index(h).filter(|&i| i < out.len()) {
             out[i].modis_count += 1;
             out[i].modis_frp_sum += h.frp;
+            *out[i].platform_counts.entry(h.sensor).or_default() += 1;
         }
     }
     for h in viirs {
         if let Some(i) = index(h).filter(|&i| i < out.len() && out[i].viirs_covered) {
             out[i].viirs_count += 1;
             out[i].viirs_frp_sum += h.frp;
+            *out[i].platform_counts.entry(h.sensor).or_default() += 1;
         }
     }
     out
@@ -3306,6 +3311,19 @@ mod tests {
         let dec11 = get(2011, 12);
         assert!(dec11.modis_covered && !dec11.viirs_covered);
         assert_eq!((dec11.modis_count, dec11.modis_frp_sum), (0, 0.0));
+        assert!(dec11.platform_counts.is_empty());
+        assert_eq!(jan.platform_counts, BTreeMap::from([(Sensor::ModisTerra, 1)]));
+        assert_eq!(
+            feb.platform_counts,
+            BTreeMap::from([
+                (Sensor::ModisTerra, 1),
+                (Sensor::ModisAqua, 1),
+                (Sensor::ViirsSNPP, 1)
+            ])
+        );
+        assert!(rows.iter().all(|r| {
+            r.platform_counts.values().sum::<u64>() == r.modis_count + r.viirs_count
+        }));
     }
 
     #[test]
@@ -3348,6 +3366,23 @@ mod tests {
             .map(|r| r["modis_count"].as_u64().unwrap() + r["viirs_count"].as_u64().unwrap())
             .sum();
         assert_eq!(total, json["counts"]["raw_detections"].as_u64().unwrap());
+        for r in rows {
+            let sum: u64 = r["platform_counts"]
+                .as_object()
+                .unwrap()
+                .values()
+                .map(|v| v.as_u64().unwrap())
+                .sum();
+            assert_eq!(
+                sum,
+                r["modis_count"].as_u64().unwrap() + r["viirs_count"].as_u64().unwrap()
+            );
+        }
+        let may = rows.iter().find(|r| r["year"] == 2012 && r["month"] == 5).unwrap();
+        assert_eq!(may["platform_counts"], serde_json::json!({ "ModisTerra": 1 }));
+        let jan13 = rows.iter().find(|r| r["year"] == 2013 && r["month"] == 1).unwrap();
+        assert_eq!(jan13["platform_counts"], serde_json::json!({ "ViirsSNPP": 1 }));
+        assert_eq!(rows[0]["platform_counts"], serde_json::json!({}));
     }
 
     fn calendar_cells_for_test(year: i32, month: u32, count: u64) -> Vec<CalendarCell> {

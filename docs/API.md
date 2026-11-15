@@ -135,6 +135,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `viirs_covered` | boolean | VIIRS ailesi o ay gözlenebilir mi (arşivde SNPP 2012-01'den itibaren) |
 | `viirs_count` | integer | Ham VIIRS (SNPP + NOAA-20) tespit sayısı |
 | `viirs_frp_sum` | number | Ham VIIRS FRP toplamı (MW) |
+| `platform_counts` | object | Ham tespit sayısının platform kırılımı; anahtarlar `Sensor` adıdır (`ModisTerra`, `ModisAqua`, `ViirsSNPP`, `ViirsNOAA20`), yalnızca sayımı sıfırdan büyük platformlar yer alır (tespitsiz ay için `{}`). Değerlerin toplamı her ay `modis_count + viirs_count` ile eşittir. Arşivde NOAA-21 yoktur, bu yüzden `ViirsNOAA21` hiç görünmez. Terra/Aqua ayrımı arşiv satırlarındaki `satellite` sütunundan gelir; VIIRS platformu ise indirilen veri kümesinden (SNPP / NOAA-20) belirlenir |
 
 `*_covered = false` "gözlenemedi" demektir, sıfır değildir: bu durumda sayım ve toplam 0 gelir ancak istemci bu ayı eksik veri olarak ele almalıdır. `modis_count + viirs_count` toplamı tüm pencerede `counts.raw_detections` ile eşittir.
 
