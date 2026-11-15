@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Republic_of_Congo.csv",
@@ -195,5 +195,5 @@
       "bytes": 7342935
     }
   ],
-  "body_hash": "223dc4b51aba6d6b"
+  "body_hash": "21ea75e42c7ddd05"
 }

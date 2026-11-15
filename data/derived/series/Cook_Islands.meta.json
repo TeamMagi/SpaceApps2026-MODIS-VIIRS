@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2013/modis_2013_Cook_Islands.csv",
@@ -75,5 +75,5 @@
       "bytes": 372
     }
   ],
-  "body_hash": "63ce4e8064615c0c"
+  "body_hash": "258a7b3bda781381"
 }

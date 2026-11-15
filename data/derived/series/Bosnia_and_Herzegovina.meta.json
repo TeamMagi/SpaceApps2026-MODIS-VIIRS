@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Bosnia_and_Herzegovina.csv",
@@ -195,5 +195,5 @@
       "bytes": 158089
     }
   ],
-  "body_hash": "babf8e4aa9bb4587"
+  "body_hash": "a5b9b4b95ca0ac85"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Togo.csv",
@@ -195,5 +195,5 @@
       "bytes": 2372501
     }
   ],
-  "body_hash": "d6e60468ed2f2045"
+  "body_hash": "d51fe729f3a1effb"
 }

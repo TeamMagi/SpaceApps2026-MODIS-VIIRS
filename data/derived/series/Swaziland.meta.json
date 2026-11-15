@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Swaziland.csv",
@@ -195,5 +195,5 @@
       "bytes": 441786
     }
   ],
-  "body_hash": "b35aef1e57aa8cab"
+  "body_hash": "5a3c4c722ecd620a"
 }

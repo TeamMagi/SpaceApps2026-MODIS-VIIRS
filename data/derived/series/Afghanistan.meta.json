@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Afghanistan.csv",
@@ -195,5 +195,5 @@
       "bytes": 65804
     }
   ],
-  "body_hash": "ba3a1968ff285518"
+  "body_hash": "7185aa76c7f2ea4b"
 }

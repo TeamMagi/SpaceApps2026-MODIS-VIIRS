@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Cameroon.csv",
@@ -195,5 +195,5 @@
       "bytes": 17578645
     }
   ],
-  "body_hash": "38b46d6c1f4d9638"
+  "body_hash": "d43644f131746d0f"
 }

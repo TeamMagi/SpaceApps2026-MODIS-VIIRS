@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Fiji.csv",
@@ -195,5 +195,5 @@
       "bytes": 172625
     }
   ],
-  "body_hash": "e745f2d912d76679"
+  "body_hash": "e66305ef4e23aaa4"
 }

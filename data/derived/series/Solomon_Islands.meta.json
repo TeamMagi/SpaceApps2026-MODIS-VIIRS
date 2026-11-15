@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Solomon_Islands.csv",
@@ -195,5 +195,5 @@
       "bytes": 15287
     }
   ],
-  "body_hash": "4e1d605339b6fe3a"
+  "body_hash": "b79ca3a313aaa44e"
 }

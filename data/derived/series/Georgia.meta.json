@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "config_hash": "69e027a683c09b69",
+  "schema_version": 3,
+  "config_hash": "9799a1f3ad5a3976",
   "files": [
     {
       "path": "modis/2000/modis_2000_Georgia.csv",
@@ -195,5 +195,5 @@
       "bytes": 303164
     }
   ],
-  "body_hash": "fca9ac006b7f1ee3"
+  "body_hash": "9a54460f1818a5af"
 }
