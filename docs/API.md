@@ -2140,6 +2140,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `harmonized[]` | array | Harmonize kayıtlar (aşağıda) |
 | `stages` | object | Aşamaların sayıları (aşağıda) |
 | `bbox` | object \| null | Yıl (veya ay) içindeki **tüm** ham satırların kapsadığı alan. Ham satır yoksa `null`. Örnekleme sonrası döndürülen noktaların alanı değildir |
+| `events` | object | Yangın olayı kümeleri (aşağıda). **Tüm** harmonize kayıtlar üzerinden hesaplanır; `limit` örneklemesinden etkilenmez |
+| `no_detection_days` | array | Bir sensör ailesinin hiç tespit döndürmediği günler (aşağıda) |
 
 `raw[]` öğeleri:
 
@@ -2153,7 +2155,7 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `daynight` | DayNight | Gündüz/gece |
 | `harmonized_id` | string \| null | Bağlı harmonize kaydın kimliği (`h<n>`). Satır interscan çakışması olarak çıkarıldıysa `null` |
 
-`harmonized[]` öğeleri: `id` (`h<n>`) ve harmonize kaydın tüm alanları (bkz. "Harmonize edilmiş kayıt"). `n`, yıl (veya ay) boyunca üretilen harmonize listesindeki sıradır; örnekleme öncesi numaralandırılır.
+`harmonized[]` öğeleri: `id` (`h<n>`) ve harmonize kaydın tüm alanları (bkz. "Harmonize edilmiş kayıt"). Ek olarak `event_id` (integer \| null) kaydın ait olduğu olayın `events.items[].id` değeridir; "watch" noktalarında `null`. Olay listesi 1000'e kırpıldıysa (`items_truncated`) `event_id` listede bulunmayan bir olaya işaret edebilir. `n`, yıl (veya ay) boyunca üretilen harmonize listesindeki sıradır; örnekleme öncesi numaralandırılır.
 
 `stages` alanı tüm yıl veya ay üzerinden hesaplanır, yalnızca döndürülen örnek üzerinden değil:
 
@@ -2164,6 +2166,46 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `fleet_merged` | Kardeş uydu birleştirmesiyle kaldırılan kayıtlar |
 | `matched_pairs` | MODIS-VIIRS eşleşme çifti sayısı |
 | `harmonized` | Harmonize kayıt sayısı |
+
+#### Yangın olayları (`events`)
+
+Kümeleme `harmonized` çıktısının tamamı üzerinde, örneklemeden önce çalışır. Yöntem eg-firetrack referans projesinin (`events.py`) kuralını izler: harmonize tespitler üzerinde DBSCAN (`eps = 2 km`, `min_samples = 3`) ve DBSCAN'in dışında kalan seyrek tespitler için "ardışık 2 gün" kuralı; tek başına kalan 1-2 tespit olay değil "watch" noktasıdır. DBSCAN uzay-zamanda (ST-DBSCAN) çalışır: iki tespit komşudur, eğer haversine mesafesi `eps_km`'den küçük veya eşitse **ve** UTC takvim günü farkı `max_day_gap`'i (1) aşmıyorsa. Böylece aynı yer farklı hafta/yıllarda birleşmez. Antimeridyen (±180° boylam) komşu aramasında sarılmaz.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `events.params` | object | `eps_km` (2.0), `min_samples` (3), `max_day_gap` (1) |
+| `events.count` | integer | Toplam olay sayısı (kırpmadan önce) |
+| `events.watch_points` | integer | Hiçbir olaya girmeyen harmonize tespit sayısı |
+| `events.items` | array | Olaylar, `id` sırasıyla. En fazla 1000; fazlası varsa tespit sayısı en büyük olanlar tutulur |
+| `events.items_truncated` | boolean | `count` 1000'i aştıysa `true` |
+
+`events.items[]` öğeleri:
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `id` | integer | En erken tespit zamanına göre (eşitlikte girdi sırası) atanan kararlı kimlik |
+| `kind` | string | `"dense"` (DBSCAN kümesi) veya `"consecutive_days"` (yoğunluk eşiğine ulaşmayan ama >= 2 ayrı UTC gününde süren tespit grubu) |
+| `detections` | integer | Olaydaki harmonize tespit sayısı |
+| `start`, `end` | RFC 3339 zaman | İlk ve son tespit |
+| `days` | integer | Tespit bulunan ayrı UTC günü sayısı |
+| `centroid_lat`, `centroid_lon` | number | Aritmetik ortalama konum |
+| `bbox` | object | `west`, `south`, `east`, `north` |
+| `total_frp` | number | `frp_corrected` toplamı, MW |
+
+#### Tespit olmayan günler (`no_detection_days`)
+
+İstenen dönem (ay veya tüm yıl) içinde, bir sensör ailesinin (`"Modis"`; `"Viirs"` = SNPP + NOAA-20) kapsama aralığında olup bölgede hiç tespit döndürmediği günler. eg-firetrack'in `no_detection_days` metaverisine karşılık gelir. Dönem, ailenin arşiv kapsamıyla (bölgenin o yıl için dosyası olan sensörlerin genel arşiv tarih aralığı; VIIRS için SNPP ve NOAA-20 aralığının birleşimi) kesiştirilir; kapsam dışındaki günler listelenmez. Liste `(date, family)` sırasındadır.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `date` | `YYYY-MM-DD` | Gün |
+| `family` | string | `"Modis"` veya `"Viirs"` |
+| `reason` | string | `"known_outage"` veya `"no_detections"` |
+| `other_family_detected` | boolean | Diğer ailenin o gün tespiti varsa `true` (veri boşluğu olduğuna dair ipucu) |
+
+`known_outage` yalnızca MODIS için ve Remy & Kaiser (2014, ACP, "Daily global fire radiative power from MODIS", Bölüm 4) tarafından belgelenen Terra MOD14 veri arızası pencerelerinde verilir: 6-17 Ağustos 2000, 16 Haziran-2 Temmuz 2001, 21-29 Mart 2002 (hepsi Aqua öncesi; gerçek sıfır yangın değil, veri arızası). Bunun dışındaki her gün `no_detections` olur.
+
+**Uyarı:** `no_detections` kesin bir kesinti kanıtı değildir. "Bu bölge-günde tespit yok" demektir ve gerçek bir sıfır-yangın gününü bir veri boşluğundan tek başına ayıramaz; `other_family_detected: true` yalnızca boşluk olasılığına işaret eden bir ipucudur. Tespit günleri arşivdeki yaban yangını (`type = 0`) satırlarından çıkarılır.
 
 #### Örnekleme davranışı
 

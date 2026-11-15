@@ -21,6 +21,7 @@
 | `effort.rs` | Gözlem eforu (EffortFactor) tahmini |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
+| `events.rs` | Yangın olayı kümeleme (ST-DBSCAN + ardışık gün kuralı) ve `no_detection_days` (bilinen Terra kesintileri dahil) |
 
 ## Teknik Kısıtlar
 

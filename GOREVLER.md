@@ -262,7 +262,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
-| Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [ ] |
+| Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
@@ -981,12 +981,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `calendar.rs` birim testleriyle birlikte PCD/PCP, opsiyonel Fire-Year ve MAD-tabanlı SFAI z-skorunu üretiyor ve API çıktısında sunuyor.
 - **Kapanış notu (15 Kasım 2026):** `calendar::concentration` / `calendar::seasonality` (`SeasonYear::Calendar | FireYear`) ve `CalendarCell.sfai` eklendi; tanımlar kaynaklarla karşılaştırıldı. PCD/PCP `[30, Dnk. 1–2]`: dönem açısı aralığın orta noktası (`θ_m = (m−0.5)·30°`); makale 36 on günlük dönem kullanır ve PCP'yi on günlük birimde verir, biz 12 ay kullandığımız için değerler doğrudan kıyaslanamaz. Fire-Year `[21]`: Mart–Şubat, başlangıç yılıyla etiketlenir (`2013–14` = 2013). SFAI (`flare-chronos`): `(x − medyan) / (0.65·1.4826·MAD + 0.35·σ)`, `anomaly` ile aynı havuz; pay olarak medyan seçimi bizimdir (referans analizi yalnız paydayı kaydediyor). `/api/calendar` yanıtı `seasonality { metric: "count", calendar_year, fire_year }` taşır; kapsamı tam olmayan yıl `complete: false` ve `null` döner, kapsam içindeki tespitsiz ay gözlenmiş sıfırdır; `/api/series` şeması değişmedi. 18 yeni core + 1 server testi; `cargo test --workspace` ve clippy temiz. Metrik harmonize kayıt sayısıdır, Ω-normalize değildir: Türkiye'de PCD 2001'de 0.64, 2012'de 0.43; bu düşüşün bir kısmı VIIRS'in sezon dışı küçük yangınları yakalamasından gelebilir, mevsim kayması diye yorumlanmadan önce sensör etkisi ayrıştırılmalı.
 
-### [ ] Y7 — Olay kümeleme ve kesinti şeffaflığı
+### [X] Y7 — Olay kümeleme ve kesinti şeffaflığı
 - **Bekler:** — · **Açar:** —
 - `eg-firetrack` yaklaşımıyla `2 km` yarıçap / en az `3 nokta` eşiğiyle DBSCAN yangın olayı kümeleme katmanının eklenmesi
 - Sensör kesinti günlerinin (`no_detection_days` — ör. Terra 2000–2002 tam kesintileri `[18, Bölüm 4]` veya veri eksikliği günleri) gerçek sıfır yangın günlerinden ayrılıp API meta verisinde yayınlanması (`eg-firetrack`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7, P4 (+ `[18]`, `eg-firetrack`)
 - **Bitti sayılır:** DBSCAN (`2 km / 3 nokta`) olay kümeleme çıktısı ve API'de `no_detection_days` kesinti alanı testlerle doğrulanmış durumda.
+- **Kapanış notu (15 Kasım 2026):** `crates/core/src/events.rs`: harmonize tespitler üzerinde ST-DBSCAN (`eps 2 km`, `min_samples 3`, komşuluk için en fazla 1 UTC gün farkı; aynı yer farklı haftalarda/yıllarda birleşmez) ve `eg-firetrack`'in ardışık gün kuralı (2+ farklı günde görülen küçük gruplar `consecutive_days` olayı); kalan noktalar `watch`. `no_detection_days`: aile (MODIS/VIIRS) bazında tespitsiz bölge-günleri; Remy & Kaiser 2014 `[18, Böl. 4]` Terra pencereleri (6–17 Ağu 2000, 16 Haz–2 Tem 2001, 21–29 Mar 2002) `known_outage`, diğerleri `no_detections` (tek başına kesinti kanıtı değildir; `other_family_detected` boşluk ipucudur). `/api/points` yanıtında `events` (tam küme üzerinde, örneklemeden önce; en çok 1000 öğe) ve `no_detection_days`; harmonize noktalarda `event_id`. 18 core + 3 server testi; `cargo test --workspace` ve clippy temiz. Gerçek veri: Türkiye Ağu 2021 → 305 olay, en büyüğü 27 Tem–6 Ağu 36.93K/31.49D (2787 tespit, Manavgat ile uyumlu); Haziran 2001'de 16–30 Haziran `known_outage`. Sınır: 1 günlük zincirleme, sürekli yanan alanları tek olaya bağlayabilir (Brezilya Eyl 2020 Pantanal: 30 günlük 22.498 tespitlik olay); bu bir yangın kompleksidir, tekil ateş sayısı değildir. K12 (Sadık) tarihsel kesinti etiketlerini aynı `KNOWN_OUTAGES` tablosuna bağlamalı.
 
 ### [ ] Y1 — FRP zaman serisi grafiği
 - **Bekler:** R1, Y5, S4 · **Açar:** G5
