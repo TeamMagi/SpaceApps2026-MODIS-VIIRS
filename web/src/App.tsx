@@ -11,6 +11,7 @@ import MapStateOverlay from "./components/Map/MapStateOverlay";
 import PipelineStrip from "./components/Pipeline/PipelineStrip";
 import CountDelta from "./components/Stats/CountDelta";
 import ViewToggle from "./components/Toggle/ViewToggle";
+import { useDataModeProbe } from "./hooks/useDataModeProbe";
 import { useDocumentSync } from "./hooks/useDocumentSync";
 import { useHarmonizeClock } from "./hooks/useHarmonizeTransition";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -21,9 +22,10 @@ const HotspotMap = lazy(() => import("./components/Map/HotspotMap"));
 
 /**
  * Composition root. Opens in Raw (the question before the answer) unless the URL says otherwise.
- * The four app-wide hooks below are the only places that own timers or global listeners.
+ * The five app-wide hooks below are the only places that own timers or global listeners.
  */
 export default function App() {
+  useDataModeProbe();
   useHarmonizeClock();
   useUrlSync();
   useKeyboardShortcuts();

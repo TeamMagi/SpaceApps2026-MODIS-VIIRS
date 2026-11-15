@@ -97,6 +97,40 @@ let activePointsKey: string | null = null;
 let pointsToken = 0;
 const pointsSubscribers = new Map<string, number>();
 
+function invalidateRegionCaches(): void {
+  regionsToken += 1;
+  regionsEntry.controller?.abort();
+  regionsRequested = false;
+  regionsEntry = {
+    status: "loading",
+    data: null,
+    error: null,
+    controller: null,
+  };
+
+  seriesToken += 1;
+  for (const entry of seriesCache.values()) {
+    entry.controller?.abort();
+  }
+  seriesCache.clear();
+  activeSeriesRegion = null;
+
+  pointsToken += 1;
+  for (const entry of pointsCache.values()) {
+    entry.controller?.abort();
+  }
+  pointsCache.clear();
+  activePointsKey = null;
+
+  emitChange();
+}
+
+useAppStore.subscribe((state, prev) => {
+  if (state.dataMode !== prev.dataMode) {
+    invalidateRegionCaches();
+  }
+});
+
 function touchCacheEntry<T>(cache: Map<string, CacheEntry<T>>, key: string, entry: CacheEntry<T>): void {
   cache.delete(key);
   cache.set(key, entry);
@@ -654,13 +688,14 @@ const NO_REGIONS: readonly RegionSummary[] = [];
 export function useRegions(): UseRegionsResult {
   useSyncExternalStore(subscribeCache, getSnapshotVersion, getSnapshotVersion);
   const lang = useAppStore((state) => state.lang);
+  const dataMode = useAppStore((state) => state.dataMode);
 
   useEffect(() => {
     acquireRegions();
     return () => {
       releaseRegions();
     };
-  }, []);
+  }, [dataMode]);
 
   const retry = useCallback(() => {
     const wasEmpty = regionsEntry.status === "empty";
@@ -681,7 +716,7 @@ export function useRegions(): UseRegionsResult {
   return {
     status: regionsEntry.status,
     regionsEmpty,
-    source: regionsEntry.data?.source ?? "FIRMS archive",
+    source: regionsEntry.data?.source ?? (dataMode === "demo" ? t(lang, "demoSourceShort") : "FIRMS archive"),
     regions: regionsEntry.status === "ready" && regionsEntry.data ? regionsEntry.data.regions : NO_REGIONS,
     error,
     retry,
@@ -697,6 +732,7 @@ export function useRegionData(): UseRegionDataResult {
   const regionId = useAppStore((state) => state.region);
   const lang = useAppStore((state) => state.lang);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
+  const dataMode = useAppStore((state) => state.dataMode);
   const regionsEmpty = regionsEntry.status === "empty";
 
   useEffect(() => {
@@ -704,7 +740,7 @@ export function useRegionData(): UseRegionDataResult {
     return () => {
       releaseRegions();
     };
-  }, []);
+  }, [dataMode]);
 
   useEffect(() => {
     if (regionsEmpty) return;
@@ -712,7 +748,7 @@ export function useRegionData(): UseRegionDataResult {
     return () => {
       releaseSeries(regionId);
     };
-  }, [regionId, regionsEmpty]);
+  }, [regionId, regionsEmpty, dataMode]);
 
   const retry = useCallback(() => {
     const wasEmpty = regionsEntry.status === "empty";
@@ -946,6 +982,7 @@ export function useMapPoints(): UseMapPointsResult {
   const regionId = useAppStore((state) => state.region);
   const lang = useAppStore((state) => state.lang);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
+  const dataMode = useAppStore((state) => state.dataMode);
   const {
     defaultMapMonth,
     status: seriesStatus,
@@ -965,7 +1002,7 @@ export function useMapPoints(): UseMapPointsResult {
     return () => {
       releasePoints(key);
     };
-  }, [regionId, targetYear, targetMonthNum, seriesStatus]);
+  }, [regionId, targetYear, targetMonthNum, seriesStatus, dataMode]);
 
   const retry = useCallback(() => {
     if (regionsEntry.status === "error" || regionsEntry.status === "empty" || !regionsEntry.data) {

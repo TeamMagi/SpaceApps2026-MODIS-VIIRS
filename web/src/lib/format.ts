@@ -112,15 +112,16 @@ export function monthKey(ref: MonthRef): string {
   return `${ref.year}-${String(ref.month).padStart(2, "0")}`;
 }
 
-/** "pyrosync_turkey_2021-08.csv"; whole-year views use the year alone. */
-export function csvFileName(regionSlug: string, period: MapPeriod): string {
+/** "pyrosync_turkey_2021-08.csv"; demo exports include "_demo_", whole-year views use the year alone. */
+export function csvFileName(regionSlug: string, period: MapPeriod, isDemo = false): string {
   const suffix =
     period.year === null
       ? "archive"
       : period.month === null
         ? String(period.year)
         : monthKey({ year: period.year, month: period.month });
-  return `pyrosync_${regionSlug}_${suffix}.csv`;
+  const demoTag = isDemo ? "_demo" : "";
+  return `pyrosync_${regionSlug}${demoTag}_${suffix}.csv`;
 }
 
 export interface Formatter {

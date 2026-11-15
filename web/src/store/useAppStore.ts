@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { DEFAULT_REGION, readUrlState, type UrlState } from "../lib/urlState";
 import type {
   ActivePhase,
+  DataMode,
+  DataModeSource,
   DrawerId,
   Lang,
   MonthCell,
@@ -86,6 +88,8 @@ export interface AppState {
   lang: Lang;
   theme: Theme;
   palette: Palette;
+  dataMode: DataMode;
+  dataModeSource: DataModeSource;
   selectedMonth: MonthRef | null;
   calendarYear: number | null;
   yearPlaying: boolean;
@@ -99,6 +103,7 @@ export interface AppState {
   setLang: (lang: Lang) => void;
   setTheme: (theme: Theme) => void;
   setPalette: (palette: Palette) => void;
+  setDataMode: (mode: DataMode, source: DataModeSource) => void;
   selectMonth: (month: MonthRef | null) => void;
   /** Selects the month, or clears the selection when it is already selected. */
   toggleMonth: (month: MonthRef) => void;
@@ -176,6 +181,8 @@ function snapped(state: Pick<AppState, "targetMode" | "snapSeq">, targetMode = s
 
 const initialUrl = readUrlState();
 const initialMode: ViewMode = initialUrl.mode ?? "raw";
+const initialDataMode: DataMode = initialUrl.data === "demo" ? "demo" : "live";
+const initialDataModeSource: DataModeSource = initialUrl.data === "demo" ? "manual" : "auto";
 
 export const useAppStore = create<AppState>()((set, get) => ({
   region: initialUrl.region ?? DEFAULT_REGION,
@@ -190,6 +197,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   lang: initialUrl.lang ?? "en",
   theme: typeof window === "undefined" ? "dark" : readStoredTheme(),
   palette: initialUrl.palette ?? (typeof window === "undefined" ? "default" : readStoredPalette()),
+  dataMode: initialDataMode,
+  dataModeSource: initialDataModeSource,
   selectedMonth: initialUrl.month ?? null,
   calendarYear: initialUrl.month?.year ?? null,
   yearPlaying: false,
@@ -210,6 +219,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   },
   setTheme: (theme) => set({ theme }),
   setPalette: (palette) => set({ palette }),
+  setDataMode: (dataMode, dataModeSource) =>
+    set((s) => (s.dataMode === dataMode && s.dataModeSource === dataModeSource ? s : { dataMode, dataModeSource })),
   selectMonth: (month) =>
     set((s) => ({
       selectedMonth: month,
@@ -254,10 +265,26 @@ export const useAppStore = create<AppState>()((set, get) => ({
         : regionChanged
           ? null
           : state.calendarYear;
+    const nextDataMode: DataMode =
+      url.data === "demo"
+        ? "demo"
+        : url.data === "live"
+          ? "live"
+          : state.dataMode === "demo" && state.dataModeSource === "manual"
+            ? "live"
+            : state.dataMode;
+    const nextDataModeSource: DataModeSource =
+      url.data === "demo"
+        ? "manual"
+        : url.data === "live" || (url.data === undefined && state.dataMode === "demo" && state.dataModeSource === "manual")
+          ? "auto"
+          : state.dataModeSource;
     set({
       region: nextRegion,
       lang: url.lang ?? state.lang,
       palette: url.palette ?? state.palette,
+      dataMode: nextDataMode,
+      dataModeSource: nextDataModeSource,
       selectedMonth: nextSelectedMonth,
       calendarYear: nextCalendarYear,
       yearPlaying: regionChanged ? false : state.yearPlaying,

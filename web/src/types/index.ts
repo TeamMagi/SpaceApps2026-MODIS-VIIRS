@@ -40,6 +40,8 @@ export interface AnalyticsSnapshot {
 export type Lang = "en" | "tr";
 export type Theme = "dark" | "light";
 export type Palette = "default" | "viridis" | "cividis";
+export type DataMode = "live" | "demo";
+export type DataModeSource = "auto" | "manual";
 
 /** Phase of the Raw <-> Harmonized choreography. See hooks/useHarmonizeTransition. */
 export type Phase = "idle" | "detect" | "merge" | "settle";

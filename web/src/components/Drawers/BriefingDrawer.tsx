@@ -11,12 +11,15 @@ import { useCopy } from "../../hooks/useCopy";
 import { useCopyLink } from "../../hooks/useCopyLink";
 import { useExportView } from "../../hooks/useExportView";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
-import { useRegionData } from "../../hooks/useRegionData";
+import { useRegionData, useRegions } from "../../hooks/useRegionData";
+import { useAppStore } from "../../store/useAppStore";
 import Drawer from "./Drawer";
 import styles from "./BriefingDrawer.module.css";
 
 export default function BriefingDrawer() {
   const { t, fmt } = useCopy();
+  const dataMode = useAppStore((state) => state.dataMode);
+  const { source } = useRegions();
   const { status, hasData, error, retry, region, totals, cliff, briefing } = useRegionData();
   const revealAnswer = useHarmonizeTransition((v) => v.revealAnswer);
   const { canDownload, download } = useExportView();
@@ -131,6 +134,9 @@ export default function BriefingDrawer() {
           ))}
         </dl>
       )}
+      <p className={styles.sourceLine}>
+        {dataMode === "demo" ? t("briefingSourceDemo") : t("briefingSourceLive", { source })}
+      </p>
     </Drawer>
   );
 }

@@ -86,6 +86,12 @@ const enBase = {
   navMethods: "Methods",
   modeBadgeArchive: "FIRMS archive",
   modeBadgeArchiveYears: "FIRMS archive · {first}–{last}",
+  modeBadgeDemo: "Demo data (synthetic)",
+  modeBadgeToDemoAria: "Switch to synthetic demo data",
+  modeBadgeToLiveAria: "Try switching to live server",
+  modeBadgeChecking: "Checking server…",
+  modeBadgeStayDemoNotice: "Server not reachable, staying on demo data",
+  demoSourceShort: "Synthetic demo data",
 
   // Correction receipt
   receiptTitle: "From raw to harmonized detections",
@@ -275,6 +281,8 @@ const enBase = {
     "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP ({viirsFirst}–{viirsLast})",
   methodsSourceCitationModis: "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast})",
   methodsSourceCitationFallback: "NASA FIRMS archive · MODIS C6.1 / VIIRS S-NPP",
+  methodsSourceCitationDemo:
+    "Synthetic demo data · 2021 Mediterranean cluster + 2000–2025 synthetic series (not NASA FIRMS data)",
 
   // Briefing
   briefingTitle: "Regional briefing",
@@ -291,7 +299,11 @@ const enBase = {
   briefingPrint: "Print this briefing",
   briefingCopyLink: "Copy link to this view",
   briefingLinkCopied: "Link copied",
+  briefingSourceLive: "Source: {source}",
+  briefingSourceDemo:
+    "Source: Synthetic demo data (2021 Mediterranean cluster + 2000–2025 synthetic series; not NASA FIRMS data)",
   nrtLiveSummary: "Live: {raw} → {harmonized}",
+  nrtDemoUnavailable: "Live feed: not available in demo mode",
   nrtTransactions: "{n} API calls",
 } as const;
 
@@ -340,6 +352,12 @@ const trBase = {
   navMethods: "Yöntemler",
   modeBadgeArchive: "FIRMS arşivi",
   modeBadgeArchiveYears: "FIRMS arşivi · {first}–{last}",
+  modeBadgeDemo: "Demo veri (sentetik)",
+  modeBadgeToDemoAria: "Sentetik demo veriye geç",
+  modeBadgeToLiveAria: "Canlı sunucuya geçmeyi dene",
+  modeBadgeChecking: "Sunucu kontrol ediliyor…",
+  modeBadgeStayDemoNotice: "Sunucuya ulaşılamıyor, demo veride kalınıyor",
+  demoSourceShort: "Sentetik demo verisi",
 
   receiptTitle: "Ham tespitten harmonize tespite",
   receiptRaw: "Ham tespitler",
@@ -521,6 +539,8 @@ const trBase = {
     "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP ({viirsFirst}–{viirsLast})",
   methodsSourceCitationModis: "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast})",
   methodsSourceCitationFallback: "NASA FIRMS arşivi · MODIS C6.1 / VIIRS S-NPP",
+  methodsSourceCitationDemo:
+    "Sentetik demo verisi · 2021 Akdeniz kümesi + 2000–2025 sentetik seri (NASA FIRMS verisi değildir)",
 
   briefingTitle: "Bölge brifingi",
   briefingFinding: "{region} bölgesinde ham tespitlerin {pct|poss} mükerrer tespitti ({raw} tespitten {removed}).",
@@ -536,7 +556,11 @@ const trBase = {
   briefingPrint: "Bu brifingi yazdır",
   briefingCopyLink: "Bu görünümün bağlantısını kopyala",
   briefingLinkCopied: "Bağlantı kopyalandı",
+  briefingSourceLive: "Kaynak: {source}",
+  briefingSourceDemo:
+    "Kaynak: Sentetik demo verisi (2021 Akdeniz kümesi + 2000–2025 sentetik seri; NASA FIRMS verisi değildir)",
   nrtLiveSummary: "Canlı: {raw} → {harmonized}",
+  nrtDemoUnavailable: "Canlı akış: demo modunda kullanılamıyor",
   nrtTransactions: "{n} API çağrısı",
 } as const;
 

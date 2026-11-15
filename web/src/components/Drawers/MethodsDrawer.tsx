@@ -35,6 +35,7 @@ const PALETTES: ReadonlyArray<{
 export default function MethodsDrawer() {
   const { t } = useCopy();
   const { coverage } = useRegionData();
+  const dataMode = useAppStore((state) => state.dataMode);
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
   const palette = useAppStore((state) => state.palette);
@@ -49,19 +50,22 @@ export default function MethodsDrawer() {
     setOpenSteps((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const sourceCitation = coverage.modis
-    ? coverage.viirs
-      ? t("methodsSourceCitation", {
-          modisFirst: String(coverage.modis.first),
-          modisLast: String(coverage.modis.last),
-          viirsFirst: String(coverage.viirs.first),
-          viirsLast: String(coverage.viirs.last),
-        })
-      : t("methodsSourceCitationModis", {
-          modisFirst: String(coverage.modis.first),
-          modisLast: String(coverage.modis.last),
-        })
-    : t("methodsSourceCitationFallback");
+  const sourceCitation =
+    dataMode === "demo"
+      ? t("methodsSourceCitationDemo")
+      : coverage.modis
+        ? coverage.viirs
+          ? t("methodsSourceCitation", {
+              modisFirst: String(coverage.modis.first),
+              modisLast: String(coverage.modis.last),
+              viirsFirst: String(coverage.viirs.first),
+              viirsLast: String(coverage.viirs.last),
+            })
+          : t("methodsSourceCitationModis", {
+              modisFirst: String(coverage.modis.first),
+              modisLast: String(coverage.modis.last),
+            })
+        : t("methodsSourceCitationFallback");
 
   return (
     <Drawer id="methods" title={t("methodsTitle")} description={t("methodsCliffDef")}>

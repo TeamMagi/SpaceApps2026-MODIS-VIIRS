@@ -1,3 +1,6 @@
+import { decideNextDataMode, type ProbeOrFetchOutcome } from "../lib/dataMode";
+import { buildDemoPoints, buildDemoRegions, buildDemoSeries } from "../lib/demoData";
+import { useAppStore } from "../store/useAppStore";
 import {
   Confidence,
   DayNight,
@@ -614,87 +617,170 @@ function adaptReportInfo(w: WireReportInfo): ReportInfo {
   };
 }
 
+// --- Health probe & demo fallback helpers ------------------------------------
+
+export const HEALTH_PROBE_TIMEOUT_MS = 2500;
+
+export type ProbeOutcome = Extract<ProbeOrFetchOutcome, { source: "probe" }>;
+
+export async function probeHealth(
+  signal?: AbortSignal,
+  timeoutMs = HEALTH_PROBE_TIMEOUT_MS,
+): Promise<ProbeOutcome> {
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timerId = globalThis.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  const onExternalAbort = () => {
+    controller.abort();
+  };
+  signal?.addEventListener("abort", onExternalAbort, { once: true });
+
+  try {
+    const url = new URL(`${BASE_URL}/health`, window.location.origin);
+    const res = await fetch(url.toString(), { signal: controller.signal });
+    if (!res.ok) {
+      return { source: "probe", ok: false, status: res.status };
+    }
+    const body: unknown = await res.json();
+    if (isRecord(body) && typeof body.status === "string") {
+      return { source: "probe", ok: true };
+    }
+    return { source: "probe", ok: false, status: null };
+  } catch (err: unknown) {
+    if (signal?.aborted && !timedOut) {
+      throw err;
+    }
+    return { source: "probe", ok: false, status: null };
+  } finally {
+    globalThis.clearTimeout(timerId);
+    signal?.removeEventListener("abort", onExternalAbort);
+  }
+}
+
+function handleLiveFetchError(err: unknown, signal?: AbortSignal): boolean {
+  if (isAbortError(err) || signal?.aborted || !(err instanceof ApiError)) {
+    return false;
+  }
+  const state = useAppStore.getState();
+  const next = decideNextDataMode(
+    { dataMode: state.dataMode, dataModeSource: state.dataModeSource },
+    { source: "fetch", ok: false, kind: err.kind, status: err.status },
+  );
+  if (next.dataMode !== state.dataMode || next.dataModeSource !== state.dataModeSource) {
+    state.setDataMode(next.dataMode, next.dataModeSource);
+  }
+  return next.dataMode === "demo";
+}
+
 // --- Public endpoint fetchers ------------------------------------------------
 
 export async function fetchRegions(signal?: AbortSignal): Promise<RegionsResponse> {
-  const wire = await requestJson<WireRegionsResponse>("/regions", undefined, signal);
-  if (
-    !isRecord(wire) ||
-    typeof wire.source !== "string" ||
-    !Array.isArray(wire.regions) ||
-    wire.regions.some((r) => !isRecord(r) || typeof r.id !== "string" || typeof r.name !== "string")
-  ) {
-    throw new ApiError("Invalid regions response from server", 200, "server", "invalid_response");
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoRegions();
   }
-  return {
-    source: wire.source,
-    regions: wire.regions.map((r) => ({
-      id: r.id,
-      name: r.name,
-      modisYears: r.modis_years ? [r.modis_years[0], r.modis_years[1]] : null,
-      viirsYears: r.viirs_years ? [r.viirs_years[0], r.viirs_years[1]] : null,
-      sizeMb: typeof r.size_mb === "number" && Number.isFinite(r.size_mb) ? r.size_mb : null,
-      tooLarge: Boolean(r.too_large),
-    })),
-  };
+  try {
+    const wire = await requestJson<WireRegionsResponse>("/regions", undefined, signal);
+    if (
+      !isRecord(wire) ||
+      typeof wire.source !== "string" ||
+      !Array.isArray(wire.regions) ||
+      wire.regions.some((r) => !isRecord(r) || typeof r.id !== "string" || typeof r.name !== "string")
+    ) {
+      throw new ApiError("Invalid regions response from server", 200, "server", "invalid_response");
+    }
+    return {
+      source: wire.source,
+      regions: wire.regions.map((r) => ({
+        id: r.id,
+        name: r.name,
+        modisYears: r.modis_years ? [r.modis_years[0], r.modis_years[1]] : null,
+        viirsYears: r.viirs_years ? [r.viirs_years[0], r.viirs_years[1]] : null,
+        sizeMb: typeof r.size_mb === "number" && Number.isFinite(r.size_mb) ? r.size_mb : null,
+        tooLarge: Boolean(r.too_large),
+      })),
+    };
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return buildDemoRegions();
+    }
+    throw err;
+  }
 }
 
 export async function fetchSeries(region: string, signal?: AbortSignal): Promise<SeriesResponse> {
-  const wire = await requestJson<WireSeriesResponse>("/series", { region }, signal);
-  if (
-    !isRecord(wire) ||
-    typeof wire.region !== "string" ||
-    !isRecord(wire.filters) ||
-    !Array.isArray(wire.years) ||
-    !Array.isArray(wire.months)
-  ) {
-    throw new ApiError("Invalid series response from server", 200, "server", "invalid_response");
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoSeries(region);
   }
-  return {
-    region: wire.region,
-    filters: {
-      fireType: wire.filters.fire_type,
-      confidence: wire.filters.confidence,
-      area: wire.filters.area,
-      sensors: wire.filters.sensors,
-    },
-    years: wire.years.map((y) => ({
-      year: y.year,
-      raw: y.raw_total,
-      rawModis: y.raw_modis,
-      rawViirs: y.raw_viirs,
-      harmonized: y.harmonized,
-      matched: y.matched,
-      modisOnly: y.modis_only,
-      viirsOnly: y.viirs_only,
-      interscanRemoved: y.interscan_removed,
-      fleetMerged: y.fleet_merged ?? 0,
-      firstDate: y.first_date ?? null,
-      lastDate: y.last_date ?? null,
-      partial: y.partial,
-      modisFirstDate: y.modis_first_date ?? null,
-      modisLastDate: y.modis_last_date ?? null,
-      viirsFirstDate: y.viirs_first_date ?? null,
-      viirsLastDate: y.viirs_last_date ?? null,
-    })),
-    months: wire.months.map((m) => ({
-      year: m.year,
-      month: m.month,
-      rawModis: m.raw_modis,
-      rawViirs: m.raw_viirs,
-      rawTotal: m.raw_total,
-      harmonized: m.harmonized,
-      anomalyRaw: m.anomaly_raw,
-      anomalyHarmonized: m.anomaly_harmonized,
-    })),
-    cliff: adaptCliff(wire.cliff),
-    coverage: wire.coverage
-      ? {
-          modis: adaptYearSpan(wire.coverage.modis),
-          viirs: adaptYearSpan(wire.coverage.viirs),
-        }
-      : null,
-  };
+  try {
+    const wire = await requestJson<WireSeriesResponse>("/series", { region }, signal);
+    if (
+      !isRecord(wire) ||
+      typeof wire.region !== "string" ||
+      !isRecord(wire.filters) ||
+      !Array.isArray(wire.years) ||
+      !Array.isArray(wire.months)
+    ) {
+      throw new ApiError("Invalid series response from server", 200, "server", "invalid_response");
+    }
+    return {
+      region: wire.region,
+      filters: {
+        fireType: wire.filters.fire_type,
+        confidence: wire.filters.confidence,
+        area: wire.filters.area,
+        sensors: wire.filters.sensors,
+      },
+      years: wire.years.map((y) => ({
+        year: y.year,
+        raw: y.raw_total,
+        rawModis: y.raw_modis,
+        rawViirs: y.raw_viirs,
+        harmonized: y.harmonized,
+        matched: y.matched,
+        modisOnly: y.modis_only,
+        viirsOnly: y.viirs_only,
+        interscanRemoved: y.interscan_removed,
+        fleetMerged: y.fleet_merged ?? 0,
+        firstDate: y.first_date ?? null,
+        lastDate: y.last_date ?? null,
+        partial: y.partial,
+        modisFirstDate: y.modis_first_date ?? null,
+        modisLastDate: y.modis_last_date ?? null,
+        viirsFirstDate: y.viirs_first_date ?? null,
+        viirsLastDate: y.viirs_last_date ?? null,
+      })),
+      months: wire.months.map((m) => ({
+        year: m.year,
+        month: m.month,
+        rawModis: m.raw_modis,
+        rawViirs: m.raw_viirs,
+        rawTotal: m.raw_total,
+        harmonized: m.harmonized,
+        anomalyRaw: m.anomaly_raw,
+        anomalyHarmonized: m.anomaly_harmonized,
+      })),
+      cliff: adaptCliff(wire.cliff),
+      coverage: wire.coverage
+        ? {
+            modis: adaptYearSpan(wire.coverage.modis),
+            viirs: adaptYearSpan(wire.coverage.viirs),
+          }
+        : null,
+    };
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return buildDemoSeries(region);
+    }
+    throw err;
+  }
 }
 
 export interface FetchPointsParams {
@@ -704,6 +790,9 @@ export interface FetchPointsParams {
 }
 
 export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoPoints(params);
+  }
   const query: Record<string, string> = {
     region: params.region,
     year: String(params.year),
@@ -711,57 +800,64 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
   if (params.month !== undefined && params.month !== null) {
     query.month = String(params.month);
   }
-  const wire = await requestJson<WirePointsResponse>("/points", query, signal);
-  if (
-    !isRecord(wire) ||
-    typeof wire.region !== "string" ||
-    !Array.isArray(wire.raw) ||
-    !Array.isArray(wire.harmonized) ||
-    !isRecord(wire.stages)
-  ) {
-    throw new ApiError("Invalid points response from server", 200, "server", "invalid_response");
+  try {
+    const wire = await requestJson<WirePointsResponse>("/points", query, signal);
+    if (
+      !isRecord(wire) ||
+      typeof wire.region !== "string" ||
+      !Array.isArray(wire.raw) ||
+      !Array.isArray(wire.harmonized) ||
+      !isRecord(wire.stages)
+    ) {
+      throw new ApiError("Invalid points response from server", 200, "server", "invalid_response");
+    }
+    return {
+      region: wire.region,
+      year: wire.year,
+      month: wire.month ?? null,
+      truncated: wire.truncated,
+      limit: wire.limit,
+      raw: wire.raw.map((r) => ({
+        id: r.id,
+        lat: r.lat,
+        lon: r.lon,
+        sensor: r.sensor === "VIIRS" ? "VIIRS" : "MODIS",
+        frp: r.frp,
+        confidence: adaptConfidence(r.confidence),
+        acquired: r.acquired,
+        daynight: adaptDayNight(r.daynight),
+        harmonizedId: r.harmonized_id,
+      })),
+      harmonized: wire.harmonized.map((h) => ({
+        id: h.id,
+        lat: h.lat,
+        lon: h.lon,
+        frp: h.frp,
+        frpCorrected: h.frp_corrected,
+        confidence: adaptConfidence(h.confidence),
+        source: adaptSource(h.source),
+        acquired: h.acquired,
+        daynight: adaptDayNight(h.daynight),
+        vzaFactor: h.vza_factor ?? null,
+        nObs: h.n_obs ?? 1,
+        platforms: h.platforms ?? [],
+      })),
+      stages: {
+        rawModis: wire.stages.raw_modis,
+        rawViirs: wire.stages.raw_viirs,
+        interscanRemoved: wire.stages.interscan_removed,
+        fleetMerged: wire.stages.fleet_merged ?? 0,
+        matchedPairs: wire.stages.matched_pairs,
+        harmonized: wire.stages.harmonized,
+      },
+      bbox: wire.bbox ?? null,
+    };
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return buildDemoPoints(params);
+    }
+    throw err;
   }
-  return {
-    region: wire.region,
-    year: wire.year,
-    month: wire.month ?? null,
-    truncated: wire.truncated,
-    limit: wire.limit,
-    raw: wire.raw.map((r) => ({
-      id: r.id,
-      lat: r.lat,
-      lon: r.lon,
-      sensor: r.sensor === "VIIRS" ? "VIIRS" : "MODIS",
-      frp: r.frp,
-      confidence: adaptConfidence(r.confidence),
-      acquired: r.acquired,
-      daynight: adaptDayNight(r.daynight),
-      harmonizedId: r.harmonized_id,
-    })),
-    harmonized: wire.harmonized.map((h) => ({
-      id: h.id,
-      lat: h.lat,
-      lon: h.lon,
-      frp: h.frp,
-      frpCorrected: h.frp_corrected,
-      confidence: adaptConfidence(h.confidence),
-      source: adaptSource(h.source),
-      acquired: h.acquired,
-      daynight: adaptDayNight(h.daynight),
-      vzaFactor: h.vza_factor ?? null,
-      nObs: h.n_obs ?? 1,
-      platforms: h.platforms ?? [],
-    })),
-    stages: {
-      rawModis: wire.stages.raw_modis,
-      rawViirs: wire.stages.raw_viirs,
-      interscanRemoved: wire.stages.interscan_removed,
-      fleetMerged: wire.stages.fleet_merged ?? 0,
-      matchedPairs: wire.stages.matched_pairs,
-      harmonized: wire.stages.harmonized,
-    },
-    bbox: wire.bbox ?? null,
-  };
 }
 
 // --- NRT endpoint fetchers ---
@@ -818,11 +914,27 @@ function adaptHarmonizedHotspot(w: WireHarmonizedHotspot): HarmonizedHotspot {
   };
 }
 
+async function requestLiveJson<T>(
+  endpoint: string,
+  params?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (useAppStore.getState().dataMode === "demo") {
+    throw new ApiError("Not available in demo mode", null, "unreachable", "unreachable");
+  }
+  try {
+    return await requestJson<T>(endpoint, params, signal);
+  } catch (err: unknown) {
+    handleLiveFetchError(err, signal);
+    throw err;
+  }
+}
+
 export async function fetchHarmonize(
   params: HarmonizeParams,
   signal?: AbortSignal,
 ): Promise<HarmonizeResponse> {
-  const wire = await requestJson<WireHarmonizeResponse>("/harmonize", harmonizeQuery(params), signal);
+  const wire = await requestLiveJson<WireHarmonizeResponse>("/harmonize", harmonizeQuery(params), signal);
   return {
     raw: {
       modisCount: wire.raw.modis_count,
@@ -845,7 +957,7 @@ export async function fetchCompare(
   params: HarmonizeParams,
   signal?: AbortSignal,
 ): Promise<CompareResponse> {
-  const wire = await requestJson<WireCompareResponse>("/compare", harmonizeQuery(params), signal);
+  const wire = await requestLiveJson<WireCompareResponse>("/compare", harmonizeQuery(params), signal);
   return {
     counts: {
       rawTotal: wire.counts.raw_total,
@@ -890,7 +1002,7 @@ export async function fetchStats(
   params: HarmonizeParams,
   signal?: AbortSignal,
 ): Promise<StatsResponse> {
-  const wire = await requestJson<WireStatsResponse>("/stats", harmonizeQuery(params), signal);
+  const wire = await requestLiveJson<WireStatsResponse>("/stats", harmonizeQuery(params), signal);
   return {
     totals: {
       rawDetections: wire.totals.raw_detections,
@@ -948,7 +1060,7 @@ export async function fetchCalendar(
   if (params.south != null) q.south = String(params.south);
   if (params.east != null) q.east = String(params.east);
   if (params.north != null) q.north = String(params.north);
-  const wire = await requestJson<WireCalendarApiResponse>("/calendar", q, signal);
+  const wire = await requestLiveJson<WireCalendarApiResponse>("/calendar", q, signal);
   return {
     country: wire.country,
     years: {
