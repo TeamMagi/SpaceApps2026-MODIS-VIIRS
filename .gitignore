@@ -38,6 +38,8 @@ data/sample/*
 # Derived Turkey case-study files (see data/case-study/turkey/README.md).
 !data/case-study/
 !data/archive-set.json
+# Calibrated Mondrian conformal table (see docs/KONFORMAL_KAPSAMA.md).
+!data/conformal.json
 !data/archive-manifest.sha256
 !data/derived/
 # Embedded biome grid (include_bytes! in crates/core/src/biome.rs).
