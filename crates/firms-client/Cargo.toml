@@ -3,6 +3,8 @@ name = "pyrosync-firms"
 description = "NASA FIRMS API client"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [[example]]
 name = "validation_suite"
