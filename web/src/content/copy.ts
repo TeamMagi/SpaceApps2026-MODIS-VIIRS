@@ -255,6 +255,10 @@ const enBase = {
   // Bottom bar
   disclaimer: "Harmonized values are model estimates, not ground truth.",
   disclaimerLink: "See how we calculate them →",
+  validationGatePass: "Validation gate: beats both baselines (LOYO error {error})",
+  validationGateInconclusive: "Validation gate: inconclusive vs baseline",
+  validationGateFail: "Validation gate: does not beat baseline - read with caution",
+  validationGateUnavailable: "Not yet validated for this region",
   exportCsv: "Download this view (CSV)",
   exportCsvShort: "CSV",
   exportCsvDescription: "Downloads {file}",
@@ -568,6 +572,10 @@ const trBase = {
 
   disclaimer: "Harmonize değerler model tahminidir, yer gerçeği değildir.",
   disclaimerLink: "Nasıl hesapladığımızı gör →",
+  validationGatePass: "Doğrulama sonucu: her iki temel yöntemden daha başarılı (LOYO hatası {error})",
+  validationGateInconclusive: "Doğrulama sonucu: temel yöntemlere göre üstünlük belirsiz",
+  validationGateFail: "Doğrulama sonucu: temel yöntemden daha başarılı değil - dikkatle yorumlayın",
+  validationGateUnavailable: "Bu bölge için henüz doğrulama yapılmadı",
   exportCsv: "Bu görünümü indir (CSV)",
   exportCsvShort: "CSV",
   exportCsvDescription: "{file} dosyasını indirir",
