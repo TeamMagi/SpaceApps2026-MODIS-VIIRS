@@ -28,6 +28,7 @@ export interface GlobePointLayer {
   /** Sensor bits matching `pointMatchesSensorFilter`, precomputed so the shader can filter. */
   readonly sensors: Float32Array;
   readonly duplicates: Float32Array;
+  readonly uncertTiers: Float32Array;
   /** Point indices in draw order (low FRP first, intense fires on top), or null for layer order. */
   readonly drawOrder: Uint32Array | null;
 }
@@ -63,11 +64,12 @@ export function sensorBitsVisible(bits: number, filter: SensorFilter): boolean {
 
 /** `layer` must come from `buildScenePoints(…, LONLAT_PROJECTION)`, so xs/ys hold lon/lat. */
 export function buildGlobeLayer(layer: ScenePointLayer, harmonized: boolean): GlobePointLayer {
-  const { count, xs, ys, buckets, shapes, flags } = layer;
+  const { count, xs, ys, buckets, shapes, flags, uncertTiers } = layer;
   const positions = new Float32Array(count * 3);
   const kinds = new Float32Array(count);
   const sensors = new Float32Array(count);
   const duplicates = new Float32Array(count);
+  const tiers = new Float32Array(count);
   for (let i = 0; i < count; i++) {
     const [x, y, z] = lonLatToVec(xs[i], ys[i], POINT_RADIUS);
     positions[i * 3] = x;
@@ -80,6 +82,15 @@ export function buildGlobeLayer(layer: ScenePointLayer, harmonized: boolean): Gl
         : PointKind.ViirsSquare;
     sensors[i] = sensorBitsFor(flags[i], shapes[i]);
     duplicates[i] = (flags[i] & PointFlag.Duplicate) !== 0 ? 1 : 0;
+    tiers[i] = harmonized && uncertTiers[i] <= 2 ? uncertTiers[i] : 0;
   }
-  return { count, positions, kinds, sensors, duplicates, drawOrder: harmonized ? drawOrderByKind(kinds) : null };
+  return {
+    count,
+    positions,
+    kinds,
+    sensors,
+    duplicates,
+    uncertTiers: tiers,
+    drawOrder: harmonized ? drawOrderByKind(kinds) : null,
+  };
 }

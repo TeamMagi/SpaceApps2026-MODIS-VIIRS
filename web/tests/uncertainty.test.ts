@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import { uncertaintyAlpha } from "../src/components/Map/engine/renderer.ts";
+import {
+  alphaForTier,
+  UNCERT_ALPHA_STEPS,
+  uncertaintyAlpha,
+} from "../src/components/Map/engine/renderer.ts";
 import {
   WIDE_UNCERTAINTY_THRESHOLD,
   formatFrpInterval,
@@ -75,4 +79,14 @@ check("uncertaintyAlpha respects exact step boundaries and null", () => {
   assert.equal(uncertaintyAlpha(0.40), 0.72);
   assert.equal(uncertaintyAlpha(0.40001), 0.48);
   assert.equal(uncertaintyAlpha(0.95), 0.48);
+});
+
+check("alphaForTier maps tiers 0/1/2 to the shared opacity steps with tier 0 fallback", () => {
+  assert.deepEqual([...UNCERT_ALPHA_STEPS], [1.0, 0.72, 0.48]);
+  assert.equal(alphaForTier(0), 1.0);
+  assert.equal(alphaForTier(1), 0.72);
+  assert.equal(alphaForTier(2), 0.48);
+  assert.equal(alphaForTier(-1), 1.0);
+  assert.equal(alphaForTier(3), 1.0);
+  assert.equal(alphaForTier(Number.NaN), 1.0);
 });
