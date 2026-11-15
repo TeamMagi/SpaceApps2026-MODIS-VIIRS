@@ -50,6 +50,7 @@ struct PoolAccumulator {
     aqua_day_high: u64,
 }
 
+#[derive(Clone)]
 struct MonthBucket {
     platforms: BTreeSet<Sensor>,
     total: u64,
@@ -247,6 +248,51 @@ pub fn omega_for_month(
         .iter()
         .find(|f| f.has_modis == has_modis && f.viirs_platforms == viirs_platforms)
         .and_then(|f| f.omega)
+}
+
+/// Per-month effort aggregates that can be built piecewise (for example one harmonized month at a
+/// time) and merged, giving the same Ω as `estimate_effort` + `omega_for_month` over the whole set.
+#[derive(Clone, Default)]
+pub struct EffortMonths(HashMap<(i32, u32), MonthBucket>);
+
+impl EffortMonths {
+    pub fn from_hotspots(hotspots: &[HarmonizedHotspot]) -> Self {
+        Self(aggregate_months(hotspots))
+    }
+
+    /// Union of months; a month present on both sides has its counts summed and platforms united.
+    pub fn merge(&mut self, other: Self) {
+        for (ym, b) in other.0 {
+            match self.0.entry(ym) {
+                std::collections::hash_map::Entry::Vacant(v) => {
+                    v.insert(b);
+                }
+                std::collections::hash_map::Entry::Occupied(mut o) => {
+                    let m = o.get_mut();
+                    m.platforms.extend(b.platforms);
+                    m.total += b.total;
+                    m.modis_observable += b.modis_observable;
+                    m.total_high += b.total_high;
+                    m.modis_observable_high += b.modis_observable_high;
+                    m.snpp_day_high += b.snpp_day_high;
+                    m.aqua_day_high += b.aqua_day_high;
+                }
+            }
+        }
+    }
+
+    /// Ω for the configuration the month belongs to; `None` for unknown months, pre-Aqua months
+    /// excluded because the series reaches 2002-07, or configurations without a usable estimate.
+    pub fn omega_for(&self, year: i32, month: u32) -> Option<f64> {
+        let mut months = self.0.clone();
+        take_pre_aqua_months(&mut months);
+        let (_, omega_by_config) = factors_from_months(&months);
+        let bucket = months.get(&(year, month))?;
+        omega_by_config
+            .get(&pooling_key(&bucket.platforms))
+            .copied()
+            .flatten()
+    }
 }
 
 /// Half-width (degrees) of the latitude belt where MODIS leaves equatorial swath gaps.
@@ -984,6 +1030,102 @@ mod tests {
         assert!(obj.contains_key("modis_observable_high_intensity"));
         assert!(obj.contains_key("omega_high_intensity"));
         assert!(obj.contains_key("snpp_aqua_high_intensity_ratio"));
+    }
+
+    fn multi_platform_series() -> Vec<HarmonizedHotspot> {
+        let mut hotspots = Vec::new();
+        for month in 3..=5 {
+            for _ in 0..(month as usize) {
+                hotspots.push(make_hotspot(2001, month, vec![Sensor::ModisTerra]));
+            }
+        }
+        for (year, month) in [(2005, 6), (2005, 7), (2006, 6), (2006, 8)] {
+            for i in 0..(3 + month as usize) {
+                let sensor = if i % 2 == 0 { Sensor::ModisTerra } else { Sensor::ModisAqua };
+                hotspots.push(make_hotspot(year, month, vec![sensor]));
+            }
+        }
+        for (year, month) in [(2013, 5), (2013, 6), (2014, 5), (2014, 6)] {
+            for i in 0..(5 + month as usize) {
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ModisAqua]));
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ViirsSNPP]));
+                if i % 2 == 0 {
+                    hotspots.push(make_hotspot(year, month, vec![Sensor::ViirsSNPP]));
+                    hotspots.push(make_hotspot(
+                        year,
+                        month,
+                        vec![Sensor::ModisAqua, Sensor::ViirsSNPP],
+                    ));
+                }
+            }
+        }
+        for (year, month) in [(2019, 4), (2019, 5), (2020, 4)] {
+            for _ in 0..4 {
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ModisAqua]));
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ViirsSNPP]));
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ViirsNOAA20]));
+            }
+        }
+        hotspots
+    }
+
+    fn months_of(hotspots: &[HarmonizedHotspot]) -> Vec<(i32, u32)> {
+        let mut months: Vec<(i32, u32)> = hotspots
+            .iter()
+            .map(|h| {
+                let d = h.acquired.date_naive();
+                (d.year(), d.month())
+            })
+            .collect();
+        months.sort_unstable();
+        months.dedup();
+        months
+    }
+
+    #[test]
+    fn effort_months_omega_matches_whole_set_estimator_for_every_month() {
+        let all = multi_platform_series();
+        let factors = estimate_effort(&all);
+        let effort = EffortMonths::from_hotspots(&all);
+        let months = months_of(&all);
+        assert!(months.len() > 10);
+        let mut with_omega = 0;
+        for (y, m) in months {
+            let expected = omega_for_month(&factors, &all, y, m);
+            assert_eq!(effort.omega_for(y, m), expected, "{y}-{m}");
+            with_omega += usize::from(expected.is_some());
+        }
+        assert!(with_omega > 0);
+        assert_eq!(effort.omega_for(2001, 4), None);
+        assert_eq!(effort.omega_for(1999, 1), None);
+    }
+
+    #[test]
+    fn effort_months_merge_of_slices_equals_whole() {
+        let all = multi_platform_series();
+        let whole = EffortMonths::from_hotspots(&all);
+        let mut merged = EffortMonths::default();
+        for (y, m) in months_of(&all) {
+            let slice: Vec<HarmonizedHotspot> = all
+                .iter()
+                .filter(|h| {
+                    let d = h.acquired.date_naive();
+                    d.year() == y && d.month() == m
+                })
+                .cloned()
+                .collect();
+            merged.merge(EffortMonths::from_hotspots(&slice));
+        }
+        for (y, m) in months_of(&all) {
+            assert_eq!(merged.omega_for(y, m), whole.omega_for(y, m), "{y}-{m}");
+        }
+
+        let (left, right) = all.split_at(all.len() / 2);
+        let mut halves = EffortMonths::from_hotspots(left);
+        halves.merge(EffortMonths::from_hotspots(right));
+        for (y, m) in months_of(&all) {
+            assert_eq!(halves.omega_for(y, m), whole.omega_for(y, m), "{y}-{m}");
+        }
     }
 
     #[test]
