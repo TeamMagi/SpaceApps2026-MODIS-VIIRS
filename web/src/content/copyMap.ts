@@ -107,7 +107,7 @@ export const mapCopyEn = {
     "Raw data: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels. {inside} VIIRS detections fall inside it within ±{window} min, and Raw counts each of them as well.",
   mapFootprintExplainRawNone:
     "Raw data: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels. No VIIRS detection falls inside it within ±{window} min at this swath position.",
-  mapFootprintRefs: "Pixel sizes [01, 09, 16] · thresholds [16, Tables 1–2] · flare-chronos sample ratio: {flare}×",
+  mapFootprintRefs: "Pixel sizes [01, 09, 16] · thresholds [16, Conclusions] · flare-chronos sample ratio: {flare}×",
 } as const;
 
 export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
@@ -217,7 +217,7 @@ export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
     "Ham veri: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar. İçine ±{window} dk içinde {inside} VIIRS tespiti düşer ve Ham görünüm her birini ayrıca sayar.",
   mapFootprintExplainRawNone:
     "Ham veri: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar. Bu tarama konumunda ±{window} dk içinde içine hiçbir VIIRS tespiti düşmüyor.",
-  mapFootprintRefs: "Piksel boyutları [01, 09, 16] · eşikler [16, Tablo 1–2] · flare-chronos örnek oranı: {flare}×",
+  mapFootprintRefs: "Piksel boyutları [01, 09, 16] · eşikler [16, Sonuç] · flare-chronos örnek oranı: {flare}×",
 };
 
 export const MAP_CONTEXT_NAMES_TR: Readonly<Record<string, string>> = {

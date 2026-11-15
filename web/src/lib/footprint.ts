@@ -5,7 +5,8 @@ import { DayNight, type RawPoint } from "../types";
  * Numbers follow docs/REFERANS_ANALIZI.md P2/P3:
  * - MODIS pixel: 1.0 km² at nadir -> 9.66–9.69 km² at the 55° scan edge [01, 16].
  * - VIIRS 375 m I-band pixel: 0.14–0.62 km² across its swath [09].
- * - Minimum detectable FRP: MODIS 5.7 -> 40 MW (day, nadir -> edge), VIIRS 0.7 -> 3.7 MW (night -> day) [16, Tables 1–2].
+ * - Minimum detectable FRP: MODIS 5.7 -> 40 MW (day, nadir -> edge), VIIRS 0.7 -> 3.7 MW (night -> day) [16, Conclusions; Sect. 5.2].
+ *   These are the paper's quoted typical values, not Eq. 5 outputs (Eq. 5 + Tables 1–2 give 4.96 -> 43.41 MW for MODIS day).
  */
 
 export const EARTH_RADIUS_KM = 6371;
@@ -23,6 +24,7 @@ export const VIIRS_EDGE_AREA_KM2 = 0.62;
 /** Area ratio flare-chronos reports for its Footprint Lens; shown as a reference, never used in math. */
 export const FLARE_CHRONOS_AREA_RATIO = 74.23;
 
+/** Paper's quoted typical values [16, Conclusions; Sect. 5.2], used only for the Footprint Lens display. */
 export const MODIS_THRESHOLD_DAY_NADIR_MW = 5.7;
 export const MODIS_THRESHOLD_DAY_EDGE_MW = 40;
 export const MODIS_THRESHOLD_NIGHT_NADIR_MW = 3.7;
@@ -30,6 +32,10 @@ export const MODIS_THRESHOLD_NIGHT_EDGE_MW = 39;
 export const VIIRS_THRESHOLD_NIGHT_MW = 0.7;
 export const VIIRS_THRESHOLD_DAY_MW = 3.7;
 export const THRESHOLD_SCALE_MAX_MW = 42;
+
+/** Eq. 5 (D_p = lambda * A_p + mu, 50 % detection mid-point) at 1 km²; mirrors vza.rs / fusion.rs. */
+export const MODIS_NADIR_D50_DAY_MW = 4.44 * 1.0 + 0.52;
+export const MODIS_NADIR_D50_NIGHT_MW = 4.43 * 1.0 + 1.01;
 
 /** Same value as `MATCH_WINDOW_SECS` in crates/core/src/harmonize.rs (180 min). */
 export const MATCH_WINDOW_SECS = 10_800;
