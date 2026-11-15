@@ -915,4 +915,41 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn platform_chain_longer_than_window_does_not_collapse_into_one_group() {
+        // Each platform is 50 min after the previous one (inside the 60 min window), but the
+        // third is 100 min after the seed. Window chaining would merge all three.
+        let hotspots = vec![
+            make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 0, 10.0, Confidence::Nominal, DayNight::Day),
+            make_hotspot(Sensor::ViirsNOAA20, 39.0, 32.0, 3000, 20.0, Confidence::Nominal, DayNight::Day),
+            make_hotspot(Sensor::ViirsNOAA21, 39.0, 32.0, 6000, 30.0, Confidence::Nominal, DayNight::Day),
+        ];
+
+        let (out, groups) = consolidate_fleet_indexed(&hotspots, VIIRS_FLEET_WINDOW_SECS);
+
+        assert_eq!(out.len(), 2);
+        assert_eq!(groups, vec![vec![0, 1], vec![2]]);
+        assert_eq!(out[0].n_obs, 2);
+        assert_eq!(out[1].n_obs, 1);
+        assert_eq!(out[1].platforms, vec![Sensor::ViirsNOAA21]);
+    }
+
+    #[test]
+    fn candidate_is_compared_to_the_seed_not_to_the_last_member() {
+        // Terra at 0 seeds; Aqua at exactly the window edge joins; a later Terra pass is
+        // excluded by the same-platform rule and cannot extend the window either.
+        let window = MODIS_FLEET_WINDOW_SECS;
+        let hotspots = vec![
+            make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 10.0, Confidence::Nominal, DayNight::Day),
+            make_hotspot(Sensor::ModisAqua, 39.0, 32.0, window, 20.0, Confidence::Nominal, DayNight::Day),
+            make_hotspot(Sensor::ModisTerra, 39.0, 32.0, window + 60, 30.0, Confidence::Nominal, DayNight::Day),
+        ];
+
+        let (out, groups) = consolidate_fleet_indexed(&hotspots, window);
+
+        assert_eq!(groups, vec![vec![0, 1], vec![2]]);
+        assert_eq!(out.len(), 2);
+    }
+
 }

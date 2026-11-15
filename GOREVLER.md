@@ -241,7 +241,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
 | R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] |
-| R11 | Seed-anchored zaman penceresi | Serhat | — | — | [ ] |
+| R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [ ] bekliyor |
@@ -745,12 +745,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P5, Yol Haritası #3 (+ `[01, 02, 03, 14, 23]`, `flare-chronos`, `FireHarmonize`)
 - **Bitti sayılır:** aynı MODIS ayak izindeki çoklu VIIRS alt-pikselleri tek `Matched` kaydında toplanıyor (`ViirsOnly` artığı kalmıyor); birim testleri ve canlı/arşiv veride `Matched` FRP toplamı doğrulanıyor.
 
-### [ ] R11 — Seed-anchored zaman penceresi
+### [X] R11 — Seed-anchored zaman penceresi
 - **Bekler:** — · **Açar:** —
 - `crates/core/src/fleet.rs` ve `crates/core/src/harmonize.rs` içinde zaman penceresi kümelemesinde zincirlemeyi (chaining) önlemek için pencereyi son eklenen kayda değil ilk tohum kayda göre sabitleme (`|t - t_anchor| ≤ window_secs`, `flare-chronos` `deduplication.py` kuralı)
 - Ardışık uzun süren tespit dizilerinin tek dev pencereye birleşmediğini doğrulayan regresyon testlerinin `fleet.rs` ve `harmonize.rs` test paketine eklenmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P5, Yol Haritası #12 (+ `flare-chronos`)
 - **Bitti sayılır:** `fleet.rs` ve `harmonize.rs` zaman pencereleri `t_anchor` tabanlı çalışıyor; zincirleme önleme testleri dahil `cargo test -p pyrosync-core` geçiyor.
+- **Kapanış (Serhat, 2026-11-15):** İnceleme sonucunda üretim kodunda zincirleme bulunmadı, kod değişmedi. `fleet.rs` `consolidate_fleet_indexed_with` her adayı tohum kaydın zamanıyla (`cand.acquired - anchor.acquired`) karşılaştırıyor. `harmonize.rs` eşleştirmesi de her VIIRS kaydını sabit MODIS gözleminin zamanıyla karşılaştırıyor. Bu davranışı koruyan 4 regresyon testi eklendi: `fleet.rs`'e `platform_chain_longer_than_window_does_not_collapse_into_one_group` ve `candidate_is_compared_to_the_seed_not_to_the_last_member`, `harmonize.rs`'e `viirs_platform_chain_longer_than_fleet_window_stays_split_through_the_pipeline` ve `matching_window_is_anchored_on_the_modis_observation_not_on_earlier_matches`. `cargo test -p pyrosync-core` geçiyor (240 test).
 
 ### [X] R9 — Frontend'i yeni API alanlarına geçirme
 - **Bekler:** — · **Açar:** R12
