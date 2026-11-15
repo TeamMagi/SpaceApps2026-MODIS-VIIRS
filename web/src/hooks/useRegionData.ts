@@ -34,6 +34,7 @@ import type {
   BriefingMetrics,
   DataMode,
   ConfidenceFilterInfo,
+  FusionModel,
   Lang,
   MinConfidence,
   MapPointSet,
@@ -141,8 +142,9 @@ function makeLastGoodKey(
   month: number | null,
   dataMode: DataMode,
   minConfidence: MinConfidence,
+  fusionModel: FusionModel,
 ): string {
-  return `${region}:${year}:${month ?? "all"}:${dataMode}:${minConfidence}`;
+  return `${region}:${year}:${month ?? "all"}:${dataMode}:${minConfidence}:${fusionModel}`;
 }
 
 function invalidateRegionCaches(): void {
@@ -326,6 +328,7 @@ function reconcileRegionWithList(regions: readonly RegionSummary[]): void {
         data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
         overrides: s.pipelineOverrides,
         minConfidence: s.minConfidence,
+        fusionModel: s.fusionModel,
       },
       s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
     );
@@ -545,9 +548,10 @@ function startPointsFetch(
   overrides: PipelineOverrides,
   defaults: PipelineConfig,
   minConfidence: MinConfidence,
+  fusionModel: FusionModel,
   force: boolean,
 ): void {
-  const key = makePointsKey(region, year, month, overrides, defaults, minConfidence);
+  const key = makePointsKey(region, year, month, overrides, defaults, minConfidence, fusionModel);
   if (activePointsKey && activePointsKey !== key) {
     const prev = pointsCache.get(activePointsKey);
     if (prev?.controller) {
@@ -578,7 +582,7 @@ function startPointsFetch(
   });
   emitChange();
 
-  fetchPoints({ region, year, month, overrides, defaults, minConfidence }, controller.signal)
+  fetchPoints({ region, year, month, overrides, defaults, minConfidence, fusionModel }, controller.signal)
     .then((res) => {
       if (controller.signal.aborted || token !== pointsToken || activePointsKey !== key) return;
       const isEmpty = (res.raw.length === 0 && res.harmonized.length === 0) || res.bbox === null;
@@ -589,7 +593,7 @@ function startPointsFetch(
         controller: null,
       });
       if (!isEmpty) {
-        lastGoodPoints.set(makeLastGoodKey(region, year, month, dataMode, minConfidence), res);
+        lastGoodPoints.set(makeLastGoodKey(region, year, month, dataMode, minConfidence, fusionModel), res);
       }
       evictCacheLru(pointsCache, pointsSubscribers, MAX_POINTS_CACHE);
       emitChange();
@@ -615,10 +619,11 @@ function acquirePoints(
   overrides: PipelineOverrides,
   defaults: PipelineConfig,
   minConfidence: MinConfidence,
+  fusionModel: FusionModel,
 ): string {
-  const key = makePointsKey(region, year, month, overrides, defaults, minConfidence);
+  const key = makePointsKey(region, year, month, overrides, defaults, minConfidence, fusionModel);
   pointsSubscribers.set(key, (pointsSubscribers.get(key) ?? 0) + 1);
-  startPointsFetch(region, year, month, overrides, defaults, minConfidence, false);
+  startPointsFetch(region, year, month, overrides, defaults, minConfidence, fusionModel, false);
   return key;
 }
 
@@ -916,6 +921,7 @@ export function useRegionData(): UseRegionDataResult {
   const serverConfig = useAppStore((state) => state.serverConfig);
   const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const minConfidence = useAppStore((state) => state.minConfidence);
+  const fusionModel = useAppStore((state) => state.fusionModel);
   const regionsEmpty = regionsEntry.status === "empty";
 
   useEffect(() => {
@@ -995,12 +1001,12 @@ export function useRegionData(): UseRegionDataResult {
   const defaultMapMonth = useMemo(() => findDefaultMapMonth(activeSeries), [activeSeries]);
   const targetMonth = selectedMonth ?? defaultMapMonth;
   const pointsKey = targetMonth
-    ? makePointsKey(regionId, targetMonth.year, targetMonth.month, committedOverrides, defaults, minConfidence)
+    ? makePointsKey(regionId, targetMonth.year, targetMonth.month, committedOverrides, defaults, minConfidence, fusionModel)
     : null;
   const pointsEntry = pointsKey ? pointsCache.get(pointsKey) : undefined;
   const fallbackPoints =
     targetMonth && pointsEntry?.status === "error" && pointsEntry.error?.status === 400
-      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetMonth.year, targetMonth.month, dataMode, minConfidence))
+      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetMonth.year, targetMonth.month, dataMode, minConfidence, fusionModel))
       : undefined;
   const candidatePoints =
     pointsEntry?.status === "ready" && pointsEntry.data
@@ -1149,6 +1155,7 @@ export function useMapPoints(): UseMapPointsResult {
   const serverConfig = useAppStore((state) => state.serverConfig);
   const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const minConfidence = useAppStore((state) => state.minConfidence);
+  const fusionModel = useAppStore((state) => state.fusionModel);
   const {
     defaultMapMonth,
     status: seriesStatus,
@@ -1162,16 +1169,16 @@ export function useMapPoints(): UseMapPointsResult {
   const targetMonthNum = targetMonth?.month ?? null;
   const pointsKey =
     targetYear !== null
-      ? makePointsKey(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence)
+      ? makePointsKey(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence, fusionModel)
       : null;
 
   useEffect(() => {
     if (targetYear === null || seriesStatus === "error" || seriesStatus === "empty") return;
-    const key = acquirePoints(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence);
+    const key = acquirePoints(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence, fusionModel);
     return () => {
       releasePoints(key);
     };
-  }, [regionId, targetYear, targetMonthNum, minConfidence, seriesStatus, dataMode, pointsKey, defaults]);
+  }, [regionId, targetYear, targetMonthNum, minConfidence, fusionModel, seriesStatus, dataMode, pointsKey, defaults]);
 
   const retry = useCallback(() => {
     if (regionsEntry.status === "error" || regionsEntry.status === "empty" || !regionsEntry.data) {
@@ -1182,9 +1189,9 @@ export function useMapPoints(): UseMapPointsResult {
       return;
     }
     if (targetYear !== null) {
-      startPointsFetch(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence, true);
+      startPointsFetch(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence, fusionModel, true);
     }
-  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, minConfidence, regionId, defaults]);
+  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, minConfidence, fusionModel, regionId, defaults]);
 
   const entry = pointsKey ? pointsCache.get(pointsKey) : undefined;
   const rawPointsError = entry?.error ?? null;
@@ -1195,7 +1202,7 @@ export function useMapPoints(): UseMapPointsResult {
       : null;
   const fallbackData =
     targetYear !== null && entry?.status === "error" && rawPointsError?.status === 400
-      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetYear, targetMonthNum, dataMode, minConfidence)) ?? null
+      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetYear, targetMonthNum, dataMode, minConfidence, fusionModel)) ?? null
       : null;
 
   let status: AsyncStatus;
@@ -1264,6 +1271,8 @@ export function useMapPoints(): UseMapPointsResult {
       frpAngleCorrectionPct,
       filters: activeData.filters,
       tropicalSwathGap: activeData.tropicalSwathGap,
+      fusionModel: activeData.fusionModel,
+      fusionComparison: activeData.fusionComparison,
     };
   }, [
     activeData,

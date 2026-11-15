@@ -6,6 +6,7 @@ import {
   normalizeOverrides,
 } from "../lib/pipelineOverrides";
 import { DEFAULT_REGION, readUrlState, type UrlState } from "../lib/urlState";
+import { DEFAULT_FUSION_MODEL, type FusionModel } from "../types";
 import type {
   ActivePhase,
   DataMode,
@@ -110,6 +111,8 @@ export interface AppState {
   pipelineOverrides: PipelineOverrides;
   /** Lowest FIRMS confidence class sent as `min_confidence`; `low` keeps every detection. */
   minConfidence: MinConfidence;
+  /** Harmonization model sent as `fusion_model`; `viirs_preferred` is the standard one. */
+  fusionModel: FusionModel;
   /** Index into TOUR_STEPS while the guided tour runs; null when no tour is active. */
   tourStep: number | null;
   tourPaused: boolean;
@@ -139,6 +142,7 @@ export interface AppState {
   setPipelineOverride: (key: PipelineOverrideKey, value: number | undefined) => void;
   resetPipelineOverrides: () => void;
   setMinConfidence: (minConfidence: MinConfidence) => void;
+  setFusionModel: (model: FusionModel) => void;
   /** Starts (or restarts) the guided tour at step 1, unpaused, with no drawer open. */
   startTour: () => void;
   setTourStep: (step: number) => void;
@@ -236,6 +240,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   serverConfig: null,
   pipelineOverrides: initialUrl.overrides ? { ...initialUrl.overrides } : {},
   minConfidence: initialUrl.minConfidence ?? "low",
+  fusionModel: initialUrl.fusionModel ?? DEFAULT_FUSION_MODEL,
   tourStep: null,
   tourPaused: false,
   tourRun: 0,
@@ -305,6 +310,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
   setMinConfidence: (minConfidence) => {
     if (get().minConfidence !== minConfidence) set({ minConfidence });
   },
+  setFusionModel: (model) => {
+    if (get().fusionModel !== model) set({ fusionModel: model });
+  },
   startTour: () => set((s) => ({ tourStep: 0, tourPaused: false, openDrawer: null, tourRun: s.tourRun + 1 })),
   setTourStep: (tourStep) => set({ tourStep }),
   endTour: () => set({ tourStep: null, tourPaused: false }),
@@ -352,6 +360,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       dataMode: nextDataMode,
       dataModeSource: nextDataModeSource,
       minConfidence: url.minConfidence ?? state.minConfidence,
+      fusionModel: url.fusionModel ?? state.fusionModel,
       selectedMonth: nextSelectedMonth,
       calendarYear: nextCalendarYear,
       yearPlaying: regionChanged ? false : state.yearPlaying,

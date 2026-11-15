@@ -7,6 +7,7 @@ import {
   DayNight,
   HotspotSource,
   Sensor,
+  DEFAULT_FUSION_MODEL,
   type ApiErrorKind,
   type BBox,
   type CalendarApiResponse,
@@ -15,6 +16,8 @@ import {
   type CliffSummary,
   type CompareResponse,
   type EffortInfo,
+  type FusionComparison,
+  type FusionModel,
   type HarmonizedHotspot,
   type HarmonizedPoint,
   type HarmonizeResponse,
@@ -254,6 +257,17 @@ interface WirePointsResponse {
   config_overridden?: boolean;
   filters?: WireConfidenceFilter | null;
   tropical_swath_gap?: unknown;
+  fusion_model?: string;
+  fusion_comparison?: WireFusionComparison | null;
+}
+
+export interface WireFusionComparison {
+  model?: string;
+  baseline_count?: number;
+  baseline_total_frp?: number;
+  count?: number;
+  total_frp?: number;
+  dropped_below_modis_limit?: number;
 }
 
 // --- NRT wire types ---
@@ -523,6 +537,8 @@ export interface PointsResponse {
   configOverridden?: boolean;
   filters: ConfidenceFilterInfo;
   tropicalSwathGap: TropicalSwathGapInfo | null;
+  fusionModel?: FusionModel;
+  fusionComparison?: FusionComparison | null;
 }
 
 // --- Core HTTP helper --------------------------------------------------------
@@ -775,6 +791,24 @@ export function adaptTropicalSwathGap(w: unknown): TropicalSwathGapInfo | null {
   };
 }
 
+export function adaptFusionModel(value: string | null | undefined): FusionModel {
+  return value === "equal_weight" || value === "modis_calibrated" ? value : DEFAULT_FUSION_MODEL;
+}
+
+/** Older servers send no `fusion_comparison`; the standard model sends null. Both read as null. */
+export function adaptFusionComparison(w: WireFusionComparison | null | undefined): FusionComparison | null {
+  if (typeof w !== "object" || w === null) return null;
+  const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+  return {
+    model: adaptFusionModel(w.model),
+    baselineCount: num(w.baseline_count),
+    baselineTotalFrp: num(w.baseline_total_frp),
+    count: num(w.count),
+    totalFrp: num(w.total_frp),
+    droppedBelowModisLimit: num(w.dropped_below_modis_limit),
+  };
+}
+
 export function adaptMinConfidence(value: string | null | undefined): MinConfidence {
   return value === "nominal" || value === "high" ? value : "low";
 }
@@ -1016,6 +1050,7 @@ export interface FetchPointsParams {
   overrides?: PipelineOverrides;
   defaults?: PipelineConfig;
   minConfidence?: MinConfidence;
+  fusionModel?: FusionModel;
 }
 
 export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
@@ -1032,6 +1067,9 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
     query.month = String(params.month);
   }
   setMinConfidenceParam(query, params.minConfidence);
+  if (params.fusionModel && params.fusionModel !== DEFAULT_FUSION_MODEL) {
+    query.fusion_model = params.fusionModel;
+  }
   try {
     const wire = await requestJson<WirePointsResponse>("/points", query, signal);
     if (
@@ -1099,6 +1137,8 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       configOverridden: Boolean(wire.config_overridden),
       filters: adaptFilters(wire.filters),
       tropicalSwathGap: adaptTropicalSwathGap(wire.tropical_swath_gap),
+      fusionModel: adaptFusionModel(wire.fusion_model),
+      fusionComparison: adaptFusionComparison(wire.fusion_comparison),
     };
   } catch (err: unknown) {
     if (handleLiveFetchError(err, signal)) {

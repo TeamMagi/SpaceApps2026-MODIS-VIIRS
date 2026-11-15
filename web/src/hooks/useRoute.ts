@@ -34,6 +34,7 @@ export function dashboardHashFromStore(): string {
       data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
       overrides: s.pipelineOverrides,
       minConfidence: s.minConfidence,
+      fusionModel: s.fusionModel,
     },
     s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
   );

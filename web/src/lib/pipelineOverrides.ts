@@ -1,4 +1,4 @@
-import type { MinConfidence, PipelineConfig, PipelineOverrideKey, PipelineOverrides } from "../types";
+import { DEFAULT_FUSION_MODEL, type FusionModel, type MinConfidence, type PipelineConfig, PipelineOverrideKey, PipelineOverrides } from "../types";
 
 export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   dedup: {
@@ -262,8 +262,10 @@ export function makePointsKey(
   overrides?: PipelineOverrides,
   defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
   minConfidence: MinConfidence = "low",
+  fusionModel: FusionModel = DEFAULT_FUSION_MODEL,
 ): string {
-  const base = `${region}:${year}:${month ?? "all"}:${minConfidence}`;
+  const modelPart = fusionModel === DEFAULT_FUSION_MODEL ? "" : `:${fusionModel}`;
+  const base = `${region}:${year}:${month ?? "all"}:${minConfidence}${modelPart}`;
   const normalized = normalizeOverrides(overrides, defaults);
   const parts: string[] = [];
   for (const spec of PIPELINE_PARAM_SPECS) {
