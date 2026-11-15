@@ -114,8 +114,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `mean_frp` | number | Yerel piksel ortalaması: `frp_corrected` ortalaması. MODIS'ten VIIRS'e geçişte süreksizdir |
 | `mean_frp_raw` | number | `frp` ortalaması |
 | `mean_frp_lower`, `mean_frp_upper` | number \| null | `mean_frp` için analitik güven sınırları |
-| `total_frp` | number | Aylık toplam `frp_corrected` (MW). VIIRS tespiti olmayan hücrelerde (kalibrasyon açıksa) `k_c(lat)` ile çarpılır. MODIS ve en az iki VIIRS platformlu havuzlarda toplam ve alt/üst sınırları `m = omega_pool / omega_ref` ile bölünerek tek VIIRS enerji ölçeğine getirilir; referans aynı serinin MODIS + yalnız S-NPP havuzudur, Ω yoksa MODIS + yalnız NOAA-20 kullanılır. Yalnız iki Ω da sonlu ve pozitifse uygulanır; referans yoksa ve 0–1 VIIRS platformlu aylarda değişiklik yapılmaz |
-| `frp_viirs_scale` | number \| null | Tek VIIRS enerji ölçeği için toplam FRP ve sınırlarına uygulanan bölen `m = omega_pool / omega_ref`; uygulanmadığında `null`. `frp_per_detection_eq` ölçeklenen toplamdan hesaplanır |
+| `total_frp` | number | Aylık toplam `frp_corrected` (MW). VIIRS tespiti olmayan hücrelerde (kalibrasyon açıksa) `k_c(lat)` ile çarpılır |
 | `total_frp_lower`, `total_frp_upper` | number \| null | `total_frp` için analitik güven sınırları |
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |

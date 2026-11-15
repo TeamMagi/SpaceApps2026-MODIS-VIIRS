@@ -1101,7 +1101,6 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             total_frp: 0.0,
             total_frp_lower: None,
             total_frp_upper: None,
-            frp_viirs_scale: None,
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
