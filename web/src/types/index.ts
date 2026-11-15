@@ -270,8 +270,15 @@ export interface CalendarCell {
   count: number;
   countNormalized: number | null;
   effortOmega: number | null;
+  // Native-pixel mean: drops at the 2012 VIIRS transition due to pixel size; use frpPerDetectionEq as the headline metric.
   meanFrp: number;
   meanFrpRaw: number;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
+  totalFrp: number;
+  totalFrpLower: number | null;
+  totalFrpUpper: number | null;
+  frpPerDetectionEq: number | null;
   anomaly: number | null;
 }
 
@@ -379,7 +386,7 @@ export interface CompareVza {
   recordsWithCorrection: number;
   meanFactor: number | null;
   maxFactor: number | null;
-  meanFrpReductionPct: number | null;
+  meanFrpAdjustmentPct: number | null;
 }
 
 export interface CompareResponse {
