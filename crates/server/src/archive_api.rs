@@ -32,6 +32,7 @@ use pyrosync_core::harmonize::harmonize_with_links_masked;
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
+use pyrosync_core::overpass::{MIN_OVERPASS_SAMPLES, OverpassMedian, overpass_medians};
 use pyrosync_core::static_mask::StaticMask;
 use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_slug, scan_local_archive};
 use pyrosync_firms::parse::{parse_csv, retain_wildfires};
@@ -1837,6 +1838,9 @@ struct PointsResponse {
     /// Effort metadata for the region. The `/api/series` body is precomputed without any
     /// geometry, so the flag is computed here at serve time from the year's detection extent.
     tropical_swath_gap: Option<TropicalSwathGap>,
+    /// Median local solar overpass time per platform and day/night pass, from the period's raw
+    /// detections at serve time. A regional indicator, not the equator-crossing time.
+    overpass: Vec<OverpassMedian>,
     events: EventsMeta,
     no_detection_days: Vec<NoDetectionDay>,
     config: PipelineConfig,
@@ -2154,6 +2158,7 @@ async fn points(
             .chain(viirs.iter().map(|h| RawPoint::from_hotspot(h, "VIIRS")))
             .collect();
         let bbox = extent(raw_points.iter().map(|p| (p.lat, p.lon)));
+        let overpass = overpass_medians(modis.iter().chain(&viirs), MIN_OVERPASS_SAMPLES);
         let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
         let modis_days: BTreeSet<NaiveDate> =
             modis.iter().map(|h| h.acquired.date_naive()).collect();
@@ -2262,6 +2267,7 @@ async fn points(
                 excluded_detections,
             },
             tropical_swath_gap,
+            overpass,
             events,
             no_detection_days: gaps,
             config,
@@ -4422,6 +4428,39 @@ mod tests {
             .expect("unknown min_confidence must fail with 400");
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
         assert!(err.message.contains("min_confidence"), "{}", err.message);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn points_report_overpass_medians_for_groups_with_enough_detections() {
+        let dir = temp_archive("points-overpass");
+        // The fixture rows are Terra day detections at 12:00 UTC and 32 degrees east: 14:08 local.
+        let many: Vec<(f64, &str, u8)> = (0..31).map(|i| (35.0 + f64::from(i) * 0.01, "2010-07-01", 0)).collect();
+        write_file(&dir, "modis", 2010, "Many", &many);
+        write_file(&dir, "modis", 2010, "Few", &many[..5]);
+        let state = state(dir.clone(), u64::MAX);
+        let query = |region: &str| PointsParams {
+            region: Some(region.into()),
+            year: Some("2010".into()),
+            month: Some("7".into()),
+            limit: None,
+            ..Default::default()
+        };
+
+        let Json(many) = points(State(state.clone()), Query(query("Many"))).await.ok().unwrap();
+        let json = serde_json::to_value(&many).unwrap();
+        let overpass = json["overpass"].as_array().unwrap();
+        assert_eq!(overpass.len(), 1);
+        assert_eq!(overpass[0]["platform"], "Terra");
+        assert_eq!(overpass[0]["daynight"], "Day");
+        assert_eq!(overpass[0]["median_local_solar_time"], "14:08");
+        assert_eq!(overpass[0]["median_minutes"], 848.0);
+        assert_eq!(overpass[0]["n"], 31);
+
+        let Json(few) = points(State(state), Query(query("Few"))).await.ok().unwrap();
+        let json = serde_json::to_value(&few).unwrap();
+        assert_eq!(json["overpass"].as_array().unwrap().len(), 0);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

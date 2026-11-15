@@ -4,6 +4,7 @@ import BottomBar from "./components/BottomBar/BottomBar";
 import BurnCalendar from "./components/Calendar/BurnCalendar";
 import ChartPanel from "./components/Charts/ChartPanel";
 import BriefingDrawer from "./components/Drawers/BriefingDrawer";
+import CellDiagnosticDrawer from "./components/Drawers/CellDiagnosticDrawer";
 import MethodsDrawer from "./components/Drawers/MethodsDrawer";
 import SettingsDrawer from "./components/Drawers/SettingsDrawer";
 import GuidedTour from "./components/Tour/GuidedTour";
@@ -11,6 +12,7 @@ import Header from "./components/Header/Header";
 import Headline from "./components/Headline/Headline";
 import MethodsPage from "./components/Methods/MethodsPage";
 import MapStateOverlay from "./components/Map/MapStateOverlay";
+import OrbitalDriftStrip from "./components/OrbitalDrift/OrbitalDriftStrip";
 import PipelineStrip from "./components/Pipeline/PipelineStrip";
 import CountDelta from "./components/Stats/CountDelta";
 import ViewToggle from "./components/Toggle/ViewToggle";
@@ -54,6 +56,7 @@ export default function App() {
       toggle={<ViewToggle />}
       count={<CountDelta />}
       pipeline={<PipelineStrip />}
+      drift={<OrbitalDriftStrip />}
       map={
         <Suspense fallback={<MapStateOverlay state="loading" />}>
           <HotspotMap />
@@ -67,6 +70,7 @@ export default function App() {
           <MethodsDrawer />
           <SettingsDrawer />
           <BriefingDrawer />
+          <CellDiagnosticDrawer />
           <GuidedTour />
         </>
       }

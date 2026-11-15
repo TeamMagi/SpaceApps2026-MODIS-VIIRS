@@ -31,6 +31,7 @@ export const mockPoints: PointsResponse = {
   stages: { ...pointsJson.stages, staticMasked: 0, samaRemoved: 0, viirsAggregated: 0 },
   filters: { minConfidence: 'low', excludedDetections: 0 },
   tropicalSwathGap: null,
+  overpass: null,
 };
 
 function snapshot(value: typeof statsJson.annual): AnalyticsSnapshot {

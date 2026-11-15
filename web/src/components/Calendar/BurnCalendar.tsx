@@ -6,6 +6,10 @@
  * `geometryHarmonized`; numerical text and ARIA labels only flip when `revealAnswer` is true
  * so Raw mode never leaks the harmonized answer. In tropical regions a short swath-gap note
  * (sensor limitation only, from `/api/points` effort metadata) sits under the detail line.
+ *
+ * Opening the month diagnostics (Y9) is deliberately separate from selecting a month: a click
+ * still toggles the month filter, "Details" in the controls row (and D on a focused month) opens
+ * the diagnostic drawer for the selected month, or for the focused one when none is selected.
  */
 
 import {
@@ -87,6 +91,7 @@ function BurnCalendar() {
   const region = useAppStore((state) => state.region);
   const calendarFrp = useCalendarFrp(region);
   const toggleMonth = useAppStore((state) => state.toggleMonth);
+  const openCellDiagnostic = useAppStore((state) => state.openCellDiagnostic);
   const calendarYear = useAppStore((state) => state.calendarYear);
   const setCalendarYear = useAppStore((state) => state.setCalendarYear);
 
@@ -293,6 +298,12 @@ function BurnCalendar() {
 
   const handleWheelKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
     if (activeYear === null || firstYear === null || lastYear === null) return;
+    if ((e.key === "d" || e.key === "D") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      const cell = activeYearCells[rovingMonth - 1];
+      if (cell?.hasData) openCellDiagnostic({ year: cell.year, month: cell.month });
+      return;
+    }
     let nextMonth = rovingMonth;
     let nextYear = activeYear;
 
@@ -420,6 +431,9 @@ function BurnCalendar() {
   const detailLineText = focusCell
     ? formatSliceDetailLine(focusCell, focusMean, revealAnswer, copy)
     : "";
+
+  const selectedInActiveYear = selected !== null && selected.year === activeYear ? selected.month : null;
+  const detailsCell = activeYearCells[(selectedInActiveYear ?? rovingMonth) - 1] ?? null;
 
   const isActiveYearPartial = partialYears.has(activeYear);
   const formattedYearTotal = fmt.number(activeYearTotal);
@@ -571,6 +585,7 @@ function BurnCalendar() {
                   data-empty={!cell.hasData ? "true" : undefined}
                   data-wide-uncert={isWideUncert ? "true" : undefined}
                   aria-pressed={isSelectedFilter}
+                  aria-keyshortcuts="D"
                   aria-disabled={!cell.hasData ? true : undefined}
                   aria-label={formatCalendarCellText(cell, revealAnswer, copy, calendarFrp.get(calendarFrpKey(cell.year, cell.month)))}
                   aria-describedby={isTooltipCell ? tooltipId : undefined}
@@ -682,6 +697,18 @@ function BurnCalendar() {
             >
               <span aria-hidden="true">{isPlaying ? "⏸" : "▶"}</span>
               <span>{isPlaying ? t("calendarPauseYears") : t("calendarPlayYears")}</span>
+            </button>
+
+            <button
+              type="button"
+              className={styles.playPill}
+              disabled={!detailsCell?.hasData}
+              title={t("cellDetailsKeyHint")}
+              onClick={() => {
+                if (detailsCell) openCellDiagnostic({ year: detailsCell.year, month: detailsCell.month });
+              }}
+            >
+              {detailsCell ? t("cellOpenDetailsShort", { month: fmt.monthYear(detailsCell) }) : t("cellOpenDetails")}
             </button>
           </div>
 

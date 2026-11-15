@@ -40,6 +40,7 @@ function emptyPointsResponse(params: FetchPointsParams): PointsResponse {
     bbox: null,
     filters: { minConfidence: "low", excludedDetections: 0 },
     tropicalSwathGap: null,
+    overpass: null,
   };
 }
 
@@ -143,6 +144,7 @@ function buildStandardDemoPoints(params: FetchPointsParams): PointsResponse {
     bbox: mockPoints.bbox,
     filters: { minConfidence: "low", excludedDetections: 0 },
     tropicalSwathGap: null,
+    overpass: null,
   };
 }
 

@@ -44,3 +44,10 @@ test("every step has non-empty EN and TR title and body", () => {
     }
   }
 });
+
+test("the validation step points at the conformal band and the Orbital Drift strip", () => {
+  const validation = TOUR_STEPS.find((step) => step.id === "validation");
+  assert.ok(validation?.targets.includes("bands"));
+  assert.match(createTranslator("en")("tourStepValidationBody"), /Mondrian.*Orbital Drift/);
+  assert.match(createTranslator("tr")("tourStepValidationBody"), /Mondrian.*Yörünge Sürüklenmesi/);
+});
