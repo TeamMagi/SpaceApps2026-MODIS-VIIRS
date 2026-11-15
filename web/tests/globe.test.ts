@@ -321,8 +321,8 @@ check("globe layer preserves uncertainty tiers per harmonized point and keeps ra
   const harmonized = [
     { id: "h0", source: "ModisOnly", lon: 30, lat: 40, frpCorrected: 100, frpLower: null, frpUpper: null },
     { id: "h1", source: "Matched", lon: 31, lat: 41, frpCorrected: 100, frpLower: 92, frpUpper: 108 },
-    { id: "h2", source: "ViirsOnly", lon: 32, lat: 42, frpCorrected: 100, frpLower: 85, frpUpper: 115 },
-    { id: "h3", source: "ModisOnly", lon: 33, lat: 43, frpCorrected: 100, frpLower: 70, frpUpper: 130 },
+    { id: "h2", source: "ModisOnly", lon: 32, lat: 42, frpCorrected: 100, frpLower: 71.5, frpUpper: 128.5 },
+    { id: "h3", source: "ModisOnly", lon: 33, lat: 43, frpCorrected: 100, frpLower: 64, frpUpper: 136 },
   ];
   const scene = buildScenePoints(
     { raw, harmonized } as unknown as Parameters<typeof buildScenePoints>[0],

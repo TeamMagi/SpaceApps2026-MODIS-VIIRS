@@ -28,6 +28,11 @@ const TAU = Math.PI * 2;
 const VIEWPORT_MARGIN_PX = 12;
 const DUP_LINE_DASH: number[] = [2.5, 2];
 export const UNCERT_ALPHA_STEPS = [1.0, 0.72, 0.48] as const;
+// VIIRS and Matched records sit around 0.06-0.16 relative width, nadir MODIS around 0.57,
+// and off-nadir MODIS with a VZA correction above ~16% goes above 0.65; these bounds keep
+// nadir MODIS visibly distinct from VIIRS without collapsing all MODIS points into tier 2.
+export const UNCERT_TIGHT_MAX = 0.30;
+export const UNCERT_MID_MAX = 0.65;
 const SCRATCH_RADII = new Float64Array(8);
 const SCRATCH_PATHS: (Path2D | null)[] = new Array<Path2D | null>(24).fill(null);
 
@@ -40,9 +45,9 @@ export function uncertaintyAlpha(relWidth: number | null): number {
   return alphaForTier(uncertaintyTierFor(relWidth));
 }
 
-function uncertaintyTierFor(relWidth: number | null): number {
-  if (relWidth === null || !Number.isFinite(relWidth) || relWidth <= 0.20) return 0;
-  if (relWidth <= 0.40) return 1;
+export function uncertaintyTierFor(relWidth: number | null): number {
+  if (relWidth === null || !Number.isFinite(relWidth) || relWidth <= UNCERT_TIGHT_MAX) return 0;
+  if (relWidth <= UNCERT_MID_MAX) return 1;
   return 2;
 }
 const SCRATCH_DIM_PATHS: Path2D[] = [];

@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import {
   alphaForTier,
   UNCERT_ALPHA_STEPS,
+  UNCERT_MID_MAX,
+  UNCERT_TIGHT_MAX,
   uncertaintyAlpha,
+  uncertaintyTierFor,
 } from "../src/components/Map/engine/renderer.ts";
 import {
   WIDE_UNCERTAINTY_THRESHOLD,
@@ -68,16 +71,33 @@ check("formatFrpInterval falls back to plain value when bounds are missing or no
   assert.equal(formatFrpInterval(45.2, 38.7, Number.POSITIVE_INFINITY, "tr"), "45,2\u00A0MW");
 });
 
+check("uncertaintyTierFor separates VIIRS, nadir MODIS, and off-nadir MODIS at exact boundaries", () => {
+  assert.equal(UNCERT_TIGHT_MAX, 0.30);
+  assert.equal(UNCERT_MID_MAX, 0.65);
+
+  assert.equal(uncertaintyTierFor(null), 0);
+  assert.equal(uncertaintyTierFor(Number.NaN), 0);
+  assert.equal(uncertaintyTierFor(0), 0);
+  assert.equal(uncertaintyTierFor(0.15), 0);
+  assert.equal(uncertaintyTierFor(0.30), 0);
+  assert.equal(uncertaintyTierFor(0.30001), 1);
+  assert.equal(uncertaintyTierFor(0.57), 1);
+  assert.equal(uncertaintyTierFor(0.65), 1);
+  assert.equal(uncertaintyTierFor(0.65001), 2);
+  assert.equal(uncertaintyTierFor(0.72), 2);
+});
+
 check("uncertaintyAlpha respects exact step boundaries and null", () => {
   assert.equal(uncertaintyAlpha(null), 1.0);
   assert.equal(uncertaintyAlpha(Number.NaN), 1.0);
   assert.equal(uncertaintyAlpha(0), 1.0);
-  assert.equal(uncertaintyAlpha(0.19), 1.0);
-  assert.equal(uncertaintyAlpha(0.20), 1.0);
-  assert.equal(uncertaintyAlpha(0.20001), 0.72);
-  assert.equal(uncertaintyAlpha(0.30), 0.72);
-  assert.equal(uncertaintyAlpha(0.40), 0.72);
-  assert.equal(uncertaintyAlpha(0.40001), 0.48);
+  assert.equal(uncertaintyAlpha(0.15), 1.0);
+  assert.equal(uncertaintyAlpha(0.30), 1.0);
+  assert.equal(uncertaintyAlpha(0.30001), 0.72);
+  assert.equal(uncertaintyAlpha(0.57), 0.72);
+  assert.equal(uncertaintyAlpha(0.65), 0.72);
+  assert.equal(uncertaintyAlpha(0.65001), 0.48);
+  assert.equal(uncertaintyAlpha(0.72), 0.48);
   assert.equal(uncertaintyAlpha(0.95), 0.48);
 });
 
