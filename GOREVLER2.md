@@ -76,7 +76,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 | Kimlik | Görev | Sahip | Bekler | Açar | Durum |
 |--------|-------|-------|--------|------|-------|
 | G7 | Config-driven pipeline | Görkem | v1:G2 | G8, R8, K2, S6 | ✅ |
-| G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | 🔄 |
+| G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | ✅ |
 | G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | ✅ |
 | G10 | Export engine + /api/export | Görkem | v1:G4 | R7, S6 | ✅ |
 | C5 | Methods sayfası + disclaimer tasarımı | Can | v1:C1 | R6, S8 | ⏸ |
@@ -120,7 +120,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 - **Bitti sayılır:** `PipelineConfig::default()` ile mevcut testler hâlâ geçiyor; TOML'dan farklı config yüklenince pipeline davranışı değişiyor; `pyrosync.example.toml` depoda.
 - **Durum (2026-11-15):** Sadık tarafından tamamlandı (`4f3e23d`). `PipelineConfig`, `pyrosync.toml` yükleme ve `pyrosync.example.toml` depoda.
 
-### G8 — Bölgesel/biyom kalibrasyon modülü 🔄
+### G8 — Bölgesel/biyom kalibrasyon modülü ✅
 - **Bekler:** G7 · **Açar:** G9
 - Tek global FRP oranı yerine bölgesel katsayılar (Li et al. 2018):
   - `calibration.rs` modülü: biyom tipine göre MODIS/VIIRS FRP kalibrasyon oranları
@@ -132,6 +132,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 - **Kaynak:** Li et al. 2018 — "Tek global katsayı yetersiz — savan %1 fark, boreal %47 fark"
 - **Bitti sayılır:** farklı bölgelerde (tropik, boreal, savan) farklı kalibrasyon uygulanıyor; test: Türkiye (Akdeniz) ve Sibirya (boreal) verileriyle FRP oranları beklenen aralıkta.
 - **Durum (2026-11-15):** Kod tamamlandı (`a883a82`, `c82641d`), bitti şartı SAĞLANMADI. Li et al. 2018 katsayıları 750 m VIIRS ürününden; FIRMS verisi 375 m. Aqua–SNPP 1° ızgara ölçümü: tropik 1,21–1,22 (model 1,16), Türkiye 1,33 (model 0,97), boreal 1,34–1,40 (model 0,82). Literatür 375 m için bu ölçümü doğruluyor (Li 2020: Afrika'da MODIS toplam FRP ~%26 düşük; GMD 2026: küresel %38). Katsayılar 375 m ölçeğine göre güncellenmeli (bkz. `docs/REFERANS_ANALIZI.md` P1).
+- **Karar ve kapanış (2026-11-15, `a387ba1`):** Üçlü konsey (Opus, Argon, DeepSeek) kararıyla kapsam yeniden tanımlandı. Izgara toplamı oranları MODIS'in tespit edemediği küçük yangınlardan (tamlık) geldiği için tespit başına enlem çarpanı KALDIRILDI; bölgesel fark artık VIIRS öncesi dönemde hücre toplam FRP'sine uygulanan ölçülmüş tamlık katsayısı k_c ile taşınıyor. k_c kendi verimizden ölçüldü (Aqua–SNPP, ≤20 dk, 1° hücre-gün, normalize VZA eğrisine göre; 2019 fit, 2020 hold-out): tropik 1,11 ± 0,08, orta enlem 1,18 ± 0,15, boreal 1,28 ± 0,11 (hold-out farkları %4–9, σ içinde). VZA düzeltmesi de kaynağa (Zheng 2026, Denk. 9) uygun olarak çarpmaya çevrildi. Takvime `total_frp` ve MODIS-eşdeğeri `frp_per_detection_eq` eklendi. Açık: savan/orman ayrımı enlem bandıyla yapılamıyor (biyom haritası gerekir); orta enlem bandı az örneklemli.
 
 ### G9 — Belirsizlik aralıkları hesaplama ✅
 - **Bekler:** G8 · **Açar:** K3, S6
