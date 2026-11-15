@@ -260,7 +260,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
-| Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [ ] |
+| Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [ ] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [ ] |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
@@ -961,7 +961,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 ## Yusuf'un görevleri
 
-### [ ] Y5 — Mock veri hazırlığı (frontend için)
+### [X] Y5 — Mock veri hazırlığı (frontend için)
 - **Bekler:** — · **Açar:** Y1, Y2, Y3, Y4
 - Frontend component'leri backend hazır olmadan geliştirilebilsin:
   - `web/src/mocks/hotspots.json` — 500-1000 arası hotspot (lat, lon, frp, confidence, sensor, date)
@@ -970,6 +970,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Veriler gerçekçi olmalı: FRP aralığı 1–500 MW, mevsimsellik var (yaz ayları yoğun), 2012'de VIIRS geçişi belirgin
   - `web/src/mocks/index.ts` ile export
 - **Bitti sayılır:** mock dosyaları `web/src/mocks/` altında; TypeScript hatasız import ediliyor; sensor cliff 2012'de görünüyor.
+- **Kapanış notu (15 Kasım 2026):** Sentetik, seed'li paket `web/scripts/generate-mocks.mjs` ile üretilir (800 ham / 500 harmonize nokta, 2000-11–2025-12 aylık seri, `calendar.json` içinde aylık sayım + `frpMonths` ortalama FRP + anomali, `stats.json`). `npm run typecheck` hatasız; `web/tests/mocks.test.ts` 8 kontrolle geçiyor (bağlantılar, aşama toplamları, mevsimsellik, 2021 tutarlılığı). 2012 cliff'i: ham sayım 277 → 894, ham ortalama FRP 128.6 → 74.3 MW; harmonize ortalama +%3.9. Harmonize süreklilik sentetik 0.35 köprüsüyle **yapı gereği** sağlanır, pipeline bulgusu değildir.
 
 ### [ ] Y6 — Takvim analitiği (`crates/core/src/calendar.rs`)
 - **Bekler:** — · **Açar:** Y3

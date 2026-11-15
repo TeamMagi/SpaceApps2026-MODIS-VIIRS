@@ -25,6 +25,18 @@ export enum Sensor {
 
 export type ViewMode = "raw" | "harmonized";
 
+/** Display input for summary cards; every value must describe the same scope. */
+export interface AnalyticsSnapshot {
+  scope: { region: string; year: number; month: number | null };
+  rawCount: number;
+  harmonizedCount: number;
+  rawFrpSum: number;
+  harmonizedFrpSum: number;
+  platforms: readonly Sensor[];
+  bySource: { modisOnly: number; viirsOnly: number; matched: number };
+  generatedAt: string;
+}
+
 export type Lang = "en" | "tr";
 export type Theme = "dark" | "light";
 
@@ -503,4 +515,18 @@ export interface AvailabilityEntry {
   source: string;
   minDate: string;
   maxDate: string;
+}
+
+/** Proposed model for Y1 (monthly FRP series); not a current API field. */
+export interface FrpMonthlyPoint {
+  year: number;
+  month: number;
+  rawModisCount: number;
+  rawModisFrpSum: number;
+  rawViirsCount: number;
+  rawViirsFrpSum: number;
+  harmonizedCount: number;
+  harmonizedFrpSum: number;
+  meanFrpRaw: number | null;
+  meanFrpHarmonized: number | null;
 }

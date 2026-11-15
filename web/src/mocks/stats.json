@@ -1,0 +1,302 @@
+{
+  "annual": {
+    "scope": {
+      "region": "Turkey",
+      "year": 2021,
+      "month": null
+    },
+    "rawCount": 800,
+    "harmonizedCount": 500,
+    "rawFrpSum": 78756.573,
+    "harmonizedFrpSum": 69701.941,
+    "platforms": [
+      "ModisTerra",
+      "ViirsSNPP",
+      "ModisAqua",
+      "ViirsNOAA20"
+    ],
+    "bySource": {
+      "modisOnly": 200,
+      "viirsOnly": 200,
+      "matched": 100
+    },
+    "generatedAt": "2026-11-15T00:00:00Z"
+  },
+  "months": [
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 1
+      },
+      "rawCount": 20,
+      "harmonizedCount": 13,
+      "rawFrpSum": 1137.928,
+      "harmonizedFrpSum": 1265.666,
+      "platforms": [
+        "ModisTerra",
+        "ViirsSNPP",
+        "ModisAqua",
+        "ViirsNOAA20"
+      ],
+      "bySource": {
+        "modisOnly": 5,
+        "viirsOnly": 6,
+        "matched": 2
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 2
+      },
+      "rawCount": 5,
+      "harmonizedCount": 4,
+      "rawFrpSum": 622.246,
+      "harmonizedFrpSum": 722.175,
+      "platforms": [
+        "ViirsNOAA20",
+        "ViirsSNPP",
+        "ModisAqua"
+      ],
+      "bySource": {
+        "modisOnly": 0,
+        "viirsOnly": 3,
+        "matched": 1
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 3
+      },
+      "rawCount": 15,
+      "harmonizedCount": 11,
+      "rawFrpSum": 1516.349,
+      "harmonizedFrpSum": 1690.198,
+      "platforms": [
+        "ViirsSNPP",
+        "ModisAqua",
+        "ViirsNOAA20",
+        "ModisTerra"
+      ],
+      "bySource": {
+        "modisOnly": 1,
+        "viirsOnly": 7,
+        "matched": 3
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 4
+      },
+      "rawCount": 40,
+      "harmonizedCount": 26,
+      "rawFrpSum": 6134.638,
+      "harmonizedFrpSum": 4777.998,
+      "platforms": [
+        "ModisAqua",
+        "ViirsNOAA20",
+        "ModisTerra",
+        "ViirsSNPP"
+      ],
+      "bySource": {
+        "modisOnly": 8,
+        "viirsOnly": 12,
+        "matched": 6
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 5
+      },
+      "rawCount": 61,
+      "harmonizedCount": 37,
+      "rawFrpSum": 4936.107,
+      "harmonizedFrpSum": 4775.272,
+      "platforms": [
+        "ModisAqua",
+        "ViirsNOAA20",
+        "ModisTerra",
+        "ViirsSNPP"
+      ],
+      "bySource": {
+        "modisOnly": 11,
+        "viirsOnly": 13,
+        "matched": 13
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 6
+      },
+      "rawCount": 109,
+      "harmonizedCount": 67,
+      "rawFrpSum": 10328.929,
+      "harmonizedFrpSum": 9561.222,
+      "platforms": [
+        "ViirsNOAA20",
+        "ViirsSNPP",
+        "ModisTerra",
+        "ModisAqua"
+      ],
+      "bySource": {
+        "modisOnly": 30,
+        "viirsOnly": 25,
+        "matched": 12
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 7
+      },
+      "rawCount": 193,
+      "harmonizedCount": 118,
+      "rawFrpSum": 21941.408,
+      "harmonizedFrpSum": 19173.177,
+      "platforms": [
+        "ModisTerra",
+        "ViirsSNPP",
+        "ModisAqua",
+        "ViirsNOAA20"
+      ],
+      "bySource": {
+        "modisOnly": 58,
+        "viirsOnly": 43,
+        "matched": 17
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 8
+      },
+      "rawCount": 174,
+      "harmonizedCount": 115,
+      "rawFrpSum": 15381.179,
+      "harmonizedFrpSum": 14588.957,
+      "platforms": [
+        "ModisAqua",
+        "ViirsSNPP",
+        "ViirsNOAA20",
+        "ModisTerra"
+      ],
+      "bySource": {
+        "modisOnly": 41,
+        "viirsOnly": 56,
+        "matched": 18
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 9
+      },
+      "rawCount": 89,
+      "harmonizedCount": 53,
+      "rawFrpSum": 8674.782,
+      "harmonizedFrpSum": 6277.438,
+      "platforms": [
+        "ModisTerra",
+        "ModisAqua",
+        "ViirsSNPP",
+        "ViirsNOAA20"
+      ],
+      "bySource": {
+        "modisOnly": 20,
+        "viirsOnly": 17,
+        "matched": 16
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 10
+      },
+      "rawCount": 63,
+      "harmonizedCount": 37,
+      "rawFrpSum": 5285.095,
+      "harmonizedFrpSum": 4350.582,
+      "platforms": [
+        "ViirsSNPP",
+        "ModisAqua",
+        "ModisTerra",
+        "ViirsNOAA20"
+      ],
+      "bySource": {
+        "modisOnly": 18,
+        "viirsOnly": 11,
+        "matched": 8
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 11
+      },
+      "rawCount": 22,
+      "harmonizedCount": 13,
+      "rawFrpSum": 1993.906,
+      "harmonizedFrpSum": 1546.224,
+      "platforms": [
+        "ModisTerra",
+        "ViirsSNPP",
+        "ModisAqua",
+        "ViirsNOAA20"
+      ],
+      "bySource": {
+        "modisOnly": 7,
+        "viirsOnly": 4,
+        "matched": 2
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "scope": {
+        "region": "Turkey",
+        "year": 2021,
+        "month": 12
+      },
+      "rawCount": 9,
+      "harmonizedCount": 6,
+      "rawFrpSum": 804.006,
+      "harmonizedFrpSum": 973.032,
+      "platforms": [
+        "ModisAqua",
+        "ViirsNOAA20",
+        "ModisTerra",
+        "ViirsSNPP"
+      ],
+      "bySource": {
+        "modisOnly": 1,
+        "viirsOnly": 3,
+        "matched": 2
+      },
+      "generatedAt": "2026-11-15T00:00:00Z"
+    }
+  ]
+}
