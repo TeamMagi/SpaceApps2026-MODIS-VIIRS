@@ -339,6 +339,7 @@ export interface CalendarCell {
   totalFrpUpper: number | null;
   frpPerDetectionEq: number | null;
   anomaly: number | null;
+  qualityFlags: readonly string[];
 }
 
 export interface EffortFactor {

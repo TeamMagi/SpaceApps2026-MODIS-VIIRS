@@ -1139,8 +1139,57 @@ fn pre_aqua_warning(excluded: usize) -> Option<String> {
     })
 }
 
+fn quality_flag_label(flag: pyrosync_core::quality::QualityFlag) -> &'static str {
+    use pyrosync_core::quality::QualityFlag;
+    match flag {
+        QualityFlag::TerraEarlyRecord => "early Terra MODIS incomplete record",
+        QualityFlag::TerraOutage => "Terra MOD14 data outages",
+        QualityFlag::SnppEarlyCalibration => "S-NPP VIIRS early calibration bias (~50 K nadir)",
+        QualityFlag::SnppSpuriousScanLines => "S-NPP VIIRS spurious scan lines",
+        QualityFlag::ModisOrbitalDrift => "MODIS orbital drift",
+    }
+}
+
+fn quality_flag_warnings(calendar: &[CalendarCell]) -> Vec<String> {
+    use pyrosync_core::quality::{QualityFlag, flag_description};
+    use std::collections::BTreeMap;
+
+    let mut by_flag: BTreeMap<QualityFlag, Vec<(i32, u32)>> = BTreeMap::new();
+    for cell in calendar {
+        for &flag in &cell.quality_flags {
+            by_flag
+                .entry(flag)
+                .or_default()
+                .push((cell.year, cell.month));
+        }
+    }
+
+    by_flag
+        .into_iter()
+        .map(|(flag, mut months)| {
+            months.sort_unstable();
+            months.dedup();
+            let count = months.len();
+            let noun_verb = if count == 1 { "month is" } else { "months are" };
+            let mut listed: Vec<String> = months
+                .iter()
+                .take(6)
+                .map(|(y, m)| format!("{y:04}-{m:02}"))
+                .collect();
+            if count > 6 {
+                listed.push("...".to_string());
+            }
+            let months_str = listed.join(", ");
+            let label = quality_flag_label(flag);
+            let desc = flag_description(flag);
+            format!("{count} {noun_verb} affected by {label} ({months_str}): {desc}")
+        })
+        .collect()
+}
+
 fn build_effort_and_warnings_from_counts(
     harmonized: &[HarmonizedHotspot],
+    calendar: &[CalendarCell],
     failure_count: usize,
     singular: &str,
     plural: &str,
@@ -1150,6 +1199,7 @@ fn build_effort_and_warnings_from_counts(
         build_warnings_from_counts(failure_count, singular, plural, uncovered);
     let excluded = pyrosync_core::effort::pre_aqua_excluded_months(harmonized).len();
     warnings.extend(pre_aqua_warning(excluded));
+    warnings.extend(quality_flag_warnings(calendar));
     let effort = EffortResponse {
         reliable: reason.is_none(),
         reason,
@@ -1161,10 +1211,12 @@ fn build_effort_and_warnings_from_counts(
 
 fn build_effort_and_warnings(
     harmonized: &[HarmonizedHotspot],
+    calendar: &[CalendarCell],
     report: &ReportResponse,
 ) -> (EffortResponse, Vec<String>) {
     build_effort_and_warnings_from_counts(
         harmonized,
+        calendar,
         report.failures.len(),
         "FIRMS request",
         "FIRMS requests",
@@ -1308,7 +1360,8 @@ async fn harmonize(
 ) -> Result<Response, ApiError> {
     let uncertainty = uncertainty_metadata(&state.config.uncertainty);
     execute_cached_pipeline(&state, "harmonize", &params, |run, include_raw| {
-        let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report);
+        let (effort, warnings) =
+            build_effort_and_warnings(&run.harmonized, &run.calendar, &run.report);
         let raw = RawResponse {
             modis_count: run.modis_count,
             viirs_count: run.viirs_count,
@@ -1786,6 +1839,7 @@ fn build_calendar_response(
 ) -> CalendarResponse {
     let (effort, mut warnings) = build_effort_and_warnings_from_counts(
         harmonized,
+        &calendar,
         failures.len(),
         "FIRMS archive download",
         "FIRMS archive downloads",
@@ -2153,6 +2207,41 @@ mod tests {
         assert_eq!(
             pre_aqua_warning(18).as_deref(),
             Some("18 months before 2002-07 (Terra-only era) are not effort-comparable with later months and have no normalized count or anomaly.")
+        );
+    }
+
+    #[test]
+    fn quality_flag_warnings_summarize_and_truncate_months() {
+        use pyrosync_core::quality::{QualityFlag, flag_description};
+
+        assert!(quality_flag_warnings(&calendar_cells_for_test(2015, 7, 10)).is_empty());
+
+        let mut cells: Vec<CalendarCell> = (1..=8)
+            .map(|month| {
+                let mut cell = calendar_cells_for_test(2022, month, 5).pop().unwrap();
+                cell.quality_flags = vec![QualityFlag::ModisOrbitalDrift];
+                cell
+            })
+            .collect();
+        let mut outage_cell = calendar_cells_for_test(2001, 6, 2).pop().unwrap();
+        outage_cell.quality_flags = vec![QualityFlag::TerraOutage];
+        cells.push(outage_cell);
+
+        let warnings = quality_flag_warnings(&cells);
+        assert_eq!(warnings.len(), 2);
+        assert_eq!(
+            warnings[0],
+            format!(
+                "1 month is affected by Terra MOD14 data outages (2001-06): {}",
+                flag_description(QualityFlag::TerraOutage)
+            )
+        );
+        assert_eq!(
+            warnings[1],
+            format!(
+                "8 months are affected by MODIS orbital drift (2022-01, 2022-02, 2022-03, 2022-04, 2022-05, 2022-06, ...): {}",
+                flag_description(QualityFlag::ModisOrbitalDrift)
+            )
         );
     }
     use chrono::TimeZone;
@@ -3195,6 +3284,7 @@ mod tests {
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
+            quality_flags: Vec::new(),
         }]
     }
 

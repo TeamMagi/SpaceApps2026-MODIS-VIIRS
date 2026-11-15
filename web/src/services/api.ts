@@ -243,6 +243,7 @@ interface WireCalendarCell {
   total_frp_upper: number | null;
   frp_per_detection_eq: number | null;
   anomaly: number | null;
+  quality_flags?: string[];
 }
 
 interface WireEffortFactor {
@@ -675,6 +676,7 @@ function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
     totalFrpUpper: w.total_frp_upper,
     frpPerDetectionEq: w.frp_per_detection_eq,
     anomaly: w.anomaly,
+    qualityFlags: w.quality_flags ?? [],
   };
 }
 

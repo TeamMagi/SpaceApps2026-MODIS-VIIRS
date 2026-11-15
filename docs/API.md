@@ -118,6 +118,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
 | `sfai` | number \| null | `count_normalized` için dayanıklı z-skoru (SFAI): `(x − medyan) / (0.65 × 1.4826 × MAD + 0.35 × σ)`; σ popülasyon standart sapmasıdır. Payda ağırlıkları flare-chronos referans projesinden gelir, medyan payı bize aittir. `anomaly` ile aynı havuz (aynı takvim ayı); en az 3 değer gerekir, payda 0 ise `null` |
+| `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
 
@@ -145,6 +146,7 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 - Arşiv yıl aralığı kırpıldığında (`calendar`).
 - Takvimde NOAA-21 eksikliği bildirildiğinde (`calendar`).
 - Yıl aralığında Terra-only dönem dışlandığında (bkz. "CalendarCell").
+- Takvim hücrelerinde tarihsel sensör anomalisi veya kesinti bayrağı (`quality_flags`) bulunan aylar olduğunda, her farklı bayrak için bir özet uyarı eklenir (en fazla 6 `YYYY-MM` ayı listelenir, fazlası `...` ile kısaltılır).
 - Yerel arşivde beklenen dosya yoksa (`calendar`).
 
 ### report

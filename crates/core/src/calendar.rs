@@ -1,7 +1,8 @@
 use crate::calibration::calibration_for;
 use crate::config::CalibrationConfig;
 use crate::effort::monthly_omegas;
-use crate::models::{CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear};
+use crate::models::{CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
+use crate::quality::month_quality_flags;
 use crate::uncertainty::{
     SensorFamily, UncertaintyParams, mean_frp_uncertainty, relative_uncertainty_for_obs,
     total_frp_uncertainty,
@@ -22,6 +23,7 @@ struct MonthBucket {
     sum_corrected: f64,
     sum_raw: f64,
     has_viirs: bool,
+    platforms: Vec<Sensor>,
     records: Vec<BucketRecord>,
     mean_uncertainty_items: Vec<(f64, f64, f64)>,
 }
@@ -123,6 +125,7 @@ pub fn build_calendar_with(
                 sum_corrected: 0.0,
                 sum_raw: 0.0,
                 has_viirs: false,
+                platforms: Vec::new(),
                 records: Vec::new(),
                 mean_uncertainty_items: Vec::new(),
             });
@@ -131,6 +134,11 @@ pub fn build_calendar_with(
         entry.sum_raw += h.frp;
         if h.platforms.iter().any(|s| s.is_viirs()) {
             entry.has_viirs = true;
+        }
+        for &sensor in &h.platforms {
+            if !entry.platforms.contains(&sensor) {
+                entry.platforms.push(sensor);
+            }
         }
 
         let sensor_family = SensorFamily::from(h.source);
@@ -210,6 +218,7 @@ pub fn build_calendar_with(
                 frp_per_detection_eq,
                 anomaly: None,
                 sfai: None,
+                quality_flags: month_quality_flags(year, month, &bucket.platforms),
             }
         })
         .collect();
@@ -375,7 +384,8 @@ pub fn seasonality(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Confidence, DayNight, HotspotSource, Sensor};
+    use crate::models::{Confidence, DayNight, HotspotSource};
+    use crate::quality::QualityFlag;
     use chrono::{TimeZone, Utc};
 
     fn count_cell(year: i32, month: u32, count: u64, norm: Option<f64>) -> CalendarCell {
@@ -395,6 +405,7 @@ mod tests {
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
+            quality_flags: Vec::new(),
         }
     }
 
@@ -1065,5 +1076,47 @@ mod tests {
 
         let neg_frp = make_harmonized(2021, 7, 3, -5.0, -5.0);
         assert_eq!(mean_frp_with_uncertainty(&[neg_frp], &params), None);
+    }
+
+    #[test]
+    fn empty_quality_flags_omitted_when_serialized() {
+        let cell = count_cell(2015, 7, 3, Some(3.0));
+        let json = serde_json::to_value(&cell).unwrap();
+        assert!(json.get("quality_flags").is_none());
+
+        let mut flagged = cell;
+        flagged.quality_flags = vec![QualityFlag::TerraEarlyRecord];
+        let flagged_json = serde_json::to_value(&flagged).unwrap();
+        assert_eq!(
+            flagged_json["quality_flags"],
+            serde_json::json!(["terra_early_record"])
+        );
+    }
+
+    #[test]
+    fn build_calendar_attaches_quality_flags_to_affected_months() {
+        let terra_outage_month = make_harmonized(2000, 8, 20, 50.0, 50.0);
+        let clean_modis = make_harmonized(2008, 7, 15, 50.0, 50.0);
+        let mut snpp_early = make_harmonized(2012, 4, 20, 30.0, 30.0);
+        snpp_early.platforms = vec![Sensor::ViirsSNPP];
+        snpp_early.source = HotspotSource::ViirsOnly;
+        let mut aqua_drift = make_harmonized(2021, 1, 10, 40.0, 40.0);
+        aqua_drift.platforms = vec![Sensor::ModisAqua];
+
+        let cells = build_calendar(&[terra_outage_month, clean_modis, snpp_early, aqua_drift]);
+        assert_eq!(cells.len(), 4);
+        assert_eq!(
+            cells[0].quality_flags,
+            vec![QualityFlag::TerraEarlyRecord, QualityFlag::TerraOutage]
+        );
+        assert!(cells[1].quality_flags.is_empty());
+        assert_eq!(
+            cells[2].quality_flags,
+            vec![
+                QualityFlag::SnppEarlyCalibration,
+                QualityFlag::SnppSpuriousScanLines,
+            ]
+        );
+        assert_eq!(cells[3].quality_flags, vec![QualityFlag::ModisOrbitalDrift]);
     }
 }
