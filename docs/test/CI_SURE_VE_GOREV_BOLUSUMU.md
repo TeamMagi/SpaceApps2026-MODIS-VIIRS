@@ -56,12 +56,12 @@ A3 kararı (çift test yürütmesi): **ayrım korunur.** `coverage` 107 sn, `rus
 
 | Koşu (commit) | Önbellek | `rust` | `coverage` | `web` | Toplam (en uzun) | Sonuç |
 |---------------|----------|--------|------------|-------|------------------|-------|
-| #63 (`85d40df`) | bilinmiyor | ? | ? | ? | 2 dk 15 sn | kırmızı |
-| #64 (`a1e37ff`) | bilinmiyor | ? | ? | ? | 1 dk 37 sn | kırmızı |
-| #65 (`bba155f`) | bilinmiyor | ? | ? | ? | 1 dk 36 sn | **yeşil** |
-| #66 (`ddd4ba6`) | bilinmiyor | ? | ? | ? | 1 dk 58 sn | **yeşil** |
+| #63 (`85d40df`) | bilinmiyor | ≤ 2 dk 15 sn | ≤ 2 dk 15 sn | ≤ 2 dk 15 sn | 2 dk 15 sn | kırmızı |
+| #64 (`a1e37ff`) | bilinmiyor | ≤ 1 dk 37 sn | ≤ 1 dk 37 sn | ≤ 1 dk 37 sn | 1 dk 37 sn | kırmızı |
+| #65 (`bba155f`) | bilinmiyor | ≤ 1 dk 36 sn | ≤ 1 dk 36 sn | ≤ 1 dk 36 sn | 1 dk 36 sn | **yeşil** |
+| #66 (`ddd4ba6`) | bilinmiyor | ≤ 1 dk 58 sn | ≤ 1 dk 58 sn | ≤ 1 dk 58 sn | 1 dk 58 sn | **yeşil** |
 
-Toplam süreler Actions listesinden alındı. Job bazlı süreler (`?`) için ilgili koşuya tıklayıp her job'ın süresini yazmak yeterli. `gh` girişi varsa: `gh run list --workflow CI --limit 5` ve `gh run view <id> --json jobs`.
+Toplam süreler Actions listesinden alındı. Job'lar paralel çalıştığı için her job'ın süresi koşunun toplam süresinden kısadır; tablodaki `≤` değerleri bu **üst sınırdır**, job bazlı gerçek süreler ilgili koşuya tıklanıp yazılabilir. `gh` girişi varsa: `gh run list --workflow CI --limit 5` ve `gh run view <id> --json jobs`.
 
 ## 7. Kırmızı CI'da ilk bakılacak yerler
 
@@ -75,6 +75,8 @@ Toplam süreler Actions listesinden alındı. Job bazlı süreler (`?`) için il
 | `npm ci` hata veriyor | `package.json` ile `package-lock.json` uyuşmuyor | Kilit dosyasını güncelle ve commit'le |
 | Koşu 30 dk'da kesiliyor | Önbellek yok ya da takılan adım | §6 tablosuna bak |
 | Beklenen CI hiç çalışmadı | `paths-ignore`: yalnız belge değişmiş | Beklenen davranış; `workflow_dispatch` ile elle başlat |
+| Bir `main` commit'i için hiç yeşil/kırmızı sonuç yok | Eskiden `cancel-in-progress: true` `main`'de de geçerliydi: sonraki push önceki koşuyu iptal ediyordu (GitHub concurrency davranışı) | `main`'de iptal artık kapalı (`ddd4ba6`); PR ve diğer dallarda eski koşu iptal edilmeye devam eder |
+| Koşu bir önceki gün çalışırken bugün Actions'ta farklı davranıyor | `ubuntu-latest` yeni bir Ubuntu sürümüne geçebilir | Runner'lar `ubuntu-24.04`'e sabit (`ddd4ba6`); ilk yeşil koşulardan sonra serbest bırakılabilir |
 
 ## 8. Bu kapsama girmeyenler (bilerek)
 
