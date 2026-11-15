@@ -246,7 +246,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
-| R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [ ] (R9, C8 [X]) |
+| R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [X] |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | [X] |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | [X] |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R6, R9, R11 tamamlandı; R10 sürüyor. Açık görevlerden şu an başlanabilecekler: R12 (`R9, C8` bitti). (`R7` S7'yi, `R8` K1'i bekliyor.)
+- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10 sürüyor (hazır sonuçların yeniden üretilmesini bekliyor). (`R7` S7'yi, `R8` K1'i bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** Şu an başlanabilecekler: K1 (R4 bitti), K2 (G7, R1 bitti), K5, K8, K9, K10, K12, K13 (`Bekler: —`). (`K3, K4` artık başlayabilir (C7 bitti); `K6, K7` K5'i; `K11` K10'u; `K14` K13'ü bekliyor.)
@@ -812,12 +812,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Case study verileri (S7) ile demo senaryosu
 - **Bitti sayılır:** CSV indiriliyor ve Excel'de açılıyor; GeoJSON indiriliyor; brifingi paneli en az 5 metrik gösteriyor; Türkiye verisiyle demo çalışıyor.
 
-### [ ] R12 — 60 saniyelik rehberli tur
+### [X] R12 — 60 saniyelik rehberli tur
 - **Bekler:** R9, C8 · **Açar:** G5
 - `docs/REFERANS_ANALIZI.md` "60 Saniyelik Canlı Demo Akışı"nın arayüzde 4 adımlı etkileşimli rehberli tur (`FireBridge` Guided Tour) olarak uygulanması: `0–15 sn` `RAW ↔ HARMONISED` (`Chronofire`), `15–30 sn` `Footprint Lens` (`C8`, `flare-chronos`, `[15, 16]`), `30–45 sn` politika/iklim vaka görünümü (`[20, 28, 30]`), `45–60 sn` `Methods` sekmesinde placebo testi + `±1σ` Mondrian bandı + `Orbital Drift` şeridi (`fire-harmony`, `FireHarmonize`)
 - Adımlar arasında ileri/geri/atla kontrolleri ve ilgili panellere otomatik odaklanma
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7 / 60 Saniyelik Canlı Demo Akışı (+ `FireBridge`, `Chronofire`, `flare-chronos`, `fire-harmony`, `FireHarmonize`)
 - **Bitti sayılır:** arayüzde başlatılabilen 4 adımlı 60 saniyelik rehberli tur `RAW ↔ HARMONISED`, `Footprint Lens`, vaka görünümü ve `Methods` doğrulama adımlarını hatasız gezdiriyor.
+- **Kapanış (Serhat, 2026-11-15):** Tur alt bardaki "60 sn tur" düğmesinden veya `T` tuşuyla başlıyor. Adımların sırası ve süreleri `web/src/lib/tour.ts`'te, zamanlayıcılar ve panel vurgusu `web/src/hooks/useGuidedTour.ts`'te, kart `web/src/components/Tour/GuidedTour.tsx`'te, metinler `web/src/content/copyTour.ts`'te (EN ve TR). Her adım 15 sn sürüyor ve kendiliğinden ilerliyor. Kartta Geri, Duraklat/Devam, İleri/Bitir ve kapatma düğmesi var. `Esc` turu kapatıyor, kart odaktayken ok tuşları adımlar arasında geziyor. Vurgulanan paneller `data-tour` işaretleriyle bulunuyor ve görünür alana kaydırılıyor. Adımlar: (1) mod Ham'a alınıyor, 5. saniyede anahtar kendiliğinden Harmonize'ye geçiyor; anahtar ve uçurum grafiği vurgulanıyor. (2) Harita vurgulanıyor, kart MODIS noktasından "Ayak izi merceği"nin nasıl açılacağını ve `5,7→40 MW` / `0,7→3,7 MW` eşiklerini anlatıyor. (3) Bölge Çin'e, takvim 2018'e, mod Harmonize'ye alınıyor; metindeki sayılar `docs/VAKA_CIN_ANIZ.md` ölçümlerinden geliyor (ham `+%10`, harmonize `−%32`, S-NPP `−%24`, Aralık–Mayıs payı `%27→%73`). (4) `#/methods/limits` açılıyor; kart `docs/DOGRULAMA_PAKETI.md`'deki placebo (ortalama sıra `0,49`/`0,51`, ham `p = 0,002–0,039`) ve LOYO (`0,052` vs `1,79`, kapı 10/10) sonuçlarını gösteriyor. `npm run typecheck`, `npm test` (36 test) ve `npm run build` temiz. Tur, backend kapalıyken headless Chrome'da baştan sona sürüldü: dört adım, 15 sn sonra kendiliğinden ilerleme, 5. saniyedeki anahtar geçişi, Geri, `Esc`, Methods rotasına gidip geri dönme ve 1366×768 ile 390 px mobil yerleşim kontrol edildi; konsolda hata yok. **Sınırlar:** `±1σ` Mondrian bandı (S10) ve `Orbital Drift` şeridi (Y9) henüz olmadığı için 4. adımda gösterilmiyor; bu görevler bitince adıma eklenmeli. Methods sayfasında ayrı bir placebo bölümü yok, sonuçlar yalnızca tur kartında yazıyor. 2. adım merceği kendiliğinden açmıyor, kullanıcının bir noktaya tıklaması gerekiyor. 3. adımdan sonra bölge Çin olarak kalıyor. Canlı veriyle (backend açıkken) görsel kontrol yapılmadı.
 
 ---
 
@@ -1250,7 +1251,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 |------|-------------|------------|------|---------|------|
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
-| Serhat | 12 (R1–R12) | 5 (`R1–R5`) | 7 (`R10, R11, R9, R8, R6, R7, R12`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
+| Serhat | 12 (R1–R12) | 9 (`R1–R6, R9, R11, R12`) | 3 (`R10, R8, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 0 | 14 (`K5, K9, K8, K10–K14, K6, K7, K1–K4`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
