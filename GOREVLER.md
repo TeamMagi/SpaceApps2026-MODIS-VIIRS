@@ -243,7 +243,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] sürüyor |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
-| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
+| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] (G7, K1, R1 [X]) |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
 | R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [X] |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10 sürüyor (hazır sonuçların yeniden üretilmesini bekliyor). (`R7` S7'yi, `R8` K1'i bekliyor.)
+- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10 sürüyor (hazır sonuçların yeniden üretilmesini bekliyor). Şu an başlanabilecek: R8 (`K1` bitti). (`R7` S7'yi bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
