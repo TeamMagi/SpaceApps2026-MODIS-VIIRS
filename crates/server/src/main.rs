@@ -11,8 +11,8 @@ use std::time::{Duration, Instant};
 
 use axum::{
     Router,
-    extract::{OriginalUri, Query, State},
-    http::{HeaderName, HeaderValue, Method, StatusCode, Uri, header},
+    extract::{FromRequestParts, OriginalUri, Query, State, rejection::QueryRejection},
+    http::{HeaderName, HeaderValue, Method, StatusCode, Uri, header, request::Parts},
     response::{IntoResponse, Json, Response},
     routing::get,
 };
@@ -36,6 +36,7 @@ const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 300;
 const DEFAULT_ARCHIVE_CACHE_DIR: &str = ".cache/firms-archive";
 const DEFAULT_AREA_CACHE_DIR: &str = ".cache/firms-area";
 const ARCHIVE_FETCH_CONCURRENCY: usize = 4;
+const MAX_COUNTRY_LEN: usize = 64;
 // NRT (`days`) responses update continuously as new satellite passes arrive, so keep their TTL short.
 const CACHE_TTL_NRT_SECS: u64 = 600;
 // Archive (`start`/`end` and `/api/calendar`) responses cover finalized science-quality data that no longer changes.
@@ -507,6 +508,13 @@ impl ApiError {
             message: message.into(),
         }
     }
+
+    fn service_unavailable(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            message: message.into(),
+        }
+    }
 }
 
 impl IntoResponse for ApiError {
@@ -516,6 +524,23 @@ impl IntoResponse for ApiError {
             Json(serde_json::json!({ "error": self.message })),
         )
             .into_response()
+    }
+}
+
+struct ApiQuery<T>(T);
+
+impl<S, T> FromRequestParts<S> for ApiQuery<T>
+where
+    Query<T>: FromRequestParts<S, Rejection = QueryRejection>,
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        Query::<T>::from_request_parts(parts, state)
+            .await
+            .map(|Query(value)| Self(value))
+            .map_err(|err| ApiError::bad_request(err.body_text()))
     }
 }
 
@@ -854,7 +879,7 @@ async fn run_server() -> anyhow::Result<()> {
             }
         },
         _ => {
-            tracing::warn!("FIRMS_API_KEY is not configured; FIRMS endpoints will return 500");
+            tracing::warn!("FIRMS_API_KEY is not configured; FIRMS endpoints will return 503");
             None
         }
     };
@@ -1255,7 +1280,7 @@ where
 
 async fn harmonize(
     State(state): State<AppState>,
-    Query(params): Query<HarmonizeParams>,
+    ApiQuery(params): ApiQuery<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
     let uncertainty = uncertainty_metadata(&state.config.uncertainty);
     execute_cached_pipeline(&state, "harmonize", &params, |run, include_raw| {
@@ -1353,7 +1378,7 @@ fn export_response(
 
 async fn export(
     State(state): State<AppState>,
-    Query(params): Query<HarmonizeParams>,
+    ApiQuery(params): ApiQuery<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
     // Validate before consulting the cache so invalid requests never probe cache entries.
     let format = ExportFormat::parse(params.format.as_deref())?;
@@ -1432,7 +1457,9 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
                 _ => factor,
             });
             if h.frp > 0.0 {
-                vza_reduction_pct_sum += 100.0 * (1.0 - h.frp_corrected / h.frp);
+                // Isolate VZA reduction from latitude calibration included in `h.frp_corrected`.
+                let vza_only_frp = pyrosync_core::vza::apply_vza_correction(h.frp, h.vza_factor);
+                vza_reduction_pct_sum += 100.0 * (1.0 - vza_only_frp / h.frp);
             }
         }
     }
@@ -1503,7 +1530,7 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
 
 async fn compare(
     State(state): State<AppState>,
-    Query(params): Query<HarmonizeParams>,
+    ApiQuery(params): ApiQuery<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
     execute_cached_pipeline(&state, "compare", &params, |run, _| {
         build_compare_response(run)
@@ -1641,7 +1668,7 @@ fn build_stats_response(run: PipelineRun) -> StatsResponse {
 
 async fn stats(
     State(state): State<AppState>,
-    Query(params): Query<HarmonizeParams>,
+    ApiQuery(params): ApiQuery<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
     execute_cached_pipeline(&state, "stats", &params, |run, _| {
         build_stats_response(run)
@@ -1674,6 +1701,11 @@ fn parse_calendar_params(params: &CalendarParams) -> Result<ValidatedCalendarQue
         return Err(ApiError::bad_request(
             "Parameter 'country' must not be empty",
         ));
+    }
+    if params.country.len() > MAX_COUNTRY_LEN {
+        return Err(ApiError::bad_request(format!(
+            "Parameter 'country' must be at most {MAX_COUNTRY_LEN} characters"
+        )));
     }
     // Reject path separators and shell metacharacters because `country` is interpolated into archive URLs and cache paths.
     if !params
@@ -1801,6 +1833,11 @@ fn format_archive_error(err: ArchiveError) -> String {
     }
 }
 
+enum CountryYearOutcome {
+    Found(Vec<Hotspot>),
+    CompleteNoFile,
+}
+
 async fn run_calendar_pipeline(
     archive: &Arc<ArchiveClient>,
     config: &PipelineConfig,
@@ -1810,6 +1847,8 @@ async fn run_calendar_pipeline(
     let mut viirs = Vec::new();
     let mut per_sensor_year = Vec::new();
     let mut failures = Vec::new();
+    let mut attempted_any = false;
+    let mut found_any_file = false;
 
     if query.years.effective_from <= query.years.effective_to {
         let semaphore = Arc::new(Semaphore::new(ARCHIVE_FETCH_CONCURRENCY));
@@ -1820,6 +1859,7 @@ async fn run_calendar_pipeline(
                 if !archive.covers(sensor, year) {
                     continue;
                 }
+                attempted_any = true;
                 let permit = Arc::clone(&semaphore)
                     .acquire_owned()
                     .await
@@ -1830,16 +1870,22 @@ async fn run_calendar_pipeline(
 
                 let handle = tokio::spawn(async move {
                     let _permit = permit;
-                    let mut hotspots = archive
-                        .fetch_country_year(sensor, &country, year)
-                        .await
-                        .map_err(format_archive_error)?;
+                    let mut hotspots = match archive.fetch_country_year(sensor, &country, year).await {
+                        Ok(hotspots) => hotspots,
+                        // A completed sensor-year zip with no CSV for this country means zero detections, not a missing download.
+                        Err(ArchiveError::NotCached { .. })
+                            if archive.sensor_year_complete(sensor, year) =>
+                        {
+                            return Ok(CountryYearOutcome::CompleteNoFile);
+                        }
+                        Err(err) => return Err(format_archive_error(err)),
+                    };
                     // Filter per country-year before merging decades of detections to bound peak memory.
                     pyrosync_firms::parse::retain_wildfires(&mut hotspots);
                     if let Some(ref bbox) = bbox {
                         hotspots = filter_bbox(hotspots, bbox);
                     }
-                    Ok::<Vec<Hotspot>, String>(hotspots)
+                    Ok::<CountryYearOutcome, String>(CountryYearOutcome::Found(hotspots))
                 });
                 handles.push((sensor, year, handle));
             }
@@ -1847,7 +1893,8 @@ async fn run_calendar_pipeline(
 
         for (sensor, year, handle) in handles {
             match handle.await {
-                Ok(Ok(mut hotspots)) => {
+                Ok(Ok(CountryYearOutcome::Found(mut hotspots))) => {
+                    found_any_file = true;
                     per_sensor_year.push(SensorYearFetch {
                         sensor,
                         year,
@@ -1858,6 +1905,13 @@ async fn run_calendar_pipeline(
                     } else {
                         viirs.append(&mut hotspots);
                     }
+                }
+                Ok(Ok(CountryYearOutcome::CompleteNoFile)) => {
+                    per_sensor_year.push(SensorYearFetch {
+                        sensor,
+                        year,
+                        detections: 0,
+                    });
                 }
                 Ok(Err(error)) => {
                     failures.push(SensorYearFailure {
@@ -1877,7 +1931,7 @@ async fn run_calendar_pipeline(
         }
     }
 
-    if per_sensor_year.is_empty() && !failures.is_empty() {
+    if attempted_any && !found_any_file {
         return Err(ApiError::not_found(format!(
             "No local archive data for country '{}'. Historical data is not downloaded by default; run `make data` to download the FIRMS country archive (~41 GB).",
             query.country
@@ -1930,7 +1984,7 @@ async fn run_calendar_with_timeout(
 
 async fn calendar(
     State(state): State<AppState>,
-    Query(params): Query<CalendarParams>,
+    ApiQuery(params): ApiQuery<CalendarParams>,
 ) -> Result<Response, ApiError> {
     let query = parse_calendar_params(&params)?;
     let key = build_calendar_cache_key(
@@ -1963,7 +2017,7 @@ fn require_firms_client(state: &AppState) -> Result<&FirmsClient, ApiError> {
     state
         .firms
         .as_deref()
-        .ok_or_else(|| ApiError::internal("FIRMS_API_KEY is not configured"))
+        .ok_or_else(|| ApiError::service_unavailable("FIRMS_API_KEY is not configured"))
 }
 
 fn require_archive_client(state: &AppState) -> Result<&Arc<ArchiveClient>, ApiError> {
@@ -2491,7 +2545,7 @@ mod tests {
             include_raw: Some(true),
             format: None,
         };
-        let err = compare(State(state.clone()), Query(bad_bbox))
+        let err = compare(State(state.clone()), ApiQuery(bad_bbox))
             .await
             .expect_err("invalid bbox should fail");
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
@@ -2507,10 +2561,10 @@ mod tests {
             include_raw: Some(true),
             format: None,
         };
-        let err = stats(State(state), Query(missing_key))
+        let err = stats(State(state), ApiQuery(missing_key))
             .await
-            .expect_err("missing FIRMS key should return 500");
-        assert_eq!(err.status, StatusCode::INTERNAL_SERVER_ERROR);
+            .expect_err("missing FIRMS key should return 503");
+        assert_eq!(err.status, StatusCode::SERVICE_UNAVAILABLE);
     }
 
     #[test]
@@ -2642,10 +2696,10 @@ mod tests {
         };
 
         // First call fails because FIRMS_API_KEY is missing; errors must never be cached.
-        let err = harmonize(State(state.clone()), Query(params))
+        let err = harmonize(State(state.clone()), ApiQuery(params))
             .await
-            .expect_err("missing key returns 500");
-        assert_eq!(err.status, StatusCode::INTERNAL_SERVER_ERROR);
+            .expect_err("missing key returns 503");
+        assert_eq!(err.status, StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(state.cache.read().await.entries.len(), 0);
 
         let bbox = BBox {
@@ -2675,7 +2729,7 @@ mod tests {
             include_raw: Some(false),
             format: None,
         };
-        let resp = harmonize(State(state), Query(params))
+        let resp = harmonize(State(state), ApiQuery(params))
             .await
             .expect("cache hit should succeed without FIRMS client");
         assert_eq!(resp.status(), StatusCode::OK);
@@ -2720,12 +2774,12 @@ mod tests {
     #[tokio::test]
     async fn export_validates_before_firms_client() {
         let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
-        let err = export(State(state.clone()), Query(export_params(Some("xml"), 26.0)))
+        let err = export(State(state.clone()), ApiQuery(export_params(Some("xml"), 26.0)))
             .await
             .expect_err("unknown format should fail");
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
 
-        let err = export(State(state), Query(export_params(Some("csv"), 50.0)))
+        let err = export(State(state), ApiQuery(export_params(Some("csv"), 50.0)))
             .await
             .expect_err("invalid bbox should fail");
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
@@ -2740,7 +2794,7 @@ mod tests {
         let cached = b"lat,lon\r\n1,2\r\n";
         put_cached(&state.cache, key, cached, Duration::from_secs(600)).await;
 
-        let resp = export(State(state), Query(export_params(None, 26.0)))
+        let resp = export(State(state), ApiQuery(export_params(None, 26.0)))
             .await
             .expect("cache hit should succeed without FIRMS client");
         assert_eq!(resp.status(), StatusCode::OK);
@@ -3208,7 +3262,7 @@ mod tests {
 
         let resp = calendar(
             State(state),
-            Query(calendar_params("Turkey", None, None, None)),
+            ApiQuery(calendar_params("Turkey", None, None, None)),
         )
         .await
         .expect("cached calendar hit should succeed without FIRMS_API_KEY");
@@ -3237,7 +3291,7 @@ mod tests {
 
         let err = calendar(
             State(state.clone()),
-            Query(calendar_params("Turkey", Some(2020), Some(2020), None)),
+            ApiQuery(calendar_params("Turkey", Some(2020), Some(2020), None)),
         )
         .await
         .expect_err("missing local archive must return 404 without downloading");
@@ -3275,7 +3329,7 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
 
         let resp = calendar(
             State(state),
-            Query(calendar_params("Testland", Some(2020), Some(2020), None)),
+            ApiQuery(calendar_params("Testland", Some(2020), Some(2020), None)),
         )
         .await
         .expect("offline calendar should succeed");
@@ -3342,5 +3396,264 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
         assert!(parse(&["precompute", "--bogus"]).is_err());
         assert!(parse(&["precompute", "--concurrency", "0"]).is_err());
         assert!(parse(&["precompute", "--region"]).is_err());
+    }
+
+    async fn oneshot_request(app: &Router, uri: &str) -> (StatusCode, String, Vec<u8>) {
+        use tower::ServiceExt;
+
+        let req = axum::http::Request::get(uri)
+            .body(axum::body::Body::empty())
+            .expect("build request");
+        let resp = app.clone().oneshot(req).await.expect("router response");
+        let status = resp.status();
+        let content_type = resp
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string();
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("read response body")
+            .to_vec();
+        (status, content_type, body)
+    }
+
+    #[tokio::test]
+    async fn query_deserialization_errors_return_json_400() {
+        let state = test_state(1024, None);
+        let app = build_router(state, None, "nonexistent-static-dir-for-test", build_cors_layer(None));
+
+        for uri in [
+            "/api/calendar",
+            "/api/calendar?country=Malta&from=abc",
+            "/api/harmonize?west=abc&south=36&east=45&north=42",
+            "/api/harmonize?west=26&south=36&east=45&north=42&days=-1",
+            "/api/compare?west=abc&south=36&east=45&north=42",
+            "/api/stats?west=abc&south=36&east=45&north=42",
+            "/api/export?west=abc&south=36&east=45&north=42",
+        ] {
+            let (status, content_type, body) = oneshot_request(&app, uri).await;
+            assert_eq!(status, StatusCode::BAD_REQUEST, "uri={uri}");
+            assert!(
+                content_type.starts_with("application/json"),
+                "uri={uri} content-type={content_type} body={}",
+                String::from_utf8_lossy(&body)
+            );
+            let json: serde_json::Value =
+                serde_json::from_slice(&body).expect("error body should be valid JSON");
+            assert!(
+                json["error"].as_str().is_some_and(|s| !s.is_empty()),
+                "uri={uri} json={json}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn firms_endpoints_return_503_when_api_key_missing() {
+        let state = test_state(1024, None);
+        let app = build_router(state, None, "nonexistent-static-dir-for-test", build_cors_layer(None));
+
+        for uri in [
+            "/api/harmonize?west=26&south=36&east=45&north=42&days=1",
+            "/api/compare?west=26&south=36&east=45&north=42&days=1",
+            "/api/stats?west=26&south=36&east=45&north=42&days=1",
+            "/api/export?west=26&south=36&east=45&north=42&days=1",
+            "/api/availability",
+        ] {
+            let (status, content_type, body) = oneshot_request(&app, uri).await;
+            assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE, "uri={uri}");
+            assert!(
+                content_type.starts_with("application/json"),
+                "uri={uri} content-type={content_type}"
+            );
+            let json: serde_json::Value = serde_json::from_slice(&body).expect("json error");
+            assert_eq!(json["error"], "FIRMS_API_KEY is not configured", "uri={uri}");
+        }
+    }
+
+    #[tokio::test]
+    async fn calendar_rejects_country_longer_than_64_chars_without_echoing_value() {
+        let max_valid = "a".repeat(64);
+        let parsed = parse_calendar_params(&calendar_params(&max_valid, None, None, None))
+            .expect("64-char country should be accepted");
+        assert_eq!(parsed.country, max_valid);
+
+        let too_long = "a".repeat(65);
+        let err = parse_calendar_params(&calendar_params(&too_long, None, None, None))
+            .err()
+            .expect("65-char country must be rejected");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert!(!err.message.contains(&too_long));
+
+        let state = test_state(1024, None);
+        let app = build_router(state, None, "nonexistent-static-dir-for-test", build_cors_layer(None));
+        let ten_kb = "b".repeat(10 * 1024);
+        let (status, content_type, body) =
+            oneshot_request(&app, &format!("/api/calendar?country={ten_kb}")).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(content_type.starts_with("application/json"));
+        let body_str = String::from_utf8(body).expect("utf8");
+        assert!(!body_str.contains(&ten_kb));
+    }
+
+    fn write_sample_viirs_csv(dir: &std::path::Path, slug: &str, year: i32, country: &str) {
+        let year_dir = dir.join(slug).join(year.to_string());
+        std::fs::create_dir_all(&year_dir).expect("create year dir");
+        let csv = format!(
+            "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight,type\n\
+             60.1000,19.9000,330.0,0.4,0.4,{year}-07-01,1100,N,VIIRS,n,2.0,290.0,12.0,D,0\n"
+        );
+        std::fs::write(year_dir.join(format!("{slug}_{year}_{country}.csv")), csv)
+            .expect("write sample viirs csv");
+    }
+
+    #[tokio::test]
+    async fn calendar_treats_completed_sensor_year_missing_country_as_zero_detections() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        write_sample_viirs_csv(dir.path(), "viirs-snpp", 2021, "Aland_Islands");
+        write_sample_viirs_csv(dir.path(), "viirs-jpss1", 2021, "Aland_Islands");
+        let modis_dir = dir.path().join("modis").join("2021");
+        std::fs::create_dir_all(&modis_dir).expect("create modis 2021 dir");
+        std::fs::write(modis_dir.join(".complete"), b"").expect("write .complete marker");
+
+        let mut state = test_state(1024 * 1024, Some(Duration::from_secs(30)));
+        state.archive = Some(Arc::new(ArchiveClient::offline(dir.path().to_path_buf())));
+        let app = build_router(state, None, "nonexistent-static-dir-for-test", build_cors_layer(None));
+
+        let (status, _, body) = oneshot_request(
+            &app,
+            "/api/calendar?country=Aland_Islands&from=2021&to=2021",
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "body={}", String::from_utf8_lossy(&body));
+        let json: serde_json::Value = serde_json::from_slice(&body).expect("json");
+        assert_eq!(json["fetch"]["failures"], serde_json::json!([]));
+        assert_eq!(json["effort"]["reliable"], serde_json::json!(true));
+        let warnings = json["warnings"].as_array().expect("warnings");
+        assert!(
+            !warnings
+                .iter()
+                .any(|w| w.as_str().unwrap_or("").contains("make data")),
+            "unexpected make data warning: {warnings:?}"
+        );
+        let per_sy = json["fetch"]["per_sensor_year"]
+            .as_array()
+            .expect("per_sensor_year");
+        assert!(
+            per_sy
+                .iter()
+                .any(|e| e["sensor"] == "ModisTerra" && e["year"] == 2021 && e["detections"] == 0),
+            "expected ModisTerra 2021 with 0 detections in {per_sy:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn calendar_still_fails_when_sensor_year_not_marked_complete() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        write_sample_viirs_csv(dir.path(), "viirs-snpp", 2021, "Aland_Islands");
+        write_sample_viirs_csv(dir.path(), "viirs-jpss1", 2021, "Aland_Islands");
+
+        let mut state = test_state(1024 * 1024, Some(Duration::from_secs(30)));
+        state.archive = Some(Arc::new(ArchiveClient::offline(dir.path().to_path_buf())));
+        let app = build_router(state, None, "nonexistent-static-dir-for-test", build_cors_layer(None));
+
+        let (status, _, body) = oneshot_request(
+            &app,
+            "/api/calendar?country=Aland_Islands&from=2021&to=2021",
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK);
+        let json: serde_json::Value = serde_json::from_slice(&body).expect("json");
+        let failures = json["fetch"]["failures"].as_array().expect("failures");
+        assert_eq!(failures.len(), 1);
+        assert_eq!(failures[0]["sensor"], "ModisTerra");
+        assert_eq!(json["effort"]["reliable"], serde_json::json!(false));
+        let warnings = json["warnings"].as_array().expect("warnings");
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.as_str().unwrap_or("").contains("make data")),
+            "expected make data warning: {warnings:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn calendar_returns_404_when_no_files_found_even_if_all_sensor_years_complete() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        for slug in ["modis", "viirs-snpp", "viirs-jpss1"] {
+            let ydir = dir.path().join(slug).join("2021");
+            std::fs::create_dir_all(&ydir).expect("create year dir");
+            std::fs::write(ydir.join(".complete"), b"").expect("write .complete marker");
+        }
+
+        let mut state = test_state(1024 * 1024, Some(Duration::from_secs(30)));
+        state.archive = Some(Arc::new(ArchiveClient::offline(dir.path().to_path_buf())));
+        let app = build_router(state, None, "nonexistent-static-dir-for-test", build_cors_layer(None));
+
+        let (status, _, body) =
+            oneshot_request(&app, "/api/calendar?country=Atlantis&from=2021&to=2021").await;
+        assert_eq!(status, StatusCode::NOT_FOUND, "body={}", String::from_utf8_lossy(&body));
+        let json: serde_json::Value = serde_json::from_slice(&body).expect("json");
+        assert!(
+            json["error"]
+                .as_str()
+                .unwrap_or("")
+                .contains("No local archive data"),
+            "json={json}"
+        );
+    }
+
+    #[test]
+    fn compare_vza_reduction_isolates_vza_effect_from_calibration_ratio() {
+        let dt = Utc.with_ymd_and_hms(2026, 7, 15, 12, 0, 0).unwrap();
+        let run = PipelineRun {
+            bbox: sample_bbox(),
+            modis_count: 2,
+            viirs_count: 0,
+            raw: vec![
+                make_raw(Sensor::ModisTerra, 100.0, 10, DayNight::Day),
+                make_raw(Sensor::ModisAqua, 100.0, 11, DayNight::Day),
+            ],
+            harmonized: vec![
+                // Nadir MODIS in tropics: vza_factor=1.0 (0% VZA reduction), calibration shifts FRP up to 140.0.
+                make_harmonized(HarmonizedArgs {
+                    platforms: vec![Sensor::ModisTerra],
+                    source: HotspotSource::ModisOnly,
+                    frp: 100.0,
+                    frp_corrected: 140.0,
+                    vza_factor: Some(1.0),
+                    n_obs: 1,
+                    confidence: Confidence::Nominal,
+                    daynight: DayNight::Day,
+                    acquired: dt,
+                }),
+                // Off-nadir MODIS: vza_factor=2.0 (50% VZA reduction), plus 1.4 calibration -> frp_corrected=70.0.
+                make_harmonized(HarmonizedArgs {
+                    platforms: vec![Sensor::ModisAqua],
+                    source: HotspotSource::ModisOnly,
+                    frp: 100.0,
+                    frp_corrected: 70.0,
+                    vza_factor: Some(2.0),
+                    n_obs: 1,
+                    confidence: Confidence::Nominal,
+                    daynight: DayNight::Day,
+                    acquired: dt,
+                }),
+            ],
+            calendar: Vec::new(),
+            report: empty_report(),
+        };
+
+        let resp = build_compare_response(run);
+        let mean_reduction = resp
+            .vza
+            .mean_frp_reduction_pct
+            .expect("mean_frp_reduction_pct should be present");
+        // (0% + 50%) / 2 = 25%, not (-40% + 30%) / 2 = -5%.
+        assert!(
+            (mean_reduction - 25.0).abs() < 1e-9,
+            "expected 25.0, got {mean_reduction}"
+        );
     }
 }

@@ -89,6 +89,18 @@ impl ArchiveClient {
             && archive_slug(sensor).is_some()
     }
 
+    /// Returns true when the seeder has marked `<cache_dir>/<slug>/<year>/.complete`.
+    pub fn sensor_year_complete(&self, sensor: Sensor, year: i32) -> bool {
+        let Some(slug) = archive_slug(sensor) else {
+            return false;
+        };
+        self.cache_dir
+            .join(slug)
+            .join(year.to_string())
+            .join(".complete")
+            .is_file()
+    }
+
     /// Download (or read from cache) one country-year CSV and return its raw text.
     pub async fn fetch_country_year_csv(
         &self,
@@ -556,5 +568,30 @@ mod tests {
                 && hotspot.lat >= bbox.south
                 && hotspot.lat <= bbox.north
         }));
+    }
+
+    #[test]
+    fn sensor_year_complete_checks_marker_and_unsupported_sensor() {
+        let dir = temp_archive("complete-marker");
+        let modis_2021 = dir.join("modis").join("2021");
+        std::fs::create_dir_all(&modis_2021).unwrap();
+        std::fs::write(modis_2021.join(".complete"), b"").unwrap();
+
+        let snpp_2021 = dir.join("viirs-snpp").join("2021");
+        std::fs::create_dir_all(&snpp_2021).unwrap();
+
+        // A directory named `.complete` must not count as a marker file.
+        let jpss1_2021 = dir.join("viirs-jpss1").join("2021");
+        std::fs::create_dir_all(jpss1_2021.join(".complete")).unwrap();
+
+        let client = ArchiveClient::offline(dir.clone());
+        assert!(client.sensor_year_complete(Sensor::ModisTerra, 2021));
+        assert!(client.sensor_year_complete(Sensor::ModisAqua, 2021));
+        assert!(!client.sensor_year_complete(Sensor::ModisTerra, 2020));
+        assert!(!client.sensor_year_complete(Sensor::ViirsSNPP, 2021));
+        assert!(!client.sensor_year_complete(Sensor::ViirsNOAA20, 2021));
+        assert!(!client.sensor_year_complete(Sensor::ViirsNOAA21, 2023));
+
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 }
