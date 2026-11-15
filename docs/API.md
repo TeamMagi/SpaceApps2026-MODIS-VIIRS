@@ -97,7 +97,7 @@ Sunucu pencereyi kaynak başına en fazla 5 günlük FIRMS isteklerine böler. H
 
 ### Harmonizasyon hattı
 
-Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kaynak, deniz üstü) çıkarılır. Ardından aynı sensörün tarama (interscan) çakışmaları kaldırılır. Aynı uydu ailesine ait kardeş uydular (fleet) birleştirilir: MODIS için 180 dakika, VIIRS için 60 dakika penceresi kullanılır. Son olarak MODIS ve VIIRS kayıtları 2 km ve 180 dakika içinde eşleştirilir ve tek kayda birleştirilir (`Matched`). Eşleşmeyen kayıtlar her iki sensörden korunur. MODIS FRP değerleri görüş açısına (VZA) göre düzeltilir ve kalibrasyon bantlarıyla (`/api/config` altındaki `calibration`) işlenir. Tüm eşikler `GET /api/config` ile okunabilir.
+Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kaynak, deniz üstü) çıkarılır. FIRMS C2 aylık dosyalarında `type` alanı sürüm 1-2'de hatalı olduğundan statik kaynakların bir kısmı `type 0` olarak gelir; bunlar kalıcı sıcak hücre maskesiyle (`static_mask`) elenir. İsteğe bağlı SAMA gece filtresi (`sama`, varsayılan kapalı) bundan önce uygulanır. Ardından aynı sensörün tarama (interscan) çakışmaları kaldırılır. Aynı uydu ailesine ait kardeş uydular (fleet) birleştirilir: MODIS için 180 dakika, VIIRS için 60 dakika penceresi kullanılır. Son olarak MODIS ve VIIRS kayıtları 2 km ve 180 dakika içinde eşleştirilir ve tek kayda birleştirilir (`Matched`). Eşleşmeyen kayıtlar her iki sensörden korunur. MODIS FRP değerleri görüş açısına (VZA) göre düzeltilir ve kalibrasyon bantlarıyla (`/api/config` altındaki `calibration`) işlenir. Tüm eşikler `GET /api/config` ile okunabilir.
 
 ### CalendarCell
 
@@ -333,6 +333,17 @@ curl -s "http://localhost:3001/api/config"
     "vza_error_coeff": 0.05,
     "modis_scale_sigma": 0.1,
     "z": 1
+  },
+  "static_mask": {
+    "enabled": true,
+    "min_active_months": 10
+  },
+  "sama": {
+    "enabled": false,
+    "west": -110,
+    "east": 11,
+    "south": -55,
+    "north": 7
   }
 }
 ```
@@ -355,6 +366,10 @@ curl -s "http://localhost:3001/api/config"
 | `uncertainty.vza_error_coeff` | number | VZA düzeltmesi arttıkça eklenen göreli hata katsayısı |
 | `uncertainty.modis_scale_sigma` | number | MODIS ölçek/Terra vekil belirsizliği (göreli 1σ) |
 | `uncertainty.z` | number | Güven aralığı z çarpanı (`> 0`) |
+| `static_mask.enabled` | boolean | Kalıcı sıcak hücre (gaz meşalesi, endüstri) maskesi açık mı |
+| `static_mask.min_active_months` | integer | H3 r7 hücresinin aynı takvim yılında maskelenmesi için gereken farklı ay sayısı (1-12). Yıl yıl değerlendirilir; bundan kısa pencereler maskelenmez |
+| `sama.enabled` | boolean | SAMA kutusundaki gece VIIRS tespitleri elensin mi |
+| `sama.west`, `sama.east`, `sama.south`, `sama.north` | number | SAMA kutusu (derece; VFIRE375 SPA v1.9) |
 
 ### Hatalar
 
@@ -1848,6 +1863,8 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
       "matched": 4363,
       "modis_only": 3477,
       "viirs_only": 35498,
+      "static_masked": 0,
+      "sama_removed": 0,
       "interscan_removed": 9787,
       "fleet_merged": 12131,
       "first_date": "2021-01-01",
@@ -1917,6 +1934,8 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
 | `raw_modis`, `raw_viirs`, `raw_total` | integer | Ham sayımlar (tip 0). `raw_viirs` S-NPP ve NOAA-20 toplamıdır |
 | `harmonized` | integer | Yıl boyunca harmonize edilmiş kayıt sayısı |
 | `matched`, `modis_only`, `viirs_only` | integer | Harmonize kaynak dağılımı |
+| `static_masked` | integer | Kalıcı sıcak hücre maskesiyle elenen ham kayıt sayısı |
+| `sama_removed` | integer | SAMA gece filtresiyle elenen ham VIIRS kayıt sayısı |
 | `interscan_removed` | integer | Tarama çakışması nedeniyle çıkarılan ham kayıt sayısı |
 | `fleet_merged` | integer | Kardeş uydu birleştirmesiyle kaldırılan kayıt sayısı |
 | `first_date`, `last_date` | `YYYY-MM-DD` \| null | Yılın ilk ve son gözlem tarihi |
@@ -2123,6 +2142,8 @@ curl -s "http://localhost:3001/api/points?region=Turkey&year=2021&month=8&limit=
   "stages": {
     "raw_modis": 2067,
     "raw_viirs": 14095,
+    "static_masked": 0,
+    "sama_removed": 0,
     "interscan_removed": 2638,
     "fleet_merged": 3889,
     "matched_pairs": 1245,
@@ -2185,6 +2206,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
   "stages": {
     "raw_modis": 2067,
     "raw_viirs": 14095,
+    "static_masked": 0,
+    "sama_removed": 0,
     "interscan_removed": 2638,
     "fleet_merged": 3889,
     "matched_pairs": 1245,
@@ -2224,7 +2247,7 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `confidence` | Confidence | Güven |
 | `acquired` | RFC 3339 zaman | Gözlem zamanı |
 | `daynight` | DayNight | Gündüz/gece |
-| `harmonized_id` | string \| null | Bağlı harmonize kaydın kimliği (`h<n>`). Satır interscan çakışması olarak çıkarıldıysa `null` |
+| `harmonized_id` | string \| null | Bağlı harmonize kaydın kimliği (`h<n>`). Satır interscan çakışması, statik maske veya SAMA filtresiyle çıkarıldıysa `null` |
 
 `harmonized[]` öğeleri: `id` (`h<n>`) ve harmonize kaydın tüm alanları (bkz. "Harmonize edilmiş kayıt"). `n`, yıl (veya ay) boyunca üretilen harmonize listesindeki sıradır; örnekleme öncesi numaralandırılır.
 
@@ -2233,6 +2256,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | Alan | Açıklama |
 |------|----------|
 | `raw_modis`, `raw_viirs` | Ham satır sayıları |
+| `static_masked` | Kalıcı sıcak hücre maskesiyle elenen satırlar |
+| `sama_removed` | SAMA gece filtresiyle elenen VIIRS satırları |
 | `interscan_removed` | Tarama çakışması ile çıkarılan satırlar |
 | `fleet_merged` | Kardeş uydu birleştirmesiyle kaldırılan kayıtlar |
 | `matched_pairs` | MODIS-VIIRS eşleşme çifti sayısı |
@@ -2337,6 +2362,8 @@ Hata gövdesi her zaman `{"error": "..."}` biçimindedir.
 | `PYROSYNC_MATCH_RADIUS_KM` | `2.0` | MODIS/VIIRS eşleştirme yarıçapı (km, en fazla 10) |
 | `PYROSYNC_MATCH_WINDOW_SECS` | `10800` | MODIS/VIIRS eşleştirme zaman penceresi (sn) |
 | `PYROSYNC_VZA_A`, `PYROSYNC_VZA_B`, `PYROSYNC_VZA_C` | `0.2017`, `0.0168`, `1.0` | MODIS VZA düzeltme polinomu katsayıları |
+| `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre maskesi ve ay eşiği |
+| `PYROSYNC_SAMA_ENABLED` | `false` | SAMA gece VIIRS filtresi |
 | `PORT` | `3001` | Sunucu portu. Sunucu `0.0.0.0:PORT` üzerinde dinler |
 | `STATIC_DIR` | `web/dist` | SPA build dizini. Docker'da `/app/static` |
 | `RUST_LOG` | `pyrosync=info` | Log seviyesi |
