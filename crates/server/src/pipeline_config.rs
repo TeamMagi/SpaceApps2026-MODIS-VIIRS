@@ -2,7 +2,7 @@ use std::path::Path;
 use std::str::FromStr;
 
 use anyhow::Context;
-use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::config::{CalibrationMode, PipelineConfig};
 
 const DEFAULT_CONFIG_FILE: &str = "pyrosync.toml";
 
@@ -50,6 +50,13 @@ fn override_from_env(
         "PYROSYNC_MATCH_SIMULTANEOUS_WINDOW_SECS",
         &mut config.matching.simultaneous_window_secs,
     )?;
+    if let Some(raw) = env("PYROSYNC_CALIBRATION_MODE") {
+        config.calibration.mode = match raw.trim() {
+            "biome" => CalibrationMode::Biome,
+            "lat_band" => CalibrationMode::LatBand,
+            other => anyhow::bail!("PYROSYNC_CALIBRATION_MODE: expected \"biome\" or \"lat_band\", got {other:?}"),
+        };
+    }
     set(env, "PYROSYNC_VZA_A", &mut config.vza.a)?;
     set(env, "PYROSYNC_VZA_B", &mut config.vza.b)?;
     set(env, "PYROSYNC_VZA_C", &mut config.vza.c)?;
@@ -178,6 +185,49 @@ mod tests {
             toml::from_str::<PipelineConfig>(&default_text).unwrap(),
             PipelineConfig::default()
         );
+    }
+
+    #[test]
+    fn calibration_mode_and_tables_load_from_toml_and_env() {
+        let file = TempToml::new(
+            "calibration",
+            "[calibration]
+mode = \"lat_band\"
+
+[[calibration.biome_table]]
+biome = \"cropland\"
+month = 7
+daynight = \"Day\"
+ratio = 1.2
+ratio_sigma = 0.1
+n = 40
+
+[[calibration.power_law]]
+biome = \"forest\"
+alpha = 1.5
+p_max_mw = 500.0
+",
+        );
+        let config = load(Some(&file.0), no_env).unwrap();
+        assert_eq!(config.calibration.mode, CalibrationMode::LatBand);
+        assert_eq!(config.calibration.biome_table.len(), 1);
+        assert_eq!(config.calibration.power_law.len(), 1);
+        assert_eq!(config.calibration.power_law[0].alpha_sigma, 0.1);
+
+        let env = |name: &str| (name == "PYROSYNC_CALIBRATION_MODE").then(|| "biome".to_string());
+        assert_eq!(load(Some(&file.0), env).unwrap().calibration.mode, CalibrationMode::Biome);
+
+        let bad = |name: &str| (name == "PYROSYNC_CALIBRATION_MODE").then(|| "zone".to_string());
+        let err = format!("{:#}", load(None, bad).unwrap_err());
+        assert!(err.contains("PYROSYNC_CALIBRATION_MODE"), "{err}");
+
+        let invalid = TempToml::new("calibration_bad", "[[calibration.power_law]]
+biome = \"forest\"
+alpha = 0.9
+p_max_mw = 500.0
+");
+        let err = format!("{:#}", load(Some(&invalid.0), no_env).unwrap_err());
+        assert!(err.contains("calibration.power_law[0].alpha"), "{err}");
     }
 
     #[test]

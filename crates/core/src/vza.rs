@@ -33,6 +33,24 @@ fn scan_size_km(theta_s_rad: f64) -> Option<f64> {
     Some(dx)
 }
 
+/// MODIS pixel area (km^2) at satellite scan angle `theta_s_rad`: along-scan size times the
+/// along-track size, which grows as slant range over altitude. Nadir is 1 km^2.
+pub(crate) fn modis_pixel_area_km2(theta_s_rad: f64) -> Option<f64> {
+    let scan = scan_size_km(theta_s_rad.abs().max(1e-12))?;
+    let orbit_radius_km = EARTH_RADIUS_KM + MODIS_ALTITUDE_KM;
+    let sin_t = theta_s_rad.sin();
+    let ground = (EARTH_RADIUS_KM.powi(2) - (orbit_radius_km * sin_t).powi(2)).sqrt();
+    let slant_km = orbit_radius_km * theta_s_rad.cos() - ground;
+    let track = slant_km / MODIS_ALTITUDE_KM;
+    let area = scan * track;
+    (area.is_finite() && area > 0.0).then_some(area)
+}
+
+/// Largest MODIS scan angle (rad) of the swath.
+pub(crate) fn modis_max_scan_angle_rad() -> f64 {
+    MODIS_MAX_SCAN_ANGLE_DEG.to_radians()
+}
+
 fn theta_s_to_vza_deg(theta_s_rad: f64) -> Option<f64> {
     let sin_vza = ((EARTH_RADIUS_KM + MODIS_ALTITUDE_KM) / EARTH_RADIUS_KM) * theta_s_rad.sin();
     if !sin_vza.is_finite() || sin_vza.abs() > 1.0 {

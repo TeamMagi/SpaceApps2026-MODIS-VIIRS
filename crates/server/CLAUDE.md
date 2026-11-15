@@ -45,6 +45,7 @@
 | `PYROSYNC_MATCH_SIMULTANEOUS_WINDOW_SECS` | `1200` | Radyometrik kestirim için eşzamanlı Matched alt kümesi penceresi (sn) |
 | `PYROSYNC_VZA_A`, `PYROSYNC_VZA_B`, `PYROSYNC_VZA_C` | `0.2017`, `0.0168`, `1.0` | MODIS VZA düzeltme polinomu `R_rel(θ)` katsayıları (Zheng et al. 2026 Eq. 9 & Fig. 4 nadir normalize) |
 | `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre (gaz meşalesi) maskesi: bir yıl içinde ≥ N farklı ayda tespit olan H3 r7 hücresi o yıl için elenir |
+| `PYROSYNC_CALIBRATION_MODE` | `biome` | `k_c` modu: `biome` (ay × biyom × gündüz/gece tablosu → güç yasası → enlem bandı) veya `lat_band` (yalnız enlem bantları). `biome_table` ve `power_law` yalnız TOML'dan (`[[calibration.biome_table]]`, `[[calibration.power_law]]`) ayarlanır |
 | `PYROSYNC_SAMA_ENABLED` | `false` | SAMA kutusundaki gece VIIRS tespitlerini eler (C2 arşivinde fazla gürültü ölçülmediği için kapalı) |
 | `PYROSYNC_TROPICAL_SWATH_GAP_COMPENSATION` | `false` | 30°G–30°K MODIS swath boşluğu için VIIRS-siz takvim `total_frp` telafisini açar |
 | `CONFORMAL_TABLE` | `data/conformal.json` | Mondrian conformal kantil tablosu; dosya yoksa veya parmak izi etkin konfigürasyonla eşleşmezse `/api/calendar` `conformal` alanı eklenmez |

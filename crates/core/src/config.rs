@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-pub use crate::calibration::CalibrationBand;
-use crate::calibration::default_bands;
+pub use crate::calibration::{BiomeCompleteness, CalibrationBand, CalibrationMode, PowerLawBudget};
+use crate::calibration::{default_bands, default_biome_table, default_power_law};
 use crate::dedup::{MAX_TIME_DIFF_SECS, MIN_OVERLAP_RATIO};
 use crate::fleet::{FLEET_RADIUS_KM, MODIS_FLEET_WINDOW_SECS, VIIRS_FLEET_WINDOW_SECS};
 use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS, SIMULTANEOUS_WINDOW_SECS};
@@ -63,7 +63,11 @@ pub struct VzaConfig {
 #[serde(default, deny_unknown_fields)]
 pub struct CalibrationConfig {
     pub enabled: bool,
+    /// `biome` tries the biome chain first; `lat_band` uses only `bands`.
+    pub mode: CalibrationMode,
     pub bands: Vec<CalibrationBand>,
+    pub biome_table: Vec<BiomeCompleteness>,
+    pub power_law: Vec<PowerLawBudget>,
 }
 
 /// Persistent hot-cell (gas flare / industry) mask, see [`crate::static_mask`].
@@ -129,7 +133,10 @@ impl Default for CalibrationConfig {
     fn default() -> Self {
         Self {
             enabled: true,
+            mode: CalibrationMode::default(),
             bands: default_bands(),
+            biome_table: default_biome_table(),
+            power_law: default_power_law(),
         }
     }
 }
@@ -280,6 +287,35 @@ fn validate_calibration(cal: &CalibrationConfig) -> Result<(), String> {
         }
         prev_max = Some(band.max_abs_lat);
     }
+    for (i, e) in cal.biome_table.iter().enumerate() {
+        let name = format!("calibration.biome_table[{i}]");
+        if let Some(m) = e.month {
+            if !(1..=12).contains(&m) {
+                return Err(format!("{name}.month must be within 1..=12, got {m}"));
+            }
+            if e.daynight.is_none() {
+                return Err(format!("{name}.daynight must be set when month is set"));
+            }
+        }
+        if !e.ratio.is_finite() || e.ratio <= 0.0 {
+            return Err(format!("{name}.ratio must be finite and > 0, got {}", e.ratio));
+        }
+        if !e.ratio_sigma.is_finite() || e.ratio_sigma < 0.0 {
+            return Err(format!("{name}.ratio_sigma must be finite and >= 0, got {}", e.ratio_sigma));
+        }
+    }
+    for (i, b) in cal.power_law.iter().enumerate() {
+        let name = format!("calibration.power_law[{i}]");
+        if !b.alpha.is_finite() || b.alpha <= 1.0 {
+            return Err(format!("{name}.alpha must be finite and > 1, got {}", b.alpha));
+        }
+        if !b.alpha_sigma.is_finite() || b.alpha_sigma < 0.0 {
+            return Err(format!("{name}.alpha_sigma must be finite and >= 0, got {}", b.alpha_sigma));
+        }
+        if !b.p_max_mw.is_finite() || b.p_max_mw <= 0.0 {
+            return Err(format!("{name}.p_max_mw must be finite and > 0, got {}", b.p_max_mw));
+        }
+    }
     Ok(())
 }
 
@@ -425,6 +461,60 @@ mod tests {
         assert_eq!(c.sama, SamaConfig::default());
         assert!(serde_json::from_str::<PipelineConfig>(r#"{"sama":{"bogus":1}}"#).is_err());
         assert!(serde_json::from_str::<PipelineConfig>(r#"{"static_mask":{"min_years":3}}"#).is_err());
+    }
+
+    #[test]
+    fn biome_calibration_fields_are_validated_and_named() {
+        use crate::biome::Biome;
+        use crate::models::DayNight;
+        let row = |month: Option<u8>, daynight: Option<DayNight>, ratio: f64, sigma: f64| BiomeCompleteness {
+            biome: Biome::Savanna,
+            month,
+            daynight,
+            ratio,
+            ratio_sigma: sigma,
+            n: 10,
+        };
+        let table = |e: BiomeCompleteness| move |c: &mut PipelineConfig| c.calibration.biome_table = vec![e.clone()];
+        accepted(table(row(Some(12), Some(DayNight::Day), 1.2, 0.0)));
+        accepted(table(row(None, None, 1.2, 0.1)));
+        rejected(table(row(Some(0), Some(DayNight::Day), 1.2, 0.1)), "calibration.biome_table[0].month");
+        rejected(table(row(Some(13), Some(DayNight::Day), 1.2, 0.1)), "calibration.biome_table[0].month");
+        rejected(table(row(Some(5), None, 1.2, 0.1)), "calibration.biome_table[0].daynight");
+        rejected(table(row(None, None, 0.0, 0.1)), "calibration.biome_table[0].ratio");
+        rejected(table(row(None, None, f64::NAN, 0.1)), "calibration.biome_table[0].ratio");
+        rejected(table(row(None, None, 1.2, -0.1)), "calibration.biome_table[0].ratio_sigma");
+
+        let law = |alpha: f64, alpha_sigma: f64, p_max_mw: f64| {
+            move |c: &mut PipelineConfig| {
+                c.calibration.power_law = vec![PowerLawBudget {
+                    biome: Biome::Forest,
+                    alpha,
+                    alpha_sigma,
+                    p_max_mw,
+                }]
+            }
+        };
+        accepted(law(2.0, 0.0, 500.0));
+        rejected(law(1.0, 0.1, 500.0), "calibration.power_law[0].alpha");
+        rejected(law(f64::INFINITY, 0.1, 500.0), "calibration.power_law[0].alpha");
+        rejected(law(1.5, -1.0, 500.0), "calibration.power_law[0].alpha_sigma");
+        rejected(law(1.5, 0.1, 0.0), "calibration.power_law[0].p_max_mw");
+    }
+
+    #[test]
+    fn default_calibration_round_trips_through_json_and_old_json_still_loads() {
+        let c = PipelineConfig::default();
+        assert_eq!(c.calibration.mode, CalibrationMode::Biome);
+        assert_eq!(c.calibration.power_law.len(), 1);
+        let json = serde_json::to_string(&c).unwrap();
+        assert_eq!(serde_json::from_str::<PipelineConfig>(&json).unwrap(), c);
+        assert!(json.contains(r#""mode":"biome""#));
+        // A config written before K14 (no mode/table/power_law) still deserializes.
+        let old: PipelineConfig = serde_json::from_str(r#"{"calibration":{"enabled":true}}"#).unwrap();
+        assert_eq!(old.calibration, CalibrationConfig::default());
+        let lat: PipelineConfig = serde_json::from_str(r#"{"calibration":{"mode":"lat_band"}}"#).unwrap();
+        assert_eq!(lat.calibration.mode, CalibrationMode::LatBand);
     }
 
     #[test]

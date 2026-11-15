@@ -47,6 +47,26 @@ c = 1.0
 # 2019 fit, 2020 hold-out), mirrored by |lat| across hemispheres with linear interpolation in
 # 50-55 deg and clamping above 70 deg. Consistent with Li et al. (2020) and Sofiev & Kouznetsov (2026).
 enabled = true
+# "biome": month x biome x day/night table, then the power-law small-fire budget, then the
+# latitude bands below (the fallback for non-burnable/unknown biomes and missing entries).
+# "lat_band": bands only (the pre-K14 behaviour).
+mode = "biome"
+# Measured completeness per (biome, month, daynight); month/daynight may be omitted to pool.
+# Shipped empty: the values come from crates/firms-client/examples/biome_completeness.rs.
+# Row: { biome = "cropland", month = 7, daynight = "Day", ratio = 1.2, ratio_sigma = 0.1, n = 100 }
+biome_table = []
+
+# Small-fire budget: f(P) ~ P^-alpha up to p_max_mw, k = sum(VIIRS seen) / sum(MODIS seen), each
+# sensor weighted by the Sofiev & Kouznetsov (2026) Eq. 5-7 detection probability; MODIS pixel
+# area averaged over the +-55 deg swath (1 - ~9.7 km2), VIIRS at nadir 0.375 x 0.375 km.
+# alpha_sigma is propagated as half the spread of k at alpha +- alpha_sigma.
+# alpha = 1.31 is the Cerrado slope [15, Fig. 6]. alpha_sigma and p_max_mw are assumptions: no
+# source gives either. Without a biome entry here the latitude bands apply.
+[[calibration.power_law]]
+biome = "savanna"
+alpha = 1.31
+alpha_sigma = 0.1
+p_max_mw = 1000.0
 
 [[calibration.bands]]
 min_abs_lat = 0.0

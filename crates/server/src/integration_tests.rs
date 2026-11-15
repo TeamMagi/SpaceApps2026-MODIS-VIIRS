@@ -1593,10 +1593,13 @@ async fn calendar_swath_gap_compensation_scales_tropical_modis_total_once() {
     seed_tropical_archive(dir.path());
     let uri = "/api/calendar?country=Testland&from=2010&to=2010";
 
-    let off = app(None, Some(dir.path()), Some(Duration::from_secs(30)));
+    // The test pins latitude-band k_c arithmetic, so the biome chain is switched off.
+    let mut lat_band = pyrosync_core::config::PipelineConfig::default();
+    lat_band.calibration.mode = pyrosync_core::config::CalibrationMode::LatBand;
+    let off = app_with_config(None, Some(dir.path()), Some(Duration::from_secs(30)), lat_band.clone());
     let off = call(&off, uri).await.json();
 
-    let mut config = pyrosync_core::config::PipelineConfig::default();
+    let mut config = lat_band;
     config.uncertainty.tropical_swath_gap_compensation = true;
     let on = app_with_config(None, Some(dir.path()), Some(Duration::from_secs(30)), config);
     let on = call(&on, uri).await.json();

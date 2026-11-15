@@ -36,3 +36,4 @@ Base URL: `https://firms.modaps.eosdis.nasa.gov/api/area/csv`
 ## Örnekler
 
 - `examples/fleet_trend.rs` (K7): tam filo trend ve seviye kayması ölçümü. Bayraklar: `--noaa21` (NOAA-21'i area API'den ekler, `FIRMS_API_KEY` gerekir), `--noaa21-union` (birleşik sınır kutusu, ülkelere çokgenle kırpılır), `--regions-geo`, `--yearly-omega`, `--out`. Rapor: `docs/TAM_FILO_TREND.md`.
+- `examples/biome_completeness.rs` (K14): Aqua MODIS (`MODIS_SP`) ve S-NPP VIIRS (`VIIRS_SNPP_SP`) 1° hücre-gün çiftlerinden (Δt ≤ 20 dk) biyom × ay × gündüz/gece `k_c` tablosu, Hill güç-yasası `α`/`p_max` ve 2020 hold-out karşılaştırması (enlem bandı / biyom / k=1). 12 sabit bölge (`--list-regions`), `--dry-run` ağsız maliyet tahmini (~17.5k işlem, 4 bütçe penceresi), her bölgeden önce 4500/10 dk bütçe beklemesi, `--report`, `--emit-rust`, `--emit-toml`. `FIRMS_API_KEY` gerekir (canlı), K5 önbelleği tekrar çalıştırmayı ücretsiz yapar.

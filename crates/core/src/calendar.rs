@@ -1,11 +1,11 @@
-use crate::calibration::calibration_for;
+use crate::calibration::{PowerLawCache, completeness_for_cached};
 use crate::conformal::{ConformalEra, ConformalTable, conformal_interval};
 use crate::config::CalibrationConfig;
 use crate::effort::{
     FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
     swath_gap_compensation,
 };
-use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
+use crate::models::{BBox, CalendarCell, DayNight, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
 use crate::quality::month_quality_flags;
 use crate::uncertainty::{
     SensorFamily, UncertaintyParams, combine_factors, mean_frp_uncertainty,
@@ -16,6 +16,8 @@ use std::collections::HashMap;
 
 struct BucketRecord {
     lat: f64,
+    lon: f64,
+    daynight: DayNight,
     frp_corrected: f64,
     sensor_family: SensorFamily,
     vza_factor: Option<f64>,
@@ -164,6 +166,8 @@ pub fn build_calendar_with_conformal(
             .push(mean_frp_uncertainty_item(h, uncertainty));
         entry.records.push(BucketRecord {
             lat: h.lat,
+            lon: h.lon,
+            daynight: h.daynight,
             frp_corrected: h.frp_corrected,
             sensor_family,
             vza_factor: h.vza_factor,
@@ -171,6 +175,7 @@ pub fn build_calendar_with_conformal(
         });
     }
 
+    let mut law_cache = PowerLawCache::default();
     let mut cells: Vec<CalendarCell> = buckets
         .into_iter()
         .map(|((year, month), bucket)| {
@@ -205,7 +210,7 @@ pub fn build_calendar_with_conformal(
                 let mut sum = 0.0_f64;
                 let mut total_items = Vec::with_capacity(bucket.records.len());
                 for rec in &bucket.records {
-                    let cal = calibration_for(rec.lat, calibration);
+                    let cal = completeness_for_cached(rec.lat, rec.lon, month, rec.daynight, calibration, &mut law_cache);
                     let completeness = (cal.ratio, cal.ratio_sigma);
                     let factor = if apply_swath_gap && in_tropical_belt(rec.lat) {
                         combine_factors(completeness, (gap.factor, gap.factor_sigma))
@@ -456,7 +461,8 @@ pub fn seasonality(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Confidence, DayNight, HotspotSource};
+    use crate::calibration::CalibrationMode;
+    use crate::models::{Confidence, HotspotSource};
     use crate::quality::QualityFlag;
     use chrono::{TimeZone, Utc};
 
@@ -1083,13 +1089,11 @@ mod tests {
         mixed_viirs.platforms = vec![Sensor::ViirsSNPP];
         mixed_viirs.source = HotspotSource::ViirsOnly;
 
-        let cells = build_calendar(&[
-            trop.clone(),
-            boreal.clone(),
-            third_modis,
-            mixed_modis,
-            mixed_viirs,
-        ]);
+        let cells = build_calendar_with(
+            &[trop.clone(), boreal.clone(), third_modis, mixed_modis, mixed_viirs],
+            &UncertaintyParams::default(),
+            &lat_band(),
+        );
         assert_eq!(cells.len(), 4);
 
         // 2010-07 (tropics, no VIIRS): 100 * 1.11 = 111.0
@@ -1123,6 +1127,45 @@ mod tests {
         let era_cells = build_calendar(&[terra_2001, terra_2003]);
         assert!(era_cells[0].count_normalized.is_none());
         assert!(era_cells[0].frp_per_detection_eq.is_none());
+    }
+
+    #[test]
+    fn biome_table_factor_scales_a_viirs_less_cell_and_leaves_viirs_cells_alone() {
+        use crate::biome::Biome;
+        use crate::calibration::BiomeCompleteness;
+        let cfg = CalibrationConfig {
+            biome_table: vec![BiomeCompleteness {
+                biome: Biome::Cropland,
+                month: Some(7),
+                daynight: Some(DayNight::Night),
+                ratio: 1.5,
+                ratio_sigma: 0.1,
+                n: 50,
+            }],
+            ..Default::default()
+        };
+        // make_harmonized sits at (39, 32); move to Ukraine cropland.
+        let mut night = make_harmonized(2010, 7, 1, 100.0, 100.0);
+        night.lat = 49.0;
+        night.lon = 32.0;
+        night.daynight = DayNight::Night;
+        let mut day = night.clone();
+        day.daynight = DayNight::Day;
+        day.acquired = Utc.with_ymd_and_hms(2010, 8, 1, 12, 0, 0).unwrap();
+        let mut third = night.clone();
+        third.acquired = Utc.with_ymd_and_hms(2010, 9, 1, 12, 0, 0).unwrap();
+
+        let cells = build_calendar_with(&[night.clone(), day, third], &UncertaintyParams::default(), &cfg);
+        // July night hits the table; August day falls through to the 30-50 deg band (1.18).
+        assert!((cells[0].total_frp - 150.0).abs() < 1e-9);
+        assert!((cells[1].total_frp - 118.0).abs() < 1e-9);
+
+        // A VIIRS detection in the cell switches k_c off entirely.
+        let mut viirs = night.clone();
+        viirs.platforms = vec![Sensor::ViirsSNPP];
+        viirs.source = HotspotSource::ViirsOnly;
+        let with_viirs = build_calendar_with(&[night, viirs], &UncertaintyParams::default(), &cfg);
+        assert!((with_viirs[0].total_frp - 200.0).abs() < 1e-9);
     }
 
     #[test]
@@ -1215,6 +1258,14 @@ mod tests {
         ]
     }
 
+    // These tests pin latitude-band arithmetic at lat 10, lon 32 (savanna): pin the mode explicitly.
+    fn lat_band() -> CalibrationConfig {
+        CalibrationConfig {
+            mode: CalibrationMode::LatBand,
+            ..Default::default()
+        }
+    }
+
     fn compensation_on() -> UncertaintyParams {
         UncertaintyParams {
             tropical_swath_gap_compensation: true,
@@ -1225,14 +1276,14 @@ mod tests {
     #[test]
     fn swath_gap_compensation_off_keeps_totals_and_bands_identical_to_k_c_only() {
         let hotspots = swath_gap_series();
-        let default_cells = build_calendar(&hotspots);
+        let default_cells = build_calendar_with(&hotspots, &UncertaintyParams::default(), &lat_band());
         let explicit_off = build_calendar_with(
             &hotspots,
             &UncertaintyParams {
                 tropical_swath_gap_compensation: false,
                 ..UncertaintyParams::default()
             },
-            &CalibrationConfig::default(),
+            &lat_band(),
         );
         assert_eq!(
             serde_json::to_string(&default_cells).unwrap(),
@@ -1254,8 +1305,8 @@ mod tests {
     #[test]
     fn swath_gap_compensation_on_applies_factor_once_in_belt_and_widens_band() {
         let hotspots = swath_gap_series();
-        let off = build_calendar(&hotspots);
-        let on = build_calendar_with(&hotspots, &compensation_on(), &CalibrationConfig::default());
+        let off = build_calendar_with(&hotspots, &UncertaintyParams::default(), &lat_band());
+        let on = build_calendar_with(&hotspots, &compensation_on(), &lat_band());
         let g = swath_gap_compensation();
         assert_eq!(on.len(), off.len());
 

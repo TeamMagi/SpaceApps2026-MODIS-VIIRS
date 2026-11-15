@@ -115,7 +115,7 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `mean_frp` | number | Yerel piksel ortalaması: `frp_corrected` ortalaması. MODIS'ten VIIRS'e geçişte süreksizdir |
 | `mean_frp_raw` | number | `frp` ortalaması |
 | `mean_frp_lower`, `mean_frp_upper` | number \| null | `mean_frp` için analitik güven sınırları |
-| `total_frp` | number | Aylık toplam `frp_corrected` (MW). VIIRS tespiti olmayan hücrelerde (kalibrasyon açıksa) `k_c(lat)` ile çarpılır |
+| `total_frp` | number | Aylık toplam `frp_corrected` (MW). VIIRS tespiti olmayan hücrelerde (kalibrasyon açıksa) kayıt başına `k_c` ile çarpılır: biyom modunda `(biyom, ay, gündüz/gece)` tablosu → güç yasası → enlem bandı, `lat_band` modunda yalnız enlem bandı (`calibration` bölümüne bakın). `k_c` `/api/series` ve `data/derived` içine girmez |
 | `total_frp_lower`, `total_frp_upper` | number \| null | `total_frp` için analitik güven sınırları |
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
@@ -438,7 +438,10 @@ curl -s "http://localhost:3001/api/config"
 | `matching.simultaneous_window_secs` | integer | Radyometrik kestirim için eşzamanlı Matched alt kümesi penceresi (sn, varsayılan 1200) |
 | `vza.a`, `vza.b`, `vza.c` | number | MODIS VZA düzeltme polinomu `R_rel(θ) = a·θ² + b·θ + c` katsayıları (θ radyan) |
 | `calibration.enabled` | boolean | Pre-VIIRS tamlık katsayısı `k_c` uygulansın mı |
-| `calibration.bands[]` | array | Enlem bantları: `min_abs_lat`, `max_abs_lat` (|lat|, derece), `ratio` (`k_c`), `ratio_sigma` (`k_c` 1σ). 50-55° arası doğrusal geçiş, 70°'nin üstü son banda sabitlenir |
+| `calibration.mode` | string | `biome` (varsayılan): ay × biyom × gündüz/gece ölçüm tablosu, sonra güç yasası küçük yangın bütçesi, sonra enlem bandı; `lat_band`: yalnız `bands` |
+| `calibration.biome_table[]` | array | Ölçülmüş tamlık: `biome` (`forest`, `shrubland`, `savanna`, `grassland`, `cropland`, `wetland`, `tundra`), `month` (1-12 veya yok = tüm aylar), `daynight` (`Day`/`Night` veya yok = ikisi; `month` varsa zorunlu), `ratio`, `ratio_sigma`, `n`. Varsayılan boş |
+| `calibration.power_law[]` | array | Biyom başına küçük yangın bütçesi: `biome`, `alpha` (`f(P) ∝ P^-alpha`, `> 1`), `alpha_sigma`, `p_max_mw`. `k` = ΣVIIRS/ΣMODIS oranı, gözlem işleci (lojistik tespit olasılığı) ve MODIS tarama ortalamalı piksel alanı ile sayısal hesaplanır; `alpha_sigma`, `alpha ± alpha_sigma` için `k` yayılımının yarısıdır. Varsayılan yalnız `savanna` (`alpha 1.31`, `alpha_sigma 0.1` ve `p_max_mw 1000` kaynaksız varsayımlardır) |
+| `calibration.bands[]` | array | Enlem bantları (`mode = lat_band` ve biyom zincirinin son fallback'i): `min_abs_lat`, `max_abs_lat` (|lat|, derece), `ratio` (`k_c`), `ratio_sigma` (`k_c` 1σ). 50-55° arası doğrusal geçiş, 70°'nin üstü son banda sabitlenir |
 | `uncertainty.modis_sensor_sigma`, `uncertainty.viirs_sensor_sigma` | number | Tek piksel sensör gürültüsü (göreli 1σ) |
 | `uncertainty.vza_error_coeff` | number | VZA düzeltmesi arttıkça eklenen göreli hata katsayısı (`vza_error_coeff × (factor - 1)`; varsayılan `1.0`) |
 | `uncertainty.modis_scale_sigma` | number | MODIS ölçek/Terra vekil belirsizliği (göreli 1σ) |
