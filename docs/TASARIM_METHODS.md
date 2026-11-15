@@ -1,5 +1,7 @@
 # PyroSync — Methods Sayfası ve Bilimsel Disclaimer Tasarımı (C5)
 
+Kod ile son eşitleme: 2026-11-15 (G8/G9 yeniden tanımından sonra).
+
 Bu doküman, `GOREVLER2.md` kapsamındaki **C5** tasarım görevini tanımlar; **R6** (`/methods` sayfası implementasyonu) ve **S8** (`docs/REFERENCES.md` bilimsel referans ve disclaimer içeriği) görevlerine devir kaynağıdır. Ses ve mikro metinler [`UX_YAZIM.md`](UX_YAZIM.md), görsel kurallar [`TASARIM_SISTEMI.md`](TASARIM_SISTEMI.md) ve [`TASARIM_KONSEPT.md`](TASARIM_KONSEPT.md) ile uyumludur.
 
 Referans ekranlar: masaüstü `1366×768`, mobil `375×812`; varsayılan tema `dark` (`[data-theme="light"]` destekli); `prefers-reduced-motion` ve `@media print` uyumludur.
@@ -49,12 +51,12 @@ Referans ekranlar: masaüstü `1366×768`, mobil `375×812`; varsayılan tema `d
 Buna karşın kod tabanında üç önemli detay vardır ve diyagram bunları dürüstçe gösterir:
 
 1. **Planlanan aşama (`grid` / H3 ortak ızgara):** `PIPELINE_ORDER`'da 4. sıradadır ancak henüz birleştirme aşaması olarak uygulanmamıştır (`planned` / `planlanan`). Gerçek kodda `h3index.rs` (H3 Res-8) yalnızca `dedup`, `fleet` ve `match` adımlarında aday budama (candidate pruning) indeksi olarak çalışır.
-2. **Filo birleştirme (`fleet`):** `copy.ts` (`PIPELINE_COPY.fleet`) ve `types/index.ts` içinde tanımlı olduğu hâlde `PIPELINE_ORDER`'a eklenmemiştir; ancak Rust motorunda (`harmonize.rs` satır 78–81, `fleet.rs`) `dedup` hemen sonrasında çalışır ve `fleet.rs` (satır 214–221) içinde her üyenin kendi VZA düzeltmesini (`vza::vza_factor_with`) de hesaplar.
+2. **Filo birleştirme (`fleet`):** `copy.ts` (`PIPELINE_COPY.fleet`) ve `types/index.ts` içinde tanımlı olduğu hâlde `PIPELINE_ORDER`'a eklenmemiştir; ancak Rust motorunda (`harmonize.rs`, `fleet.rs`) `dedup` hemen sonrasında çalışır ve `fleet.rs` içinde her üyenin kendi VZA düzeltmesini (`vza::apply_vza_correction` — `vza::vza_factor_with` ve `raw_frp * ratio` çarpımı) de hesaplar.
 3. **G8 Kalibrasyon (`calibration.rs`) ve G9 Belirsizlik (`uncertainty.rs`) nerede oturur?**
-   - **G8 (`calibration::calibration_for`):** `harmonize.rs` satır 254–273'te, **6. aşama (`fuse`)** içinde `from_modis_only_with` dalında uygulanır. Yalnızca `ModisOnly` kayıtlarını enlem bandına göre VIIRS ölçeğine çarpar (`Matched` ve `ViirsOnly` zaten VIIRS FRP kullandığından değişmez).
+   - **G8 (`calibration::calibration_for`):** Artık 6. aşama (`fuse`) içinde tespit bazında uygulanmaz (`HarmonizedHotspot` üzerinde `calibration_ratio` alanı yoktur). **7. aşama (`calendar`)** içinde `build_calendar_with` (`calendar.rs`) dalında, **yalnızca** VIIRS tespiti bulunmayan (VIIRS öncesi, `!bucket.has_viirs && calibration.enabled`) aylık kovaların **`total_frp`** değerine enlem bandına göre ölçülen bütünlük faktörü $k_c(\text{lat}) = \Sigma\text{VIIRS} / \Sigma(\text{MODIS} \times R_{\text{rel}}(\theta))$ ile çarpım olarak uygulanır. `mean_frp` yerel piksel ölçeğinde kalır; 2012 geçişinde sürekli piksel-eşdeğer seri için `frp_per_detection_eq = total_frp / count_normalized` üretilir.
    - **G9 (`uncertainty.rs`):** İki noktada çalışır:
-     1. **6. aşama (`fuse`)** içinde her `HarmonizedHotspot` için (`frp_uncertainty_for_obs` → `frp_lower`, `frp_upper`),
-     2. **7. aşama (`calendar`)** içinde `build_calendar_with` (`mean_frp_uncertainty` → `mean_frp_lower`, `mean_frp_upper`) hesaplanır.
+     1. **6. aşama (`fuse`)** içinde her `HarmonizedHotspot` için (`frp_uncertainty_for_obs` → `frp_lower`, `frp_upper`). Rastgele hata $\sqrt{\sigma_{\text{sensor}}^2 + \sigma_{\text{vza}}^2}$ olup $1/\sqrt{n_{\text{obs}}}$ ile küçülür (`Matched` kayıtlarda VIIRS FRP kullanıldığı için yalnızca VIIRS filo gözlem sayısı `v.n_obs` geçer). Sistematik ölçek belirsizliği `modis_scale_sigma` (`0.10`) yalnızca `ModisOnly` kayıtlarına eklenir (`Matched` ve `ViirsOnly` için `0.0`).
+     2. **7. aşama (`calendar`)** içinde `build_calendar_with` sırasıyla `mean_frp_uncertainty` (`mean_frp_lower`, `mean_frp_upper`) ve `total_frp_uncertainty` (`total_frp_lower`, `total_frp_upper`) hesaplar. VIIRS bulunmayan aylarda $k_c$ kalibrasyon belirsizliği (`cal_sigma = ratio_sigma / ratio`) `modis_scale_sigma` ile karesel toplanarak (`scale_sigma.hypot(cal_sigma)`) yalnızca `total_frp` belirsizliğine girer (`mean_frp` belirsizliğine girmez).
    - Ayrıca **Çaba Normalizasyonu ($\Omega$, `effort.rs`)** 7. aşama (`calendar`) içinde `monthly_omegas` ile hesaplanır; `count_normalized` ve popülasyon z-skoru `anomaly` buradan çıkar.
 
 ### Mermaid Akış Diyagramı
@@ -68,21 +70,21 @@ flowchart LR
     S1["1. Topla (collect)<br/>NASA FIRMS NRT / Arşiv"]:::applied
     S2["2. Çift sayımı ayıkla (dedup)<br/>Δt ≤ 8s, örtüşme &gt; %30"]:::applied
     F["Filo birleştirme (fleet.rs)<br/>MODIS 10.800s · VIIRS 3.600s"]:::module
-    S3["3. Bakış açısını düzelt (angle)<br/>VZA R(θ) = aθ² + bθ + c"]:::applied
+    S3["3. Bakış açısını düzelt (angle)<br/>VZA R_rel(θ) = aθ² + bθ + c<br/>FRP × R_rel(θ)"]:::applied
     S4["4. Tek ızgaraya oturt (grid)<br/>Ortak H3 ızgarası · PLANLANAN"]:::planned
     S5["5. Sensörleri eşleştir (match)<br/>2 km · 10.800s · H3 Res-8 indeks"]:::applied
     S6["6. En iyi gözlemi tut (fuse)<br/>VIIRS öncelikli birleştirme"]:::applied
-    G8["G8 Bölgesel kalibrasyon<br/>(calibration.rs · yalnız ModisOnly)"]:::module
     G9a["G9 Kayıt belirsizliği<br/>(uncertainty.rs · frp_lower/upper)"]:::module
     S7["7. Takvimi kur (calendar)<br/>Aylık Ω normalizasyon + anomali"]:::applied
-    G9b["G9 Hücre belirsizliği<br/>(mean_frp_lower/upper)"]:::module
+    G8["G8 Pre-VIIRS kalibrasyon (k_c)<br/>(calibration.rs · yalnız VIIRS-siz total_frp)"]:::module
+    G9b["G9 Hücre belirsizliği<br/>(mean_frp + total_frp ±)"]:::module
 
     S1 --> S2 --> F --> S3
     S3 -. "planlanan ara adım" .-> S4 -.-> S5
     S3 -->|"bugünkü akış"| S5 --> S6 --> S7
-    G8 -. "ModisOnly FRP" .-> S6
-    G9a -. "±z·σ_rand ⊕ σ_sys" .-> S6
-    G9b -. "1/√n + sistematik" .-> S7
+    G9a -. "±z·σ_rand ⊕ σ_scale" .-> S6
+    G8 -. "VIIRS-siz total_frp" .-> S7
+    G9b -. "1/√n + σ_scale ⊕ σ_cal" .-> S7
 ```
 
 ### Masaüstü Wireframe (`1366×768`)
@@ -97,12 +99,12 @@ flowchart LR
 | Bes uydudan (MODIS Terra/Aqua, VIIRS S-NPP/NOAA-20/21) tek tutarli yangin takvimine.            |
 |                                                                                                  |
 |  (1) Topla ---> (2) Cift sayim ---> [Filo*] ---> (3) Aci (VZA) - - -> [4. Izgara (planlanan)]    |
-|   FIRMS           Dedup 8s/%30      fleet.rs      R(theta)      |             :                  |
+|   FIRMS           Dedup 8s/%30      fleet.rs      R_rel(theta)  |             :                  |
 |                                                                 v             v                  |
 |  (7) Takvim <--- (6) En iyi gozlem <-------------------------- (5) Eslestir (2 km, 180 dk)      |
 |   |  Aylik +       |  VIIRS oncelikli                            TimedH3Index (Res-8 budama)     |
-|   |  Omega + z     +--[G8 Kalibrasyon (ModisOnly)]                                               |
-|   +--[G9 Hucre belirsizligi]   +--[G9 Kayit belirsizligi]                                        |
+|   |  Omega + z     +--[G9 Kayit belirsizligi]                                                    |
+|   +--[G8 k_c (VIIRS-siz total_frp)] + [G9 Hucre belirsizligi]                                    |
 |                                                                                                  |
 | * Not: Filo birlestirme (fleet.rs) backend'de adim 2 ve 3 ile birlikte calisir;                  |
 |   4. adim (ortak H3 hucre birlestirme) henuz uygulanmamistir (planlanan).                        |
@@ -134,11 +136,11 @@ flowchart LR
 |   |  TimedH3Index (Res-8) + 2km/180dk |
 |   |                                   |
 |  (6) En iyi gozlemi tut · Fusion      |
-|   |  + G8 Kalibrasyon (ModisOnly)     |
 |   |  + G9 Kayit belirsizligi          |
 |   v                                   |
 |  (7) Takvimi kur · Aylik              |
-|      + Omega + G9 Hucre belirsizligi  |
+|      + Omega + G8 k_c (VIIRS-siz)     |
+|      + G9 Hucre belirsizligi          |
 +---------------------------------------+
 ```
 
@@ -154,11 +156,11 @@ Tüm parametre adları ve varsayılan değerler `crates/core/src/config.rs`, `py
 |---|---|---|---|---|---|---|
 | **1** | **Topla** (`collect`) | NASA FIRMS NRT API (`MODIS_NRT`, `VIIRS_SNPP_NRT`, `VIIRS_NOAA20_NRT`, `VIIRS_NOAA21_NRT`) veya yerel ülke arşiv CSV'lerinden (`modis`, `viirs-snpp`, `viirs-jpss1`) yalnızca bitki örtüsü yangınlarını (`FireType::VegetationFire`, `type == 0`) alır. | Farklı kaynak ve tarih aralıklarındaki tüm MODIS/VIIRS ham tespitlerini tek şemada toplamak, volkan/endüstriyel kaynakları ayırmak. | `FIRMS_API_KEY` (NRT); `ARCHIVE_CACHE_DIR` (`.cache/firms-archive`); `ARCHIVE_MAX_REGION_MB = 512`; `AREA_CACHE_NRT_TTL_SECS = 600` (arşiv `/api/calendar` TTL `21600s`) | FIRMS CSV satırları → `Vec<Hotspot>` (MODIS + VIIRS) | NASA FIRMS arşivi / NRT (`S8 tamamlayacak`) |
 | **2** | **Çift sayımı ayıkla** (`dedup`) | Aynı sensör içinde `|Δt| ≤ 8s` ve piksel ayak izi örtüşmesi `> 0.30` olan ardışık tarama çakışmalarını gruplar (`dedup.rs`). En yüksek güvenli kaydı tutar, grubun ortalama FRP'sini atar. *(Ardından `fleet.rs` aynı sensör ailesinin kardeş uydularını birleştirir.)* | Tek uydu ardışık tarama şeritlerinde (bowtie/overlap) aynı yangını iki kez sayabilir. | `dedup.max_time_diff_secs = 8` (`PYROSYNC_DEDUP_MAX_TIME_DIFF_SECS`); `dedup.min_overlap_ratio = 0.30` (`PYROSYNC_DEDUP_MIN_OVERLAP_RATIO`). *Filo:* `fleet.viirs_window_secs = 3600`, `fleet.modis_window_secs = 10800`, `fleet.radius_km = 2.0` | `Vec<Hotspot>` → tekilleştirilmiş `Vec<Hotspot>` → `Vec<FleetObservation>` | Li et al. (2018) (`dedup.rs` satır 14); filo pencereleri için `S8 tamamlayacak` |
-| **3** | **Bakış açısını düzelt** (`angle`) | Yalnız MODIS kayıtları için (VIIRS şerit boyunca kararlı kabul edilip `None` kalır), açık `vza` yoksa `scan` genişliğinden küresel Dünya geometrisiyle VZA kestirir (`1.0 km` nadir, `4.833 km` @ `55°` tarama açısı → `65.4°` VZA); `R(θ) = max(1.0, a·θ² + b·θ + c)` ile `frp / R(θ)` uygular (`vza.rs`). *(Filo birleştirmede üye başına da hesaplanır.)* | MODIS piksel alanı tarama kenarına doğru genişlediği için aynı yangının ölçülen FRP'si yapay olarak artar. | `vza.a = 0.85` (`PYROSYNC_VZA_A`); `vza.b = 0.12` (`PYROSYNC_VZA_B`); `vza.c = 1.0` (`PYROSYNC_VZA_C`) *(yer tutucu katsayılar)* | `Hotspot.frp` + `vza`/`scan` → `vza_factor: Option<f64>` ve VZA düzeltilmiş FRP | Zheng et al. (2026) (`vza.rs` satır 85; tam künye `S8 tamamlayacak`) |
-| **4** | **Tek ızgaraya oturt** (`grid`) **[planlanan]** | **Henüz uygulanmadı (`isPlannedStage("grid") === true`).** Eşleştirme öncesinde tüm tespitlerin ortak bir H3 altıgen ızgarasında hücre bazlı birleştirilmesi planlanmaktadır. *Bugün kodda H3 (Res-8) yalnızca 2., filo ve 5. aşamada aday arama indeksi olarak çalışır.* | Farklı piksel çözünürlüklerindeki (`1 km` MODIS vs `375 m` VIIRS) tespitleri ortak mekânsal hücrede hizalamak. | Bugünkü indeks sabiti (`h3index.rs`): `INDEX_RESOLUTION = Resolution::Eight`, `APOTHEM_KM = 0.40`, `COVERAGE_MARGIN = 1.25` | `Vec<FleetObservation>` (koordinatlar değişmeden `TimedH3Index` ile indekslenir) | `S8 tamamlayacak` |
-| **5** | **Sensörleri eşleştir** (`match`) | Her MODIS filo gözlemi için `TimedH3Index` (H3 Res-8, `k = k_ring_for_radius(radius_km)`, varsayılan `2.0 km` için `k = 3`) ile aday VIIRS filo gözlemleri bulunur; `haversine_km ≤ 2.0 km` ve `|Δt| ≤ 10.800s` (180 dk) içindeki en yüksek `0.6·spatial + 0.4·temporal` skorlu eşleşmemiş VIIRS seçilir (`harmonize.rs`). | MODIS ve VIIRS geçişleri FIRMS verisinde en az 34 dk (medyan ~158 dk) arayla gelir; 180 dk pencere aynı yangının iki kez sayılmasını önler. | `matching.radius_km = 2.0` (üst sınır `MAX_MATCH_RADIUS_KM = 10.0`, `PYROSYNC_MATCH_RADIUS_KM`); `matching.window_secs = 10800` (`PYROSYNC_MATCH_WINDOW_SECS`) | `modis_fleet` + `viirs_fleet` → eşleşmiş çiftler (`Matched`) ve tekil kalanlar (`ModisOnly`, `ViirsOnly`) | `S8 tamamlayacak` |
-| **6** | **En iyi gözlemi tut** (`fuse`) | Eşleşen çiftlerde VIIRS (`375 m`) konumu ve FRP'si tercih edilir, iki kaydın yüksek güven seviyesi alınır (`harmonize.rs`). **G8:** Yalnız `ModisOnly` kayıtlarına enlem bandı kalibrasyonu (`calibration.rs`) uygulanır. **G9:** Tüm kayıtlara analitik `frp_lower`/`frp_upper` hesaplanır (`uncertainty.rs`). | İki sensör aynı yangını gördüğünde daha yüksek çözünürlüklü sensörü tutmak; kalan MODIS-only noktaları VIIRS ölçeğine taşımak ve model belirsizliğini raporlamak. | **G8 (`calibration`):** `enabled = true`, bantlar `\|lat\|`: `[0–30°]: 1.16 (σ=0.13)`, `[30–50°]: 0.97 (σ=0.03)`, `[55–70°]: 0.82 (σ=0.18)` (`50–55°` doğrusal interpolasyon, `>70°` sabit). **G9 (`uncertainty`):** `modis_sensor_sigma = 0.12`, `viirs_sensor_sigma = 0.08`, `vza_error_coeff = 0.05`, `z = 1.0` | `Matched` / `ModisOnly` / `ViirsOnly` → `Vec<HarmonizedHotspot>` | VIIRS önceliği: Zheng et al. (2026); G8 oranları: Li et al. (2018); `erf`: Abramowitz & Stegun (7.1.26) (`S8 tamamlayacak`) |
-| **7** | **Takvimi kur** (`calendar`) | Harmonize tespitler UTC `(year, month)` kovalarına toplanır (`calendar.rs`). `effort.rs` her platform konfigürasyonu için MODIS'e göre çaba faktörü $\Omega$ hesaplar (en az 3 ay şartı; 2002-07 öncesi Terra-only aylar seri 2002-07+ içeriyorsa hariç tutulur). **G9:** `mean_frp_uncertainty` hücre güven aralığını üretir. En az 3 yıl olan aylarda popülasyon z-skoru (`anomaly`) hesaplanır. | 2012 (S-NPP), 2018 (NOAA-20) ve 2023 (NOAA-21) uydu eklemelerinin yarattığı yapay tespit sıçramasını ("sensör uçurumu") normalize edip gerçek yangın anomalisini ortaya çıkarmak. | `MIN_MONTHS_PER_CONFIG = 3`; `FIRST_TERRA_AQUA_MONTH = (2002, 7)`; anomali eşiği: aynı takvim ayında `>= 3` normalize hücre ve `std > 0`; G9 `uncertainty` parametreleri | `Vec<HarmonizedHotspot>` → `Vec<CalendarCell>` (`count`, `effort_omega`, `count_normalized`, `mean_frp`, `mean_frp_lower/upper`, `anomaly`) | `S8 tamamlayacak` |
+| **3** | **Bakış açısını düzelt** (`angle`) | Yalnız MODIS kayıtları için (VIIRS şerit boyunca kararlı kabul edilip `None` kalır), açık `vza` yoksa `scan` genişliğinden küresel Dünya geometrisiyle VZA kestirir (`1.0 km` nadir, `4.833 km` @ `55°` tarama açısı → `~65.4°` VZA); `R_rel(θ) = max(1.0, a·θ² + b·θ + c)` ile **`frp * R_rel(θ)`** uygular (`vza.rs`). *(Filo birleştirmede üye başına da hesaplanır; Terra ayrı fit bulunmadığından geometrik vekil olarak aynı eğriyi kullanır.)* | Tarama kenarına doğru genişleyen MODIS pikselindeki aynı tarama açısı bozulmasını kaldırarak ham FRP'yi VIIRS ayak izi ölçeği eşdeğerine taşımak; nadir sabiti (`1.19`) `7.` aşamadaki $k_c$ faktöründen ayrı tutularak çift sayım önlenir. | `vza.a = 0.2017` (`PYROSYNC_VZA_A`); `vza.b = 0.0168` (`PYROSYNC_VZA_B`); `vza.c = 1.0` (`PYROSYNC_VZA_C`) | `Hotspot.frp` + `vza`/`scan` → `vza_factor: Option<f64>` ve `R_rel(θ)` ile çarpılmış FRP | Zheng et al. (2026) Eq. 9 & Fig. 4 (`1.19` ile normalize; `vza.rs`; tam künye `S8 tamamlayacak`) |
+| **4** | **Tek ızgaraya oturt** (`grid`) **[planlanan]** | **Henüz uygulanmadı (`isPlannedStage("grid") === true`).** Eşleştirme öncesinde tüm tespitlerin ortak bir H3 altıgen ızgarasında hücre bazlı birleştirilmesi planlanmaktadır. *Bugün kodda H3 (Res-8) yalnızca 2., filo ve 5. aşamada aday arama indeksi olarak çalışır.* | Farklı piksel çözünürlüklerindeki (`1 km` MODIS vs `375 m` VIIRS) tespitleri ortak mekânsal hücrede hizalamak. | Bugünkü indeks sabiti (`h3index.rs`): `INDEX_RESOLUTION = Resolution::Eight`, `MIN_CELL_WIDTH_KM = 0.64`, `COVERAGE_MARGIN = 1.15`, `RING_SLACK = 2` | `Vec<FleetObservation>` (koordinatlar değişmeden `TimedH3Index` ile indekslenir) | `S8 tamamlayacak` |
+| **5** | **Sensörleri eşleştir** (`match`) | Her MODIS filo gözlemi için `TimedH3Index` (H3 Res-8, `k = k_ring_for_radius(radius_km)`, varsayılan `2.0 km` için `k = 5`) ile aday VIIRS filo gözlemleri bulunur; `haversine_km ≤ 2.0 km` ve `|Δt| ≤ 10.800s` (180 dk) içindeki en yüksek `0.6·spatial + 0.4·temporal` skorlu eşleşmemiş VIIRS seçilir (`harmonize.rs`). | MODIS ve VIIRS geçişleri FIRMS verisinde en az 34 dk (medyan ~158 dk) arayla gelir; 180 dk pencere aynı yangının iki kez sayılmasını önler. | `matching.radius_km = 2.0` (üst sınır `MAX_MATCH_RADIUS_KM = 10.0`, `PYROSYNC_MATCH_RADIUS_KM`); `matching.window_secs = 10800` (`PYROSYNC_MATCH_WINDOW_SECS`) | `modis_fleet` + `viirs_fleet` → eşleşmiş çiftler (`Matched`) ve tekil kalanlar (`ModisOnly`, `ViirsOnly`) | `S8 tamamlayacak` |
+| **6** | **En iyi gözlemi tut** (`fuse`) | Eşleşen çiftlerde VIIRS (`375 m`) konumu ve FRP'si tercih edilir, iki kaydın yüksek güven seviyesi alınır (`harmonize.rs`). **G9:** Tüm kayıtlara analitik `frp_lower`/`frp_upper` hesaplanır (`uncertainty.rs`); `Matched` kayıtlarda rastgele hata yalnızca VIIRS filo gözlem sayısı (`v.n_obs`) ile ölçeklenir, sistematik ölçek belirsizliği (`modis_scale_sigma`) yalnızca `ModisOnly` kayıtlarına eklenir (tespit bazında kalibrasyon çarpanı uygulanmaz). | İki sensör aynı yangını gördüğünde daha yüksek çözünürlüklü sensörü tutmak; kalan MODIS-only noktaların model ve geometrik vekil belirsizliğini raporlamak. | **G9 (`uncertainty`):** `modis_sensor_sigma = 0.12`, `viirs_sensor_sigma = 0.08`, `vza_error_coeff = 0.05`, `modis_scale_sigma = 0.10`, `z = 1.0` *(yalnızca TOML/JSON config; `PYROSYNC_*` env yok)* | `Matched` / `ModisOnly` / `ViirsOnly` → `Vec<HarmonizedHotspot>` | VIIRS önceliği ve Terra §5 vekil tartışması: Zheng et al. (2026); `erf`: Abramowitz & Stegun (7.1.26) (`S8 tamamlayacak`) |
+| **7** | **Takvimi kur** (`calendar`) | Harmonize tespitler UTC `(year, month)` kovalarına toplanır (`calendar.rs`). `effort.rs` her platform konfigürasyonu için MODIS'e göre çaba faktörü $\Omega$ hesaplar (`MIN_MONTHS_PER_CONFIG = 3`; seri `(2002, 7)`+ içeriyorsa öncesi Terra-only aylar hariç tutulur). **G8:** Yalnız VIIRS tespiti bulunmayan (pre-VIIRS) aylarda `total_frp` üzerine enlem bandı bütünlük çarpanı $k_c(\text{lat})$ uygulanır (`mean_frp` yerel piksel ölçeğinde kalır; sürekli seri için `frp_per_detection_eq = total_frp / count_normalized` üretilir). **G9:** `mean_frp_uncertainty` ve `total_frp_uncertainty` hücre güven aralıklarını üretir (`cal_sigma` yalnızca VIIRS-siz `total_frp` belirsizliğine girer). En az 3 yıl olan aylarda popülasyon z-skoru (`anomaly`) hesaplanır. | 2012 (S-NPP), 2018 (NOAA-20) ve 2023 (NOAA-21) uydu eklemelerinin yarattığı yapay tespit sıçramasını ("sensör uçurumu") ve VIIRS öncesi aylık toplam FRP eksikliğini normalize edip gerçek yangın anomalisini ortaya çıkarmak. | **G8 (`calibration`):** `enabled = true`, bantlar `\|lat\|`: `[0–30°]: 1.11 (σ=0.08)`, `[30–50°]: 1.18 (σ=0.15)`, `[55–70°]: 1.28 (σ=0.11)` (`50–55°` doğrusal interpolasyon, `>70°` sabit; TOML/JSON config). **Takvim & G9:** `MIN_MONTHS_PER_CONFIG = 3`; `FIRST_TERRA_AQUA_MONTH = (2002, 7)`; anomali `>= 3` hücre ve `std > 0`; G9 `uncertainty` parametreleri | `Vec<HarmonizedHotspot>` → `Vec<CalendarCell>` (`count`, `effort_omega`, `count_normalized`, `mean_frp`, `mean_frp_lower/upper`, `total_frp`, `total_frp_lower/upper`, `frp_per_detection_eq`, `anomaly`) | Ölçülen $k_c$ bütünlük oranları: Li et al. (2020) ve Sofiev & Kouznetsov (2026) (`calibration.rs`; tam künye `S8 tamamlayacak`) |
 
 ### Accordion Etkileşim Spesifikasyonu
 
@@ -179,15 +181,15 @@ Mevcut `MethodsDrawer.tsx` içindeki accordion kalıbı korunur ve `/methods` sa
 
 ### Koddaki Matematiksel Model (`crates/core/src/vza.rs` + `uncertainty.rs`)
 
-- **Düzeltme faktörü (`vza.rs` satır 118–125):**
-  $$R(\theta) = \max\Bigl(1.0,\; a\,\theta_{\text{rad}}^2 + b\,\theta_{\text{rad}} + c\Bigr), \quad \theta_{\text{rad}} = \theta_{\text{deg}} \cdot \frac{\pi}{180}$$
-  Varsayılan katsayılar (`VzaConfig::default()`): **`a = 0.85`**, **`b = 0.12`**, **`c = 1.0`** *(koddaki yoruma göre henüz kalibre edilmemiş yer tutucu değerlerdir)*.
+- **Düzeltme faktörü (`vza.rs`):**
+  $$R_{\text{rel}}(\theta) = \max\Bigl(1.0,\; a\,\theta_{\text{rad}}^2 + b\,\theta_{\text{rad}} + c\Bigr), \quad \theta_{\text{rad}} = \theta_{\text{deg}} \cdot \frac{\pi}{180}$$
+  Varsayılan katsayılar (`VzaConfig::default()`): **`a = 0.2017`**, **`b = 0.0168`**, **`c = 1.0`** *(Zheng et al., 2026 Eq. 9 & Fig. 4'teki $R(\theta) = 0.24\theta^2 + 0.02\theta + 1.19$ eğrisinin nadir sabiti $1.19$ ile bölünerek normalize edilmiş biçimidir; nadir ofseti 7. aşamadaki $k_c$ bütünlük faktöründe ölçüldüğü için çift sayım önlenir. Terra için ayrı fit bulunmadığından geometrik vekil olarak aynı eğri kullanılır)*.
 - **FRP düzeltmesi (`apply_vza_correction`):**
-  $$\text{FRP}_{\text{corrected}} = \frac{\text{FRP}_{\text{raw}}}{R(\theta)} \quad \Longrightarrow \quad \text{FRP oranı} = \frac{1}{R(\theta)}$$
-- **VZA belirsizliği (`uncertainty.rs` satır 22, 132–138, 163):**
-  $$\sigma_{\text{vza}}(\theta) = k_{\text{vza}} \cdot \max\bigl(R(\theta) - 1.0,\; 0.0\bigr), \quad k_{\text{vza}} = 0.05 \text{ (`vza_error_coeff`)}$$
+  $$\text{FRP}_{\text{corrected}} = \text{FRP}_{\text{raw}} \times R_{\text{rel}}(\theta)$$
+- **VZA ve ölçek belirsizliği (`uncertainty.rs`):**
+  $$\sigma_{\text{vza}}(\theta) = k_{\text{vza}} \cdot \max\bigl(R_{\text{rel}}(\theta) - 1.0,\; 0.0\bigr), \quad k_{\text{vza}} = 0.05 \text{ (`vza_error_coeff`)}$$
   $$\sigma_{\text{rand, MODIS}}(\theta) = \sqrt{\sigma_{\text{modis}}^2 + \sigma_{\text{vza}}(\theta)^2}, \quad \sigma_{\text{modis}} = 0.12 \text{ (`modis_sensor_sigma`)}$$
-  Varsayılan güven çarpanı **`z = 1.0`** (`~68.27%` iki taraflı normal güven aralığı).
+  `ModisOnly` kayıtları ve aylık `total_frp` ayrıca sistematik **`modis_scale_sigma = 0.10`** taşır (Zheng $R(\theta)$ ölçek/biçim belirsizliği + Terra geometrik vekil belirsizliği). Varsayılan güven çarpanı **`z = 1.0`** (`~68.27%` iki taraflı normal güven aralığı).
 
 > [!NOTE]
 > `vza.rs` (satır 7, 257–272) ayrıca FIRMS verisinde açık `vza` kolonu olmadığında `scan` piksel genişliğinden küresel Dünya geometrisiyle VZA türetir: nadirde `1.0 km` (`0°`), maksimum MODIS tarama açısı `θ_s = 55°` değerinde `~4.833 km` ve yaklaşık **`65.4°` VZA**. Grafik `0°–65.4°` aralığını kapsar.
@@ -196,55 +198,56 @@ Mevcut `MethodsDrawer.tsx` içindeki accordion kalıbı korunur ve `/methods` sa
 
 - **Grafik türü:** Özel duyarlı SVG eğri + güven bandı grafiği (veya Recharts `ComposedChart`, `viewBox="0 0 640 280"` masaüstü / `"0 0 340 220"` mobil; harici ağır bağımlılık eklemeden `MethodsDrawer` SVG altyapısını genişletir).
 - **X ekseni:** Görüş Zenit Açısı $\theta$ (`0°` – `65°`, ana kılavuz çizgileri `0°, 10°, 20°, 30°, 40°, 50°, 60°`).
-- **Y ekseni:** Sekmeli veya çift gösterimli iki metrik (varsayılan: **Normalize FRP Oranı `1 / R(θ)`** `[0.40 – 1.15]`, geçiş seçeneği: **Düzeltme Faktörü `R(θ)`** `[1.00 – 2.50]`). Varsayılan görünümde `1 / R(θ)` eğrisi aşağı doğru bükülürken `1.0` birim çizgisi (düzeltilmiş hedef / VIIRS referansı) ve `R(θ)` (ham büyüme faktörü) birlikte veya toggle ile incelenebilir; böylece `MethodsDrawer`'daki mini şema ile kavramsal tutarlılık korunur.
+- **Y ekseni:** Sekmeli veya çift gösterimli iki metrik (varsayılan: **Düzeltme Çarpanı `R_rel(θ)`** `[1.00 – 1.35]`, geçiş seçeneği: **Göreli FRP Artışı `(R_rel(θ) - 1) × %100`** `[%0 – %35]`). Varsayılan görünümde `R_rel(θ)` eğrisi nadirdeki `1.0` referans çizgisinden tarama kenarına doğru yukarı kıvrılarak ham MODIS piksel FRP'sinin VIIRS ayak izi ölçeğine kaç kat büyütülerek taşındığını gösterir; `MethodsDrawer`'daki mini şema ile yön tutarlılığı korunur.
 
-### Örnek Değerler Tablosu (Varsayılan `a = 0.85, b = 0.12, c = 1.0, k_vza = 0.05, z = 1.0`)
+### Örnek Değerler Tablosu (Varsayılan `a = 0.2017, b = 0.0168, c = 1.0, k_vza = 0.05, z = 1.0`)
 
-| $\theta$ (`°`) | $\theta_{\text{rad}}$ | Düzeltme faktörü $R(\theta)$ | FRP oranı $1 / R(\theta)$ | FRP düzeltme farkı | $\sigma_{\text{vza}}$ (göreli 1σ) | Toplam MODIS $\sigma_{\text{rand}}$ |
-|---|---|---|---|---|---|---|
-| `0°` *(nadir)* | `0.0000` | `1.000` | `1.000` | `%0,0` | `0.0000` (`%0,00`) | `0.1200` (`%12,0`) |
-| `10°` | `0.1745` | `1.047` | `0.955` | `-%4,5` | `0.0023` (`%0,23`) | `0.1200` (`%12,0`) |
-| `20°` | `0.3491` | `1.145` | `0.873` | `-%12,7` | `0.0073` (`%0,73`) | `0.1202` (`%12,0`) |
-| `30°` | `0.5236` | `1.296` | `0.772` | `-%22,8` | `0.0148` (`%1,48`) | `0.1209` (`%12,1`) |
-| `40°` | `0.6981` | `1.498` | `0.668` | `-%33,2` | `0.0249` (`%2,49`) | `0.1226` (`%12,3`) |
-| `50°` | `0.8727` | `1.752` | `0.571` | `-%42,9` | `0.0376` (`%3,76`) | `0.1258` (`%12,6`) |
-| `55°` *(tarama açısı sınırı)* | `0.9599` | `1.898` | `0.527` | `-%47,3` | `0.0449` (`%4,49`) | `0.1281` (`%12,8`) |
-| `60°` | `1.0472` | `2.058` | `0.486` | `-%51,4` | `0.0529` (`%5,29`) | `0.1311` (`%13,1`) |
+| $\theta$ (`°`) | $\theta_{\text{rad}}$ | Düzeltme çarpanı $R_{\text{rel}}(\theta)$ | FRP düzeltme farkı ($R_{\text{rel}} - 1$) | $\sigma_{\text{vza}}$ (göreli 1σ) | Toplam MODIS $\sigma_{\text{rand}}$ |
+|---|---|---|---|---|---|
+| `0°` *(nadir)* | `0.0000` | `1.000` | `%0,0` | `0.0000` (`%0,00`) | `0.1200` (`%12,0`) |
+| `10°` | `0.1745` | `1.009` | `+%0,9` | `0.0005` (`%0,05`) | `0.1200` (`%12,0`) |
+| `20°` | `0.3491` | `1.030` | `+%3,0` | `0.0015` (`%0,15`) | `0.1200` (`%12,0`) |
+| `30°` | `0.5236` | `1.064` | `+%6,4` | `0.0032` (`%0,32`) | `0.1200` (`%12,0`) |
+| `40°` | `0.6981` | `1.110` | `+%11,0` | `0.0055` (`%0,55`) | `0.1201` (`%12,0`) |
+| `50°` | `0.8727` | `1.168` | `+%16,8` | `0.0084` (`%0,84`) | `0.1203` (`%12,0`) |
+| `55°` *(tarama açısı sınırı)* | `0.9599` | `1.202` | `+%20,2` | `0.0101` (`%1,01`) | `0.1204` (`%12,0`) |
+| `60°` | `1.0472` | `1.239` | `+%23,9` | `0.0119` (`%1,19`) | `0.1206` (`%12,1`) |
+| `~65.4°` *(tarama kenarı VZA)* | `1.1414` | `1.282` | `+%28,2` | `0.0141` (`%1,41`) | `0.1208` (`%12,1`) |
 
-*(Bilgi notu: Küresel Dünya'da `55°` uydu tarama açısı `~65.4°` yer VZA'sına karşılık gelir; bu noktada mevcut yer tutucu katsayılarla `R(65.4°) ≈ 2.244`, `1/R ≈ 0.446`, `σ_vza ≈ %6,22` olur. Literatürde raporlanan `%300` kenar şişmesi `factor ≈ 4.0` olduğunda `uncertainty.rs` yorumunda belirtildiği üzere `σ_vza = %15` seviyesine ulaşır.)*
+*(Bilgi notu: Küresel Dünya'da `55°` uydu tarama açısı tam geometriyle `65.48°` (`~65.4°`) yer VZA'sına karşılık gelir; `65.48°` noktasında `R_rel ≈ 1.283` (`+%28,3`), `σ_vza ≈ %1,41` olur. Tekil `ModisOnly` kayıtlarda bu rastgele bileşene ek olarak sistematik `modis_scale_sigma = 0.10` (`%10,0`) uygulanır. Not: `uncertainty.rs` satır 18 yorumundaki `"factor ≈ 1.32"` ifadesi mevcut polinomun `65.4°` değerinden (`1.282`) bir miktar yüksektir.)*
 
 ### ASCII Grafik Taslağı ve Anotasyonlar
 
 ```text
-  Duzeltme faktoru R(theta) ve VZA belirsizlik bandi (+/- sigma_vza)
-  [Gorunum: R(theta) carpani | FRP orani 1/R(theta)]  [x] sigma_vza bandini goster
+  Duzeltme carpani R_rel(theta) ve VZA belirsizlik bandi (+/- sigma_vza)
+  [Gorunum: R_rel(theta) carpani | FRP artisi +%]      [x] sigma_vza bandini goster
 
-  2.4 |                                                       / : :  <-- Tarama kenari
-  2.0 |                                                  . ' /  : :      (65.4 deg VZA)
-  1.6 |                                         . ' ' /  ' '    : :  R(theta) +/- sigma_vza
-  1.2 |                     _ . - - ' ' ' '  /  . '             : :  (acilan belirsizlik bandi)
-  1.0 |=======+======+======+======+======+======+======+=======+=+====
-      0      10     20     30     40     50     55     60       65.4  theta (deg)
-      ^                                          ^              ^
-    Nadir                                  Tarama acisi      Maks. VZA
-  R=1.000, sigma_vza=%0                   55 deg (R=1.898)   (R~2.244)
+  1.35 |                                                              :  <-- Tarama kenari
+  1.28 |                                                         . ' /:      (~65.4 deg VZA, R_rel~1.282)
+  1.20 |                                                . ' ' /  ' '  :  R_rel(theta) +/- sigma_vza
+  1.10 |                                 _ . - - ' ' /   . '          :  (acilan belirsizlik bandi)
+  1.00 |=======+======+======+======+======+======+======+=======+====+=
+       0      10     20     30     40     50     55     60         65.4  theta (deg)
+       ^                                          ^                 ^
+     Nadir                                  Tarama acisi        Maks. VZA
+  R_rel=1.000, sigma_vza=%0                55 deg (R_rel=1.202) (~1.282)
 ```
 
 ### Etkileşim, Renk Token'ları ve $\sigma_{\text{vza}}$ Bandı
 
 - **Anotasyonlar:**
-  - `0°` dikey referans çizgisi: `"Nadir (0°) · düzeltme yok (R = 1,00)"`
-  - `55°` / `65.4°` bölgesi: `"Tarama kenarı · piksel genişlemesi nedeniyle en yüksek düzeltme ve belirsizlik"`
-  - Grafik altı dürüst not: `"Katsayılar (a=0,85, b=0,12, c=1,0) henüz kalibre edilmemiş yer tutuculardır."`
+  - `0°` dikey referans çizgisi: `"Nadir (0°) · düzeltme yok (R_rel = 1,00)"`
+  - `55°` / `65.4°` bölgesi: `"Tarama kenarı · en yüksek VZA ölçeklemesi (~1,282×) ve belirsizlik"`
+  - Grafik altı dürüst not: `"R_rel(θ) eğrisi Zheng et al. (2026) Denk. 9'dan nadir=1,0 olacak şekilde normalize edilmiştir; sensör gürültüsü, VZA hata katsayısı ve MODIS ölçek belirsizliği (0,10) model varsayımlarıdır. Terra ayrı fit bulunmadığından aynı eğriyi vekil olarak kullanır."`
 - **Hover / Klavye Readout:** Grafik üzerinde fare hareketinde (veya odaklanabilir `<input type="range" min="0" max="65" step="5">` açı seçicisinde) dikey kılavuz çizgisi çizilir ve `--color-surface-raised` tooltip'inde tek bakışta:
-  `θ = 40° · R(θ) = 1.498 · FRP oranı = 0.668 (−%33,2) · ±σ_vza = ±%2,49 (MODIS toplam σ_rand = ±%12,3)`
+  `θ = 40° · R_rel(θ) = 1.110 (+%11,0) · ±σ_vza = ±%0,55 (MODIS σ_rand = ±%12,0, +σ_scale = ±%10,0)`
 - **Renkler (`tokens.css` doygunluk bütçesine tam uyum):**
   - `--color-accent` bu grafikte **KULLANILMAZ** (`TASARIM_SISTEMI.md` Bölüm 8: `--color-accent` yalnızca Raw/Harmonized geçişi ve 2012 işaretçisine ayrılmıştır).
   - Birincil eğri (`R(θ)` veya `1/R(θ)`): `--color-text` (`2px` düz çizgi)
   - Referans birim çizgisi (`1.0`): `--color-text-muted` (`1.5px` kesikli `4 3`)
   - Eksenler ve kılavuzlar: `--color-border-strong` ve `--color-border-subtle`
   - Metin ve rakamlar: `--color-text-secondary` / `--color-text-muted`, `--font-mono`, `tabular-nums`
-  - **$\sigma_{\text{vza}}$ belirsizlik bandı katmanı:** Eğri etrafında `R(θ) · (1 ± z · σ_vza(θ))` (veya `1/R(θ) · (1 ± z · σ_vza(θ))`) kapalı poligonu (`<path>`) olarak çizilir; dolgu rengi `--color-border-strong` üzerinde düşük opaklık (`0.22` dark / `0.16` light — yeni token önerisi `--color-uncertainty-band` Bölüm 9'da tanımlıdır) ve sınır çizgileri `1px` kesikli `--color-text-muted` (veya [`TASARIM_BELIRSIZLIK_RENK.md`](TASARIM_BELIRSIZLIK_RENK.md) içinde tanımlanan eşlikçi `--color-uncertainty-band-stroke` token'ı) ile gösterilir. İsteğe bağlı kutucukla `±σ_rand` (sensör gürültüsü dahil) dış bandı da karşılaştırılabilir.
+  - **$\sigma_{\text{vza}}$ belirsizlik bandı katmanı:** Eğri etrafında `R_rel(θ) · (1 ± z · σ_vza(θ))` (veya yüzde artış görünümünde `((R_rel(θ) · (1 ± z · σ_vza(θ))) - 1) × 100`) kapalı poligonu (`<path>`) olarak çizilir; dolgu rengi `--color-border-strong` üzerinde düşük opaklık (`0.22` dark / `0.16` light — yeni token önerisi `--color-uncertainty-band` Bölüm 9'da tanımlıdır) ve sınır çizgileri `1px` kesikli `--color-text-muted` (veya [`TASARIM_BELIRSIZLIK_RENK.md`](TASARIM_BELIRSIZLIK_RENK.md) içinde tanımlanan eşlikçi `--color-uncertainty-band-stroke` token'ı) ile gösterilir. İsteğe bağlı kutucukla `±σ_rand` (sensör gürültüsü dahil) dış bandı da karşılaştırılabilir.
 
 ---
 
@@ -317,9 +320,11 @@ Aşağıdaki sütun şeması `/methods?section=references` ve `docs/REFERENCES.m
 
 | ID | APA 7 Künye | DOI / URL | İlişkili Aşama(lar) | Koddaki / Dokümandaki Dayanak | Durum |
 |---|---|---|---|---|---|
-| `REF-01` | Li, F., ... *(tam yazar listesi ve sayfa: S8 tamamlayacak)* (2018). Comparison of Fire Radiative Power Estimates From VIIRS and MODIS Observations. *Journal of Geophysical Research: Atmospheres*, ... | `https://doi.org/10.1029/2017JD027823` | `2. Dedup` (`dedup.rs`), `6. En iyi gözlemi tut` (`calibration.rs`) | `calibration.rs` (satır 7–13, 33–57): tropik `1.16`, orta enlem `0.97`, yüksek enlem `0.82` oranları ve boreal `>1000 MW` `%47` küme sınırlaması; `dedup.rs` satır 14 | Kısmi — tam APA künye `S8 tamamlayacak` |
-| `REF-02` | Zheng et al. (2026). *(Tam başlık, yazar adları, dergi ve DOI: S8 tamamlayacak)* | `S8 tamamlayacak` | `3. Açı (VZA)` (`vza.rs`), `6. En iyi gözlemi tut` (`harmonize.rs`) | `vza.rs` satır 84–85 (`R(θ) = a·θ² + b·θ + c`, `R² ≥ 98.18%`); `harmonize.rs` satır 235 (eşleşmelerde VIIRS FRP önceliği) | Kısmi — tam APA künye `S8 tamamlayacak` |
-| `REF-03` | Abramowitz, M., & Stegun, I. A. *(Baskı, yıl, yayınevi ve bölüm 7.1.26 tam künyesi: S8 tamamlayacak)* | `S8 tamamlayacak` | `6–7. Belirsizlik` (`uncertainty.rs`) | `uncertainty.rs` satır 273: `erf_approx` rasyonel hata fonksiyonu yaklaşımı (7.1.26, `≤ 1.5e-7`) | Kısmi — tam APA künye `S8 tamamlayacak` |
+| `REF-01` | Li, F., ... *(tam yazar listesi ve sayfa: S8 tamamlayacak)* (2018). Comparison of Fire Radiative Power Estimates From VIIRS and MODIS Observations. *Journal of Geophysical Research: Atmospheres*, ... | `https://doi.org/10.1029/2017JD027823` | `2. Dedup` (`dedup.rs`) | `dedup.rs`: tek sensör ardışık tarama çakışması ayıklama penceresi ve piksel örtüşme eşiği | Kısmi — tam APA künye `S8 tamamlayacak` |
+| `REF-02` | Zheng et al. (2026). *(Tam başlık, yazar adları, dergi ve DOI: S8 tamamlayacak)* | `S8 tamamlayacak` | `3. Açı (VZA)` (`vza.rs`), `6. En iyi gözlemi tut` (`harmonize.rs`, `uncertainty.rs`) | `vza.rs`: Eq. 9 & Fig. 4 (`R(θ) = 0.24·θ² + 0.02·θ + 1.19` eğrisinin `1.19` ile normalize edilerek `0.2017·θ² + 0.0168·θ + 1.0` elde edilmesi, `R² ≥ 98.18%`), §5 (Terra ayrı fit yokluğu → `modis_scale_sigma`); `harmonize.rs` (eşleşmelerde VIIRS FRP önceliği) | Kısmi — tam APA künye `S8 tamamlayacak` |
+| `REF-03` | Abramowitz, M., & Stegun, I. A. *(Baskı, yıl, yayınevi ve bölüm 7.1.26 tam künyesi: S8 tamamlayacak)* | `S8 tamamlayacak` | `6–7. Belirsizlik` (`uncertainty.rs`) | `uncertainty.rs`: `erf_approx` rasyonel hata fonksiyonu yaklaşımı (7.1.26, `≤ 1.5e-7`) | Kısmi — tam APA künye `S8 tamamlayacak` |
+| `REF-04` | Li et al. (2020). *(Tam yazar listesi, başlık, dergi ve DOI: S8 tamamlayacak)* | `S8 tamamlayacak` | `7. Takvim` — G8 Kalibrasyon (`calibration.rs`, `calendar.rs`) | `calibration.rs`: Afrika'da MODIS'in VIIRS'e göre ~%26 düşük ölçüm bulgusu; `calibration_grid_check.rs` üzerinden ölçülen `k_c` bütünlük aralığı ile tutarlı | Kısmi — tam APA künye `S8 tamamlayacak` |
+| `REF-05` | Sofiev, M., & Kouznetsov, R. (2026). *(Tam başlık, dergi ve DOI: S8 tamamlayacak)* | `S8 tamamlayacak` | `7. Takvim` — G8 Kalibrasyon (`calibration.rs`, `calendar.rs`) | `calibration.rs`: küresel ölçekte ~%38 MODIS düşük ölçüm bulgusu; VIIRS bulunmayan (pre-VIIRS) aylarda `total_frp` üzerine uygulanan `[1.11, 1.18, 1.28]` bantlarıyla tutarlı | Kısmi — tam APA künye `S8 tamamlayacak` |
 | `REF-04` | NASA FIRMS *(Veri ürünü tam APA künyesi — MODIS Collection 6.1 ve VIIRS S-NPP / NOAA-20 / NOAA-21: S8 tamamlayacak)* | `https://firms.modaps.eosdis.nasa.gov` | `1. Topla` (`firms-client`, `archive.rs`) | `copy.ts` (`methodsSourceCitation`), `archive.rs` satır 11, `client.rs` satır 19 | Kısmi — tam APA künye `S8 tamamlayacak` |
 | `REF-05+` | H3 altıgen ızgara (`h3o`), MODIS/VIIRS aktif yangın algoritmaları, çaba normalizasyonu ($\Omega$) ve anomali z-skoru referansları | `S8 tamamlayacak` | `4. Izgara`, `5. Eşleştir`, `7. Takvim` | Repoda doğrudan akademik atıf geçmiyor; tümü S8 tarafından doğrulanıp eklenecek | `S8 tamamlayacak` |
 
@@ -344,7 +349,7 @@ Ses kuralı (`UX_YAZIM.md` Bölüm 4): alarm dili, ünlem (`!`), emoji ve "warni
 | `disclaimer` *(mevcut)* | Harmonized values are model estimates, not ground truth. | Harmonize değerler model tahminidir, yer gerçeği değildir. | Ana ekran `BottomBar` tek satır |
 | `disclaimerLink` *(mevcut, `BottomBar.tsx`'te bağlanmalı)* | See how we calculate them → | Nasıl hesapladığımızı gör → | `BottomBar` içinden `/methods?section=limits` bağlantısı |
 | `methodsDisclaimerTitle` *(yeni)* | Model estimates and assumptions | Model tahminleri ve varsayımlar | `/methods` üst banner başlığı |
-| `methodsDisclaimerBody` *(yeni — `UNCERTAINTY_NOTE` karşılığı)* | Bounds combine sensor noise, viewing-angle correction, and MODIS-to-VIIRS calibration uncertainty. Default sensor-noise and VZA parameters are uncalibrated assumptions, not published measurements. | Güven aralıkları sensör gürültüsü, bakış açısı düzeltmesi ve MODIS–VIIRS kalibrasyon belirsizliğini birleştirir. Varsayılan sensör gürültüsü ve VZA parametreleri yayımlanmış ölçümler değil, başlangıç varsayımlarıdır. | `/methods` banner gövdesi ve `Limits` bölümü |
+| `methodsDisclaimerBody` *(yeni — `UNCERTAINTY_NOTE` karşılığı)* | For MODIS detections, VZA scales raw FRP to MODIS footprint equivalents; VIIRS-era calendar total_frp adds empirically measured pre-VIIRS completeness (k_c) when no VIIRS detections are present in a cell. mean_frp remains native-pixel and is discontinuous at sensor transitions. Default sensor-noise, VZA error, and MODIS scale uncertainty parameters are assumptions, not published values. | MODIS tespitlerinde VZA düzeltmesi ham FRP'yi MODIS ayak izi eşdeğerine ölçekler; VIIRS olmayan (VIIRS öncesi) takvim hücrelerinde `total_frp` üzerine ölçülmüş bütünlük çarpanı (`k_c`) eklenir. `mean_frp` yerel piksel ölçeğinde kalır ve sensör geçişlerinde süreksizdir. Varsayılan sensör gürültüsü, VZA hata katsayısı ve MODIS ölçek belirsizliği parametreleri yayımlanmış değerler değil, varsayımlardır. | `/methods` banner gövdesi ve `Limits` bölümü |
 | `methodsDisclaimerDemo` *(yeni)* | Showing saved demo data. Harmonized values remain model estimates, not ground truth. | Kayıtlı demo verisi gösteriliyor. Harmonize değerler yine de model tahminidir, yer gerçeği değildir. | Demo / fallback modu açıkken |
 | `methodsDisclaimerShow` / `methodsDisclaimerHide` *(yeni)* | Show assumptions / Hide assumptions | Varsayımları göster / Varsayımları gizle | `/methods` banner daraltma düğmesi |
 
@@ -452,7 +457,7 @@ Ses kuralı (`UX_YAZIM.md` Bölüm 4): alarm dili, ünlem (`!`), emoji ve "warni
 | `methodsNavReferences` | References | Referanslar |
 | `methodsNavLimits` | Limits | Sınırlar |
 | `methodsDisclaimerTitle` | Model estimates and assumptions | Model tahminleri ve varsayımlar |
-| `methodsDisclaimerBody` | Bounds combine sensor noise, viewing-angle correction, and MODIS-to-VIIRS calibration uncertainty. Default sensor-noise and VZA parameters are uncalibrated assumptions, not published measurements. | Güven aralıkları sensör gürültüsü, bakış açısı düzeltmesi ve MODIS–VIIRS kalibrasyon belirsizliğini birleştirir. Varsayılan sensör gürültüsü ve VZA parametreleri yayımlanmış ölçümler değil, başlangıç varsayımlarıdır. |
+| `methodsDisclaimerBody` | For MODIS detections, VZA scales raw FRP to MODIS footprint equivalents; VIIRS-era calendar total_frp adds empirically measured pre-VIIRS completeness (k_c) when no VIIRS detections are present in a cell. mean_frp remains native-pixel and is discontinuous at sensor transitions. Default sensor-noise, VZA error, and MODIS scale uncertainty parameters are assumptions, not published values. | MODIS tespitlerinde VZA düzeltmesi ham FRP'yi MODIS ayak izi eşdeğerine ölçekler; VIIRS olmayan (VIIRS öncesi) takvim hücrelerinde `total_frp` üzerine ölçülmüş bütünlük çarpanı (`k_c`) eklenir. `mean_frp` yerel piksel ölçeğinde kalır ve sensör geçişlerinde süreksizdir. Varsayılan sensör gürültüsü, VZA hata katsayısı ve MODIS ölçek belirsizliği parametreleri yayımlanmış değerler değil, varsayımlardır. |
 | `methodsDisclaimerDemo` | Showing saved demo data. Harmonized values remain model estimates, not ground truth. | Kayıtlı demo verisi gösteriliyor. Harmonize değerler yine de model tahminidir, yer gerçeği değildir. |
 | `methodsDisclaimerShow` | Show assumptions | Varsayımları göster |
 | `methodsDisclaimerHide` | Hide assumptions | Varsayımları gizle |
@@ -461,7 +466,7 @@ Ses kuralı (`UX_YAZIM.md` Bölüm 4): alarm dili, ünlem (`!`), emoji ve "warni
 | `methodsCollapseAll` | Collapse all steps | Tüm adımları kapat |
 | `methodsPrint` | Print methods | Yöntemleri yazdır |
 
-*(Not: Mevcut `copy.ts` içindeki `disclaimerLink` anahtarı `BottomBar.tsx` içine eklenmeli ve `/methods?section=limits` hedefine bağlanmalıdır. Ayrıca `web/src/types/index.ts` içindeki `HarmonizedHotspot` ve `CalendarCell` tipleri backend `models.rs` ile hizalanarak `frpLower`, `frpUpper`, `calibrationRatio`, `meanFrpLower`, `meanFrpUpper` alanlarını içermelidir.)*
+*(Not: Mevcut `copy.ts` içindeki `disclaimerLink` anahtarı `BottomBar.tsx` içine eklenmeli ve `/methods?section=limits` hedefine bağlanmalıdır. Ayrıca `web/src/types/index.ts` içindeki `HarmonizedHotspot` ve `CalendarCell` tipleri backend `models.rs` ile hizalanarak `HarmonizedHotspot` üzerinde `frpLower`, `frpUpper`, `CalendarCell` üzerinde `meanFrpLower`, `meanFrpUpper`, `totalFrp`, `totalFrpLower`, `totalFrpUpper`, `frpPerDetectionEq` alanlarını içermelidir; `HarmonizedHotspot` üzerinde artık `calibrationRatio` alanı yoktur.)*
 
 #### 3. Yeni Token Önerileri (`web/src/styles/tokens.css`)
 
