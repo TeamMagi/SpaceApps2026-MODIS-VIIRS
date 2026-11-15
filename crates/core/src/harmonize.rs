@@ -221,14 +221,15 @@ fn fuse_matched(
     platforms.dedup();
 
     let n_obs = m.n_obs.saturating_add(v.n_obs);
-    // The record averages `n_obs` independent member observations, so random noise shrinks by
-    // 1/√n_obs; no MODIS→VIIRS calibration systematic term applies because Matched uses VIIRS FRP.
+    // The FRP value comes only from the VIIRS members, so the confidence interval must scale its
+    // random term by the VIIRS member count alone; including MODIS members would narrow an
+    // interval that no MODIS observation informs. `n_obs` still reports the total member count.
     let est = uncertainty::frp_uncertainty_for_obs(
         v.frp_corrected_mean,
         None,
         SensorFamily::from(HotspotSource::Matched),
         None,
-        n_obs,
+        v.n_obs,
         uncertainty_params,
     );
 
@@ -1807,8 +1808,95 @@ mod tests {
     }
 
     #[test]
+    fn matched_interval_equals_viirs_only_interval_for_same_viirs_observation() {
+        // MODIS contributes no FRP information to a Matched record (FRP comes from VIIRS), so the
+        // interval must match the same VIIRS fleet observation processed on its own.
+        let viirs_row =
+            make_hotspot(Sensor::ViirsSNPP, 39.001, 32.001, 60, 50.0, Confidence::High);
+        let matched = harmonize(
+            vec![make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 80.0, Confidence::High)],
+            vec![viirs_row.clone()],
+        );
+        let viirs_only = harmonize(vec![], vec![viirs_row]);
+
+        assert_eq!(matched[0].source, HotspotSource::Matched);
+        assert_eq!(matched[0].n_obs, 2);
+        assert_eq!(viirs_only[0].source, HotspotSource::ViirsOnly);
+        assert_eq!(viirs_only[0].n_obs, 1);
+        assert_eq!(matched[0].frp_corrected, viirs_only[0].frp_corrected);
+        assert_eq!(
+            matched[0].frp_lower.to_bits(),
+            viirs_only[0].frp_lower.to_bits()
+        );
+        assert_eq!(
+            matched[0].frp_upper.to_bits(),
+            viirs_only[0].frp_upper.to_bits()
+        );
+    }
+
+    #[test]
+    fn matched_interval_follows_viirs_member_count_for_two_platform_viirs_fleet() {
+        let modis = vec![
+            make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 80.0, Confidence::High),
+            make_hotspot(Sensor::ModisAqua, 39.0, 32.0, 300, 90.0, Confidence::Nominal),
+        ];
+        let viirs = vec![
+            make_hotspot(Sensor::ViirsSNPP, 39.001, 32.0, 600, 50.0, Confidence::High),
+            make_hotspot(Sensor::ViirsNOAA20, 39.001, 32.0, 900, 60.0, Confidence::High),
+        ];
+
+        let matched = harmonize(modis, viirs.clone());
+        let viirs_only = harmonize(vec![], viirs);
+
+        assert_eq!(matched.len(), 1);
+        assert_eq!(matched[0].source, HotspotSource::Matched);
+        assert_eq!(matched[0].n_obs, 4);
+        assert_eq!(viirs_only.len(), 1);
+        assert_eq!(viirs_only[0].source, HotspotSource::ViirsOnly);
+        assert_eq!(viirs_only[0].n_obs, 2);
+        assert_eq!(matched[0].frp_corrected, viirs_only[0].frp_corrected);
+        assert_eq!(
+            matched[0].frp_lower.to_bits(),
+            viirs_only[0].frp_lower.to_bits()
+        );
+        assert_eq!(
+            matched[0].frp_upper.to_bits(),
+            viirs_only[0].frp_upper.to_bits()
+        );
+    }
+
+    #[test]
+    fn fuse_matched_interval_ignores_modis_member_count() {
+        // Fleet groups cannot hold three MODIS members (only Terra and Aqua exist), so the
+        // MODIS member count is exercised through a hand-built fleet observation.
+        let params = UncertaintyParams::default();
+        let v = FleetObservation {
+            hotspot: make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 0, 50.0, Confidence::High),
+            frp_mean: 50.0,
+            frp_corrected_mean: 50.0,
+            n_obs: 2,
+            platforms: vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20],
+        };
+        let m = FleetObservation {
+            hotspot: make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 80.0, Confidence::High),
+            frp_mean: 80.0,
+            frp_corrected_mean: 80.0,
+            n_obs: 3,
+            platforms: vec![Sensor::ModisTerra, Sensor::ModisAqua],
+        };
+
+        let matched = fuse_matched(&m, &v, &params);
+        let viirs_only = from_viirs_only(&v, &params);
+
+        assert_eq!(matched.n_obs, 5);
+        assert_eq!(matched.frp_lower.to_bits(), viirs_only.frp_lower.to_bits());
+        assert_eq!(matched.frp_upper.to_bits(), viirs_only.frp_upper.to_bits());
+    }
+
+    #[test]
     fn higher_n_obs_narrows_random_uncertainty_but_preserves_systematic() {
-        // ViirsOnly (n_obs=1) vs Matched with 3 VIIRS + 1 MODIS (n_obs=4) at identical frp_corrected=50:
+        // ViirsOnly (n_obs=1) vs Matched with 3 VIIRS + 1 MODIS (output n_obs=4) at identical
+        // frp_corrected=50: only the three VIIRS observations enter the random term.
         let single_viirs = harmonize(
             vec![],
             vec![make_hotspot(Sensor::ViirsSNPP, 39.0, 32.0, 0, 50.0, Confidence::High)],
@@ -1826,7 +1914,7 @@ mod tests {
         let w1 = single_viirs[0].frp_upper - single_viirs[0].frp_lower;
         let w4 = four_obs_matched[0].frp_upper - four_obs_matched[0].frp_lower;
         assert!(w4 < w1, "expected n_obs=4 width ({w4}) < n_obs=1 width ({w1})");
-        assert!((w4 - w1 / 2.0).abs() < 1e-12);
+        assert!((w4 - w1 / 3f64.sqrt()).abs() < 1e-12);
 
         // ModisOnly: with zero random sensor/VZA sigma, systematic calibration sigma stays unscaled by n_obs.
         let obs1 = FleetObservation {
