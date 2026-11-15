@@ -4,7 +4,8 @@ use crate::effort::{
     SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
     swath_gap_compensation,
 };
-use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear};
+use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
+use crate::quality::month_quality_flags;
 use crate::uncertainty::{
     SensorFamily, UncertaintyParams, combine_factors, mean_frp_uncertainty,
     relative_uncertainty_for_obs, total_frp_uncertainty,
@@ -25,8 +26,67 @@ struct MonthBucket {
     sum_corrected: f64,
     sum_raw: f64,
     has_viirs: bool,
+    platforms: Vec<Sensor>,
     records: Vec<BucketRecord>,
     mean_uncertainty_items: Vec<(f64, f64, f64)>,
+}
+
+fn mean_frp_uncertainty_item(
+    h: &HarmonizedHotspot,
+    uncertainty: &UncertaintyParams,
+) -> (f64, f64, f64) {
+    let sensor_family = SensorFamily::from(h.source);
+    // Native-pixel `mean_frp` never includes completeness k_c, so its systematic uncertainty
+    // comes solely from `modis_scale_sigma` (on ModisOnly) without `ratio_sigma`.
+    let mean_rel = relative_uncertainty_for_obs(
+        h.vza_factor,
+        sensor_family,
+        None,
+        h.n_obs,
+        uncertainty,
+    );
+    (h.frp_corrected, mean_rel.random, mean_rel.systematic)
+}
+
+fn mean_frp_bounds_from_items(
+    sum_corrected: f64,
+    items: &[(f64, f64, f64)],
+    uncertainty: &UncertaintyParams,
+) -> Option<(f64, f64, f64)> {
+    if items.is_empty() {
+        return None;
+    }
+    let mean = sum_corrected / items.len() as f64;
+    let est = mean_frp_uncertainty(items, uncertainty)?;
+    if !mean.is_finite()
+        || !est.lower.is_finite()
+        || !est.upper.is_finite()
+        || est.lower < 0.0
+        || est.lower > mean
+        || mean > est.upper
+    {
+        return None;
+    }
+    Some((mean, est.lower, est.upper))
+}
+
+/// Compute `(mean_frp, mean_frp_lower, mean_frp_upper)` for a slice of harmonized hotspots using
+/// the same native-pixel formula as [`build_calendar_with`]. Returns `None` when `hotspots` is
+/// empty or any bound is non-finite.
+pub fn mean_frp_with_uncertainty(
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+) -> Option<(f64, f64, f64)> {
+    if hotspots.is_empty() {
+        return None;
+    }
+    let mut sum_corrected = 0.0_f64;
+    let mut items = Vec::with_capacity(hotspots.len());
+    for h in hotspots {
+        sum_corrected += h.frp_corrected;
+        items.push(mean_frp_uncertainty_item(h, uncertainty));
+    }
+    mean_frp_bounds_from_items(sum_corrected, &items, uncertainty)
 }
 
 /// Build a burning activity calendar from harmonized hotspot data using default uncertainty and calibration configs.
@@ -69,6 +129,7 @@ pub fn build_calendar_with(
                 sum_corrected: 0.0,
                 sum_raw: 0.0,
                 has_viirs: false,
+                platforms: Vec::new(),
                 records: Vec::new(),
                 mean_uncertainty_items: Vec::new(),
             });
@@ -78,20 +139,16 @@ pub fn build_calendar_with(
         if h.platforms.iter().any(|s| s.is_viirs()) {
             entry.has_viirs = true;
         }
+        for &sensor in &h.platforms {
+            if !entry.platforms.contains(&sensor) {
+                entry.platforms.push(sensor);
+            }
+        }
 
         let sensor_family = SensorFamily::from(h.source);
-        // Native-pixel `mean_frp` never includes completeness k_c, so its systematic uncertainty
-        // comes solely from `modis_scale_sigma` (on ModisOnly) without `ratio_sigma`.
-        let mean_rel = relative_uncertainty_for_obs(
-            h.vza_factor,
-            sensor_family,
-            None,
-            h.n_obs,
-            uncertainty,
-        );
         entry
             .mean_uncertainty_items
-            .push((h.frp_corrected, mean_rel.random, mean_rel.systematic));
+            .push(mean_frp_uncertainty_item(h, uncertainty));
         entry.records.push(BucketRecord {
             lat: h.lat,
             frp_corrected: h.frp_corrected,
@@ -108,7 +165,11 @@ pub fn build_calendar_with(
             let count_normalized = effort_omega.and_then(|omega| {
                 (omega > 0.0 && omega.is_finite()).then_some(bucket.count as f64 / omega)
             });
-            let mean_estimate = mean_frp_uncertainty(&bucket.mean_uncertainty_items, uncertainty);
+            let mean_bounds = mean_frp_bounds_from_items(
+                bucket.sum_corrected,
+                &bucket.mean_uncertainty_items,
+                uncertainty,
+            );
 
             // Apply empirical pre-VIIRS completeness k_c(lat) to `total_frp` ONLY when the cell
             // has no VIIRS detections at all (pre-2012 MODIS-only era). Once VIIRS is present,
@@ -167,16 +228,17 @@ pub fn build_calendar_with(
                 count: bucket.count,
                 count_normalized,
                 effort_omega,
-                mean_frp: bucket.sum_corrected / bucket.count as f64,
+                mean_frp: mean_bounds.map_or(bucket.sum_corrected / bucket.count as f64, |(m, _, _)| m),
                 mean_frp_raw: bucket.sum_raw / bucket.count as f64,
-                mean_frp_lower: mean_estimate.map(|e| e.lower),
-                mean_frp_upper: mean_estimate.map(|e| e.upper),
+                mean_frp_lower: mean_bounds.map(|(_, lower, _)| lower),
+                mean_frp_upper: mean_bounds.map(|(_, _, upper)| upper),
                 total_frp,
                 total_frp_lower: total_estimate.map(|e| e.lower),
                 total_frp_upper: total_estimate.map(|e| e.upper),
                 frp_per_detection_eq,
                 anomaly: None,
                 sfai: None,
+                quality_flags: month_quality_flags(year, month, &bucket.platforms),
             }
         })
         .collect();
@@ -365,7 +427,8 @@ pub fn seasonality(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Confidence, DayNight, HotspotSource, Sensor};
+    use crate::models::{Confidence, DayNight, HotspotSource};
+    use crate::quality::QualityFlag;
     use chrono::{TimeZone, Utc};
 
     fn count_cell(year: i32, month: u32, count: u64, norm: Option<f64>) -> CalendarCell {
@@ -385,6 +448,7 @@ mod tests {
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
+            quality_flags: Vec::new(),
         }
     }
 
@@ -1026,6 +1090,77 @@ mod tests {
         let era_cells = build_calendar(&[terra_2001, terra_2003]);
         assert!(era_cells[0].count_normalized.is_none());
         assert!(era_cells[0].frp_per_detection_eq.is_none());
+    }
+
+    #[test]
+    fn mean_frp_with_uncertainty_matches_calendar_cell_and_handles_edge_cases() {
+        let params = UncertaintyParams::default();
+        assert_eq!(mean_frp_with_uncertainty(&[], &params), None);
+
+        let mut modis = make_harmonized(2021, 7, 1, 60.0, 72.0);
+        modis.vza_factor = Some(1.2);
+        let mut viirs = make_harmonized(2021, 7, 2, 24.0, 24.0);
+        viirs.platforms = vec![Sensor::ViirsSNPP];
+        viirs.source = HotspotSource::ViirsOnly;
+        viirs.vza_factor = None;
+
+        let hotspots = [modis.clone(), viirs];
+        let cells = build_calendar_with(&hotspots, &params, &CalibrationConfig::default());
+        assert_eq!(cells.len(), 1);
+
+        let (mean, lower, upper) = mean_frp_with_uncertainty(&hotspots, &params).unwrap();
+        assert_eq!(mean, cells[0].mean_frp);
+        assert_eq!(Some(lower), cells[0].mean_frp_lower);
+        assert_eq!(Some(upper), cells[0].mean_frp_upper);
+        assert!(0.0 <= lower && lower <= mean && mean <= upper);
+
+        let nan_frp = make_harmonized(2021, 7, 3, 10.0, f64::NAN);
+        assert_eq!(mean_frp_with_uncertainty(&[nan_frp], &params), None);
+
+        let neg_frp = make_harmonized(2021, 7, 3, -5.0, -5.0);
+        assert_eq!(mean_frp_with_uncertainty(&[neg_frp], &params), None);
+    }
+
+    #[test]
+    fn empty_quality_flags_omitted_when_serialized() {
+        let cell = count_cell(2015, 7, 3, Some(3.0));
+        let json = serde_json::to_value(&cell).unwrap();
+        assert!(json.get("quality_flags").is_none());
+
+        let mut flagged = cell;
+        flagged.quality_flags = vec![QualityFlag::TerraEarlyRecord];
+        let flagged_json = serde_json::to_value(&flagged).unwrap();
+        assert_eq!(
+            flagged_json["quality_flags"],
+            serde_json::json!(["terra_early_record"])
+        );
+    }
+
+    #[test]
+    fn build_calendar_attaches_quality_flags_to_affected_months() {
+        let terra_outage_month = make_harmonized(2000, 8, 20, 50.0, 50.0);
+        let clean_modis = make_harmonized(2008, 7, 15, 50.0, 50.0);
+        let mut snpp_early = make_harmonized(2012, 4, 20, 30.0, 30.0);
+        snpp_early.platforms = vec![Sensor::ViirsSNPP];
+        snpp_early.source = HotspotSource::ViirsOnly;
+        let mut aqua_drift = make_harmonized(2021, 1, 10, 40.0, 40.0);
+        aqua_drift.platforms = vec![Sensor::ModisAqua];
+
+        let cells = build_calendar(&[terra_outage_month, clean_modis, snpp_early, aqua_drift]);
+        assert_eq!(cells.len(), 4);
+        assert_eq!(
+            cells[0].quality_flags,
+            vec![QualityFlag::TerraEarlyRecord, QualityFlag::TerraOutage]
+        );
+        assert!(cells[1].quality_flags.is_empty());
+        assert_eq!(
+            cells[2].quality_flags,
+            vec![
+                QualityFlag::SnppEarlyCalibration,
+                QualityFlag::SnppSpuriousScanLines,
+            ]
+        );
+        assert_eq!(cells[3].quality_flags, vec![QualityFlag::ModisOrbitalDrift]);
     }
 
     /// Three VIIRS-less months (tropics, belt edge, mid-latitude) plus one tropical VIIRS month.

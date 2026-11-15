@@ -64,6 +64,9 @@ export interface AnalyticsSnapshot {
 
 export type Lang = "en" | "tr";
 export type Theme = "dark" | "light";
+export type Palette = "default" | "viridis" | "cividis";
+export type DataMode = "live" | "demo";
+export type DataModeSource = "auto" | "manual";
 
 /** Phase of the Raw <-> Harmonized choreography. See hooks/useHarmonizeTransition. */
 export type Phase = "idle" | "detect" | "merge" | "settle";
@@ -74,7 +77,46 @@ export type ActivePhase = Exclude<Phase, "idle">;
 export type PhaseDurations = Readonly<Record<ActivePhase, number>>;
 
 /** Overlay panels. `receipt` is the correction receipt popover under the count. */
-export type DrawerId = "methods" | "briefing" | "receipt";
+export type DrawerId = "methods" | "settings" | "briefing" | "receipt";
+
+export interface PipelineDedupConfig {
+  maxTimeDiffSecs: number;
+  minOverlapRatio: number;
+}
+
+export interface PipelineFleetConfig {
+  viirsWindowSecs: number;
+  modisWindowSecs: number;
+  radiusKm: number;
+}
+
+export interface PipelineMatchingConfig {
+  radiusKm: number;
+  windowSecs: number;
+}
+
+export interface PipelineVzaConfig {
+  a: number;
+  b: number;
+  c: number;
+}
+
+export interface PipelineConfig {
+  dedup: PipelineDedupConfig;
+  fleet: PipelineFleetConfig;
+  matching: PipelineMatchingConfig;
+  vza?: PipelineVzaConfig;
+}
+
+export interface PipelineOverrides {
+  dedupTimeSecs?: number;
+  dedupOverlap?: number;
+  matchRadiusKm?: number;
+  matchWindowSecs?: number;
+  fleetRadiusKm?: number;
+}
+
+export type PipelineOverrideKey = keyof PipelineOverrides;
 
 /** Async fetch status exposed by data hooks. */
 export type AsyncStatus = "loading" | "ready" | "empty" | "error";
@@ -160,6 +202,8 @@ export interface HarmonizedPoint {
   vzaFactor: number | null;
   nObs: number;
   platforms: string[];
+  frpLower: number | null;
+  frpUpper: number | null;
 }
 
 export interface PointStages {
@@ -206,6 +250,9 @@ export interface MonthCell {
   /** z-score against the same calendar month in other years; null when fewer than 3 years or sd == 0. */
   anomalyRaw: number | null;
   anomalyHarmonized: number | null;
+  meanFrp: number | null;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
 }
 
 export interface YearlyPoint {
@@ -329,6 +376,7 @@ export interface CalendarCell {
   totalFrpUpper: number | null;
   frpPerDetectionEq: number | null;
   anomaly: number | null;
+  qualityFlags: readonly string[];
 }
 
 export interface EffortFactor {
@@ -339,6 +387,10 @@ export interface EffortFactor {
   total: number;
   modisObservable: number;
   omega: number | null;
+  totalHighIntensity?: number;
+  modisObservableHighIntensity?: number;
+  omegaHighIntensity?: number | null;
+  snppAquaHighIntensityRatio?: number | null;
 }
 
 /**

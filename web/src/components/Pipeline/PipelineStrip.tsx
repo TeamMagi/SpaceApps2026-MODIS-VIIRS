@@ -14,6 +14,7 @@ import {
 } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
 import { useNrtData } from "../../hooks/useNrtData";
+import { DEFAULT_PIPELINE_CONFIG, hasPipelineOverrides } from "../../lib/pipelineOverrides";
 import { summarizePointStages } from "../../lib/receiptCounts";
 import { PIPELINE_NODE_COUNT, useAppStore } from "../../store/useAppStore";
 import styles from "./PipelineStrip.module.css";
@@ -31,7 +32,14 @@ export default function PipelineStrip() {
   const points = useMapPoints();
   const nrt = useNrtData(points.bbox);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
+  const pipelineOverrides = useAppStore((state) => state.pipelineOverrides);
+  const serverConfig = useAppStore((state) => state.serverConfig);
+  const showDrawer = useAppStore((state) => state.showDrawer);
   const reduceMotion = useReducedMotion();
+  const customThresholds = hasPipelineOverrides(
+    pipelineOverrides,
+    serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+  );
 
   const count =
     litNodes === 0
@@ -140,6 +148,16 @@ export default function PipelineStrip() {
           </span>
         ) : (
           <span className={styles.count}>{count}</span>
+        )}
+        {customThresholds && (
+          <button
+            type="button"
+            className={styles.customBadge}
+            aria-label={t("settingsCustomBadgeAria")}
+            onClick={() => showDrawer("settings")}
+          >
+            {t("settingsCustomBadge")}
+          </button>
         )}
         {nrt.status === "ready" && nrt.stats && (
           <span className={styles.nrtMeta}>

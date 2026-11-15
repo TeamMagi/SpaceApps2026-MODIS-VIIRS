@@ -26,6 +26,7 @@ import { calendarFrpKey, useCalendarFrp } from "../../hooks/useCalendarFrp";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData, useSelectedMonthCell } from "../../hooks/useRegionData";
 import { useYearPlayback } from "../../hooks/useYearPlayback";
+import { relativeUncertaintyWidth, WIDE_UNCERTAINTY_THRESHOLD } from "../../lib/format";
 import {
   RADIAL_CENTER,
   RADIAL_INNER_RADIUS,
@@ -90,6 +91,7 @@ function BurnCalendar() {
   const setCalendarYear = useAppStore((state) => state.setCalendarYear);
 
   const tooltipId = useId();
+  const hatchId = useId();
   const containerRef = useRef<HTMLElement | null>(null);
   const wheelSvgRef = useRef<SVGSVGElement | null>(null);
 
@@ -189,6 +191,9 @@ function BurnCalendar() {
         harmonizedCount: 0,
         anomalyRaw: null,
         anomalyHarmonized: null,
+        meanFrp: null,
+        meanFrpLower: null,
+        meanFrpUpper: null,
       };
     });
   }, [activeYear, cellMap]);
@@ -450,6 +455,25 @@ function BurnCalendar() {
             onKeyDown={handleWheelKeyDown}
             onMouseLeave={() => setHoveredMonth(null)}
           >
+            <defs>
+              <pattern
+                id={hatchId}
+                width={6}
+                height={6}
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)"
+              >
+                <line
+                  x1={0}
+                  y1={0}
+                  x2={0}
+                  y2={6}
+                  stroke="var(--uncert-hatch-stroke)"
+                  strokeWidth={1.25}
+                />
+              </pattern>
+            </defs>
+
             <circle
               cx={RADIAL_CENTER}
               cy={RADIAL_CENTER}
@@ -506,6 +530,16 @@ function BurnCalendar() {
                 selected !== null && selected.year === activeYear && selected.month === month;
               const isHighlighted = focusMonth === month;
               const isTooltipCell = tooltipVisible && tooltipMonth === month;
+              const relWidth = relativeUncertaintyWidth(
+                cell.meanFrpLower,
+                cell.meanFrpUpper,
+                cell.meanFrp,
+              );
+              const isWideUncert =
+                geometryHarmonized &&
+                cell.hasData &&
+                relWidth !== null &&
+                relWidth > WIDE_UNCERTAINTY_THRESHOLD;
 
               const sliceStyle: SliceCssVars = {
                 "--slice-raw": sliceColorVar(
@@ -535,6 +569,7 @@ function BurnCalendar() {
                   data-selected={isSelectedFilter ? "true" : undefined}
                   data-highlighted={isHighlighted ? "true" : undefined}
                   data-empty={!cell.hasData ? "true" : undefined}
+                  data-wide-uncert={isWideUncert ? "true" : undefined}
                   aria-pressed={isSelectedFilter}
                   aria-disabled={!cell.hasData ? true : undefined}
                   aria-label={formatCalendarCellText(cell, revealAnswer, copy, calendarFrp.get(calendarFrpKey(cell.year, cell.month)))}
@@ -551,6 +586,14 @@ function BurnCalendar() {
                 >
                   <path d={trackPath} className={styles.sliceTrack} />
                   <path d={sectorPath} className={styles.sliceWedge} />
+                  {isWideUncert && (
+                    <path
+                      d={sectorPath}
+                      fill={`url(#${hatchId})`}
+                      className={styles.sliceHatch}
+                      aria-hidden="true"
+                    />
+                  )}
                   {meanArcPath && <path d={meanArcPath} className={styles.normalArc} />}
                   <text
                     x={labelPos.x}

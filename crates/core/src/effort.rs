@@ -1,10 +1,18 @@
-use crate::models::{HarmonizedHotspot, Sensor};
+use crate::models::{DayNight, HarmonizedHotspot, Sensor};
 use chrono::Datelike;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 /// Minimum months sharing a platform configuration before its Ω is trusted.
 const MIN_MONTHS_PER_CONFIG: usize = 3;
+
+/// MODIS scan-edge detection limit ([16]): above this threshold detection probability no longer
+/// depends on where in the swath the fire falls, removing the VIIRS small-fire sensitivity cliff.
+pub const HIGH_INTENSITY_FRP_MW: f64 = 40.0;
+
+/// Minimum MODIS-observable high-intensity sample count before computing a regime ratio;
+/// ratios from tiny counts are noise and worse than reporting `None`.
+const MIN_HIGH_INTENSITY_SAMPLE: u64 = 30;
 
 /// First month with Terra and Aqua both flying (year, month). Aqua's first FIRMS detections are
 /// in 2002-07; before that the MODIS reference channel itself had half the platforms, a change
@@ -21,6 +29,12 @@ pub struct EffortFactor {
     pub total: u64,
     pub modis_observable: u64,
     pub omega: Option<f64>,
+    pub total_high_intensity: u64,
+    pub modis_observable_high_intensity: u64,
+    pub omega_high_intensity: Option<f64>,
+    /// Diagnostic of the diurnal/swath difference (~1.2x between S-NPP and Aqua, [16] §5.4);
+    /// reported separately and not applied to any count.
+    pub snpp_aqua_high_intensity_ratio: Option<f64>,
 }
 
 type PoolingKey = (bool, Vec<Sensor>);
@@ -30,12 +44,20 @@ struct PoolAccumulator {
     months: usize,
     total: u64,
     modis_observable: u64,
+    total_high: u64,
+    modis_observable_high: u64,
+    snpp_day_high: u64,
+    aqua_day_high: u64,
 }
 
 struct MonthBucket {
     platforms: BTreeSet<Sensor>,
     total: u64,
     modis_observable: u64,
+    total_high: u64,
+    modis_observable_high: u64,
+    snpp_day_high: u64,
+    aqua_day_high: u64,
 }
 
 // Pool by (has_modis, viirs_platforms) rather than exact sensor set: Ω is a VIIRS/MODIS ratio,
@@ -58,10 +80,29 @@ fn aggregate_months(hotspots: &[HarmonizedHotspot]) -> HashMap<(i32, u32), Month
                 platforms: BTreeSet::new(),
                 total: 0,
                 modis_observable: 0,
+                total_high: 0,
+                modis_observable_high: 0,
+                snpp_day_high: 0,
+                aqua_day_high: 0,
             });
         bucket.total += 1;
-        if h.platforms.iter().any(|s| s.is_modis()) {
+        let has_modis = h.platforms.iter().any(|s| s.is_modis());
+        if has_modis {
             bucket.modis_observable += 1;
+        }
+        if h.frp.is_finite() && h.frp >= HIGH_INTENSITY_FRP_MW {
+            bucket.total_high += 1;
+            if has_modis {
+                bucket.modis_observable_high += 1;
+            }
+            if h.daynight == DayNight::Day {
+                if h.platforms.contains(&Sensor::ViirsSNPP) {
+                    bucket.snpp_day_high += 1;
+                }
+                if h.platforms.contains(&Sensor::ModisAqua) {
+                    bucket.aqua_day_high += 1;
+                }
+            }
         }
         bucket.platforms.extend(h.platforms.iter().copied());
     }
@@ -88,11 +129,19 @@ fn factors_from_months(
             months: 0,
             total: 0,
             modis_observable: 0,
+            total_high: 0,
+            modis_observable_high: 0,
+            snpp_day_high: 0,
+            aqua_day_high: 0,
         });
         entry.platforms.extend(bucket.platforms.iter().copied());
         entry.months += 1;
         entry.total += bucket.total;
         entry.modis_observable += bucket.modis_observable;
+        entry.total_high += bucket.total_high;
+        entry.modis_observable_high += bucket.modis_observable_high;
+        entry.snpp_day_high += bucket.snpp_day_high;
+        entry.aqua_day_high += bucket.aqua_day_high;
     }
 
     let mut factors = Vec::with_capacity(pooled.len());
@@ -101,6 +150,22 @@ fn factors_from_months(
     for ((has_modis, viirs_platforms), acc) in pooled {
         let omega = if acc.months >= MIN_MONTHS_PER_CONFIG && acc.modis_observable > 0 {
             let ratio = acc.total as f64 / acc.modis_observable as f64;
+            ratio.is_finite().then_some(ratio)
+        } else {
+            None
+        };
+        let omega_high_intensity = if acc.months >= MIN_MONTHS_PER_CONFIG
+            && acc.modis_observable_high >= MIN_HIGH_INTENSITY_SAMPLE
+        {
+            let ratio = acc.total_high as f64 / acc.modis_observable_high as f64;
+            ratio.is_finite().then_some(ratio)
+        } else {
+            None
+        };
+        let snpp_aqua_high_intensity_ratio = if viirs_platforms.contains(&Sensor::ViirsSNPP)
+            && acc.aqua_day_high >= MIN_HIGH_INTENSITY_SAMPLE
+        {
+            let ratio = acc.snpp_day_high as f64 / acc.aqua_day_high as f64;
             ratio.is_finite().then_some(ratio)
         } else {
             None
@@ -114,6 +179,10 @@ fn factors_from_months(
             total: acc.total,
             modis_observable: acc.modis_observable,
             omega,
+            total_high_intensity: acc.total_high,
+            modis_observable_high_intensity: acc.modis_observable_high,
+            omega_high_intensity,
+            snpp_aqua_high_intensity_ratio,
         });
     }
 
@@ -323,7 +392,13 @@ mod tests {
     use crate::models::{Confidence, DayNight, HotspotSource};
     use chrono::{TimeZone, Utc};
 
-    fn make_hotspot(year: i32, month: u32, platforms: Vec<Sensor>) -> HarmonizedHotspot {
+    fn make_hotspot_with(
+        year: i32,
+        month: u32,
+        platforms: Vec<Sensor>,
+        frp: f64,
+        daynight: DayNight,
+    ) -> HarmonizedHotspot {
         let has_modis = platforms.iter().any(|s| s.is_modis());
         let has_viirs = platforms.iter().any(|s| s.is_viirs());
         let source = match (has_modis, has_viirs) {
@@ -334,18 +409,22 @@ mod tests {
         HarmonizedHotspot {
             lat: 39.0,
             lon: 32.0,
-            frp: 30.0,
-            frp_corrected: 30.0,
-            frp_lower: 27.6,
-            frp_upper: 32.4,
+            frp,
+            frp_corrected: frp,
+            frp_lower: frp * 0.92,
+            frp_upper: frp * 1.08,
             vza_factor: None,
             n_obs: platforms.len() as u16,
             platforms,
             confidence: Confidence::Nominal,
             source,
             acquired: Utc.with_ymd_and_hms(year, month, 15, 12, 0, 0).unwrap(),
-            daynight: DayNight::Day,
+            daynight,
         }
+    }
+
+    fn make_hotspot(year: i32, month: u32, platforms: Vec<Sensor>) -> HarmonizedHotspot {
+        make_hotspot_with(year, month, platforms, 30.0, DayNight::Day)
     }
 
     #[test]
@@ -731,6 +810,180 @@ mod tests {
         let factors = estimate_effort(&hotspots);
         assert_eq!(factors[0].months, 4);
         assert_eq!(omega_for_month(&factors, &hotspots, 2001, 2), Some(1.0));
+    }
+
+    #[test]
+    fn high_intensity_threshold_matches_modis_edge_detection_limit() {
+        let coeffs = crate::vza::detection_limit_coefficients(Sensor::ModisTerra, DayNight::Day);
+        let edge_limit = crate::vza::detection_limit_mw(&coeffs, 9.66).unwrap();
+        assert!(
+            (edge_limit - HIGH_INTENSITY_FRP_MW).abs() < 5.0,
+            "MODIS scan-edge limit {edge_limit} MW should be within a few MW of {HIGH_INTENSITY_FRP_MW} MW"
+        );
+    }
+
+    #[test]
+    fn small_fire_cliff_inflates_omega_but_not_high_intensity_omega() {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for _ in 0..100 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ViirsSNPP], 5.0, DayNight::Day));
+            }
+            for _ in 0..10 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ModisAqua], 50.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ViirsSNPP], 50.0, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert_eq!(factors[0].omega, Some(12.0));
+        assert_eq!(factors[0].total_high_intensity, 60);
+        assert_eq!(factors[0].modis_observable_high_intensity, 30);
+        assert_eq!(factors[0].omega_high_intensity, Some(2.0));
+    }
+
+    #[test]
+    fn below_min_high_intensity_sample_yields_none_regime_omega() {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for _ in 0..5 {
+                hotspots.push(make_hotspot_with(2016, month, vec![Sensor::ModisAqua], 20.0, DayNight::Day));
+            }
+            for _ in 0..9 {
+                hotspots.push(make_hotspot_with(2016, month, vec![Sensor::ModisAqua], 50.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2016, month, vec![Sensor::ViirsSNPP], 50.0, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert!(factors[0].omega.is_some());
+        assert_eq!(factors[0].modis_observable_high_intensity, 27);
+        assert_eq!(factors[0].omega_high_intensity, None);
+    }
+
+    #[test]
+    fn modis_only_high_intensity_pool_has_omega_one() {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for _ in 0..10 {
+                hotspots.push(make_hotspot_with(2010, month, vec![Sensor::ModisTerra], 50.0, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert_eq!(factors[0].total_high_intensity, 30);
+        assert_eq!(factors[0].modis_observable_high_intensity, 30);
+        assert_eq!(factors[0].omega_high_intensity, Some(1.0));
+        assert_eq!(factors[0].snpp_aqua_high_intensity_ratio, None);
+    }
+
+    #[test]
+    fn high_intensity_threshold_boundary_and_nan_handling() {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for _ in 0..10 {
+                hotspots.push(make_hotspot_with(2018, month, vec![Sensor::ModisTerra], 40.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2018, month, vec![Sensor::ViirsSNPP], 40.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2018, month, vec![Sensor::ModisTerra], 39.999, DayNight::Day));
+            }
+            for _ in 0..5 {
+                hotspots.push(make_hotspot_with(2018, month, vec![Sensor::ModisTerra], f64::NAN, DayNight::Day));
+                hotspots.push(make_hotspot_with(2018, month, vec![Sensor::ViirsSNPP], f64::NAN, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert_eq!(factors[0].total, 120);
+        assert_eq!(factors[0].modis_observable, 75);
+        assert_eq!(factors[0].total_high_intensity, 60);
+        assert_eq!(factors[0].modis_observable_high_intensity, 30);
+        assert_eq!(factors[0].omega_high_intensity, Some(2.0));
+    }
+
+    #[test]
+    fn pre_aqua_exclusion_applies_to_high_intensity_pools() {
+        let mut hotspots = Vec::new();
+        for month in [5, 6] {
+            for _ in 0..20 {
+                hotspots.push(make_hotspot_with(2002, month, vec![Sensor::ModisTerra], 50.0, DayNight::Day));
+            }
+        }
+        for month in 7..=9 {
+            for _ in 0..10 {
+                hotspots.push(make_hotspot_with(2002, month, vec![Sensor::ModisTerra], 50.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2002, month, vec![Sensor::ModisAqua], 50.0, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        assert_eq!(factors.len(), 1);
+        assert_eq!(factors[0].months, 3);
+        assert_eq!(factors[0].total_high_intensity, 60);
+        assert_eq!(factors[0].modis_observable_high_intensity, 60);
+        assert_eq!(factors[0].omega_high_intensity, Some(1.0));
+    }
+
+    #[test]
+    fn snpp_aqua_high_intensity_ratio_daytime_only_and_requires_snpp() {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for _ in 0..20 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ModisAqua], 50.0, DayNight::Day));
+            }
+            for _ in 0..24 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ViirsSNPP], 50.0, DayNight::Day));
+            }
+            for _ in 0..15 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ModisAqua], 50.0, DayNight::Night));
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ViirsSNPP], 50.0, DayNight::Night));
+            }
+            for _ in 0..10 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ModisAqua], 20.0, DayNight::Day));
+            }
+        }
+        for month in 4..=6 {
+            for _ in 0..20 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ModisAqua], 50.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ViirsNOAA20], 50.0, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        let snpp_pool = factors
+            .iter()
+            .find(|f| f.viirs_platforms == vec![Sensor::ViirsSNPP])
+            .unwrap();
+        let noaa20_pool = factors
+            .iter()
+            .find(|f| f.viirs_platforms == vec![Sensor::ViirsNOAA20])
+            .unwrap();
+
+        let ratio = snpp_pool.snpp_aqua_high_intensity_ratio.unwrap();
+        assert!((ratio - 1.2).abs() < 1e-12, "expected 1.2, got {ratio}");
+        assert_eq!(noaa20_pool.snpp_aqua_high_intensity_ratio, None);
+    }
+
+    #[test]
+    fn effort_factor_serializes_high_intensity_and_diurnal_fields() {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for _ in 0..10 {
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ModisAqua], 50.0, DayNight::Day));
+                hotspots.push(make_hotspot_with(2015, month, vec![Sensor::ViirsSNPP], 50.0, DayNight::Day));
+            }
+        }
+
+        let factors = estimate_effort(&hotspots);
+        let value = serde_json::to_value(&factors[0]).unwrap();
+        let obj = value.as_object().unwrap();
+        assert!(obj.contains_key("total_high_intensity"));
+        assert!(obj.contains_key("modis_observable_high_intensity"));
+        assert!(obj.contains_key("omega_high_intensity"));
+        assert!(obj.contains_key("snpp_aqua_high_intensity_ratio"));
     }
 
     #[test]

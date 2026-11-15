@@ -1,3 +1,7 @@
+import { decideNextDataMode, type ProbeOrFetchOutcome } from "../lib/dataMode";
+import { buildDemoPoints, buildDemoRegions, buildDemoSeries } from "../lib/demoData";
+import { DEFAULT_PIPELINE_CONFIG, overridesToQueryParams } from "../lib/pipelineOverrides";
+import { useAppStore } from "../store/useAppStore";
 import {
   Confidence,
   DayNight,
@@ -14,6 +18,8 @@ import {
   type HarmonizedHotspot,
   type HarmonizedPoint,
   type HarmonizeResponse,
+  type PipelineConfig,
+  type PipelineOverrides,
   type MinConfidence,
   type PointStages,
   type RawHotspot,
@@ -139,6 +145,9 @@ interface WireSeriesMonth {
   harmonized: number;
   anomaly_raw: number | null;
   anomaly_harmonized: number | null;
+  mean_frp?: number | null;
+  mean_frp_lower?: number | null;
+  mean_frp_upper?: number | null;
 }
 
 interface WireSeriesCliff {
@@ -196,6 +205,8 @@ interface WireHarmonizedPoint {
   vza_factor?: number | null;
   n_obs?: number;
   platforms?: string[];
+  frp_lower?: number | null;
+  frp_upper?: number | null;
 }
 
 interface WirePointStages {
@@ -210,6 +221,27 @@ interface WirePointStages {
   harmonized: number;
 }
 
+interface WirePipelineConfig {
+  dedup: {
+    max_time_diff_secs: number;
+    min_overlap_ratio: number;
+  };
+  fleet: {
+    viirs_window_secs: number;
+    modis_window_secs: number;
+    radius_km: number;
+  };
+  matching: {
+    radius_km: number;
+    window_secs: number;
+  };
+  vza?: {
+    a: number;
+    b: number;
+    c: number;
+  };
+}
+
 interface WirePointsResponse {
   region: string;
   year: number;
@@ -220,6 +252,8 @@ interface WirePointsResponse {
   harmonized: WireHarmonizedPoint[];
   stages: WirePointStages;
   bbox: BBox | null;
+  config?: WirePipelineConfig;
+  config_overridden?: boolean;
   filters?: WireConfidenceFilter | null;
   tropical_swath_gap?: unknown;
 }
@@ -241,6 +275,7 @@ interface WireCalendarCell {
   total_frp_upper: number | null;
   frp_per_detection_eq: number | null;
   anomaly: number | null;
+  quality_flags?: string[];
 }
 
 interface WireEffortFactor {
@@ -251,6 +286,10 @@ interface WireEffortFactor {
   total: number;
   modis_observable: number;
   omega: number | null;
+  total_high_intensity?: number;
+  modis_observable_high_intensity?: number;
+  omega_high_intensity?: number | null;
+  snpp_aqua_high_intensity_ratio?: number | null;
 }
 
 interface WireEffortInfo {
@@ -458,6 +497,9 @@ export interface SeriesMonth {
   harmonized: number;
   anomalyRaw: number | null;
   anomalyHarmonized: number | null;
+  meanFrp: number | null;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
 }
 
 export interface SeriesResponse {
@@ -479,6 +521,8 @@ export interface PointsResponse {
   harmonized: readonly HarmonizedPoint[];
   stages: PointStages;
   bbox: BBox | null;
+  config?: PipelineConfig;
+  configOverridden?: boolean;
   filters: ConfidenceFilterInfo;
   tropicalSwathGap: TropicalSwathGapInfo | null;
 }
@@ -546,6 +590,60 @@ async function requestJson<T>(
 }
 
 // --- Adapters ----------------------------------------------------------------
+
+function finiteOrNull(value: number | null | undefined): number | null {
+  return value != null && Number.isFinite(value) ? value : null;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+export function adaptPipelineConfig(wire: unknown): PipelineConfig {
+  if (
+    !isRecord(wire) ||
+    !isRecord(wire.dedup) ||
+    !isRecord(wire.fleet) ||
+    !isRecord(wire.matching) ||
+    !isFiniteNumber(wire.dedup.max_time_diff_secs) ||
+    !isFiniteNumber(wire.dedup.min_overlap_ratio) ||
+    !isFiniteNumber(wire.fleet.viirs_window_secs) ||
+    !isFiniteNumber(wire.fleet.modis_window_secs) ||
+    !isFiniteNumber(wire.fleet.radius_km) ||
+    !isFiniteNumber(wire.matching.radius_km) ||
+    !isFiniteNumber(wire.matching.window_secs)
+  ) {
+    throw new ApiError("Invalid config response from server", 200, "server", "invalid_response");
+  }
+  const adapted: PipelineConfig = {
+    dedup: {
+      maxTimeDiffSecs: wire.dedup.max_time_diff_secs,
+      minOverlapRatio: wire.dedup.min_overlap_ratio,
+    },
+    fleet: {
+      viirsWindowSecs: wire.fleet.viirs_window_secs,
+      modisWindowSecs: wire.fleet.modis_window_secs,
+      radiusKm: wire.fleet.radius_km,
+    },
+    matching: {
+      radiusKm: wire.matching.radius_km,
+      windowSecs: wire.matching.window_secs,
+    },
+  };
+  if (
+    isRecord(wire.vza) &&
+    isFiniteNumber(wire.vza.a) &&
+    isFiniteNumber(wire.vza.b) &&
+    isFiniteNumber(wire.vza.c)
+  ) {
+    adapted.vza = {
+      a: wire.vza.a,
+      b: wire.vza.b,
+      c: wire.vza.c,
+    };
+  }
+  return adapted;
+}
 
 function adaptCliff(wire: WireSeriesCliff | null): CliffSummary | null {
   if (!wire) {
@@ -619,6 +717,7 @@ function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
     totalFrpUpper: w.total_frp_upper,
     frpPerDetectionEq: w.frp_per_detection_eq,
     anomaly: w.anomaly,
+    qualityFlags: w.quality_flags ?? [],
   };
 }
 
@@ -634,6 +733,10 @@ function adaptEffortInfo(w: WireEffortInfo): EffortInfo {
       total: f.total,
       modisObservable: f.modis_observable,
       omega: f.omega,
+      totalHighIntensity: f.total_high_intensity,
+      modisObservableHighIntensity: f.modis_observable_high_intensity,
+      omegaHighIntensity: f.omega_high_intensity,
+      snppAquaHighIntensityRatio: f.snpp_aqua_high_intensity_ratio,
     })),
     tropicalSwathGap: adaptTropicalSwathGap(w.tropical_swath_gap),
   };
@@ -722,164 +825,291 @@ function adaptReportInfo(w: WireReportInfo): ReportInfo {
   };
 }
 
+// --- Health probe & demo fallback helpers ------------------------------------
+
+export const HEALTH_PROBE_TIMEOUT_MS = 2500;
+
+export type ProbeOutcome = Extract<ProbeOrFetchOutcome, { source: "probe" }>;
+
+export async function probeHealth(
+  signal?: AbortSignal,
+  timeoutMs = HEALTH_PROBE_TIMEOUT_MS,
+): Promise<ProbeOutcome> {
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timerId = globalThis.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  const onExternalAbort = () => {
+    controller.abort();
+  };
+  signal?.addEventListener("abort", onExternalAbort, { once: true });
+
+  try {
+    const url = new URL(`${BASE_URL}/health`, window.location.origin);
+    const res = await fetch(url.toString(), { signal: controller.signal });
+    if (!res.ok) {
+      return { source: "probe", ok: false, status: res.status };
+    }
+    const body: unknown = await res.json();
+    if (isRecord(body) && typeof body.status === "string") {
+      return { source: "probe", ok: true };
+    }
+    return { source: "probe", ok: false, status: null };
+  } catch (err: unknown) {
+    if (signal?.aborted && !timedOut) {
+      throw err;
+    }
+    return { source: "probe", ok: false, status: null };
+  } finally {
+    globalThis.clearTimeout(timerId);
+    signal?.removeEventListener("abort", onExternalAbort);
+  }
+}
+
+function handleLiveFetchError(err: unknown, signal?: AbortSignal): boolean {
+  if (isAbortError(err) || signal?.aborted || !(err instanceof ApiError)) {
+    return false;
+  }
+  const state = useAppStore.getState();
+  const next = decideNextDataMode(
+    { dataMode: state.dataMode, dataModeSource: state.dataModeSource },
+    { source: "fetch", ok: false, kind: err.kind, status: err.status },
+  );
+  if (next.dataMode !== state.dataMode || next.dataModeSource !== state.dataModeSource) {
+    state.setDataMode(next.dataMode, next.dataModeSource);
+  }
+  return next.dataMode === "demo";
+}
+
 // --- Public endpoint fetchers ------------------------------------------------
 
 export async function fetchRegions(signal?: AbortSignal): Promise<RegionsResponse> {
-  const wire = await requestJson<WireRegionsResponse>("/regions", undefined, signal);
-  if (
-    !isRecord(wire) ||
-    typeof wire.source !== "string" ||
-    !Array.isArray(wire.regions) ||
-    wire.regions.some((r) => !isRecord(r) || typeof r.id !== "string" || typeof r.name !== "string")
-  ) {
-    throw new ApiError("Invalid regions response from server", 200, "server", "invalid_response");
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoRegions();
   }
-  return {
-    source: wire.source,
-    regions: wire.regions.map((r) => ({
-      id: r.id,
-      name: r.name,
-      modisYears: r.modis_years ? [r.modis_years[0], r.modis_years[1]] : null,
-      viirsYears: r.viirs_years ? [r.viirs_years[0], r.viirs_years[1]] : null,
-      sizeMb: typeof r.size_mb === "number" && Number.isFinite(r.size_mb) ? r.size_mb : null,
-      tooLarge: Boolean(r.too_large),
-    })),
-  };
+  try {
+    const wire = await requestJson<WireRegionsResponse>("/regions", undefined, signal);
+    if (
+      !isRecord(wire) ||
+      typeof wire.source !== "string" ||
+      !Array.isArray(wire.regions) ||
+      wire.regions.some((r) => !isRecord(r) || typeof r.id !== "string" || typeof r.name !== "string")
+    ) {
+      throw new ApiError("Invalid regions response from server", 200, "server", "invalid_response");
+    }
+    return {
+      source: wire.source,
+      regions: wire.regions.map((r) => ({
+        id: r.id,
+        name: r.name,
+        modisYears: r.modis_years ? [r.modis_years[0], r.modis_years[1]] : null,
+        viirsYears: r.viirs_years ? [r.viirs_years[0], r.viirs_years[1]] : null,
+        sizeMb: typeof r.size_mb === "number" && Number.isFinite(r.size_mb) ? r.size_mb : null,
+        tooLarge: Boolean(r.too_large),
+      })),
+    };
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return buildDemoRegions();
+    }
+    throw err;
+  }
 }
 
 export async function fetchSeries(region: string, signal?: AbortSignal): Promise<SeriesResponse> {
-  const wire = await requestJson<WireSeriesResponse>("/series", { region }, signal);
-  if (
-    !isRecord(wire) ||
-    typeof wire.region !== "string" ||
-    !isRecord(wire.filters) ||
-    !Array.isArray(wire.years) ||
-    !Array.isArray(wire.months)
-  ) {
-    throw new ApiError("Invalid series response from server", 200, "server", "invalid_response");
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoSeries(region);
   }
-  return {
-    region: wire.region,
-    filters: {
-      fireType: wire.filters.fire_type,
-      confidence: wire.filters.confidence,
-      area: wire.filters.area,
-      sensors: wire.filters.sensors,
-    },
-    years: wire.years.map((y) => ({
-      year: y.year,
-      raw: y.raw_total,
-      rawModis: y.raw_modis,
-      rawViirs: y.raw_viirs,
-      harmonized: y.harmonized,
-      matched: y.matched,
-      viirsAggregated: y.viirs_aggregated ?? 0,
-      modisOnly: y.modis_only,
-      viirsOnly: y.viirs_only,
-      staticMasked: y.static_masked ?? 0,
-      samaRemoved: y.sama_removed ?? 0,
-      interscanRemoved: y.interscan_removed,
-      fleetMerged: y.fleet_merged ?? 0,
-      firstDate: y.first_date ?? null,
-      lastDate: y.last_date ?? null,
-      partial: y.partial,
-      modisFirstDate: y.modis_first_date ?? null,
-      modisLastDate: y.modis_last_date ?? null,
-      viirsFirstDate: y.viirs_first_date ?? null,
-      viirsLastDate: y.viirs_last_date ?? null,
-    })),
-    months: wire.months.map((m) => ({
-      year: m.year,
-      month: m.month,
-      rawModis: m.raw_modis,
-      rawViirs: m.raw_viirs,
-      rawTotal: m.raw_total,
-      harmonized: m.harmonized,
-      anomalyRaw: m.anomaly_raw,
-      anomalyHarmonized: m.anomaly_harmonized,
-    })),
-    cliff: adaptCliff(wire.cliff),
-    coverage: wire.coverage
-      ? {
-          modis: adaptYearSpan(wire.coverage.modis),
-          viirs: adaptYearSpan(wire.coverage.viirs),
-        }
-      : null,
-  };
+  try {
+    const wire = await requestJson<WireSeriesResponse>("/series", { region }, signal);
+    if (
+      !isRecord(wire) ||
+      typeof wire.region !== "string" ||
+      !isRecord(wire.filters) ||
+      !Array.isArray(wire.years) ||
+      !Array.isArray(wire.months)
+    ) {
+      throw new ApiError("Invalid series response from server", 200, "server", "invalid_response");
+    }
+    return {
+      region: wire.region,
+      filters: {
+        fireType: wire.filters.fire_type,
+        confidence: wire.filters.confidence,
+        area: wire.filters.area,
+        sensors: wire.filters.sensors,
+      },
+      years: wire.years.map((y) => ({
+        year: y.year,
+        raw: y.raw_total,
+        rawModis: y.raw_modis,
+        rawViirs: y.raw_viirs,
+        harmonized: y.harmonized,
+        matched: y.matched,
+        viirsAggregated: y.viirs_aggregated ?? 0,
+        modisOnly: y.modis_only,
+        viirsOnly: y.viirs_only,
+        staticMasked: y.static_masked ?? 0,
+        samaRemoved: y.sama_removed ?? 0,
+        interscanRemoved: y.interscan_removed,
+        fleetMerged: y.fleet_merged ?? 0,
+        firstDate: y.first_date ?? null,
+        lastDate: y.last_date ?? null,
+        partial: y.partial,
+        modisFirstDate: y.modis_first_date ?? null,
+        modisLastDate: y.modis_last_date ?? null,
+        viirsFirstDate: y.viirs_first_date ?? null,
+        viirsLastDate: y.viirs_last_date ?? null,
+      })),
+      months: wire.months.map((m) => ({
+        year: m.year,
+        month: m.month,
+        rawModis: m.raw_modis,
+        rawViirs: m.raw_viirs,
+        rawTotal: m.raw_total,
+        harmonized: m.harmonized,
+        anomalyRaw: m.anomaly_raw,
+        anomalyHarmonized: m.anomaly_harmonized,
+        meanFrp: finiteOrNull(m.mean_frp),
+        meanFrpLower: finiteOrNull(m.mean_frp_lower),
+        meanFrpUpper: finiteOrNull(m.mean_frp_upper),
+      })),
+      cliff: adaptCliff(wire.cliff),
+      coverage: wire.coverage
+        ? {
+            modis: adaptYearSpan(wire.coverage.modis),
+            viirs: adaptYearSpan(wire.coverage.viirs),
+          }
+        : null,
+    };
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return buildDemoSeries(region);
+    }
+    throw err;
+  }
+}
+
+export async function fetchConfig(signal?: AbortSignal): Promise<PipelineConfig> {
+  if (useAppStore.getState().dataMode === "demo") {
+    return DEFAULT_PIPELINE_CONFIG;
+  }
+  try {
+    const wire = await requestJson<WirePipelineConfig>("/config", undefined, signal);
+    return adaptPipelineConfig(wire);
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return DEFAULT_PIPELINE_CONFIG;
+    }
+    throw err;
+  }
 }
 
 export interface FetchPointsParams {
   region: string;
   year: number;
   month?: number | null;
+  overrides?: PipelineOverrides;
+  defaults?: PipelineConfig;
   minConfidence?: MinConfidence;
 }
 
 export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
+  if (useAppStore.getState().dataMode === "demo") {
+    return buildDemoPoints(params);
+  }
+  const defaults = params.defaults ?? useAppStore.getState().serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const query: Record<string, string> = {
     region: params.region,
     year: String(params.year),
+    ...overridesToQueryParams(params.overrides, defaults),
   };
   if (params.month !== undefined && params.month !== null) {
     query.month = String(params.month);
   }
   setMinConfidenceParam(query, params.minConfidence);
-  const wire = await requestJson<WirePointsResponse>("/points", query, signal);
-  if (
-    !isRecord(wire) ||
-    typeof wire.region !== "string" ||
-    !Array.isArray(wire.raw) ||
-    !Array.isArray(wire.harmonized) ||
-    !isRecord(wire.stages)
-  ) {
-    throw new ApiError("Invalid points response from server", 200, "server", "invalid_response");
+  try {
+    const wire = await requestJson<WirePointsResponse>("/points", query, signal);
+    if (
+      !isRecord(wire) ||
+      typeof wire.region !== "string" ||
+      !Array.isArray(wire.raw) ||
+      !Array.isArray(wire.harmonized) ||
+      !isRecord(wire.stages)
+    ) {
+      throw new ApiError("Invalid points response from server", 200, "server", "invalid_response");
+    }
+    let adaptedConfig: PipelineConfig | undefined;
+    if (wire.config !== undefined) {
+      try {
+        adaptedConfig = adaptPipelineConfig(wire.config);
+      } catch {
+        // Ignore malformed optional config metadata on points response.
+      }
+    }
+    return {
+      region: wire.region,
+      year: wire.year,
+      month: wire.month ?? null,
+      truncated: wire.truncated,
+      limit: wire.limit,
+      raw: wire.raw.map((r) => ({
+        id: r.id,
+        lat: r.lat,
+        lon: r.lon,
+        sensor: r.sensor === "VIIRS" ? "VIIRS" : "MODIS",
+        frp: r.frp,
+        confidence: adaptConfidence(r.confidence),
+        acquired: r.acquired,
+        daynight: adaptDayNight(r.daynight),
+        harmonizedId: r.harmonized_id,
+      })),
+      harmonized: wire.harmonized.map((h) => ({
+        id: h.id,
+        lat: h.lat,
+        lon: h.lon,
+        frp: h.frp,
+        frpCorrected: h.frp_corrected,
+        confidence: adaptConfidence(h.confidence),
+        source: adaptSource(h.source),
+        acquired: h.acquired,
+        daynight: adaptDayNight(h.daynight),
+        vzaFactor: h.vza_factor ?? null,
+        nObs: h.n_obs ?? 1,
+        platforms: h.platforms ?? [],
+        frpLower: finiteOrNull(h.frp_lower),
+        frpUpper: finiteOrNull(h.frp_upper),
+      })),
+      stages: {
+        rawModis: wire.stages.raw_modis,
+        rawViirs: wire.stages.raw_viirs,
+        staticMasked: wire.stages.static_masked ?? 0,
+        samaRemoved: wire.stages.sama_removed ?? 0,
+        interscanRemoved: wire.stages.interscan_removed,
+        fleetMerged: wire.stages.fleet_merged ?? 0,
+        matchedPairs: wire.stages.matched_pairs,
+        viirsAggregated: wire.stages.viirs_aggregated ?? 0,
+        harmonized: wire.stages.harmonized,
+      },
+      bbox: wire.bbox ?? null,
+      config: adaptedConfig,
+      configOverridden: Boolean(wire.config_overridden),
+      filters: adaptFilters(wire.filters),
+      tropicalSwathGap: adaptTropicalSwathGap(wire.tropical_swath_gap),
+    };
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return buildDemoPoints(params);
+    }
+    throw err;
   }
-  return {
-    region: wire.region,
-    year: wire.year,
-    month: wire.month ?? null,
-    truncated: wire.truncated,
-    limit: wire.limit,
-    raw: wire.raw.map((r) => ({
-      id: r.id,
-      lat: r.lat,
-      lon: r.lon,
-      sensor: r.sensor === "VIIRS" ? "VIIRS" : "MODIS",
-      frp: r.frp,
-      confidence: adaptConfidence(r.confidence),
-      acquired: r.acquired,
-      daynight: adaptDayNight(r.daynight),
-      harmonizedId: r.harmonized_id,
-    })),
-    harmonized: wire.harmonized.map((h) => ({
-      id: h.id,
-      lat: h.lat,
-      lon: h.lon,
-      frp: h.frp,
-      frpCorrected: h.frp_corrected,
-      confidence: adaptConfidence(h.confidence),
-      source: adaptSource(h.source),
-      acquired: h.acquired,
-      daynight: adaptDayNight(h.daynight),
-      vzaFactor: h.vza_factor ?? null,
-      nObs: h.n_obs ?? 1,
-      platforms: h.platforms ?? [],
-    })),
-    stages: {
-      rawModis: wire.stages.raw_modis,
-      rawViirs: wire.stages.raw_viirs,
-      staticMasked: wire.stages.static_masked ?? 0,
-      samaRemoved: wire.stages.sama_removed ?? 0,
-      interscanRemoved: wire.stages.interscan_removed,
-      fleetMerged: wire.stages.fleet_merged ?? 0,
-      matchedPairs: wire.stages.matched_pairs,
-      viirsAggregated: wire.stages.viirs_aggregated ?? 0,
-      harmonized: wire.stages.harmonized,
-    },
-    bbox: wire.bbox ?? null,
-    filters: adaptFilters(wire.filters),
-    tropicalSwathGap: adaptTropicalSwathGap(wire.tropical_swath_gap),
-  };
 }
 
 // --- NRT endpoint fetchers ---
@@ -938,11 +1168,27 @@ function adaptHarmonizedHotspot(w: WireHarmonizedHotspot): HarmonizedHotspot {
   };
 }
 
+async function requestLiveJson<T>(
+  endpoint: string,
+  params?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (useAppStore.getState().dataMode === "demo") {
+    throw new ApiError("Not available in demo mode", null, "unreachable", "unreachable");
+  }
+  try {
+    return await requestJson<T>(endpoint, params, signal);
+  } catch (err: unknown) {
+    handleLiveFetchError(err, signal);
+    throw err;
+  }
+}
+
 export async function fetchHarmonize(
   params: HarmonizeParams,
   signal?: AbortSignal,
 ): Promise<HarmonizeResponse> {
-  const wire = await requestJson<WireHarmonizeResponse>("/harmonize", harmonizeQuery(params), signal);
+  const wire = await requestLiveJson<WireHarmonizeResponse>("/harmonize", harmonizeQuery(params), signal);
   return {
     raw: {
       modisCount: wire.raw.modis_count,
@@ -967,7 +1213,7 @@ export async function fetchCompare(
   params: HarmonizeParams,
   signal?: AbortSignal,
 ): Promise<CompareResponse> {
-  const wire = await requestJson<WireCompareResponse>("/compare", harmonizeQuery(params), signal);
+  const wire = await requestLiveJson<WireCompareResponse>("/compare", harmonizeQuery(params), signal);
   return {
     counts: {
       rawTotal: wire.counts.raw_total,
@@ -1013,7 +1259,7 @@ export async function fetchStats(
   params: HarmonizeParams,
   signal?: AbortSignal,
 ): Promise<StatsResponse> {
-  const wire = await requestJson<WireStatsResponse>("/stats", harmonizeQuery(params), signal);
+  const wire = await requestLiveJson<WireStatsResponse>("/stats", harmonizeQuery(params), signal);
   return {
     totals: {
       rawDetections: wire.totals.raw_detections,
@@ -1074,7 +1320,7 @@ export async function fetchCalendar(
   if (params.east != null) q.east = String(params.east);
   if (params.north != null) q.north = String(params.north);
   setMinConfidenceParam(q, params.minConfidence);
-  const wire = await requestJson<WireCalendarApiResponse>("/calendar", q, signal);
+  const wire = await requestLiveJson<WireCalendarApiResponse>("/calendar", q, signal);
   return {
     country: wire.country,
     years: {

@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::{OnceCell, Semaphore};
 use tokio::task::JoinSet;
 
-use pyrosync_core::calendar::compute_anomalies;
+use pyrosync_core::calendar::{compute_anomalies, mean_frp_with_uncertainty};
 use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap};
 use pyrosync_core::events::{
@@ -935,6 +935,7 @@ struct YearEntry {
 }
 
 #[derive(Serialize)]
+#[cfg_attr(test, derive(Deserialize))]
 struct MonthEntry {
     year: i32,
     month: u32,
@@ -942,6 +943,9 @@ struct MonthEntry {
     raw_viirs: usize,
     raw_total: usize,
     harmonized: usize,
+    mean_frp: Option<f64>,
+    mean_frp_lower: Option<f64>,
+    mean_frp_upper: Option<f64>,
     anomaly_raw: Option<f64>,
     anomaly_harmonized: Option<f64>,
 }
@@ -1016,18 +1020,26 @@ fn year_stats_with(
                 return None;
             }
             let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
+            // Each month is harmonized on its own, so matches and interscan duplicates
+            // that straddle a month boundary are not merged; the monthly harmonized counts
+            // need not add up to the yearly figure, which is harmonized over the whole year.
+            let harmonized_hotspots =
+                harmonize_with_links_masked(modis, viirs, config, mask.as_ref()).hotspots;
+            let (mean_frp, mean_frp_lower, mean_frp_upper) =
+                match mean_frp_with_uncertainty(&harmonized_hotspots, &config.uncertainty) {
+                    Some((mean, lower, upper)) => (Some(mean), Some(lower), Some(upper)),
+                    None => (None, None, None),
+                };
             Some(MonthEntry {
                 year,
                 month,
                 raw_modis,
                 raw_viirs,
                 raw_total: raw_modis + raw_viirs,
-                // Each month is harmonized on its own, so matches and interscan duplicates
-                // that straddle a month boundary are not merged; the monthly harmonized counts
-                // need not add up to the yearly figure, which is harmonized over the whole year.
-                harmonized: harmonize_with_links_masked(modis, viirs, config, mask.as_ref())
-                    .hotspots
-                    .len(),
+                harmonized: harmonized_hotspots.len(),
+                mean_frp,
+                mean_frp_lower,
+                mean_frp_upper,
                 anomaly_raw: None,
                 anomaly_harmonized: None,
             })
@@ -1091,6 +1103,7 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
+            quality_flags: Vec::new(),
         })
         .collect();
     compute_anomalies(&mut cells);
@@ -1573,12 +1586,17 @@ pub async fn precompute_series(
 
 // ---------- points ----------
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default, Clone)]
 struct PointsParams {
     region: Option<String>,
     year: Option<String>,
     month: Option<String>,
     limit: Option<String>,
+    dedup_time_secs: Option<String>,
+    dedup_overlap: Option<String>,
+    match_radius_km: Option<String>,
+    match_window_secs: Option<String>,
+    fleet_radius_km: Option<String>,
     min_confidence: Option<String>,
 }
 
@@ -1732,6 +1750,8 @@ struct PointsResponse {
     tropical_swath_gap: Option<TropicalSwathGap>,
     events: EventsMeta,
     no_detection_days: Vec<NoDetectionDay>,
+    config: PipelineConfig,
+    config_overridden: bool,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1861,6 +1881,38 @@ fn sample_links(
     (k_start.max(2), keep_out, keep_raw)
 }
 
+fn resolve_points_config(
+    base: &PipelineConfig,
+    params: &PointsParams,
+) -> Result<(PipelineConfig, bool), ApiError> {
+    let mut config = base.clone();
+    let mut overridden = false;
+    if let Some(v) = parse_param::<i64>("dedup_time_secs", params.dedup_time_secs.as_deref())? {
+        config.dedup.max_time_diff_secs = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("dedup_overlap", params.dedup_overlap.as_deref())? {
+        config.dedup.min_overlap_ratio = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("match_radius_km", params.match_radius_km.as_deref())? {
+        config.matching.radius_km = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<i64>("match_window_secs", params.match_window_secs.as_deref())? {
+        config.matching.window_secs = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("fleet_radius_km", params.fleet_radius_km.as_deref())? {
+        config.fleet.radius_km = v;
+        overridden = true;
+    }
+    config
+        .validate()
+        .map_err(|msg| ApiError::new(StatusCode::BAD_REQUEST, msg))?;
+    Ok((config, overridden))
+}
+
 async fn points(
     State(state): State<Arc<ArchiveState>>,
     Query(params): Query<PointsParams>,
@@ -1888,6 +1940,7 @@ async fn points(
         Some(n) => n.min(MAX_POINTS_LIMIT),
         None => DEFAULT_POINTS_LIMIT,
     };
+    let (config, config_overridden) = resolve_points_config(&state.config, &params)?;
     let min_confidence = MinConfidence::parse(params.min_confidence.as_deref())
         .map_err(|message| ApiError::new(StatusCode::BAD_REQUEST, message))?;
     if !region.modis_years.contains(&year)
@@ -1909,7 +1962,6 @@ async fn points(
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
     let coverage = load_coverage(&state).await?;
-    let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
         // Judged on the whole year so a single-month request masks the same cells as /api/series.
@@ -2028,6 +2080,8 @@ async fn points(
             tropical_swath_gap,
             events,
             no_detection_days: gaps,
+            config,
+            config_overridden,
         }
     })
     .await
@@ -2177,7 +2231,7 @@ mod tests {
                 year: Some("2010".into()),
                 month: None,
                 limit: None,
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2531,7 +2585,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("0".into()),
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2549,7 +2603,7 @@ mod tests {
                     year: Some("2021".into()),
                     month: None,
                     limit: Some("1".into()),
-                    min_confidence: None,
+                    ..Default::default()
                 }),
             ),
         )
@@ -2594,7 +2648,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("1".into()),
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2743,7 +2797,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: None,
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3102,6 +3156,7 @@ mod tests {
             month: None,
             limit: None,
             min_confidence: min_confidence.map(str::to_string),
+            ..Default::default()
         };
 
         let Json(all) = points(State(state.clone()), Query(query(None))).await.ok().unwrap();
@@ -3149,7 +3204,7 @@ mod tests {
             year: Some("2010".into()),
             month: Some("7".into()),
             limit: None,
-            min_confidence: None,
+            ..Default::default()
         };
 
         let Json(tropical) = points(State(state.clone()), Query(query("Savanna"))).await.ok().unwrap();
@@ -3206,7 +3261,7 @@ mod tests {
                 year: Some("2018".into()),
                 month: None,
                 limit: None,
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3222,7 +3277,7 @@ mod tests {
                 year: Some("2020".into()),
                 month: None,
                 limit: None,
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3599,6 +3654,119 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn series_treats_v3_schema_as_stale_and_recomputes() {
+        let dir = temp_archive("schema-v3-stale");
+        write_file(&dir, "modis", 2015, "Chios", &[(38.4, "2015-07-01", 0)]);
+
+        let writable_dir = dir.join("_writable");
+        let bundled_dir = dir.join("_bundled");
+
+        let seed_state = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir.clone(),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (_, real_body) = series_raw(&seed_state, "Chios").await.ok().unwrap();
+
+        let csv_path = dir.join("modis/2015/modis_2015_Chios.csv");
+        let csv_bytes = std::fs::metadata(&csv_path).unwrap().len();
+        let v3_meta = serde_json::json!({
+            "schema_version": 3,
+            "config_hash": crate::derived_cache::config_digest(&PipelineConfig::default()),
+            "files": [{
+                "path": "modis/2015/modis_2015_Chios.csv",
+                "bytes": csv_bytes,
+            }],
+            "body_hash": format!("{:016x}", crate::derived_cache::fnv1a_64(&real_body)),
+        });
+        let v3_meta_bytes = serde_json::to_vec_pretty(&v3_meta).unwrap();
+
+        std::fs::create_dir_all(bundled_dir.join("series")).unwrap();
+        std::fs::write(bundled_dir.join("series/Chios.json"), &real_body).unwrap();
+        std::fs::write(bundled_dir.join("series/Chios.meta.json"), &v3_meta_bytes).unwrap();
+        std::fs::write(writable_dir.join("series/Chios.meta.json"), &v3_meta_bytes).unwrap();
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, body) = series_raw(&s, "Chios").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("computed"));
+        assert_eq!(body, real_body);
+
+        let refreshed_meta: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(writable_dir.join("series/Chios.meta.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            refreshed_meta["schema_version"].as_u64(),
+            Some(u64::from(crate::derived_cache::DERIVED_SCHEMA_VERSION))
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_month_mean_frp_and_uncertainty_round_trips() {
+        let dir = temp_archive("month-mean-frp");
+        write_file(
+            &dir,
+            "modis",
+            2015,
+            "FrpLand",
+            &[(39.0, "2015-06-01", 0), (39.5, "2015-08-01", 0)],
+        );
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2015,
+            "FrpLand",
+            &[(39.0, "2015-06-01", 0)],
+        );
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let (src1, body1) = series_raw(&s1, "FrpLand").await.ok().unwrap();
+        assert_eq!(src1.as_deref(), Some("computed"));
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let (src2, body2) = series_raw(&s2, "FrpLand").await.ok().unwrap();
+        assert_eq!(src2.as_deref(), Some("disk"));
+        assert_eq!(body1, body2);
+
+        let json: serde_json::Value = serde_json::from_slice(&body2).unwrap();
+        let months = json["months"].as_array().unwrap();
+        let listed: Vec<u64> = months.iter().map(|m| m["month"].as_u64().unwrap()).collect();
+        // Uncovered months (1..=5, 9..=12) are omitted; covered empty month 7 stays with None.
+        assert_eq!(listed, [6, 7, 8]);
+
+        for m in [6u64, 8u64] {
+            let entry = months.iter().find(|e| e["month"] == m).unwrap();
+            let mean = entry["mean_frp"].as_f64().expect("mean_frp must be present");
+            let lower = entry["mean_frp_lower"].as_f64().expect("mean_frp_lower must be present");
+            let upper = entry["mean_frp_upper"].as_f64().expect("mean_frp_upper must be present");
+            assert!(0.0 <= lower && lower <= mean && mean <= upper);
+        }
+
+        let empty_july = months.iter().find(|e| e["month"] == 7).unwrap();
+        assert_eq!(empty_july["harmonized"], 0);
+        assert_eq!(empty_july.get("mean_frp"), Some(&serde_json::Value::Null));
+        assert_eq!(empty_july.get("mean_frp_lower"), Some(&serde_json::Value::Null));
+        assert_eq!(empty_july.get("mean_frp_upper"), Some(&serde_json::Value::Null));
+
+        let round_tripped: Vec<MonthEntry> =
+            serde_json::from_value(json["months"].clone()).unwrap();
+        let reserialized = serde_json::to_value(&round_tripped).unwrap();
+        assert_eq!(reserialized, json["months"]);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
     async fn regions_rejects_corrupt_or_missing_body_until_repaired() {
         let dir = temp_archive("regions-corrupt-body");
         let big: Vec<(f64, &str, u8)> = (0..120)
@@ -3777,6 +3945,38 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn points_default_config_echoes_server_config_and_not_overridden() {
+        let dir = temp_archive("points-config-default");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+
+        let mut server_config = PipelineConfig::default();
+        server_config.matching.window_secs = 7200;
+        let state = state_with_config(
+            dir.clone(),
+            dir.join("_derived_cache"),
+            u64::MAX,
+            server_config.clone(),
+        );
+
+        let Json(pts) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        assert!(!pts.config_overridden);
+        assert_eq!(pts.config, server_config);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
     async fn coverage_disk_cache_roundtrip_avoids_rescan_and_preserves_all_sensors() {
         let dir = temp_archive("coverage-disk-roundtrip");
         let derived = dir.join("_derived_cache");
@@ -3824,7 +4024,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: Some("7".into()),
                 limit: None,
-                min_confidence: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3840,6 +4040,90 @@ mod tests {
         let cov3 = load_coverage(&s3).await.ok().unwrap();
         assert_eq!(s3.coverage_scans(), 0);
         assert_eq!(cov3, cov1);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_threshold_overrides_change_matching_and_echo_effective_config() {
+        let dir = temp_archive("points-config-override");
+        let modis_dir = dir.join("modis/2021");
+        let viirs_dir = dir.join("viirs-snpp/2021");
+        std::fs::create_dir_all(&modis_dir).unwrap();
+        std::fs::create_dir_all(&viirs_dir).unwrap();
+        // Same location, 1 hour apart: matched under default 10800s window, unmatched under 60s.
+        std::fs::write(
+            modis_dir.join("modis_2021_Malta.csv"),
+            format!(
+                "{MODIS_HEADER}\r\n35.9,32.0,320,0.5,0.5,2021-07-01,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n"
+            ),
+        )
+        .unwrap();
+        std::fs::write(
+            viirs_dir.join("viirs-snpp_2021_Malta.csv"),
+            format!(
+                "{VIIRS_HEADER}\r\n35.9,32.0,320,0.5,0.5,2021-07-01,1300,N,VIIRS,n,2,290,10,D,0\r\n"
+            ),
+        )
+        .unwrap();
+
+        let state = state(dir.clone(), u64::MAX);
+
+        let Json(baseline) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(!baseline.config_overridden);
+        assert_eq!(baseline.config, PipelineConfig::default());
+        assert_eq!(baseline.stages.matched_pairs, 1);
+        assert_eq!(baseline.stages.harmonized, 1);
+
+        let Json(narrow) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                match_window_secs: Some("60".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(narrow.config_overridden);
+        assert_eq!(narrow.config.matching.window_secs, 60);
+        assert_eq!(narrow.stages.matched_pairs, 0);
+        assert_eq!(narrow.stages.harmonized, 2);
+
+        let Json(all_overrides) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                dedup_time_secs: Some("12".into()),
+                dedup_overlap: Some("0.5".into()),
+                match_radius_km: Some("5.5".into()),
+                match_window_secs: Some("120".into()),
+                fleet_radius_km: Some("3.5".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(all_overrides.config_overridden);
+        assert_eq!(all_overrides.config.dedup.max_time_diff_secs, 12);
+        assert_eq!(all_overrides.config.dedup.min_overlap_ratio, 0.5);
+        assert_eq!(all_overrides.config.matching.radius_km, 5.5);
+        assert_eq!(all_overrides.config.matching.window_secs, 120);
+        assert_eq!(all_overrides.config.fleet.radius_km, 3.5);
 
         let _ = std::fs::remove_dir_all(dir);
     }
@@ -3879,6 +4163,103 @@ mod tests {
             !writable_dir.exists(),
             "reading coverage from bundled must not create or write to the writable cache"
         );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_rejects_out_of_range_and_non_numeric_threshold_overrides() {
+        let dir = temp_archive("points-config-invalid");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        let state = state(dir.clone(), u64::MAX);
+
+        let base = PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            ..Default::default()
+        };
+
+        let range_cases = [
+            (
+                PointsParams {
+                    match_radius_km: Some("50".into()),
+                    ..base.clone()
+                },
+                "matching.radius_km",
+            ),
+            (
+                PointsParams {
+                    dedup_overlap: Some("1.5".into()),
+                    ..base.clone()
+                },
+                "dedup.min_overlap_ratio",
+            ),
+            (
+                PointsParams {
+                    dedup_time_secs: Some("-1".into()),
+                    ..base.clone()
+                },
+                "dedup.max_time_diff_secs",
+            ),
+            (
+                PointsParams {
+                    match_window_secs: Some("-5".into()),
+                    ..base.clone()
+                },
+                "matching.window_secs",
+            ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("-1".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km",
+            ),
+        ];
+
+        for (params, field) in range_cases {
+            let err = points(State(state.clone()), Query(params))
+                .await
+                .err()
+                .expect("out-of-range threshold must fail with 400");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+            assert!(
+                err.message.contains(field),
+                "error `{}` does not name `{field}`",
+                err.message
+            );
+        }
+
+        let parse_cases = [
+            PointsParams {
+                match_radius_km: Some("abc".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                dedup_time_secs: Some("1.5".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                dedup_overlap: Some("nope".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                match_window_secs: Some("xyz".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                fleet_radius_km: Some("bad".into()),
+                ..base
+            },
+        ];
+
+        for params in parse_cases {
+            let err = points(State(state.clone()), Query(params))
+                .await
+                .err()
+                .expect("non-numeric threshold must fail with 400");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        }
 
         let _ = std::fs::remove_dir_all(dir);
     }

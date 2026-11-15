@@ -72,6 +72,9 @@ function FlatMap() {
     region,
     setRegion,
     points,
+    rawFrpBreaks,
+    harmonizedFrpBreaks,
+    frpBreaks,
     geo,
     geometryHarmonized,
     showDuplicateRings,
@@ -165,8 +168,12 @@ function FlatMap() {
     [geo.dataset, region.id, projection, selectedFeatureSet, selectableFeatureSet],
   );
   const scenePoints = useMemo(
-    () => buildScenePoints(pointInput, projection),
-    [pointInput, projection],
+    () =>
+      buildScenePoints(pointInput, projection, {
+        raw: rawFrpBreaks,
+        harmonized: harmonizedFrpBreaks,
+      }),
+    [pointInput, projection, rawFrpBreaks, harmonizedFrpBreaks],
   );
   const scene = useMemo<MapScene>(
     () => composeScene(region.id, sceneGeometry, scenePoints),
@@ -818,6 +825,7 @@ function FlatMap() {
           <MapLegend
             sensorFilter={effectiveSensorFilter}
             onSensorFilterChange={setSensorFilter}
+            frpBreaks={frpBreaks}
           />
         </div>
 

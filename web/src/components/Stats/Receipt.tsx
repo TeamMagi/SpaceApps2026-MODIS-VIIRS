@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { formatApiError, PIPELINE_COPY } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
+import { DEFAULT_PIPELINE_CONFIG, hasPipelineOverrides } from "../../lib/pipelineOverrides";
 import { summarizePointStages } from "../../lib/receiptCounts";
 import { useAppStore } from "../../store/useAppStore";
 import styles from "./Receipt.module.css";
@@ -42,6 +43,12 @@ export default function Receipt({ id }: ReceiptProps) {
   const { status, hasData, error, retry, totals, stages } = useRegionData();
   const points = useMapPoints();
   const closeDrawer = useAppStore((state) => state.closeDrawer);
+  const pipelineOverrides = useAppStore((state) => state.pipelineOverrides);
+  const serverConfig = useAppStore((state) => state.serverConfig);
+  const customThresholds = hasPipelineOverrides(
+    pipelineOverrides,
+    serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+  );
   const reduceMotion = useReducedMotion();
   const slideY = reduceMotion ? 0 : -6;
 
@@ -115,7 +122,12 @@ export default function Receipt({ id }: ReceiptProps) {
           </dl>
           {points.status === "ready" && points.hasData && (
             <>
-              <h3 className={styles.subtitle}>{t("receiptPeriodTitle", { period: periodLabel })}</h3>
+              <div className={styles.subtitleRow}>
+                <h3 className={styles.subtitle}>{t("receiptPeriodTitle", { period: periodLabel })}</h3>
+                {customThresholds && (
+                  <span className={styles.customBadge}>{t("settingsCustomBadge")}</span>
+                )}
+              </div>
               <dl className={styles.lines}>
                 <div className={styles.row}>
                   <dt>{t("receiptRaw")}</dt>

@@ -270,20 +270,20 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
 | Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [ ] |
 | Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [ ] |
-| K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [ ] |
-| K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [ ] |
-| K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | [ ] |
-| K10 | Piksel alanı ve tespit limiti | Sadık | — | K11 | [ ] |
-| K11 | Şiddet rejimli Ω (effort.rs) | Sadık | K10 | G11 | [ ] |
-| K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [ ] |
+| K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [X] |
+| K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [X] |
+| K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | [X] |
+| K10 | Piksel alanı ve tespit limiti | Sadık | — | K11 | [ ] kod tamam, nadir değerleri kaynakla teyit bekliyor |
+| K11 | Şiddet rejimli Ω (effort.rs) | Sadık | K10 | G11 | [X] |
+| K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [X] |
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
-| K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [ ] |
+| K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [ ] etiketler tamam, regresyonla kurtarım yapılmadı |
 | K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
 | K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [ ] |
-| K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [ ] bekliyor |
-| K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [ ] bekliyor |
-| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] bekliyor |
-| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [ ] bekliyor |
+| K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [X] |
+| K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [X] |
+| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] kod tamam, harita opaklığının görsel doğrulaması bekliyor |
+| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [X] |
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
@@ -291,7 +291,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R6, R9, R11 tamamlandı; R10 sürüyor. Açık görevlerden şu an başlanabilecekler: R12 (`R9, C8` bitti). (`R7` S7'yi, `R8` K1'i bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
-- **Sadık:** Şu an başlanabilecekler: K1 (R4 bitti), K2 (G7, R1 bitti), K5, K8, K9, K10, K12, K13 (`Bekler: —`). (`K3, K4` artık başlayabilir (C7 bitti); `K6, K7` K5'i; `K11` K10'u; `K14` K13'ü bekliyor.)
+- **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -1104,7 +1104,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > [!NOTE]
 > K5–K9 görevleri 2026-11-14'te Sadık'a atandı (eski G11–G15 kimliklerinden bu dosyada K5–K9 olarak yeniden numaralandı; K1–K4 ile çakışma yok).
 
-### [ ] K5 — Area API sonuçlarını diske cache'leme
+### [X] K5 — Area API sonuçlarını diske cache'leme
 - **Bekler:** — · **Açar:** K6, K7
 - **Neden:** G3 doğrulamasında FIRMS transaction limitine dayandık. 18 aylık tek bir aralık 1373 transaction harcıyor ve limit aşıldığında istekler `HTTP 400 Exceeding allowed transaction limit` dönüyor. Aynı aralığı tekrar sorgulamak baştan harcama demek, bu yüzden uzun zaman serisi doğrulamaları yapılamıyor.
 - `crates/firms-client/src/archive.rs` içindeki `ArchiveClient` ülke-yıl dosyalarını zaten diske cache'liyor ve bu yaklaşım çalışıyor (`.cache/firms-archive`, 2,4 GB, MODIS 2000-2025 + VIIRS SNPP 2012-2025). Aynı mantık area API sorguları için kurulacak.
@@ -1113,8 +1113,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - NRT kaynakları için cache süreli olmalı (veri güncelleniyor), SP ve arşiv kaynakları için kalıcı (veri dondu).
   - `.cache/` dizini gitignore'da olmalı.
 - **Bitti sayılır:** aynı aralık ikinci kez istendiğinde `transactions_spent` 0 dönüyor; cache'li bir aralık ağ bağlantısı olmadan da çalışıyor.
+- **Kapanış notu (2026-11-15):** Tamamlandı (kod `190f509`). `crates/firms-client/src/area_cache.rs`: cache hit istek atmıyor ve transaction harcamıyor, SP pencereleri kalıcı, NRT pencereleri süreli (`AREA_CACHE_NRT_TTL_SECS`, varsayılan 600 sn), availability tablosu da diske yazılıp ağ yokken oradan okunuyor. Bitti şartı sahte FIRMS sunucusuyla uçtan uca üç testle kanıtlandı (`crates/server/src/integration_tests.rs`): `area_cache_makes_second_identical_range_free` (aynı SP aralığının ikinci isteğinde `report.transactions_spent == 0` ve sahte sunucuya yeni alan isteği gitmiyor), `area_cache_serves_cached_range_when_firms_is_unreachable` (FIRMS erişilemezken aynı aralık HTTP 200 ve aynı harmonize sayıyla dönüyor), `area_cache_does_not_store_failed_windows` (HTTP 400 transaction limiti yanıtı cache'lenmiyor). Gerçek FIRMS anahtarıyla canlı deneme yapılmadı.
 
-### [ ] K9 — SPA fallback gerçekten çalışmıyor
+### [X] K9 — SPA fallback gerçekten çalışmıyor
 - **Bekler:** — · **Açar:** R1 (routing eklenince kritik olur)
 - **Neden:** `crates/server/CLAUDE.md` "Teknik Notlar" bölümünde *"`tower_http::services::ServeDir` ile SPA fallback sağlanır"* yazıyor, ama bu DOĞRU DEĞİL. Düz `ServeDir` bilinmeyen bir yolda `index.html` döndürmez, 404 döner.
 - **Ölçüm (2026-11-14, `web/dist` build edilmiş durumda, backend :3001):**
@@ -1132,8 +1133,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - `STATIC_DIR` dizini veya `index.html` yoksa sunucu panik etmemeli; fallback kurulamazsa mevcut davranışa düşüp uyarı loglanmalı (Docker'da `STATIC_DIR=/app/static`, geliştirmede `web/dist` ve build edilmemiş olabilir).
   - `crates/server/CLAUDE.md`'deki yanlış iddia düzeltilmeli.
 - **Bitti sayılır:** `web/dist` build edilmiş haldeyken `/harita` isteği HTTP 200 ve `index.html` dönüyor; `/api/olmayanbirsey` hâlâ JSON 404 dönüyor; `STATIC_DIR` boşken sunucu ayağa kalkmaya devam ediyor.
+- **Kapanış notu (2026-11-14):** Tamamlandı (`54ba5ef`). `index.html` varsa `ServeDir` ona `ServeFile` ile düşüyor; yoksa uyarı loglanıp düz `ServeDir` davranışı sürüyor. Canlı ölçüm (`web/dist` build edilmiş, backend :3055): `/harita` → HTTP 200 `text/html`; `/api/olmayanbirsey` → HTTP 404 `{"error":"Unknown API endpoint: ..."}`. `STATIC_DIR` olmayan durumda sunucunun ayağa kalktığı ve `/harita`'nın 404 döndüğü `missing_static_dir_keeps_plain_404_without_panicking` testiyle sabit.
 
-### [ ] K8 — MODIS içi efor geçişi (2002 Aqua)
+### [X] K8 — MODIS içi efor geçişi (2002 Aqua)
 - **Bekler:** — · **Açar:** —
 - **Neden:** Ω tanım gereği `total / modis_observable` oranı olduğu için **MODIS referans kanalının kendi içindeki değişimi göremiyor.** 2002-07'de Aqua devreye girdiğinde tespitler arttı (arşiv, Türkiye: 2001 Terra 5162 → 2002 Terra 4474 + Aqua 2412) ama Aqua `modis_observable`'ın parçası olduğu için Ω 1,000 kalıyor ve bu sıçrama düzeltilmiyor.
 - MODIS filo birleştirmesi (bkz. `crates/core/src/fleet.rs`, 180 dk pencere) aynı yangının Terra/Aqua çift sayımını temizliyor, ama ölçüme göre Aqua tespitlerinin yalnız %18-21'i Terra ile eşleşiyor. Kalanı Terra'nın gerçekten görmediği yangınlar (sabah geçişinden sonra başlayanlar) ve bu gerçek bir efor artışı.
@@ -1143,6 +1145,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   2. 2000-11 … 2002-06 arası 20 ayı `count_normalized: None` ile "kıyaslanabilir değil" işaretlemek. Veri kaybı 26 yılın küçük bir kısmı ve o dönem MODIS misyonunun en az güvenilir evresi. Daha dürüst ve risksiz.
 - **Not:** G3'ün bitiş şartı yalnızca 2012 ve 2017 geçişlerini istediği için bu madde şartı ihlal etmiyor; 2000-2002 taban döneminin sonrasıyla tam kıyaslanabilir olmaması bilinen ve kayıtlı bir sınır.
 - **Bitti sayılır:** 2000-2002 dönemi ya düzeltiliyor ya da açıkça kıyaslanamaz işaretleniyor; methods sayfasında (`C5` / `R6`) hangisinin seçildiği belirtiliyor.
+- **Kapanış notu (2026-11-14):** Tamamlandı (`ea08ab4`). İkinci yol seçildi: seri 2002-07 veya sonrasını içeriyorsa 2002-07 öncesi Terra-only aylar Ω havuzlarına girmiyor, `count_normalized`, `effort_omega` ve `anomaly` alanları `None` kalıyor ve yanıtın `warnings` dizisine kaç ayın dışlandığı yazılıyor; ham `count` ve FRP alanları korunuyor. Tamamı 2002-07 öncesinde kalan seriler değişmiyor. Seçim methods tasarımında (`docs/TASARIM_METHODS.md`, aşama 7) ve `docs/API.md`'de (CalendarCell) belirtildi; `R6` sayfayı kodlarken bu satırı taşımalı. Dönemin regresyonla kurtarımı ayrı görev (`K12`).
 
 ### [ ] K10 — Piksel alanı ve tespit limiti
 - **Bekler:** — · **Açar:** K11
@@ -1151,20 +1154,23 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - `A_p`, `D_p(A_p)` ve `r_p(A_p)` çıktılarının `effort.rs` (`K11`) ve `uncertainty.rs` modüllerine sağlanması
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P3, P4, Yol Haritası #7 (+ `[16, 17/08, Denklem 1–6, Tablo 1–2]`)
 - **Bitti sayılır:** `vza.rs` `A_p` ve `D_p(A_p)`/`r_p(A_p)` değerlerini `[16]` Tablo 1–2 katsayılarıyla hesaplıyor ve birim testleri MODIS (`5.7→40 MW`) ile VIIRS (`0.7→3.7 MW`) limitlerini doğruluyor.
+- **Durum (2026-11-15):** Kod tamamlandı, bitti şartı TAM SAĞLANMADI. `vza.rs`: `pixel_area_km2`, `detection_limit_coefficients` (MODIS/VIIRS × gündüz/gece, `docs/REFERANS_ANALIZI.md` tablosu), `detection_limit_mw`, `detection_slope`, `hotspot_detection_limit_mw`. Tarama kenarı değerleri kaynağa yakın (MODIS gündüz `9,66 km²` → `43,4 MW`, gece → `43,8 MW`; kaynak 40–42 / 39 MW). Nadir "tipik" değerler ise tablodaki katsayılarla nominal piksel alanından ÜRETİLEMİYOR: MODIS gündüz `1,0 km²` → `4,96 MW` (kaynak 5,7), MODIS gece → `5,44 MW` (kaynak 3,7), VIIRS gündüz `0,14 km²` → `2,31 MW` (kaynak 3,7), VIIRS gece → `0,54 MW` (kaynak 0,7). Katsayılar ve formül değiştirilmedi; testler formülün verdiği değeri doğruluyor. Makale (`[16]`, Tablo 1–2) yerelde olmadığı için tablonun mu yoksa "tipik" değerlerin mi farklı bir etkin alana ait olduğu teyit edilemedi; teyit edilince kutu işaretlenecek.
 
-### [ ] K11 — Şiddet rejimli Ω (`effort.rs`)
+### [X] K11 — Şiddet rejimli Ω (`effort.rs`)
 - **Bekler:** K10 · **Açar:** G11
 - `crates/core/src/effort.rs` içinde `Ω` hesabını küçük yangın tespit uçurumundan ayırmak için yalnızca MODIS kenar eşiği üstündeki (`FRP ≥ 40 MW` `[16]`) olaylarda hesaplama veya `modis_observable` sayımını `[16, Denklem 7]` gözlem operatörü olasılığı `Ξ_pix(P_mdl)` ile ağırlıklandırma (`1/P_det` küçük yangın varyans patlamasını önlemek için `FRP ≥ 40 MW` rejim ayrımı tercih/test edilir)
 - Aqua (`13:00–14:00`) – S-NPP (`12:00–13:30`) arasındaki `1.2×` (`~%20–23`) günlük döngü farkının (`[16, Bölüm 5.4]`) `Ω` havuzlamasından ayrıştırılması
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P4, Yol Haritası #5 (+ `[16, 17/08, Denklem 7]`)
 - **Bitti sayılır:** `effort.rs` `FRP ≥ 40 MW` (veya `Ξ_pix` ağırlıklı) rejimli `Ω` hesaplıyor, `Aqua–SNPP` günlük döngü farkı ayrı raporlanıyor ve `cargo test -p pyrosync-core` geçiyor.
+- **Kapanış notu (2026-11-15):** Tamamlandı. `effort.rs`: `HIGH_INTENSITY_FRP_MW = 40.0`; `EffortFactor`'a `total_high_intensity`, `modis_observable_high_intensity`, `omega_high_intensity` (en az 3 ay ve 30 MODIS-gözlenebilir yüksek şiddetli kayıt gerekir) ve ayrı raporlanan `snpp_aqua_high_intensity_ratio` (gündüz, yüksek şiddetli S-NPP / Aqua; sayımlara uygulanmaz) eklendi. Mevcut `omega` ve `CalendarCell.count_normalized` DEĞİŞMEDİ; yeni alanlar ek bilgidir, `G11` yeniden ölçümde kullanabilir. Gerçek arşivde örnek (Kıbrıs, 2000–2025): MODIS+S-NPP havuzunda tüm-tespit `Ω = 5,15`, `omega_high_intensity = 2,38`; MODIS+S-NPP+NOAA-20 havuzunda `5,52` → `2,34`, S-NPP/Aqua oranı `1,67`. Sınır: `frp` VIIRS kayıtlarında tek 375 m pikselin değeridir; birden çok piksele yayılan büyük bir yangın 40 MW eşiğinin altında kalabilir (`R10` ayak izi toplamı gelince yeniden değerlendirilmeli). `cargo test -p pyrosync-core` 257 test geçiyor.
 
-### [ ] K13 — NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü
+### [X] K13 — NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü
 - **Bekler:** — · **Açar:** K14
 - Arşiv/NRT verimizden SNPP ↔ NOAA-20 (ve varsa NOAA-21) tespit ve FRP köprü katsayılarının ölçülmesi; `fire-harmony` Empirik Bayes sayım köprüsü (`SNPP 0.990`, `N21 1.046`) ile karşılaştırılması (FRP köprü katsayısı ölçülecek)
 - `[01, Bölüm 5]` (Zheng et al. 2026) uyarısı gereği Aqua `MYD14`'ten alınan `R_rel(θ)` eğrisinin sabah geçişli **Terra `MOD14`**'e aktarımının arşivimizdeki `|Δt| ≤ 20 dk` Terra–VIIRS çiftlerinden dolaylı kontrolü (fark ölçülecek)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P4, Açık Boşluklar §2 (+ `[01, Bölüm 5]`, `fire-harmony`)
 - **Bitti sayılır:** SNPP–NOAA-20 tespit/FRP köprü katsayıları ve Terra `MOD14` `≤20 dk` VZA kontrol raporu arşivden ölçülüp `docs/` altında belgelendi.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Araç `crates/firms-client/examples/viirs_bridge.rs`, rapor `docs/KOPRU_KATSAYILARI.md` (6 ülke, 2018-04…2025-12). S-NPP → NOAA-20 sayım köprüsü `0,999–1,030`, FRP toplam köprüsü `1,008–1,091`. Terra `≤20 dk` çifti tropik ülkelerde hiç yok (en küçük fark 43–77 dk), orta enlemde az; VZA dilimli karşılaştırma yalnız Avustralya'da yapılabildi (1.384 çift) ve Terra'ya aktarımı ne doğruladı ne çürüttü (ayrıntı raporda). NOAA-21 ülke arşivinde olmadığı için ölçülmedi. Hedeflenen 10 ülkeden 4'ü (India, United_States, Canada, Kazakhstan) çalışma süresi nedeniyle ölçülmedi.
 
 ### [ ] K14 — Biyom bazlı tamlık katsayısı
 - **Bekler:** K13 · **Açar:** —
@@ -1180,6 +1186,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Takvim ve efor meta verisine tarihsel anomali/kesinti etiketlerinin eklenmesi: Kasım 2000 öncesi Terra (`[11, Bölüm 6; 26, Bölüm 2.2.1]`), 2000–2002 tam kesintileri (`6–17 Ağu 2000`, `16 Haz–2 Tem 2001`, `21–29 Mar 2002` `[18, Bölüm 4]`), 3 Nisan / 15 Ekim 2012 öncesi SNPP (`Mx5.3/Mx6.3` `[13, Bölüm 4.2]`) ve `2021+` yörünge sürüklenmesi (`fire-harmony`, `FireHarmonize`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P4, Yol Haritası #11 (+ `[11, 13, 18, 26]`, `fire-harmony`)
 - **Bitti sayılır:** `2000-11..2002-06` dönemi uyarlanabilir regresyonla kurtarılıyor ve belirtilen tüm kesinti/anomali dönemleri `calendar.rs`/`effort.rs` meta verisinde etiketleniyor.
+- **Durum (2026-11-15):** KISMEN yapıldı. Etiketleme tamam: `crates/core/src/quality.rs` (`QualityFlag`: `terra_early_record`, `terra_outage`, `snpp_early_calibration`, `snpp_spurious_scan_lines`, `modis_orbital_drift`), `CalendarCell.quality_flags` ve yanıtların `warnings` dizisinde bayrak başına bir özet satırı; Terra kesinti pencereleri `events::KNOWN_OUTAGES` ile tek kaynaktan geliyor. Etiketli aylar normalizasyondan veya anomali tabanından ÇIKARILMIYOR (yalnız etiket). Yan etki: 2021 ve sonrası MODIS içeren her yanıt artık bir `MODIS orbital drift` uyarısı taşıyor (canlı NRT yanıtları dahil). Regresyonla kurtarım (Remy & Kaiser 2014) YAPILMADI: yöntem bulut farkı verisi istiyor (FIRMS'te yok), makale yerelde yok ve `K8`'in "kıyaslanamaz işaretle" kararını tersine çevirdiği için önce karar gerekiyor.
 
 ### [ ] K6 — 2023 (NOAA-21) efor geçişini ölçme
 - **Bekler:** K5 · **Açar:** —
@@ -1196,7 +1203,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Güncel durum (2026-11-15): yerel arşiv (`make data`) MODIS + SNPP + NOAA-20'yi 2000-2025 boyunca içeriyor, yani seri 2018 geçişi dahil doğrudan arşivden kurulabilir. Area API (K5 cache'i) yalnız 2023 sonrası NOAA-21 katkısı için gerekiyor. Sonra `archive_ingest` örneğinin sıçrama kontrolü tam filo serisi üzerinde koşturulacak.
 - **Bitti sayılır:** 2000-present tam filo serisinde normalize Spearman ρ'nun mutlak değeri ham ρ'nun yarısından küçük; 2012, 2018 ve 2023 geçişlerinin üçünde de seviye kayması ölçütü sağlanıyor.
 
-### [ ] K1 — Live/demo/fallback modu
+### [X] K1 — Live/demo/fallback modu
 - **Bekler:** R4 · **Açar:** R8
 - FIRMS API çalışmadığında uygulamanın hâlâ demo yapılabilmesi (FireHarmonize'dan ilham):
   - API bağlantısı kontrol mekanizması (health check → timeout → fallback)
@@ -1207,8 +1214,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Jüri demo anında API çökerse sunum kesilmesin
 - **Kaynak:** FireHarmonize — "Live/demo/fallback modu: API çalışmazsa demo verisiyle devam"
 - **Bitti sayılır:** API key olmadan uygulama demo modunda açılıyor; API varken otomatik live'a geçiyor; mod göstergesi doğru; jüri demo'su API olmadan sorunsuz çalışıyor.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Tarayıcı doğrulaması (başsız Edge, gerçek arşiv, Kıbrıs): backend kapalıyken uygulama hata göstermeden "Demo data (synthetic)" rozetiyle açıldı, sentetik seri ve harita noktaları geldi; canlıya geçme isteği "Server not reachable, staying on demo data" notuyla demo'da kaldı; backend yeniden başlatılınca 20 sn içinde kendiliğinden canlıya döndü ve seçili bölge geri geldi; elle demo seçimi 35 sn sonra da korunuyor. İlk denemede bulunan iki kusur düzeltildi: demo modunda harita alt yazısı artık "Fire data: synthetic demo fixtures" diyor (önce "NASA FIRMS" yazıyordu) ve demo'ya girerken görünüm fixture'ın nokta taşıdığı aya (2021-07) taşınıyor (önce harita boş açılıyordu). Bilinen sınır: demo ile canlı arasında geçişte bölge korunuyor ama seçili ay korunmuyor (demo verisinde yalnız bir bölge ve bir yılın noktaları var). Uygulama ayrıntıları: `/api/health` yoklaması (2,5 sn), erişilemezse `web/src/mocks` sentetik verisiyle demo modu, 30 sn'de bir yeniden yoklama ve otomatik canlıya dönüş, elle geçiş (rozet düğmesi, `#data=demo`), seçimler sıfırlanmıyor; demo modunda kaynak etiketleri ve CSV dosya adı/sütunu "sentetik demo" diyor, NRT paneli istek atmıyor. `tsc`, `vite build` ve saf fonksiyon testleri geçiyor. Kapsam kararı: demo, backend'e erişilemediğinde devreye girer; backend ayakta ama `FIRMS_API_KEY` yokken arşiv verisi canlı sayılır.
 
-### [ ] K2 — Config ayarları frontend paneli
+### [X] K2 — Config ayarları frontend paneli
 - **Bekler:** G7, R1 · **Açar:** —
 - Pipeline parametrelerini UI'dan ayarlayabilme (EG FireTrack tarzı şeffaflık):
   - Settings panel/drawer: slider ve input alanlarıyla parametre düzenleme
@@ -1218,6 +1226,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - "Varsayılana dön" butonu
   - Ayarların URL query string'ine yansıması (paylaşılabilir link)
 - **Bitti sayılır:** en az 3 parametre UI'dan değiştirilebiliyor; sonuçlar değişiyor; varsayılan butonuyla geri dönülebiliyor; link paylaşılınca aynı ayarlarla açılıyor.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Tarayıcı doğrulaması (başsız Edge, gerçek arşiv, Kıbrıs): Ayarlar çekmecesinde beş slider görünüyor; üçü değiştirildiğinde (`dt=2`, `mr=1`, `mw=1800`) URL hash'i güncellendi, `/api/points` isteği bu parametrelerle yeniden atıldı ve "Custom thresholds" göstergesi çıktı; "Reset to defaults" hash'i ve göstergeyi temizledi; aynı hash'le açılan yeni sekme aynı parametrelerle istek attı. Sonuçların değiştiği backend'de ölçüldü (106 → 119 harmonize kayıt). Küçük verimsizlik: paylaşılan linkle açılışta aynı nokta isteği üç kez atılıyor. Uygulama ayrıntıları: Backend: `/api/points` beş opsiyonel eşik parametresi alıyor (`dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`), aralık dışı değer HTTP 400, yanıtta etkin `config` ve `config_overridden`; gerçek arşivde denendi (Kıbrıs 2021-07: varsayılan 106, `match_window_secs=1800&dedup_time_secs=2` ile 119 harmonize kayıt). Frontend: Ayarlar çekmecesi (slider + sayı girişi), 400 ms gecikmeli yeniden istek, varsayılana dön, URL hash'i (`dt`, `ov`, `mr`, `mw`, `fr`), "Özel eşikler" göstergesi. Görev metninden bilinçli sapmalar: eşleştirme zaman aralığı `1–30 dk` yerine `30–360 dk` (varsayılan 180 dk; 30 dk altı eşleşmeyi neredeyse imkânsız kılar) ve ayarlar yalnız seçili ayın harita noktalarını ve aşama sayılarını yeniden hesaplıyor, yıllık seri ve takvim sunucu varsayılanında kalıyor.
 
 ### [ ] K3 — Belirsizlik aralıkları görselleştirme
 - **Bekler:** G9, C7, R1 · **Açar:** —
@@ -1229,8 +1238,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Belirsizlik açıklaması: "Geniş aralık = sensör açısı büyük veya kalibrasyon verisi az"
 - **Kaynak:** fire-harmony — belirsizlik gösterimi; Can'ın C7 tasarımına uygun
 - **Bitti sayılır:** en az 2 chart tipinde belirsizlik görünüyor; tooltip'te aralık var; yüksek VZA'lı noktalar geniş aralıklı (görsel olarak ayırt edilebilir).
+- **Durum (2026-11-15):** Kod tamamlandı, bitti şartı KISMEN doğrulandı. Tarayıcıda (başsız Edge, Kıbrıs 2021-07, Harmonized mod) doğrulananlar: nokta kartı `15.6 MW (likely 14.7–16.4)` ve `±1σ (~68% confidence interval)` satırını gösteriyor; takvim ipucu aylık ortalama ve toplam FRP aralığını gösteriyor; geniş aralıklı ay dilimi (Nisan 2021) tarama deseniyle çiziliyor. Doğrulanamayan: düz haritadaki üç kademeli opaklığın gözle ayırt edilebildiği (o ayda 106 noktanın yalnız 4'ü geniş aralıklı; ekran görüntüsünde fark seçilemedi). Bu madde doğrulanınca kutu işaretlenecek. Uygulama ayrıntıları: Backend: `/api/series` ay kayıtları `mean_frp`, `mean_frp_lower`, `mean_frp_upper` taşıyor (`DERIVED_SCHEMA_VERSION` artırıldı, eski `make precompute` çıktıları geçersiz sayılır). Frontend (`docs/TASARIM_BELIRSIZLIK_RENK.md` bölüm 1, 2, 8.1): nokta detayında aralık metni ve geniş aralık uyarısı, düz haritada üç kademeli opaklık (`1,0 / 0,72 / 0,48`), takvimde geniş aralıklı dilimde tarama deseni ve kesikli kenar, takvim ipucunda aylık aralık. Yapılmayanlar: küre (WebGL) haritasında opaklık ve zaman serisi grafiğinde güven bandı. Görevdeki "Recharts ile" ifadesi uygulanmadı; grafikler projede elle yazılmış SVG.
 
-### [ ] K4 — Erişilebilir renk skalası sistemi
+### [X] K4 — Erişilebilir renk skalası sistemi
 - **Bekler:** C7, R1 · **Açar:** —
 - Yarışma gereksinimlerinden "color ramps" + erişilebilirlik:
   - Renk skalası modülü: sequential (FRP), diverging (anomaly), categorical (sensör)
@@ -1241,6 +1251,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Quantile-based renk atama (outlier'lar skalayı bozmasın)
 - **Kaynak:** Yarışma gereksinimleri — "Color ramps"; erişilebilirlik en iyi pratikleri
 - **Bitti sayılır:** en az 2 palet var; renk körlüğü simülatörüyle kontrol edilmiş; legend'da değer aralıkları görünüyor; palet değiştirince tüm chart'lar güncelleniyor.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Tarayıcı doğrulaması (başsız Edge, gerçek arşiv, Kıbrıs): Methods çekmecesinde üç palet seçeneği var; `viridis` seçilince `data-palette=viridis`, `--frp-1 #440154 … --frp-8 #fde725`, `cividis` seçilince `#00204d … #ffea46`, varsayılana dönünce `#3d0f5e … #f6e27a`; seçim `localStorage` ve URL hash'ine (`palette=viridis`) yazıldı; lejant "Viridis · Quantile" başlığıyla değer aralıklarını gösterdi ve harita noktaları yeni paletle çizildi. Uygulama ayrıntıları: Üç palet (`default` inferno, `viridis`, `cividis`) koyu ve açık tema için `tokens.css`'te; seçim `MethodsDrawer` Görünüm bölümünde, `localStorage` (`pyrosync.palette`) ve URL hash'inde (`#palette=`) kalıcı; `data-palette` özniteliği CSS grafiklerini, palet imzası da canvas/WebGL haritasını yeniliyor; `computeQuantileBreaks` ve lejantta değer aralıkları eklendi. `python tools/cvd_check.py` çalıştırıldı ve `docs/RENK_DENETIMI.md` yeniden üretildi: mevcut token'larda 2 FAIL kaldı, ikisi de düşük FRP basamaklarının `map-land` zeminine karşı 3:1 altı kontrastı (tasarımın bölüm 7.2'sinde zorunlu kılıf/halo ile karşılanan bilinen durum).
 
 ---
 
@@ -1253,4 +1264,4 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Serhat | 12 (R1–R12) | 5 (`R1–R5`) | 7 (`R10, R11, R9, R8, R6, R7, R12`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 0 | 14 (`K5, K9, K8, K10–K14, K6, K7, K1–K4`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 8 (`K1, K2, K4, K5, K8, K9, K11, K13`) | 6 (`K3, K10, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |

@@ -47,6 +47,9 @@ function makeCell(overrides: Partial<MonthCell> & { year: number; month: number 
     harmonizedCount: 0,
     anomalyRaw: null,
     anomalyHarmonized: null,
+    meanFrp: null,
+    meanFrpLower: null,
+    meanFrpUpper: null,
     ...overrides,
   };
 }
