@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Oman.csv",
+      "bytes": 9122
+    },
+    {
+      "path": "modis/2001/modis_2001_Oman.csv",
+      "bytes": 50555
+    },
+    {
+      "path": "modis/2002/modis_2002_Oman.csv",
+      "bytes": 62449
+    },
+    {
+      "path": "modis/2003/modis_2003_Oman.csv",
+      "bytes": 87550
+    },
+    {
+      "path": "modis/2004/modis_2004_Oman.csv",
+      "bytes": 156869
+    },
+    {
+      "path": "modis/2005/modis_2005_Oman.csv",
+      "bytes": 121061
+    },
+    {
+      "path": "modis/2006/modis_2006_Oman.csv",
+      "bytes": 91417
+    },
+    {
+      "path": "modis/2007/modis_2007_Oman.csv",
+      "bytes": 80933
+    },
+    {
+      "path": "modis/2008/modis_2008_Oman.csv",
+      "bytes": 76245
+    },
+    {
+      "path": "modis/2009/modis_2009_Oman.csv",
+      "bytes": 55241
+    },
+    {
+      "path": "modis/2010/modis_2010_Oman.csv",
+      "bytes": 35300
+    },
+    {
+      "path": "modis/2011/modis_2011_Oman.csv",
+      "bytes": 31706
+    },
+    {
+      "path": "modis/2012/modis_2012_Oman.csv",
+      "bytes": 51386
+    },
+    {
+      "path": "modis/2013/modis_2013_Oman.csv",
+      "bytes": 41999
+    },
+    {
+      "path": "modis/2014/modis_2014_Oman.csv",
+      "bytes": 62198
+    },
+    {
+      "path": "modis/2015/modis_2015_Oman.csv",
+      "bytes": 57418
+    },
+    {
+      "path": "modis/2016/modis_2016_Oman.csv",
+      "bytes": 71006
+    },
+    {
+      "path": "modis/2017/modis_2017_Oman.csv",
+      "bytes": 89790
+    },
+    {
+      "path": "modis/2018/modis_2018_Oman.csv",
+      "bytes": 104607
+    },
+    {
+      "path": "modis/2019/modis_2019_Oman.csv",
+      "bytes": 125271
+    },
+    {
+      "path": "modis/2020/modis_2020_Oman.csv",
+      "bytes": 96087
+    },
+    {
+      "path": "modis/2021/modis_2021_Oman.csv",
+      "bytes": 100844
+    },
+    {
+      "path": "modis/2022/modis_2022_Oman.csv",
+      "bytes": 40996
+    },
+    {
+      "path": "modis/2023/modis_2023_Oman.csv",
+      "bytes": 35767
+    },
+    {
+      "path": "modis/2024/modis_2024_Oman.csv",
+      "bytes": 51489
+    },
+    {
+      "path": "modis/2025/modis_2025_Oman.csv",
+      "bytes": 72698
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Oman.csv",
+      "bytes": 1218060
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Oman.csv",
+      "bytes": 1876783
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Oman.csv",
+      "bytes": 1586479
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Oman.csv",
+      "bytes": 1628377
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Oman.csv",
+      "bytes": 1429979
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Oman.csv",
+      "bytes": 1220876
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Oman.csv",
+      "bytes": 1378528
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Oman.csv",
+      "bytes": 1600411
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Oman.csv",
+      "bytes": 1204904
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Oman.csv",
+      "bytes": 1449298
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Oman.csv",
+      "bytes": 1626289
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Oman.csv",
+      "bytes": 1570641
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Oman.csv",
+      "bytes": 1799874
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Oman.csv",
+      "bytes": 1779480
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Oman.csv",
+      "bytes": 1757108
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Oman.csv",
+      "bytes": 1889801
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Oman.csv",
+      "bytes": 1613353
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Oman.csv",
+      "bytes": 1636137
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Oman.csv",
+      "bytes": 1362639
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Oman.csv",
+      "bytes": 1203765
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Oman.csv",
+      "bytes": 1292603
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Oman.csv",
+      "bytes": 1558612
+    }
+  ],
+  "body_hash": "c2098f24602cb78b"
+}

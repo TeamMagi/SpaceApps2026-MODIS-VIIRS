@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Netherlands.csv",
+      "bytes": 277
+    },
+    {
+      "path": "modis/2001/modis_2001_Netherlands.csv",
+      "bytes": 9177
+    },
+    {
+      "path": "modis/2002/modis_2002_Netherlands.csv",
+      "bytes": 14917
+    },
+    {
+      "path": "modis/2003/modis_2003_Netherlands.csv",
+      "bytes": 38869
+    },
+    {
+      "path": "modis/2004/modis_2004_Netherlands.csv",
+      "bytes": 23016
+    },
+    {
+      "path": "modis/2005/modis_2005_Netherlands.csv",
+      "bytes": 27042
+    },
+    {
+      "path": "modis/2006/modis_2006_Netherlands.csv",
+      "bytes": 22271
+    },
+    {
+      "path": "modis/2007/modis_2007_Netherlands.csv",
+      "bytes": 29301
+    },
+    {
+      "path": "modis/2008/modis_2008_Netherlands.csv",
+      "bytes": 21151
+    },
+    {
+      "path": "modis/2009/modis_2009_Netherlands.csv",
+      "bytes": 22775
+    },
+    {
+      "path": "modis/2010/modis_2010_Netherlands.csv",
+      "bytes": 18721
+    },
+    {
+      "path": "modis/2011/modis_2011_Netherlands.csv",
+      "bytes": 27132
+    },
+    {
+      "path": "modis/2012/modis_2012_Netherlands.csv",
+      "bytes": 19498
+    },
+    {
+      "path": "modis/2013/modis_2013_Netherlands.csv",
+      "bytes": 23369
+    },
+    {
+      "path": "modis/2014/modis_2014_Netherlands.csv",
+      "bytes": 21640
+    },
+    {
+      "path": "modis/2015/modis_2015_Netherlands.csv",
+      "bytes": 25614
+    },
+    {
+      "path": "modis/2016/modis_2016_Netherlands.csv",
+      "bytes": 22174
+    },
+    {
+      "path": "modis/2017/modis_2017_Netherlands.csv",
+      "bytes": 17566
+    },
+    {
+      "path": "modis/2018/modis_2018_Netherlands.csv",
+      "bytes": 27638
+    },
+    {
+      "path": "modis/2019/modis_2019_Netherlands.csv",
+      "bytes": 23767
+    },
+    {
+      "path": "modis/2020/modis_2020_Netherlands.csv",
+      "bytes": 30789
+    },
+    {
+      "path": "modis/2021/modis_2021_Netherlands.csv",
+      "bytes": 22657
+    },
+    {
+      "path": "modis/2022/modis_2022_Netherlands.csv",
+      "bytes": 30311
+    },
+    {
+      "path": "modis/2023/modis_2023_Netherlands.csv",
+      "bytes": 24488
+    },
+    {
+      "path": "modis/2024/modis_2024_Netherlands.csv",
+      "bytes": 24587
+    },
+    {
+      "path": "modis/2025/modis_2025_Netherlands.csv",
+      "bytes": 44173
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Netherlands.csv",
+      "bytes": 261337
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Netherlands.csv",
+      "bytes": 255329
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Netherlands.csv",
+      "bytes": 233281
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Netherlands.csv",
+      "bytes": 218688
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Netherlands.csv",
+      "bytes": 277277
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Netherlands.csv",
+      "bytes": 199710
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Netherlands.csv",
+      "bytes": 193600
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Netherlands.csv",
+      "bytes": 251463
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Netherlands.csv",
+      "bytes": 235857
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Netherlands.csv",
+      "bytes": 225621
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Netherlands.csv",
+      "bytes": 268631
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Netherlands.csv",
+      "bytes": 275256
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Netherlands.csv",
+      "bytes": 269919
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Netherlands.csv",
+      "bytes": 239252
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Netherlands.csv",
+      "bytes": 289761
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Netherlands.csv",
+      "bytes": 248476
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Netherlands.csv",
+      "bytes": 227286
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Netherlands.csv",
+      "bytes": 207863
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Netherlands.csv",
+      "bytes": 240851
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Netherlands.csv",
+      "bytes": 176289
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Netherlands.csv",
+      "bytes": 179084
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Netherlands.csv",
+      "bytes": 251601
+    }
+  ],
+  "body_hash": "c713a58a7c8826d6"
+}

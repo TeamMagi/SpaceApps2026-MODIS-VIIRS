@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Ethiopia.csv",
+      "bytes": 462769
+    },
+    {
+      "path": "modis/2001/modis_2001_Ethiopia.csv",
+      "bytes": 1591701
+    },
+    {
+      "path": "modis/2002/modis_2002_Ethiopia.csv",
+      "bytes": 2879574
+    },
+    {
+      "path": "modis/2003/modis_2003_Ethiopia.csv",
+      "bytes": 3943727
+    },
+    {
+      "path": "modis/2004/modis_2004_Ethiopia.csv",
+      "bytes": 3992517
+    },
+    {
+      "path": "modis/2005/modis_2005_Ethiopia.csv",
+      "bytes": 4846766
+    },
+    {
+      "path": "modis/2006/modis_2006_Ethiopia.csv",
+      "bytes": 3758371
+    },
+    {
+      "path": "modis/2007/modis_2007_Ethiopia.csv",
+      "bytes": 4802507
+    },
+    {
+      "path": "modis/2008/modis_2008_Ethiopia.csv",
+      "bytes": 4527500
+    },
+    {
+      "path": "modis/2009/modis_2009_Ethiopia.csv",
+      "bytes": 3969421
+    },
+    {
+      "path": "modis/2010/modis_2010_Ethiopia.csv",
+      "bytes": 3334767
+    },
+    {
+      "path": "modis/2011/modis_2011_Ethiopia.csv",
+      "bytes": 4035025
+    },
+    {
+      "path": "modis/2012/modis_2012_Ethiopia.csv",
+      "bytes": 4277284
+    },
+    {
+      "path": "modis/2013/modis_2013_Ethiopia.csv",
+      "bytes": 4180347
+    },
+    {
+      "path": "modis/2014/modis_2014_Ethiopia.csv",
+      "bytes": 3604770
+    },
+    {
+      "path": "modis/2015/modis_2015_Ethiopia.csv",
+      "bytes": 4471977
+    },
+    {
+      "path": "modis/2016/modis_2016_Ethiopia.csv",
+      "bytes": 4064690
+    },
+    {
+      "path": "modis/2017/modis_2017_Ethiopia.csv",
+      "bytes": 4058842
+    },
+    {
+      "path": "modis/2018/modis_2018_Ethiopia.csv",
+      "bytes": 4150596
+    },
+    {
+      "path": "modis/2019/modis_2019_Ethiopia.csv",
+      "bytes": 3433825
+    },
+    {
+      "path": "modis/2020/modis_2020_Ethiopia.csv",
+      "bytes": 3595991
+    },
+    {
+      "path": "modis/2021/modis_2021_Ethiopia.csv",
+      "bytes": 3965033
+    },
+    {
+      "path": "modis/2022/modis_2022_Ethiopia.csv",
+      "bytes": 2887664
+    },
+    {
+      "path": "modis/2023/modis_2023_Ethiopia.csv",
+      "bytes": 3495595
+    },
+    {
+      "path": "modis/2024/modis_2024_Ethiopia.csv",
+      "bytes": 3291682
+    },
+    {
+      "path": "modis/2025/modis_2025_Ethiopia.csv",
+      "bytes": 3702163
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Ethiopia.csv",
+      "bytes": 7396370
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Ethiopia.csv",
+      "bytes": 16966553
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Ethiopia.csv",
+      "bytes": 17504103
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Ethiopia.csv",
+      "bytes": 19391462
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Ethiopia.csv",
+      "bytes": 15337477
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Ethiopia.csv",
+      "bytes": 17739678
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Ethiopia.csv",
+      "bytes": 17452405
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Ethiopia.csv",
+      "bytes": 19697005
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Ethiopia.csv",
+      "bytes": 17324550
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Ethiopia.csv",
+      "bytes": 20407487
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Ethiopia.csv",
+      "bytes": 17938274
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Ethiopia.csv",
+      "bytes": 21518052
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Ethiopia.csv",
+      "bytes": 20467352
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Ethiopia.csv",
+      "bytes": 19280357
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Ethiopia.csv",
+      "bytes": 19124056
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Ethiopia.csv",
+      "bytes": 16730195
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Ethiopia.csv",
+      "bytes": 17340136
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Ethiopia.csv",
+      "bytes": 19295281
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Ethiopia.csv",
+      "bytes": 15197934
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Ethiopia.csv",
+      "bytes": 17808508
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Ethiopia.csv",
+      "bytes": 17390595
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Ethiopia.csv",
+      "bytes": 19527363
+    }
+  ],
+  "body_hash": "35fa9ed15b55100e"
+}

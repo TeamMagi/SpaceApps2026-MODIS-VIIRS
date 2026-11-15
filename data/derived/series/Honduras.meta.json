@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Honduras.csv",
+      "bytes": 4684
+    },
+    {
+      "path": "modis/2001/modis_2001_Honduras.csv",
+      "bytes": 215152
+    },
+    {
+      "path": "modis/2002/modis_2002_Honduras.csv",
+      "bytes": 211379
+    },
+    {
+      "path": "modis/2003/modis_2003_Honduras.csv",
+      "bytes": 932470
+    },
+    {
+      "path": "modis/2004/modis_2004_Honduras.csv",
+      "bytes": 291206
+    },
+    {
+      "path": "modis/2005/modis_2005_Honduras.csv",
+      "bytes": 985771
+    },
+    {
+      "path": "modis/2006/modis_2006_Honduras.csv",
+      "bytes": 513888
+    },
+    {
+      "path": "modis/2007/modis_2007_Honduras.csv",
+      "bytes": 478593
+    },
+    {
+      "path": "modis/2008/modis_2008_Honduras.csv",
+      "bytes": 555509
+    },
+    {
+      "path": "modis/2009/modis_2009_Honduras.csv",
+      "bytes": 557283
+    },
+    {
+      "path": "modis/2010/modis_2010_Honduras.csv",
+      "bytes": 357409
+    },
+    {
+      "path": "modis/2011/modis_2011_Honduras.csv",
+      "bytes": 922160
+    },
+    {
+      "path": "modis/2012/modis_2012_Honduras.csv",
+      "bytes": 288275
+    },
+    {
+      "path": "modis/2013/modis_2013_Honduras.csv",
+      "bytes": 703998
+    },
+    {
+      "path": "modis/2014/modis_2014_Honduras.csv",
+      "bytes": 634058
+    },
+    {
+      "path": "modis/2015/modis_2015_Honduras.csv",
+      "bytes": 554187
+    },
+    {
+      "path": "modis/2016/modis_2016_Honduras.csv",
+      "bytes": 653422
+    },
+    {
+      "path": "modis/2017/modis_2017_Honduras.csv",
+      "bytes": 434028
+    },
+    {
+      "path": "modis/2018/modis_2018_Honduras.csv",
+      "bytes": 644209
+    },
+    {
+      "path": "modis/2019/modis_2019_Honduras.csv",
+      "bytes": 808660
+    },
+    {
+      "path": "modis/2020/modis_2020_Honduras.csv",
+      "bytes": 1263519
+    },
+    {
+      "path": "modis/2021/modis_2021_Honduras.csv",
+      "bytes": 326261
+    },
+    {
+      "path": "modis/2022/modis_2022_Honduras.csv",
+      "bytes": 310181
+    },
+    {
+      "path": "modis/2023/modis_2023_Honduras.csv",
+      "bytes": 994964
+    },
+    {
+      "path": "modis/2024/modis_2024_Honduras.csv",
+      "bytes": 828487
+    },
+    {
+      "path": "modis/2025/modis_2025_Honduras.csv",
+      "bytes": 242819
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Honduras.csv",
+      "bytes": 2966952
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Honduras.csv",
+      "bytes": 4910912
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Honduras.csv",
+      "bytes": 6713512
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Honduras.csv",
+      "bytes": 1944125
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Honduras.csv",
+      "bytes": 2254996
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Honduras.csv",
+      "bytes": 5543894
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Honduras.csv",
+      "bytes": 4673002
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Honduras.csv",
+      "bytes": 1246543
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Honduras.csv",
+      "bytes": 1657206
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Honduras.csv",
+      "bytes": 4156957
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Honduras.csv",
+      "bytes": 3615119
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Honduras.csv",
+      "bytes": 3251863
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Honduras.csv",
+      "bytes": 3636221
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Honduras.csv",
+      "bytes": 2222726
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Honduras.csv",
+      "bytes": 3422123
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Honduras.csv",
+      "bytes": 4742449
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Honduras.csv",
+      "bytes": 6538350
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Honduras.csv",
+      "bytes": 1818711
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Honduras.csv",
+      "bytes": 2161105
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Honduras.csv",
+      "bytes": 5410071
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Honduras.csv",
+      "bytes": 4588583
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Honduras.csv",
+      "bytes": 1273647
+    }
+  ],
+  "body_hash": "80968eaf3370d072"
+}

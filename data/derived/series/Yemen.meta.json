@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Yemen.csv",
+      "bytes": 1490
+    },
+    {
+      "path": "modis/2001/modis_2001_Yemen.csv",
+      "bytes": 15343
+    },
+    {
+      "path": "modis/2002/modis_2002_Yemen.csv",
+      "bytes": 18667
+    },
+    {
+      "path": "modis/2003/modis_2003_Yemen.csv",
+      "bytes": 36132
+    },
+    {
+      "path": "modis/2004/modis_2004_Yemen.csv",
+      "bytes": 22560
+    },
+    {
+      "path": "modis/2005/modis_2005_Yemen.csv",
+      "bytes": 39443
+    },
+    {
+      "path": "modis/2006/modis_2006_Yemen.csv",
+      "bytes": 72961
+    },
+    {
+      "path": "modis/2007/modis_2007_Yemen.csv",
+      "bytes": 78986
+    },
+    {
+      "path": "modis/2008/modis_2008_Yemen.csv",
+      "bytes": 69618
+    },
+    {
+      "path": "modis/2009/modis_2009_Yemen.csv",
+      "bytes": 82889
+    },
+    {
+      "path": "modis/2010/modis_2010_Yemen.csv",
+      "bytes": 92887
+    },
+    {
+      "path": "modis/2011/modis_2011_Yemen.csv",
+      "bytes": 56136
+    },
+    {
+      "path": "modis/2012/modis_2012_Yemen.csv",
+      "bytes": 38663
+    },
+    {
+      "path": "modis/2013/modis_2013_Yemen.csv",
+      "bytes": 42110
+    },
+    {
+      "path": "modis/2014/modis_2014_Yemen.csv",
+      "bytes": 34555
+    },
+    {
+      "path": "modis/2015/modis_2015_Yemen.csv",
+      "bytes": 15688
+    },
+    {
+      "path": "modis/2016/modis_2016_Yemen.csv",
+      "bytes": 4543
+    },
+    {
+      "path": "modis/2017/modis_2017_Yemen.csv",
+      "bytes": 5551
+    },
+    {
+      "path": "modis/2018/modis_2018_Yemen.csv",
+      "bytes": 9571
+    },
+    {
+      "path": "modis/2019/modis_2019_Yemen.csv",
+      "bytes": 12358
+    },
+    {
+      "path": "modis/2020/modis_2020_Yemen.csv",
+      "bytes": 14010
+    },
+    {
+      "path": "modis/2021/modis_2021_Yemen.csv",
+      "bytes": 12852
+    },
+    {
+      "path": "modis/2022/modis_2022_Yemen.csv",
+      "bytes": 6214
+    },
+    {
+      "path": "modis/2023/modis_2023_Yemen.csv",
+      "bytes": 7394
+    },
+    {
+      "path": "modis/2024/modis_2024_Yemen.csv",
+      "bytes": 6530
+    },
+    {
+      "path": "modis/2025/modis_2025_Yemen.csv",
+      "bytes": 9372
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Yemen.csv",
+      "bytes": 247170
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Yemen.csv",
+      "bytes": 434112
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Yemen.csv",
+      "bytes": 519857
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Yemen.csv",
+      "bytes": 603158
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Yemen.csv",
+      "bytes": 479823
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Yemen.csv",
+      "bytes": 303889
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Yemen.csv",
+      "bytes": 259492
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Yemen.csv",
+      "bytes": 267706
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Yemen.csv",
+      "bytes": 736990
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Yemen.csv",
+      "bytes": 742932
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Yemen.csv",
+      "bytes": 701142
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Yemen.csv",
+      "bytes": 366447
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Yemen.csv",
+      "bytes": 125991
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Yemen.csv",
+      "bytes": 244320
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Yemen.csv",
+      "bytes": 319256
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Yemen.csv",
+      "bytes": 429930
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Yemen.csv",
+      "bytes": 501087
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Yemen.csv",
+      "bytes": 579332
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Yemen.csv",
+      "bytes": 450560
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Yemen.csv",
+      "bytes": 273041
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Yemen.csv",
+      "bytes": 239325
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Yemen.csv",
+      "bytes": 254112
+    }
+  ],
+  "body_hash": "08210ed359fa2dc6"
+}

@@ -1,0 +1,175 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2004/modis_2004_Bahrain.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2005/modis_2005_Bahrain.csv",
+      "bytes": 278
+    },
+    {
+      "path": "modis/2007/modis_2007_Bahrain.csv",
+      "bytes": 205
+    },
+    {
+      "path": "modis/2008/modis_2008_Bahrain.csv",
+      "bytes": 426
+    },
+    {
+      "path": "modis/2009/modis_2009_Bahrain.csv",
+      "bytes": 366
+    },
+    {
+      "path": "modis/2010/modis_2010_Bahrain.csv",
+      "bytes": 731
+    },
+    {
+      "path": "modis/2011/modis_2011_Bahrain.csv",
+      "bytes": 1485
+    },
+    {
+      "path": "modis/2013/modis_2013_Bahrain.csv",
+      "bytes": 360
+    },
+    {
+      "path": "modis/2014/modis_2014_Bahrain.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2015/modis_2015_Bahrain.csv",
+      "bytes": 589
+    },
+    {
+      "path": "modis/2016/modis_2016_Bahrain.csv",
+      "bytes": 281
+    },
+    {
+      "path": "modis/2017/modis_2017_Bahrain.csv",
+      "bytes": 363
+    },
+    {
+      "path": "modis/2018/modis_2018_Bahrain.csv",
+      "bytes": 1459
+    },
+    {
+      "path": "modis/2019/modis_2019_Bahrain.csv",
+      "bytes": 1194
+    },
+    {
+      "path": "modis/2020/modis_2020_Bahrain.csv",
+      "bytes": 673
+    },
+    {
+      "path": "modis/2021/modis_2021_Bahrain.csv",
+      "bytes": 820
+    },
+    {
+      "path": "modis/2022/modis_2022_Bahrain.csv",
+      "bytes": 1203
+    },
+    {
+      "path": "modis/2023/modis_2023_Bahrain.csv",
+      "bytes": 752
+    },
+    {
+      "path": "modis/2024/modis_2024_Bahrain.csv",
+      "bytes": 984
+    },
+    {
+      "path": "modis/2025/modis_2025_Bahrain.csv",
+      "bytes": 448
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Bahrain.csv",
+      "bytes": 75655
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Bahrain.csv",
+      "bytes": 149794
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Bahrain.csv",
+      "bytes": 128154
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Bahrain.csv",
+      "bytes": 105266
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Bahrain.csv",
+      "bytes": 88650
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Bahrain.csv",
+      "bytes": 75947
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Bahrain.csv",
+      "bytes": 89522
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Bahrain.csv",
+      "bytes": 81209
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Bahrain.csv",
+      "bytes": 80633
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Bahrain.csv",
+      "bytes": 111005
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Bahrain.csv",
+      "bytes": 75720
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Bahrain.csv",
+      "bytes": 71810
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Bahrain.csv",
+      "bytes": 80596
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Bahrain.csv",
+      "bytes": 81265
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Bahrain.csv",
+      "bytes": 97890
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Bahrain.csv",
+      "bytes": 142078
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Bahrain.csv",
+      "bytes": 123027
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Bahrain.csv",
+      "bytes": 102965
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Bahrain.csv",
+      "bytes": 81695
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Bahrain.csv",
+      "bytes": 79495
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Bahrain.csv",
+      "bytes": 86747
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Bahrain.csv",
+      "bytes": 77580
+    }
+  ],
+  "body_hash": "230cf05c5a8ad9e6"
+}

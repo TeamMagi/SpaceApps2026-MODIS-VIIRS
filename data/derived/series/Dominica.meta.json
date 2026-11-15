@@ -1,0 +1,139 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Dominica.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2003/modis_2003_Dominica.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2005/modis_2005_Dominica.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2007/modis_2007_Dominica.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2014/modis_2014_Dominica.csv",
+      "bytes": 203
+    },
+    {
+      "path": "modis/2015/modis_2015_Dominica.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2016/modis_2016_Dominica.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2017/modis_2017_Dominica.csv",
+      "bytes": 353
+    },
+    {
+      "path": "modis/2019/modis_2019_Dominica.csv",
+      "bytes": 517
+    },
+    {
+      "path": "modis/2020/modis_2020_Dominica.csv",
+      "bytes": 670
+    },
+    {
+      "path": "modis/2023/modis_2023_Dominica.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2024/modis_2024_Dominica.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Dominica.csv",
+      "bytes": 694
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Dominica.csv",
+      "bytes": 2640
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Dominica.csv",
+      "bytes": 3450
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Dominica.csv",
+      "bytes": 1178
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Dominica.csv",
+      "bytes": 1257
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Dominica.csv",
+      "bytes": 1596
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Dominica.csv",
+      "bytes": 1345
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Dominica.csv",
+      "bytes": 537
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Dominica.csv",
+      "bytes": 843
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Dominica.csv",
+      "bytes": 1080
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Dominica.csv",
+      "bytes": 687
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Dominica.csv",
+      "bytes": 1080
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Dominica.csv",
+      "bytes": 2822
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Dominica.csv",
+      "bytes": 1157
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Dominica.csv",
+      "bytes": 3615
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Dominica.csv",
+      "bytes": 3298
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Dominica.csv",
+      "bytes": 1151
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Dominica.csv",
+      "bytes": 763
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Dominica.csv",
+      "bytes": 1320
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Dominica.csv",
+      "bytes": 1236
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Dominica.csv",
+      "bytes": 1001
+    }
+  ],
+  "body_hash": "60bb6df985fc1edf"
+}

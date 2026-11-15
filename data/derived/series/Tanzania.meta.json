@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Tanzania.csv",
+      "bytes": 57927
+    },
+    {
+      "path": "modis/2001/modis_2001_Tanzania.csv",
+      "bytes": 2781377
+    },
+    {
+      "path": "modis/2002/modis_2002_Tanzania.csv",
+      "bytes": 6233763
+    },
+    {
+      "path": "modis/2003/modis_2003_Tanzania.csv",
+      "bytes": 9356582
+    },
+    {
+      "path": "modis/2004/modis_2004_Tanzania.csv",
+      "bytes": 7360974
+    },
+    {
+      "path": "modis/2005/modis_2005_Tanzania.csv",
+      "bytes": 8527327
+    },
+    {
+      "path": "modis/2006/modis_2006_Tanzania.csv",
+      "bytes": 5480928
+    },
+    {
+      "path": "modis/2007/modis_2007_Tanzania.csv",
+      "bytes": 8297772
+    },
+    {
+      "path": "modis/2008/modis_2008_Tanzania.csv",
+      "bytes": 7979186
+    },
+    {
+      "path": "modis/2009/modis_2009_Tanzania.csv",
+      "bytes": 8177637
+    },
+    {
+      "path": "modis/2010/modis_2010_Tanzania.csv",
+      "bytes": 8645843
+    },
+    {
+      "path": "modis/2011/modis_2011_Tanzania.csv",
+      "bytes": 6429654
+    },
+    {
+      "path": "modis/2012/modis_2012_Tanzania.csv",
+      "bytes": 7384903
+    },
+    {
+      "path": "modis/2013/modis_2013_Tanzania.csv",
+      "bytes": 7060377
+    },
+    {
+      "path": "modis/2014/modis_2014_Tanzania.csv",
+      "bytes": 5877823
+    },
+    {
+      "path": "modis/2015/modis_2015_Tanzania.csv",
+      "bytes": 7105935
+    },
+    {
+      "path": "modis/2016/modis_2016_Tanzania.csv",
+      "bytes": 7552030
+    },
+    {
+      "path": "modis/2017/modis_2017_Tanzania.csv",
+      "bytes": 5589646
+    },
+    {
+      "path": "modis/2018/modis_2018_Tanzania.csv",
+      "bytes": 5424188
+    },
+    {
+      "path": "modis/2019/modis_2019_Tanzania.csv",
+      "bytes": 5830456
+    },
+    {
+      "path": "modis/2020/modis_2020_Tanzania.csv",
+      "bytes": 6065830
+    },
+    {
+      "path": "modis/2021/modis_2021_Tanzania.csv",
+      "bytes": 6729593
+    },
+    {
+      "path": "modis/2022/modis_2022_Tanzania.csv",
+      "bytes": 5060203
+    },
+    {
+      "path": "modis/2023/modis_2023_Tanzania.csv",
+      "bytes": 4798848
+    },
+    {
+      "path": "modis/2024/modis_2024_Tanzania.csv",
+      "bytes": 6549142
+    },
+    {
+      "path": "modis/2025/modis_2025_Tanzania.csv",
+      "bytes": 6575148
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Tanzania.csv",
+      "bytes": 30422545
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Tanzania.csv",
+      "bytes": 32382129
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Tanzania.csv",
+      "bytes": 37382008
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Tanzania.csv",
+      "bytes": 40000217
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Tanzania.csv",
+      "bytes": 33132849
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Tanzania.csv",
+      "bytes": 28869800
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Tanzania.csv",
+      "bytes": 37538450
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Tanzania.csv",
+      "bytes": 38713215
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Tanzania.csv",
+      "bytes": 39693199
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Tanzania.csv",
+      "bytes": 38078870
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Tanzania.csv",
+      "bytes": 33284650
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Tanzania.csv",
+      "bytes": 39199611
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Tanzania.csv",
+      "bytes": 41239350
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Tanzania.csv",
+      "bytes": 31476292
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Tanzania.csv",
+      "bytes": 30692597
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Tanzania.csv",
+      "bytes": 32290488
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Tanzania.csv",
+      "bytes": 37140442
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Tanzania.csv",
+      "bytes": 38927290
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Tanzania.csv",
+      "bytes": 30052585
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Tanzania.csv",
+      "bytes": 28888377
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Tanzania.csv",
+      "bytes": 31777617
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Tanzania.csv",
+      "bytes": 37402495
+    }
+  ],
+  "body_hash": "a66ead18a0ac0f1c"
+}

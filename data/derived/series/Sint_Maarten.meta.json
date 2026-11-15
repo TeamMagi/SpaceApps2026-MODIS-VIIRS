@@ -1,0 +1,67 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2015/modis_2015_Sint_Maarten.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2018/modis_2018_Sint_Maarten.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Sint_Maarten.csv",
+      "bytes": 1351
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Sint_Maarten.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Sint_Maarten.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Sint_Maarten.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Sint_Maarten.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Sint_Maarten.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Sint_Maarten.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Sint_Maarten.csv",
+      "bytes": 604
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Sint_Maarten.csv",
+      "bytes": 446
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Sint_Maarten.csv",
+      "bytes": 2513
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Sint_Maarten.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Sint_Maarten.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Sint_Maarten.csv",
+      "bytes": 287
+    }
+  ],
+  "body_hash": "20a16b95d56b3800"
+}

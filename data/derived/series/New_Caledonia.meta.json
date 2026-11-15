@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_New_Caledonia.csv",
+      "bytes": 1466
+    },
+    {
+      "path": "modis/2001/modis_2001_New_Caledonia.csv",
+      "bytes": 5116
+    },
+    {
+      "path": "modis/2002/modis_2002_New_Caledonia.csv",
+      "bytes": 31070
+    },
+    {
+      "path": "modis/2003/modis_2003_New_Caledonia.csv",
+      "bytes": 15187
+    },
+    {
+      "path": "modis/2004/modis_2004_New_Caledonia.csv",
+      "bytes": 27677
+    },
+    {
+      "path": "modis/2005/modis_2005_New_Caledonia.csv",
+      "bytes": 12329
+    },
+    {
+      "path": "modis/2006/modis_2006_New_Caledonia.csv",
+      "bytes": 11973
+    },
+    {
+      "path": "modis/2007/modis_2007_New_Caledonia.csv",
+      "bytes": 4783
+    },
+    {
+      "path": "modis/2008/modis_2008_New_Caledonia.csv",
+      "bytes": 2731
+    },
+    {
+      "path": "modis/2009/modis_2009_New_Caledonia.csv",
+      "bytes": 9956
+    },
+    {
+      "path": "modis/2010/modis_2010_New_Caledonia.csv",
+      "bytes": 8510
+    },
+    {
+      "path": "modis/2011/modis_2011_New_Caledonia.csv",
+      "bytes": 11906
+    },
+    {
+      "path": "modis/2012/modis_2012_New_Caledonia.csv",
+      "bytes": 3715
+    },
+    {
+      "path": "modis/2013/modis_2013_New_Caledonia.csv",
+      "bytes": 10621
+    },
+    {
+      "path": "modis/2014/modis_2014_New_Caledonia.csv",
+      "bytes": 17080
+    },
+    {
+      "path": "modis/2015/modis_2015_New_Caledonia.csv",
+      "bytes": 16470
+    },
+    {
+      "path": "modis/2016/modis_2016_New_Caledonia.csv",
+      "bytes": 19623
+    },
+    {
+      "path": "modis/2017/modis_2017_New_Caledonia.csv",
+      "bytes": 37036
+    },
+    {
+      "path": "modis/2018/modis_2018_New_Caledonia.csv",
+      "bytes": 18990
+    },
+    {
+      "path": "modis/2019/modis_2019_New_Caledonia.csv",
+      "bytes": 44753
+    },
+    {
+      "path": "modis/2020/modis_2020_New_Caledonia.csv",
+      "bytes": 12151
+    },
+    {
+      "path": "modis/2021/modis_2021_New_Caledonia.csv",
+      "bytes": 19405
+    },
+    {
+      "path": "modis/2022/modis_2022_New_Caledonia.csv",
+      "bytes": 13026
+    },
+    {
+      "path": "modis/2023/modis_2023_New_Caledonia.csv",
+      "bytes": 31975
+    },
+    {
+      "path": "modis/2024/modis_2024_New_Caledonia.csv",
+      "bytes": 23485
+    },
+    {
+      "path": "modis/2025/modis_2025_New_Caledonia.csv",
+      "bytes": 3839
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_New_Caledonia.csv",
+      "bytes": 90199
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_New_Caledonia.csv",
+      "bytes": 279335
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_New_Caledonia.csv",
+      "bytes": 89840
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_New_Caledonia.csv",
+      "bytes": 133253
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_New_Caledonia.csv",
+      "bytes": 86983
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_New_Caledonia.csv",
+      "bytes": 201761
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_New_Caledonia.csv",
+      "bytes": 114782
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_New_Caledonia.csv",
+      "bytes": 28312
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_New_Caledonia.csv",
+      "bytes": 18206
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_New_Caledonia.csv",
+      "bytes": 71633
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_New_Caledonia.csv",
+      "bytes": 134643
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_New_Caledonia.csv",
+      "bytes": 101963
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_New_Caledonia.csv",
+      "bytes": 137229
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_New_Caledonia.csv",
+      "bytes": 222460
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_New_Caledonia.csv",
+      "bytes": 114281
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_New_Caledonia.csv",
+      "bytes": 277184
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_New_Caledonia.csv",
+      "bytes": 93505
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_New_Caledonia.csv",
+      "bytes": 143456
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_New_Caledonia.csv",
+      "bytes": 88714
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_New_Caledonia.csv",
+      "bytes": 204659
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_New_Caledonia.csv",
+      "bytes": 115108
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_New_Caledonia.csv",
+      "bytes": 28292
+    }
+  ],
+  "body_hash": "007322afbd565eae"
+}

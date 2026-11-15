@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Faeroe_Islands.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Faeroe_Islands.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Faeroe_Islands.csv",
+      "bytes": 282
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Faeroe_Islands.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Faeroe_Islands.csv",
+      "bytes": 282
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Faeroe_Islands.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Faeroe_Islands.csv",
+      "bytes": 207
+    }
+  ],
+  "body_hash": "73876d01786bf3dd"
+}

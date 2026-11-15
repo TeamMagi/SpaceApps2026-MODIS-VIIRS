@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Niger.csv",
+      "bytes": 11546
+    },
+    {
+      "path": "modis/2001/modis_2001_Niger.csv",
+      "bytes": 31390
+    },
+    {
+      "path": "modis/2002/modis_2002_Niger.csv",
+      "bytes": 48803
+    },
+    {
+      "path": "modis/2003/modis_2003_Niger.csv",
+      "bytes": 91005
+    },
+    {
+      "path": "modis/2004/modis_2004_Niger.csv",
+      "bytes": 61692
+    },
+    {
+      "path": "modis/2005/modis_2005_Niger.csv",
+      "bytes": 82924
+    },
+    {
+      "path": "modis/2006/modis_2006_Niger.csv",
+      "bytes": 70761
+    },
+    {
+      "path": "modis/2007/modis_2007_Niger.csv",
+      "bytes": 75630
+    },
+    {
+      "path": "modis/2008/modis_2008_Niger.csv",
+      "bytes": 79561
+    },
+    {
+      "path": "modis/2009/modis_2009_Niger.csv",
+      "bytes": 76071
+    },
+    {
+      "path": "modis/2010/modis_2010_Niger.csv",
+      "bytes": 89025
+    },
+    {
+      "path": "modis/2011/modis_2011_Niger.csv",
+      "bytes": 68505
+    },
+    {
+      "path": "modis/2012/modis_2012_Niger.csv",
+      "bytes": 76287
+    },
+    {
+      "path": "modis/2013/modis_2013_Niger.csv",
+      "bytes": 75889
+    },
+    {
+      "path": "modis/2014/modis_2014_Niger.csv",
+      "bytes": 62716
+    },
+    {
+      "path": "modis/2015/modis_2015_Niger.csv",
+      "bytes": 51486
+    },
+    {
+      "path": "modis/2016/modis_2016_Niger.csv",
+      "bytes": 84814
+    },
+    {
+      "path": "modis/2017/modis_2017_Niger.csv",
+      "bytes": 75482
+    },
+    {
+      "path": "modis/2018/modis_2018_Niger.csv",
+      "bytes": 96779
+    },
+    {
+      "path": "modis/2019/modis_2019_Niger.csv",
+      "bytes": 97375
+    },
+    {
+      "path": "modis/2020/modis_2020_Niger.csv",
+      "bytes": 107426
+    },
+    {
+      "path": "modis/2021/modis_2021_Niger.csv",
+      "bytes": 144036
+    },
+    {
+      "path": "modis/2022/modis_2022_Niger.csv",
+      "bytes": 106460
+    },
+    {
+      "path": "modis/2023/modis_2023_Niger.csv",
+      "bytes": 112779
+    },
+    {
+      "path": "modis/2024/modis_2024_Niger.csv",
+      "bytes": 189082
+    },
+    {
+      "path": "modis/2025/modis_2025_Niger.csv",
+      "bytes": 252593
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Niger.csv",
+      "bytes": 459121
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Niger.csv",
+      "bytes": 585413
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Niger.csv",
+      "bytes": 594382
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Niger.csv",
+      "bytes": 932328
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Niger.csv",
+      "bytes": 730803
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Niger.csv",
+      "bytes": 677286
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Niger.csv",
+      "bytes": 1026429
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Niger.csv",
+      "bytes": 1500310
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Niger.csv",
+      "bytes": 538632
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Niger.csv",
+      "bytes": 498825
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Niger.csv",
+      "bytes": 417450
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Niger.csv",
+      "bytes": 349335
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Niger.csv",
+      "bytes": 587051
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Niger.csv",
+      "bytes": 488594
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Niger.csv",
+      "bytes": 628055
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Niger.csv",
+      "bytes": 604872
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Niger.csv",
+      "bytes": 596954
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Niger.csv",
+      "bytes": 931111
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Niger.csv",
+      "bytes": 770393
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Niger.csv",
+      "bytes": 658872
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Niger.csv",
+      "bytes": 901773
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Niger.csv",
+      "bytes": 1455180
+    }
+  ],
+  "body_hash": "7d65ad9b88f9bb4a"
+}

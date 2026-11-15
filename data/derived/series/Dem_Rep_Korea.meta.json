@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Dem_Rep_Korea.csv",
+      "bytes": 6197
+    },
+    {
+      "path": "modis/2001/modis_2001_Dem_Rep_Korea.csv",
+      "bytes": 191249
+    },
+    {
+      "path": "modis/2002/modis_2002_Dem_Rep_Korea.csv",
+      "bytes": 55897
+    },
+    {
+      "path": "modis/2003/modis_2003_Dem_Rep_Korea.csv",
+      "bytes": 119711
+    },
+    {
+      "path": "modis/2004/modis_2004_Dem_Rep_Korea.csv",
+      "bytes": 302965
+    },
+    {
+      "path": "modis/2005/modis_2005_Dem_Rep_Korea.csv",
+      "bytes": 323955
+    },
+    {
+      "path": "modis/2006/modis_2006_Dem_Rep_Korea.csv",
+      "bytes": 121491
+    },
+    {
+      "path": "modis/2007/modis_2007_Dem_Rep_Korea.csv",
+      "bytes": 183925
+    },
+    {
+      "path": "modis/2008/modis_2008_Dem_Rep_Korea.csv",
+      "bytes": 194567
+    },
+    {
+      "path": "modis/2009/modis_2009_Dem_Rep_Korea.csv",
+      "bytes": 311092
+    },
+    {
+      "path": "modis/2010/modis_2010_Dem_Rep_Korea.csv",
+      "bytes": 50968
+    },
+    {
+      "path": "modis/2011/modis_2011_Dem_Rep_Korea.csv",
+      "bytes": 281397
+    },
+    {
+      "path": "modis/2012/modis_2012_Dem_Rep_Korea.csv",
+      "bytes": 74756
+    },
+    {
+      "path": "modis/2013/modis_2013_Dem_Rep_Korea.csv",
+      "bytes": 93088
+    },
+    {
+      "path": "modis/2014/modis_2014_Dem_Rep_Korea.csv",
+      "bytes": 361848
+    },
+    {
+      "path": "modis/2015/modis_2015_Dem_Rep_Korea.csv",
+      "bytes": 167744
+    },
+    {
+      "path": "modis/2016/modis_2016_Dem_Rep_Korea.csv",
+      "bytes": 39758
+    },
+    {
+      "path": "modis/2017/modis_2017_Dem_Rep_Korea.csv",
+      "bytes": 73434
+    },
+    {
+      "path": "modis/2018/modis_2018_Dem_Rep_Korea.csv",
+      "bytes": 54335
+    },
+    {
+      "path": "modis/2019/modis_2019_Dem_Rep_Korea.csv",
+      "bytes": 102971
+    },
+    {
+      "path": "modis/2020/modis_2020_Dem_Rep_Korea.csv",
+      "bytes": 36714
+    },
+    {
+      "path": "modis/2021/modis_2021_Dem_Rep_Korea.csv",
+      "bytes": 13793
+    },
+    {
+      "path": "modis/2022/modis_2022_Dem_Rep_Korea.csv",
+      "bytes": 14178
+    },
+    {
+      "path": "modis/2023/modis_2023_Dem_Rep_Korea.csv",
+      "bytes": 23182
+    },
+    {
+      "path": "modis/2024/modis_2024_Dem_Rep_Korea.csv",
+      "bytes": 38421
+    },
+    {
+      "path": "modis/2025/modis_2025_Dem_Rep_Korea.csv",
+      "bytes": 15922
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Dem_Rep_Korea.csv",
+      "bytes": 139743
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Dem_Rep_Korea.csv",
+      "bytes": 421346
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Dem_Rep_Korea.csv",
+      "bytes": 154523
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Dem_Rep_Korea.csv",
+      "bytes": 71917
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Dem_Rep_Korea.csv",
+      "bytes": 113476
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Dem_Rep_Korea.csv",
+      "bytes": 115226
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Dem_Rep_Korea.csv",
+      "bytes": 172084
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Dem_Rep_Korea.csv",
+      "bytes": 101926
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Dem_Rep_Korea.csv",
+      "bytes": 328528
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Dem_Rep_Korea.csv",
+      "bytes": 351574
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Dem_Rep_Korea.csv",
+      "bytes": 1616423
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Dem_Rep_Korea.csv",
+      "bytes": 627020
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Dem_Rep_Korea.csv",
+      "bytes": 139326
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Dem_Rep_Korea.csv",
+      "bytes": 293992
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Dem_Rep_Korea.csv",
+      "bytes": 231304
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Dem_Rep_Korea.csv",
+      "bytes": 414939
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Dem_Rep_Korea.csv",
+      "bytes": 138051
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Dem_Rep_Korea.csv",
+      "bytes": 77780
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Dem_Rep_Korea.csv",
+      "bytes": 105980
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Dem_Rep_Korea.csv",
+      "bytes": 119174
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Dem_Rep_Korea.csv",
+      "bytes": 161358
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Dem_Rep_Korea.csv",
+      "bytes": 99577
+    }
+  ],
+  "body_hash": "81c61d8dd0948954"
+}

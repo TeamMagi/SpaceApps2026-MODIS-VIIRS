@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_South_Sudan.csv",
+      "bytes": 2814026
+    },
+    {
+      "path": "modis/2001/modis_2001_South_Sudan.csv",
+      "bytes": 4778786
+    },
+    {
+      "path": "modis/2002/modis_2002_South_Sudan.csv",
+      "bytes": 9379764
+    },
+    {
+      "path": "modis/2003/modis_2003_South_Sudan.csv",
+      "bytes": 11933052
+    },
+    {
+      "path": "modis/2004/modis_2004_South_Sudan.csv",
+      "bytes": 12726196
+    },
+    {
+      "path": "modis/2005/modis_2005_South_Sudan.csv",
+      "bytes": 14240557
+    },
+    {
+      "path": "modis/2006/modis_2006_South_Sudan.csv",
+      "bytes": 10904001
+    },
+    {
+      "path": "modis/2007/modis_2007_South_Sudan.csv",
+      "bytes": 14837553
+    },
+    {
+      "path": "modis/2008/modis_2008_South_Sudan.csv",
+      "bytes": 13655705
+    },
+    {
+      "path": "modis/2009/modis_2009_South_Sudan.csv",
+      "bytes": 13477989
+    },
+    {
+      "path": "modis/2010/modis_2010_South_Sudan.csv",
+      "bytes": 10562297
+    },
+    {
+      "path": "modis/2011/modis_2011_South_Sudan.csv",
+      "bytes": 14442922
+    },
+    {
+      "path": "modis/2012/modis_2012_South_Sudan.csv",
+      "bytes": 13179794
+    },
+    {
+      "path": "modis/2013/modis_2013_South_Sudan.csv",
+      "bytes": 13095829
+    },
+    {
+      "path": "modis/2014/modis_2014_South_Sudan.csv",
+      "bytes": 14076570
+    },
+    {
+      "path": "modis/2015/modis_2015_South_Sudan.csv",
+      "bytes": 16052566
+    },
+    {
+      "path": "modis/2016/modis_2016_South_Sudan.csv",
+      "bytes": 15633685
+    },
+    {
+      "path": "modis/2017/modis_2017_South_Sudan.csv",
+      "bytes": 13585968
+    },
+    {
+      "path": "modis/2018/modis_2018_South_Sudan.csv",
+      "bytes": 16184437
+    },
+    {
+      "path": "modis/2019/modis_2019_South_Sudan.csv",
+      "bytes": 9817724
+    },
+    {
+      "path": "modis/2020/modis_2020_South_Sudan.csv",
+      "bytes": 14232471
+    },
+    {
+      "path": "modis/2021/modis_2021_South_Sudan.csv",
+      "bytes": 13500580
+    },
+    {
+      "path": "modis/2022/modis_2022_South_Sudan.csv",
+      "bytes": 10945595
+    },
+    {
+      "path": "modis/2023/modis_2023_South_Sudan.csv",
+      "bytes": 12510709
+    },
+    {
+      "path": "modis/2024/modis_2024_South_Sudan.csv",
+      "bytes": 14477411
+    },
+    {
+      "path": "modis/2025/modis_2025_South_Sudan.csv",
+      "bytes": 11983576
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_South_Sudan.csv",
+      "bytes": 36798809
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_South_Sudan.csv",
+      "bytes": 39445268
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_South_Sudan.csv",
+      "bytes": 54601846
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_South_Sudan.csv",
+      "bytes": 52695247
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_South_Sudan.csv",
+      "bytes": 45195108
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_South_Sudan.csv",
+      "bytes": 51686852
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_South_Sudan.csv",
+      "bytes": 62045785
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_South_Sudan.csv",
+      "bytes": 56052954
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_South_Sudan.csv",
+      "bytes": 41825542
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_South_Sudan.csv",
+      "bytes": 50749549
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_South_Sudan.csv",
+      "bytes": 53772590
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_South_Sudan.csv",
+      "bytes": 60510999
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_South_Sudan.csv",
+      "bytes": 62469626
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_South_Sudan.csv",
+      "bytes": 53058207
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_South_Sudan.csv",
+      "bytes": 60413907
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_South_Sudan.csv",
+      "bytes": 39611280
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_South_Sudan.csv",
+      "bytes": 54495871
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_South_Sudan.csv",
+      "bytes": 53283412
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_South_Sudan.csv",
+      "bytes": 44619201
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_South_Sudan.csv",
+      "bytes": 52058400
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_South_Sudan.csv",
+      "bytes": 60843527
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_South_Sudan.csv",
+      "bytes": 55563945
+    }
+  ],
+  "body_hash": "1d89cbce3728c91c"
+}

@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Latvia.csv",
+      "bytes": 20218
+    },
+    {
+      "path": "modis/2002/modis_2002_Latvia.csv",
+      "bytes": 101237
+    },
+    {
+      "path": "modis/2003/modis_2003_Latvia.csv",
+      "bytes": 65255
+    },
+    {
+      "path": "modis/2004/modis_2004_Latvia.csv",
+      "bytes": 33687
+    },
+    {
+      "path": "modis/2005/modis_2005_Latvia.csv",
+      "bytes": 6051
+    },
+    {
+      "path": "modis/2006/modis_2006_Latvia.csv",
+      "bytes": 52545
+    },
+    {
+      "path": "modis/2007/modis_2007_Latvia.csv",
+      "bytes": 6329
+    },
+    {
+      "path": "modis/2008/modis_2008_Latvia.csv",
+      "bytes": 3010
+    },
+    {
+      "path": "modis/2009/modis_2009_Latvia.csv",
+      "bytes": 11286
+    },
+    {
+      "path": "modis/2010/modis_2010_Latvia.csv",
+      "bytes": 4644
+    },
+    {
+      "path": "modis/2011/modis_2011_Latvia.csv",
+      "bytes": 4444
+    },
+    {
+      "path": "modis/2012/modis_2012_Latvia.csv",
+      "bytes": 3543
+    },
+    {
+      "path": "modis/2013/modis_2013_Latvia.csv",
+      "bytes": 4544
+    },
+    {
+      "path": "modis/2014/modis_2014_Latvia.csv",
+      "bytes": 8623
+    },
+    {
+      "path": "modis/2015/modis_2015_Latvia.csv",
+      "bytes": 5255
+    },
+    {
+      "path": "modis/2016/modis_2016_Latvia.csv",
+      "bytes": 4958
+    },
+    {
+      "path": "modis/2017/modis_2017_Latvia.csv",
+      "bytes": 2420
+    },
+    {
+      "path": "modis/2018/modis_2018_Latvia.csv",
+      "bytes": 11555
+    },
+    {
+      "path": "modis/2019/modis_2019_Latvia.csv",
+      "bytes": 7678
+    },
+    {
+      "path": "modis/2020/modis_2020_Latvia.csv",
+      "bytes": 3863
+    },
+    {
+      "path": "modis/2021/modis_2021_Latvia.csv",
+      "bytes": 4482
+    },
+    {
+      "path": "modis/2022/modis_2022_Latvia.csv",
+      "bytes": 2760
+    },
+    {
+      "path": "modis/2023/modis_2023_Latvia.csv",
+      "bytes": 3275
+    },
+    {
+      "path": "modis/2024/modis_2024_Latvia.csv",
+      "bytes": 2636
+    },
+    {
+      "path": "modis/2025/modis_2025_Latvia.csv",
+      "bytes": 2508
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Latvia.csv",
+      "bytes": 38535
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Latvia.csv",
+      "bytes": 24234
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Latvia.csv",
+      "bytes": 12790
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Latvia.csv",
+      "bytes": 9774
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Latvia.csv",
+      "bytes": 15704
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Latvia.csv",
+      "bytes": 13222
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Latvia.csv",
+      "bytes": 8461
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Latvia.csv",
+      "bytes": 7355
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Latvia.csv",
+      "bytes": 23277
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Latvia.csv",
+      "bytes": 19612
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Latvia.csv",
+      "bytes": 35687
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Latvia.csv",
+      "bytes": 20505
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Latvia.csv",
+      "bytes": 17428
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Latvia.csv",
+      "bytes": 10767
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Latvia.csv",
+      "bytes": 39322
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Latvia.csv",
+      "bytes": 23404
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Latvia.csv",
+      "bytes": 10162
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Latvia.csv",
+      "bytes": 9215
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Latvia.csv",
+      "bytes": 11715
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Latvia.csv",
+      "bytes": 11944
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Latvia.csv",
+      "bytes": 5984
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Latvia.csv",
+      "bytes": 6555
+    }
+  ],
+  "body_hash": "6638b719e184b4b7"
+}

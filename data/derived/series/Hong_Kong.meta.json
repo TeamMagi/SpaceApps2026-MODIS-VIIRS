@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Hong_Kong.csv",
+      "bytes": 689
+    },
+    {
+      "path": "modis/2002/modis_2002_Hong_Kong.csv",
+      "bytes": 525
+    },
+    {
+      "path": "modis/2003/modis_2003_Hong_Kong.csv",
+      "bytes": 2937
+    },
+    {
+      "path": "modis/2004/modis_2004_Hong_Kong.csv",
+      "bytes": 2714
+    },
+    {
+      "path": "modis/2005/modis_2005_Hong_Kong.csv",
+      "bytes": 1830
+    },
+    {
+      "path": "modis/2006/modis_2006_Hong_Kong.csv",
+      "bytes": 2051
+    },
+    {
+      "path": "modis/2007/modis_2007_Hong_Kong.csv",
+      "bytes": 2164
+    },
+    {
+      "path": "modis/2008/modis_2008_Hong_Kong.csv",
+      "bytes": 2467
+    },
+    {
+      "path": "modis/2009/modis_2009_Hong_Kong.csv",
+      "bytes": 1365
+    },
+    {
+      "path": "modis/2010/modis_2010_Hong_Kong.csv",
+      "bytes": 1528
+    },
+    {
+      "path": "modis/2011/modis_2011_Hong_Kong.csv",
+      "bytes": 1197
+    },
+    {
+      "path": "modis/2012/modis_2012_Hong_Kong.csv",
+      "bytes": 512
+    },
+    {
+      "path": "modis/2013/modis_2013_Hong_Kong.csv",
+      "bytes": 1073
+    },
+    {
+      "path": "modis/2014/modis_2014_Hong_Kong.csv",
+      "bytes": 904
+    },
+    {
+      "path": "modis/2015/modis_2015_Hong_Kong.csv",
+      "bytes": 1677
+    },
+    {
+      "path": "modis/2016/modis_2016_Hong_Kong.csv",
+      "bytes": 836
+    },
+    {
+      "path": "modis/2017/modis_2017_Hong_Kong.csv",
+      "bytes": 1064
+    },
+    {
+      "path": "modis/2018/modis_2018_Hong_Kong.csv",
+      "bytes": 846
+    },
+    {
+      "path": "modis/2019/modis_2019_Hong_Kong.csv",
+      "bytes": 993
+    },
+    {
+      "path": "modis/2020/modis_2020_Hong_Kong.csv",
+      "bytes": 1062
+    },
+    {
+      "path": "modis/2021/modis_2021_Hong_Kong.csv",
+      "bytes": 1450
+    },
+    {
+      "path": "modis/2022/modis_2022_Hong_Kong.csv",
+      "bytes": 438
+    },
+    {
+      "path": "modis/2023/modis_2023_Hong_Kong.csv",
+      "bytes": 682
+    },
+    {
+      "path": "modis/2024/modis_2024_Hong_Kong.csv",
+      "bytes": 847
+    },
+    {
+      "path": "modis/2025/modis_2025_Hong_Kong.csv",
+      "bytes": 694
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Hong_Kong.csv",
+      "bytes": 6867
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Hong_Kong.csv",
+      "bytes": 8243
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Hong_Kong.csv",
+      "bytes": 7097
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Hong_Kong.csv",
+      "bytes": 6388
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Hong_Kong.csv",
+      "bytes": 4174
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Hong_Kong.csv",
+      "bytes": 4740
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Hong_Kong.csv",
+      "bytes": 6057
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Hong_Kong.csv",
+      "bytes": 8173
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Hong_Kong.csv",
+      "bytes": 4174
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Hong_Kong.csv",
+      "bytes": 9327
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Hong_Kong.csv",
+      "bytes": 10441
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Hong_Kong.csv",
+      "bytes": 10668
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Hong_Kong.csv",
+      "bytes": 6871
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Hong_Kong.csv",
+      "bytes": 9225
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Hong_Kong.csv",
+      "bytes": 12555
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Hong_Kong.csv",
+      "bytes": 8460
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Hong_Kong.csv",
+      "bytes": 7725
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Hong_Kong.csv",
+      "bytes": 7732
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Hong_Kong.csv",
+      "bytes": 3124
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Hong_Kong.csv",
+      "bytes": 3223
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Hong_Kong.csv",
+      "bytes": 5435
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Hong_Kong.csv",
+      "bytes": 7634
+    }
+  ],
+  "body_hash": "c209b06bf0535a6f"
+}

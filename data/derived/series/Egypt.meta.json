@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Egypt.csv",
+      "bytes": 4991
+    },
+    {
+      "path": "modis/2001/modis_2001_Egypt.csv",
+      "bytes": 40743
+    },
+    {
+      "path": "modis/2002/modis_2002_Egypt.csv",
+      "bytes": 73044
+    },
+    {
+      "path": "modis/2003/modis_2003_Egypt.csv",
+      "bytes": 92804
+    },
+    {
+      "path": "modis/2004/modis_2004_Egypt.csv",
+      "bytes": 99474
+    },
+    {
+      "path": "modis/2005/modis_2005_Egypt.csv",
+      "bytes": 102787
+    },
+    {
+      "path": "modis/2006/modis_2006_Egypt.csv",
+      "bytes": 117054
+    },
+    {
+      "path": "modis/2007/modis_2007_Egypt.csv",
+      "bytes": 111003
+    },
+    {
+      "path": "modis/2008/modis_2008_Egypt.csv",
+      "bytes": 93117
+    },
+    {
+      "path": "modis/2009/modis_2009_Egypt.csv",
+      "bytes": 90065
+    },
+    {
+      "path": "modis/2010/modis_2010_Egypt.csv",
+      "bytes": 105857
+    },
+    {
+      "path": "modis/2011/modis_2011_Egypt.csv",
+      "bytes": 96543
+    },
+    {
+      "path": "modis/2012/modis_2012_Egypt.csv",
+      "bytes": 93525
+    },
+    {
+      "path": "modis/2013/modis_2013_Egypt.csv",
+      "bytes": 128422
+    },
+    {
+      "path": "modis/2014/modis_2014_Egypt.csv",
+      "bytes": 128883
+    },
+    {
+      "path": "modis/2015/modis_2015_Egypt.csv",
+      "bytes": 137179
+    },
+    {
+      "path": "modis/2016/modis_2016_Egypt.csv",
+      "bytes": 212407
+    },
+    {
+      "path": "modis/2017/modis_2017_Egypt.csv",
+      "bytes": 125240
+    },
+    {
+      "path": "modis/2018/modis_2018_Egypt.csv",
+      "bytes": 102579
+    },
+    {
+      "path": "modis/2019/modis_2019_Egypt.csv",
+      "bytes": 114073
+    },
+    {
+      "path": "modis/2020/modis_2020_Egypt.csv",
+      "bytes": 86595
+    },
+    {
+      "path": "modis/2021/modis_2021_Egypt.csv",
+      "bytes": 73730
+    },
+    {
+      "path": "modis/2022/modis_2022_Egypt.csv",
+      "bytes": 70105
+    },
+    {
+      "path": "modis/2023/modis_2023_Egypt.csv",
+      "bytes": 111938
+    },
+    {
+      "path": "modis/2024/modis_2024_Egypt.csv",
+      "bytes": 100212
+    },
+    {
+      "path": "modis/2025/modis_2025_Egypt.csv",
+      "bytes": 114137
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Egypt.csv",
+      "bytes": 2110281
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Egypt.csv",
+      "bytes": 2701480
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Egypt.csv",
+      "bytes": 2539522
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Egypt.csv",
+      "bytes": 2356906
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Egypt.csv",
+      "bytes": 2425949
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Egypt.csv",
+      "bytes": 2489279
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Egypt.csv",
+      "bytes": 2316195
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Egypt.csv",
+      "bytes": 2158786
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Egypt.csv",
+      "bytes": 2699749
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Egypt.csv",
+      "bytes": 2838570
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Egypt.csv",
+      "bytes": 3066248
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Egypt.csv",
+      "bytes": 3085938
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Egypt.csv",
+      "bytes": 3165052
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Egypt.csv",
+      "bytes": 2906053
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Egypt.csv",
+      "bytes": 2688235
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Egypt.csv",
+      "bytes": 2640428
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Egypt.csv",
+      "bytes": 2492077
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Egypt.csv",
+      "bytes": 2268792
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Egypt.csv",
+      "bytes": 2228819
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Egypt.csv",
+      "bytes": 2406541
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Egypt.csv",
+      "bytes": 2125460
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Egypt.csv",
+      "bytes": 2036736
+    }
+  ],
+  "body_hash": "9a004650ff205b5b"
+}

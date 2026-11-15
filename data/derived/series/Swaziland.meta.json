@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Swaziland.csv",
+      "bytes": 1795
+    },
+    {
+      "path": "modis/2001/modis_2001_Swaziland.csv",
+      "bytes": 58941
+    },
+    {
+      "path": "modis/2002/modis_2002_Swaziland.csv",
+      "bytes": 93409
+    },
+    {
+      "path": "modis/2003/modis_2003_Swaziland.csv",
+      "bytes": 124556
+    },
+    {
+      "path": "modis/2004/modis_2004_Swaziland.csv",
+      "bytes": 100631
+    },
+    {
+      "path": "modis/2005/modis_2005_Swaziland.csv",
+      "bytes": 136231
+    },
+    {
+      "path": "modis/2006/modis_2006_Swaziland.csv",
+      "bytes": 59531
+    },
+    {
+      "path": "modis/2007/modis_2007_Swaziland.csv",
+      "bytes": 236078
+    },
+    {
+      "path": "modis/2008/modis_2008_Swaziland.csv",
+      "bytes": 146297
+    },
+    {
+      "path": "modis/2009/modis_2009_Swaziland.csv",
+      "bytes": 82371
+    },
+    {
+      "path": "modis/2010/modis_2010_Swaziland.csv",
+      "bytes": 173043
+    },
+    {
+      "path": "modis/2011/modis_2011_Swaziland.csv",
+      "bytes": 146464
+    },
+    {
+      "path": "modis/2012/modis_2012_Swaziland.csv",
+      "bytes": 155215
+    },
+    {
+      "path": "modis/2013/modis_2013_Swaziland.csv",
+      "bytes": 141704
+    },
+    {
+      "path": "modis/2014/modis_2014_Swaziland.csv",
+      "bytes": 186943
+    },
+    {
+      "path": "modis/2015/modis_2015_Swaziland.csv",
+      "bytes": 92388
+    },
+    {
+      "path": "modis/2016/modis_2016_Swaziland.csv",
+      "bytes": 71282
+    },
+    {
+      "path": "modis/2017/modis_2017_Swaziland.csv",
+      "bytes": 94034
+    },
+    {
+      "path": "modis/2018/modis_2018_Swaziland.csv",
+      "bytes": 93870
+    },
+    {
+      "path": "modis/2019/modis_2019_Swaziland.csv",
+      "bytes": 201983
+    },
+    {
+      "path": "modis/2020/modis_2020_Swaziland.csv",
+      "bytes": 108508
+    },
+    {
+      "path": "modis/2021/modis_2021_Swaziland.csv",
+      "bytes": 143998
+    },
+    {
+      "path": "modis/2022/modis_2022_Swaziland.csv",
+      "bytes": 112367
+    },
+    {
+      "path": "modis/2023/modis_2023_Swaziland.csv",
+      "bytes": 153809
+    },
+    {
+      "path": "modis/2024/modis_2024_Swaziland.csv",
+      "bytes": 204933
+    },
+    {
+      "path": "modis/2025/modis_2025_Swaziland.csv",
+      "bytes": 109179
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Swaziland.csv",
+      "bytes": 303908
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Swaziland.csv",
+      "bytes": 851775
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Swaziland.csv",
+      "bytes": 404673
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Swaziland.csv",
+      "bytes": 551822
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Swaziland.csv",
+      "bytes": 432955
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Swaziland.csv",
+      "bytes": 591029
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Swaziland.csv",
+      "bytes": 947127
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Swaziland.csv",
+      "bytes": 444471
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Swaziland.csv",
+      "bytes": 583239
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Swaziland.csv",
+      "bytes": 614347
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Swaziland.csv",
+      "bytes": 717501
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Swaziland.csv",
+      "bytes": 342432
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Swaziland.csv",
+      "bytes": 241934
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Swaziland.csv",
+      "bytes": 400158
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Swaziland.csv",
+      "bytes": 324414
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Swaziland.csv",
+      "bytes": 847057
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Swaziland.csv",
+      "bytes": 401128
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Swaziland.csv",
+      "bytes": 548328
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Swaziland.csv",
+      "bytes": 390432
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Swaziland.csv",
+      "bytes": 606233
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Swaziland.csv",
+      "bytes": 681774
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Swaziland.csv",
+      "bytes": 441786
+    }
+  ],
+  "body_hash": "b35aef1e57aa8cab"
+}

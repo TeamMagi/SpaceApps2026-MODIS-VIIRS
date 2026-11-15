@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Jordan.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2001/modis_2001_Jordan.csv",
+      "bytes": 440
+    },
+    {
+      "path": "modis/2002/modis_2002_Jordan.csv",
+      "bytes": 1051
+    },
+    {
+      "path": "modis/2003/modis_2003_Jordan.csv",
+      "bytes": 1289
+    },
+    {
+      "path": "modis/2004/modis_2004_Jordan.csv",
+      "bytes": 1202
+    },
+    {
+      "path": "modis/2005/modis_2005_Jordan.csv",
+      "bytes": 1133
+    },
+    {
+      "path": "modis/2006/modis_2006_Jordan.csv",
+      "bytes": 2215
+    },
+    {
+      "path": "modis/2007/modis_2007_Jordan.csv",
+      "bytes": 1730
+    },
+    {
+      "path": "modis/2008/modis_2008_Jordan.csv",
+      "bytes": 2578
+    },
+    {
+      "path": "modis/2009/modis_2009_Jordan.csv",
+      "bytes": 1737
+    },
+    {
+      "path": "modis/2010/modis_2010_Jordan.csv",
+      "bytes": 1463
+    },
+    {
+      "path": "modis/2011/modis_2011_Jordan.csv",
+      "bytes": 3355
+    },
+    {
+      "path": "modis/2012/modis_2012_Jordan.csv",
+      "bytes": 1053
+    },
+    {
+      "path": "modis/2013/modis_2013_Jordan.csv",
+      "bytes": 1587
+    },
+    {
+      "path": "modis/2014/modis_2014_Jordan.csv",
+      "bytes": 2636
+    },
+    {
+      "path": "modis/2015/modis_2015_Jordan.csv",
+      "bytes": 6291
+    },
+    {
+      "path": "modis/2016/modis_2016_Jordan.csv",
+      "bytes": 3410
+    },
+    {
+      "path": "modis/2017/modis_2017_Jordan.csv",
+      "bytes": 3868
+    },
+    {
+      "path": "modis/2018/modis_2018_Jordan.csv",
+      "bytes": 3364
+    },
+    {
+      "path": "modis/2019/modis_2019_Jordan.csv",
+      "bytes": 4181
+    },
+    {
+      "path": "modis/2020/modis_2020_Jordan.csv",
+      "bytes": 4326
+    },
+    {
+      "path": "modis/2021/modis_2021_Jordan.csv",
+      "bytes": 3393
+    },
+    {
+      "path": "modis/2022/modis_2022_Jordan.csv",
+      "bytes": 2697
+    },
+    {
+      "path": "modis/2023/modis_2023_Jordan.csv",
+      "bytes": 3682
+    },
+    {
+      "path": "modis/2024/modis_2024_Jordan.csv",
+      "bytes": 5328
+    },
+    {
+      "path": "modis/2025/modis_2025_Jordan.csv",
+      "bytes": 5514
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Jordan.csv",
+      "bytes": 34789
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Jordan.csv",
+      "bytes": 52176
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Jordan.csv",
+      "bytes": 66853
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Jordan.csv",
+      "bytes": 59255
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Jordan.csv",
+      "bytes": 61220
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Jordan.csv",
+      "bytes": 54462
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Jordan.csv",
+      "bytes": 76294
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Jordan.csv",
+      "bytes": 69480
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Jordan.csv",
+      "bytes": 40578
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Jordan.csv",
+      "bytes": 44409
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Jordan.csv",
+      "bytes": 45246
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Jordan.csv",
+      "bytes": 57838
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Jordan.csv",
+      "bytes": 56116
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Jordan.csv",
+      "bytes": 44996
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Jordan.csv",
+      "bytes": 38440
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Jordan.csv",
+      "bytes": 50277
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Jordan.csv",
+      "bytes": 63909
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Jordan.csv",
+      "bytes": 53773
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Jordan.csv",
+      "bytes": 52742
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Jordan.csv",
+      "bytes": 49100
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Jordan.csv",
+      "bytes": 57920
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Jordan.csv",
+      "bytes": 59317
+    }
+  ],
+  "body_hash": "5aa4834f7d150407"
+}

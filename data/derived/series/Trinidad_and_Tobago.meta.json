@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Trinidad_and_Tobago.csv",
+      "bytes": 445
+    },
+    {
+      "path": "modis/2001/modis_2001_Trinidad_and_Tobago.csv",
+      "bytes": 5658
+    },
+    {
+      "path": "modis/2002/modis_2002_Trinidad_and_Tobago.csv",
+      "bytes": 2079
+    },
+    {
+      "path": "modis/2003/modis_2003_Trinidad_and_Tobago.csv",
+      "bytes": 23794
+    },
+    {
+      "path": "modis/2004/modis_2004_Trinidad_and_Tobago.csv",
+      "bytes": 4748
+    },
+    {
+      "path": "modis/2005/modis_2005_Trinidad_and_Tobago.csv",
+      "bytes": 10687
+    },
+    {
+      "path": "modis/2006/modis_2006_Trinidad_and_Tobago.csv",
+      "bytes": 10247
+    },
+    {
+      "path": "modis/2007/modis_2007_Trinidad_and_Tobago.csv",
+      "bytes": 17038
+    },
+    {
+      "path": "modis/2008/modis_2008_Trinidad_and_Tobago.csv",
+      "bytes": 8000
+    },
+    {
+      "path": "modis/2009/modis_2009_Trinidad_and_Tobago.csv",
+      "bytes": 7801
+    },
+    {
+      "path": "modis/2010/modis_2010_Trinidad_and_Tobago.csv",
+      "bytes": 25451
+    },
+    {
+      "path": "modis/2011/modis_2011_Trinidad_and_Tobago.csv",
+      "bytes": 5446
+    },
+    {
+      "path": "modis/2012/modis_2012_Trinidad_and_Tobago.csv",
+      "bytes": 5450
+    },
+    {
+      "path": "modis/2013/modis_2013_Trinidad_and_Tobago.csv",
+      "bytes": 11171
+    },
+    {
+      "path": "modis/2014/modis_2014_Trinidad_and_Tobago.csv",
+      "bytes": 11091
+    },
+    {
+      "path": "modis/2015/modis_2015_Trinidad_and_Tobago.csv",
+      "bytes": 9305
+    },
+    {
+      "path": "modis/2016/modis_2016_Trinidad_and_Tobago.csv",
+      "bytes": 11787
+    },
+    {
+      "path": "modis/2017/modis_2017_Trinidad_and_Tobago.csv",
+      "bytes": 8267
+    },
+    {
+      "path": "modis/2018/modis_2018_Trinidad_and_Tobago.csv",
+      "bytes": 5885
+    },
+    {
+      "path": "modis/2019/modis_2019_Trinidad_and_Tobago.csv",
+      "bytes": 13536
+    },
+    {
+      "path": "modis/2020/modis_2020_Trinidad_and_Tobago.csv",
+      "bytes": 10937
+    },
+    {
+      "path": "modis/2021/modis_2021_Trinidad_and_Tobago.csv",
+      "bytes": 5314
+    },
+    {
+      "path": "modis/2022/modis_2022_Trinidad_and_Tobago.csv",
+      "bytes": 4051
+    },
+    {
+      "path": "modis/2023/modis_2023_Trinidad_and_Tobago.csv",
+      "bytes": 10267
+    },
+    {
+      "path": "modis/2024/modis_2024_Trinidad_and_Tobago.csv",
+      "bytes": 14408
+    },
+    {
+      "path": "modis/2025/modis_2025_Trinidad_and_Tobago.csv",
+      "bytes": 7520
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Trinidad_and_Tobago.csv",
+      "bytes": 44593
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Trinidad_and_Tobago.csv",
+      "bytes": 121474
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Trinidad_and_Tobago.csv",
+      "bytes": 112456
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Trinidad_and_Tobago.csv",
+      "bytes": 58436
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Trinidad_and_Tobago.csv",
+      "bytes": 60285
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Trinidad_and_Tobago.csv",
+      "bytes": 74858
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Trinidad_and_Tobago.csv",
+      "bytes": 106291
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Trinidad_and_Tobago.csv",
+      "bytes": 60032
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Trinidad_and_Tobago.csv",
+      "bytes": 100294
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Trinidad_and_Tobago.csv",
+      "bytes": 157723
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Trinidad_and_Tobago.csv",
+      "bytes": 134333
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Trinidad_and_Tobago.csv",
+      "bytes": 130451
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Trinidad_and_Tobago.csv",
+      "bytes": 135164
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Trinidad_and_Tobago.csv",
+      "bytes": 95973
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Trinidad_and_Tobago.csv",
+      "bytes": 71034
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Trinidad_and_Tobago.csv",
+      "bytes": 110493
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Trinidad_and_Tobago.csv",
+      "bytes": 98275
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Trinidad_and_Tobago.csv",
+      "bytes": 53151
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Trinidad_and_Tobago.csv",
+      "bytes": 50972
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Trinidad_and_Tobago.csv",
+      "bytes": 86529
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Trinidad_and_Tobago.csv",
+      "bytes": 109338
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Trinidad_and_Tobago.csv",
+      "bytes": 52730
+    }
+  ],
+  "body_hash": "4f703dc973fdf16e"
+}

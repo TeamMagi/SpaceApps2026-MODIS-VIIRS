@@ -189,16 +189,24 @@ pub fn api_routes(state: Arc<ArchiveState>) -> Router {
 }
 
 async fn request_timeout(State(limit): State<Duration>, request: Request, next: Next) -> Response {
+    let path = request.uri().path().to_owned();
     match tokio::time::timeout(limit, next.run(request)).await {
         Ok(response) => response,
-        Err(_) => ApiError::new(
-            StatusCode::SERVICE_UNAVAILABLE,
-            format!(
-                "archive request timed out after {} s (ARCHIVE_REQUEST_TIMEOUT_SECS)",
-                limit.as_secs()
-            ),
-        )
-        .into_response(),
+        Err(_) => {
+            tracing::warn!(
+                path = %path,
+                timeout_secs = limit.as_secs_f64(),
+                "archive request timed out"
+            );
+            ApiError::new(
+                StatusCode::GATEWAY_TIMEOUT,
+                format!(
+                    "archive request timed out after {} s (ARCHIVE_REQUEST_TIMEOUT_SECS)",
+                    limit.as_secs()
+                ),
+            )
+            .into_response()
+        }
     }
 }
 
@@ -950,6 +958,10 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             mean_frp_raw: 0.0,
             mean_frp_lower: None,
             mean_frp_upper: None,
+            total_frp: 0.0,
+            total_frp_lower: None,
+            total_frp_upper: None,
+            frp_per_detection_eq: None,
             anomaly: None,
         })
         .collect();
@@ -1512,10 +1524,31 @@ fn extent(rows: impl Iterator<Item = (f64, f64)>) -> Option<Extent> {
     })
 }
 
+fn build_stride_masks(
+    links: &[Option<usize>],
+    outputs: usize,
+    k: usize,
+) -> (usize, Vec<bool>, Vec<bool>) {
+    let keep_out: Vec<bool> = (0..outputs).map(|i| i.is_multiple_of(k)).collect();
+    let mut removed_rank = 0usize;
+    let keep_raw: Vec<bool> = links
+        .iter()
+        .map(|link| match link {
+            Some(h) => keep_out[*h],
+            None => {
+                removed_rank += 1;
+                (removed_rank - 1).is_multiple_of(k)
+            }
+        })
+        .collect();
+    (k, keep_out, keep_raw)
+}
+
 /// Deterministic subset that keeps links consistent: every `k`-th harmonized output (in time
 /// order) with all raw rows linked to it, plus every `k`-th interscan-removed raw row. `k` is
 /// the smallest step, starting from ceil(raw / limit), whose subset fits in `limit` raw rows.
-/// Returns (k, kept output mask, kept raw mask).
+/// When no stride can fit within `limit` (e.g. output 0 alone exceeds `limit`), falls back to a
+/// greedy time-ordered selection within budget. Returns (k, kept output mask, kept raw mask).
 fn sample_links(
     links: &[Option<usize>],
     outputs: usize,
@@ -1524,25 +1557,61 @@ fn sample_links(
     if links.len() <= limit {
         return (1, vec![true; outputs], vec![true; links.len()]);
     }
-    let mut k = links.len().div_ceil(limit.max(1));
-    loop {
-        let keep_out: Vec<bool> = (0..outputs).map(|i| i.is_multiple_of(k)).collect();
-        let mut removed_rank = 0usize;
-        let keep_raw: Vec<bool> = links
-            .iter()
-            .map(|link| match link {
-                Some(h) => keep_out[*h],
-                None => {
-                    removed_rank += 1;
-                    (removed_rank - 1).is_multiple_of(k)
-                }
-            })
-            .collect();
-        if keep_raw.iter().filter(|&&kept| kept).count() <= limit {
-            return (k, keep_out, keep_raw);
+
+    let mut obs_counts = vec![0usize; outputs];
+    let mut removed_count = 0usize;
+    for link in links {
+        match link {
+            Some(h) => obs_counts[*h] += 1,
+            None => removed_count += 1,
         }
-        k += 1;
     }
+
+    // Index 0 of outputs and the first `None` row are selected for every stride `k`, so no
+    // stride can fit if their combined rows already exceed `limit`.
+    let min_kept = obs_counts.first().copied().unwrap_or(0) + usize::from(removed_count > 0);
+    let k_start = links.len().div_ceil(limit.max(1));
+    if min_kept <= limit {
+        let max_k = outputs.max(removed_count).max(1);
+        let mut k = k_start;
+        loop {
+            let mut count = removed_count.div_ceil(k);
+            for i in (0..outputs).step_by(k) {
+                count += obs_counts[i];
+                if count > limit {
+                    break;
+                }
+            }
+            if count <= limit {
+                return build_stride_masks(links, outputs, k);
+            }
+            if k >= max_k {
+                break;
+            }
+            k += 1;
+        }
+    }
+
+    let mut remaining = limit;
+    let mut keep_out = vec![false; outputs];
+    for (h, &n_obs) in obs_counts.iter().enumerate() {
+        if n_obs > 0 && n_obs <= remaining {
+            keep_out[h] = true;
+            remaining -= n_obs;
+        }
+    }
+    let keep_raw: Vec<bool> = links
+        .iter()
+        .map(|link| match link {
+            Some(h) => keep_out[*h],
+            None if remaining > 0 => {
+                remaining -= 1;
+                true
+            }
+            None => false,
+        })
+        .collect();
+    (k_start.max(2), keep_out, keep_raw)
 }
 
 async fn points(
@@ -1562,9 +1631,16 @@ async fn points(
             "'month' must be within 1..=12",
         ));
     }
-    let limit = parse_param::<usize>("limit", params.limit.as_deref())?
-        .unwrap_or(DEFAULT_POINTS_LIMIT)
-        .clamp(1, MAX_POINTS_LIMIT);
+    let limit = match parse_param::<usize>("limit", params.limit.as_deref())? {
+        Some(0) => {
+            return Err(ApiError::new(
+                StatusCode::BAD_REQUEST,
+                "'limit' must be at least 1",
+            ));
+        }
+        Some(n) => n.min(MAX_POINTS_LIMIT),
+        None => DEFAULT_POINTS_LIMIT,
+    };
     if !region.modis_years.contains(&year)
         && !region.viirs_years.contains(&year)
         && !region.noaa20_years.contains(&year)
@@ -1964,6 +2040,162 @@ mod tests {
             }
         }
         assert!(out[0] && !out[1]);
+    }
+
+    fn assert_sample_invariants(
+        links: &[Option<usize>],
+        outputs: usize,
+        limit: usize,
+        k: usize,
+        out: &[bool],
+        raw: &[bool],
+    ) {
+        assert_eq!(out.len(), outputs);
+        assert_eq!(raw.len(), links.len());
+        let kept_raw = raw.iter().filter(|&&r| r).count();
+        assert!(kept_raw <= limit, "kept {kept_raw} > limit {limit}");
+        if links.len() > limit {
+            assert!(k > 1, "truncated result must report sample_every > 1, got {k}");
+        }
+        for (i, link) in links.iter().enumerate() {
+            if raw[i] && let Some(h) = link {
+                assert!(out[*h], "raw row {i} references dropped output {h}");
+            }
+        }
+    }
+
+    fn run_sample_links_with_timeout(
+        links: Vec<Option<usize>>,
+        outputs: usize,
+        limit: usize,
+    ) -> (usize, Vec<bool>, Vec<bool>) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let res = sample_links(&links, outputs, limit);
+            let _ = tx.send(res);
+        });
+        rx.recv_timeout(Duration::from_secs(1))
+            .expect("sample_links did not finish within 1s")
+    }
+
+    #[test]
+    fn sample_links_handles_empty_and_all_none_inputs() {
+        let (k, out, raw) = sample_links(&[], 0, 10);
+        assert_eq!(k, 1);
+        assert!(out.is_empty());
+        assert!(raw.is_empty());
+
+        let (k, out, raw) = sample_links(&[], 0, 0);
+        assert_eq!(k, 1);
+        assert!(out.is_empty());
+        assert!(raw.is_empty());
+
+        let all_none = vec![None; 10];
+        let (k, out, raw) = sample_links(&all_none, 0, 3);
+        assert_sample_invariants(&all_none, 0, 3, k, &out, &raw);
+        assert_eq!(raw.iter().filter(|&&r| r).count(), 3);
+    }
+
+    #[test]
+    fn sample_links_terminates_when_first_output_exceeds_limit_or_limit_is_one() {
+        // Output 0 has 2 raw rows, so limit=1 would loop forever without a bound/fallback.
+        let links_one = vec![Some(0), Some(0), Some(1)];
+        let (k1, out1, raw1) = run_sample_links_with_timeout(links_one.clone(), 2, 1);
+        assert_sample_invariants(&links_one, 2, 1, k1, &out1, &raw1);
+        assert_eq!(raw1.iter().filter(|&&r| r).count(), 1);
+        assert!(!out1[0] && out1[1]);
+
+        // First output has 5 raw rows > limit=2; later output (1 row) and None row fill budget.
+        let links_multi = vec![
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(1),
+            None,
+            None,
+        ];
+        let (k2, out2, raw2) = run_sample_links_with_timeout(links_multi.clone(), 2, 2);
+        assert_sample_invariants(&links_multi, 2, 2, k2, &out2, &raw2);
+        assert_eq!(raw2.iter().filter(|&&r| r).count(), 2);
+        assert!(!out2[0] && out2[1]);
+    }
+
+    #[test]
+    fn sample_links_large_input_completes_quickly() {
+        let mut links = Vec::with_capacity(200_005);
+        links.extend(std::iter::repeat_n(Some(0), 10));
+        for i in 1..=100_000 {
+            links.push(Some(i));
+            links.push(Some(i));
+        }
+        links.extend(std::iter::repeat_n(None, 5));
+
+        let started = Instant::now();
+        let (k, out, raw) = run_sample_links_with_timeout(links.clone(), 100_001, 5);
+        assert!(started.elapsed() < Duration::from_secs(1));
+        assert_sample_invariants(&links, 100_001, 5, k, &out, &raw);
+    }
+
+    #[tokio::test]
+    async fn points_rejects_zero_limit_and_handles_limit_one_with_merged_hotspot() {
+        let dir = temp_archive("points-limit");
+        // Co-located MODIS + VIIRS rows harmonize into a single output with 2 raw rows,
+        // plus a standalone VIIRS row so greedy fallback can still keep 1 raw row at limit=1.
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2021,
+            "Malta",
+            &[(35.9, "2021-07-01", 0), (36.0, "2021-07-02", 0)],
+        );
+        let state = state(dir.clone(), u64::MAX);
+
+        let err = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: None,
+                limit: Some("0".into()),
+            }),
+        )
+        .await
+        .err()
+        .expect("limit=0 must fail with 400");
+        assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.message, "'limit' must be at least 1");
+
+        let Json(pts) = tokio::time::timeout(
+            Duration::from_secs(2),
+            points(
+                State(state),
+                Query(PointsParams {
+                    region: Some("Malta".into()),
+                    year: Some("2021".into()),
+                    month: None,
+                    limit: Some("1".into()),
+                }),
+            ),
+        )
+        .await
+        .expect("points with limit=1 must not hang")
+        .ok()
+        .unwrap();
+        assert_eq!(pts.limit, 1);
+        assert!(pts.truncated);
+        assert!(pts.sample_every > 1);
+        assert!(pts.raw.len() <= 1);
+        let kept_ids: HashSet<&str> = pts.harmonized.iter().map(|h| h.id.as_str()).collect();
+        for r in &pts.raw {
+            if let Some(hid) = r.harmonized_id.as_deref() {
+                assert!(kept_ids.contains(hid), "orphan harmonized_id {hid}");
+            }
+        }
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -2780,5 +3012,183 @@ mod tests {
         assert!(refreshed_meta["files"][0].get("mtime_secs").is_none());
 
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn regions_rejects_corrupt_or_missing_body_until_repaired() {
+        let dir = temp_archive("regions-corrupt-body");
+        let big: Vec<(f64, &str, u8)> = (0..120)
+            .map(|i| (30.0 + f64::from(i) * 0.05, "2015-07-01", 0))
+            .collect();
+        write_file(&dir, "modis", 2015, "BigCorrupt", &big);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let report = precompute_series(
+            state_with_caches(
+                dir.clone(),
+                staging_dir.clone(),
+                dir.join("_unused_bundled"),
+                100,
+                PipelineConfig::default(),
+            ),
+            &PrecomputeOptions {
+                regions: vec!["BigCorrupt".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+        copy_series_files(&staging_dir, &bundled_dir, "BigCorrupt");
+
+        let bundled_body_path = bundled_dir.join("series/BigCorrupt.json");
+        let valid_body = std::fs::read(&bundled_body_path).unwrap();
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir,
+            bundled_dir,
+            100,
+            PipelineConfig::default(),
+        );
+        let find_big = |listing: &RegionsResponse| -> RegionEntry {
+            let e = listing
+                .regions
+                .iter()
+                .find(|r| r.id == "BigCorrupt")
+                .unwrap();
+            RegionEntry {
+                id: e.id.clone(),
+                name: e.name.clone(),
+                modis_years: e.modis_years,
+                viirs_years: e.viirs_years,
+                noaa20_years: e.noaa20_years,
+                size_mb: e.size_mb,
+                too_large: e.too_large,
+                precomputed: e.precomputed,
+            }
+        };
+
+        let Json(initial) = regions(State(s.clone())).await.ok().unwrap();
+        let entry = find_big(&initial);
+        assert!(entry.precomputed);
+        assert!(!entry.too_large);
+
+        // Corrupt 1 byte in the bundled body (same byte length, updated content).
+        let mut corrupt_body = valid_body.clone();
+        corrupt_body[0] ^= 0x01;
+        let bumped_mtime = std::time::SystemTime::now() + Duration::from_secs(10);
+        std::fs::write(&bundled_body_path, &corrupt_body).unwrap();
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&bundled_body_path)
+            .unwrap()
+            .set_modified(bumped_mtime)
+            .unwrap();
+
+        let Json(after_corrupt) = regions(State(s.clone())).await.ok().unwrap();
+        let entry = find_big(&after_corrupt);
+        assert!(!entry.precomputed);
+        assert!(entry.too_large);
+
+        // Repair the body; /api/regions must pick it up again.
+        let repaired_mtime = bumped_mtime + Duration::from_secs(10);
+        std::fs::write(&bundled_body_path, &valid_body).unwrap();
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&bundled_body_path)
+            .unwrap()
+            .set_modified(repaired_mtime)
+            .unwrap();
+
+        let Json(after_repair) = regions(State(s.clone())).await.ok().unwrap();
+        let entry = find_big(&after_repair);
+        assert!(entry.precomputed);
+        assert!(!entry.too_large);
+
+        // Missing body with intact metadata must also report unavailable.
+        std::fs::remove_file(&bundled_body_path).unwrap();
+        let Json(after_remove) = regions(State(s)).await.ok().unwrap();
+        let entry = find_big(&after_remove);
+        assert!(!entry.precomputed);
+        assert!(entry.too_large);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[derive(Clone, Default)]
+    struct LogBuf(Arc<Mutex<Vec<u8>>>);
+
+    impl std::io::Write for LogBuf {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for LogBuf {
+        type Writer = Self;
+        fn make_writer(&'a self) -> Self::Writer {
+            self.clone()
+        }
+    }
+
+    #[tokio::test]
+    async fn request_timeout_returns_504_and_logs_warning() {
+        use tower::ServiceExt;
+
+        let buf = LogBuf::default();
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_ansi(false)
+            .with_writer(buf.clone())
+            .finish();
+        let _guard = tracing::subscriber::set_default(subscriber);
+
+        let app = Router::new()
+            .route(
+                "/api/slow",
+                get(|| async {
+                    tokio::time::sleep(Duration::from_millis(200)).await;
+                    "ok"
+                }),
+            )
+            .layer(middleware::from_fn_with_state(
+                Duration::from_millis(20),
+                request_timeout,
+            ));
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/slow?region=Test")
+                    .body(axum::body::Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::GATEWAY_TIMEOUT);
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(
+            json["error"]
+                .as_str()
+                .is_some_and(|m| m.contains("timed out")),
+            "unexpected error body: {json}"
+        );
+
+        let logs = String::from_utf8(buf.0.lock().unwrap().clone()).unwrap();
+        assert!(logs.contains("/api/slow"), "missing path in logs: {logs}");
+        assert!(logs.contains("WARN"), "missing WARN level in logs: {logs}");
     }
 }

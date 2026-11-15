@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2011/modis_2011_Wallis_and_Futuna_Islands.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Wallis_and_Futuna_Islands.csv",
+      "bytes": 296
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Wallis_and_Futuna_Islands.csv",
+      "bytes": 293
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Wallis_and_Futuna_Islands.csv",
+      "bytes": 212
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Wallis_and_Futuna_Islands.csv",
+      "bytes": 295
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Wallis_and_Futuna_Islands.csv",
+      "bytes": 371
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Wallis_and_Futuna_Islands.csv",
+      "bytes": 291
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Wallis_and_Futuna_Islands.csv",
+      "bytes": 371
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Wallis_and_Futuna_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Wallis_and_Futuna_Islands.csv",
+      "bytes": 210
+    }
+  ],
+  "body_hash": "47087532b02d319f"
+}

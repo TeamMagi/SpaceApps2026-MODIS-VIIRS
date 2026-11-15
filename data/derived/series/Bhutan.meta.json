@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Bhutan.csv",
+      "bytes": 2311
+    },
+    {
+      "path": "modis/2001/modis_2001_Bhutan.csv",
+      "bytes": 17595
+    },
+    {
+      "path": "modis/2002/modis_2002_Bhutan.csv",
+      "bytes": 11296
+    },
+    {
+      "path": "modis/2003/modis_2003_Bhutan.csv",
+      "bytes": 15497
+    },
+    {
+      "path": "modis/2004/modis_2004_Bhutan.csv",
+      "bytes": 20467
+    },
+    {
+      "path": "modis/2005/modis_2005_Bhutan.csv",
+      "bytes": 20449
+    },
+    {
+      "path": "modis/2006/modis_2006_Bhutan.csv",
+      "bytes": 33989
+    },
+    {
+      "path": "modis/2007/modis_2007_Bhutan.csv",
+      "bytes": 29127
+    },
+    {
+      "path": "modis/2008/modis_2008_Bhutan.csv",
+      "bytes": 21439
+    },
+    {
+      "path": "modis/2009/modis_2009_Bhutan.csv",
+      "bytes": 33884
+    },
+    {
+      "path": "modis/2010/modis_2010_Bhutan.csv",
+      "bytes": 39114
+    },
+    {
+      "path": "modis/2011/modis_2011_Bhutan.csv",
+      "bytes": 25521
+    },
+    {
+      "path": "modis/2012/modis_2012_Bhutan.csv",
+      "bytes": 39450
+    },
+    {
+      "path": "modis/2013/modis_2013_Bhutan.csv",
+      "bytes": 21375
+    },
+    {
+      "path": "modis/2014/modis_2014_Bhutan.csv",
+      "bytes": 32433
+    },
+    {
+      "path": "modis/2015/modis_2015_Bhutan.csv",
+      "bytes": 23387
+    },
+    {
+      "path": "modis/2016/modis_2016_Bhutan.csv",
+      "bytes": 20467
+    },
+    {
+      "path": "modis/2017/modis_2017_Bhutan.csv",
+      "bytes": 21295
+    },
+    {
+      "path": "modis/2018/modis_2018_Bhutan.csv",
+      "bytes": 13169
+    },
+    {
+      "path": "modis/2019/modis_2019_Bhutan.csv",
+      "bytes": 12282
+    },
+    {
+      "path": "modis/2020/modis_2020_Bhutan.csv",
+      "bytes": 12170
+    },
+    {
+      "path": "modis/2021/modis_2021_Bhutan.csv",
+      "bytes": 22971
+    },
+    {
+      "path": "modis/2022/modis_2022_Bhutan.csv",
+      "bytes": 9539
+    },
+    {
+      "path": "modis/2023/modis_2023_Bhutan.csv",
+      "bytes": 20853
+    },
+    {
+      "path": "modis/2024/modis_2024_Bhutan.csv",
+      "bytes": 16746
+    },
+    {
+      "path": "modis/2025/modis_2025_Bhutan.csv",
+      "bytes": 15173
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Bhutan.csv",
+      "bytes": 18069
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Bhutan.csv",
+      "bytes": 40817
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Bhutan.csv",
+      "bytes": 42233
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Bhutan.csv",
+      "bytes": 74778
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Bhutan.csv",
+      "bytes": 42399
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Bhutan.csv",
+      "bytes": 62655
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Bhutan.csv",
+      "bytes": 68009
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Bhutan.csv",
+      "bytes": 56711
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Bhutan.csv",
+      "bytes": 169636
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Bhutan.csv",
+      "bytes": 66368
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Bhutan.csv",
+      "bytes": 139418
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Bhutan.csv",
+      "bytes": 106494
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Bhutan.csv",
+      "bytes": 70995
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Bhutan.csv",
+      "bytes": 67081
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Bhutan.csv",
+      "bytes": 46298
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Bhutan.csv",
+      "bytes": 47594
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Bhutan.csv",
+      "bytes": 37608
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Bhutan.csv",
+      "bytes": 68537
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Bhutan.csv",
+      "bytes": 38780
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Bhutan.csv",
+      "bytes": 68653
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Bhutan.csv",
+      "bytes": 63831
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Bhutan.csv",
+      "bytes": 49676
+    }
+  ],
+  "body_hash": "44bd3f923753e6ce"
+}

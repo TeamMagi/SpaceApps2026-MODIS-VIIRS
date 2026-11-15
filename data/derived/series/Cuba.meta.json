@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Cuba.csv",
+      "bytes": 7098
+    },
+    {
+      "path": "modis/2001/modis_2001_Cuba.csv",
+      "bytes": 179706
+    },
+    {
+      "path": "modis/2002/modis_2002_Cuba.csv",
+      "bytes": 233737
+    },
+    {
+      "path": "modis/2003/modis_2003_Cuba.csv",
+      "bytes": 356510
+    },
+    {
+      "path": "modis/2004/modis_2004_Cuba.csv",
+      "bytes": 950144
+    },
+    {
+      "path": "modis/2005/modis_2005_Cuba.csv",
+      "bytes": 572628
+    },
+    {
+      "path": "modis/2006/modis_2006_Cuba.csv",
+      "bytes": 649502
+    },
+    {
+      "path": "modis/2007/modis_2007_Cuba.csv",
+      "bytes": 473609
+    },
+    {
+      "path": "modis/2008/modis_2008_Cuba.csv",
+      "bytes": 486173
+    },
+    {
+      "path": "modis/2009/modis_2009_Cuba.csv",
+      "bytes": 763025
+    },
+    {
+      "path": "modis/2010/modis_2010_Cuba.csv",
+      "bytes": 449938
+    },
+    {
+      "path": "modis/2011/modis_2011_Cuba.csv",
+      "bytes": 760431
+    },
+    {
+      "path": "modis/2012/modis_2012_Cuba.csv",
+      "bytes": 429790
+    },
+    {
+      "path": "modis/2013/modis_2013_Cuba.csv",
+      "bytes": 491153
+    },
+    {
+      "path": "modis/2014/modis_2014_Cuba.csv",
+      "bytes": 355351
+    },
+    {
+      "path": "modis/2015/modis_2015_Cuba.csv",
+      "bytes": 572760
+    },
+    {
+      "path": "modis/2016/modis_2016_Cuba.csv",
+      "bytes": 323193
+    },
+    {
+      "path": "modis/2017/modis_2017_Cuba.csv",
+      "bytes": 528296
+    },
+    {
+      "path": "modis/2018/modis_2018_Cuba.csv",
+      "bytes": 296275
+    },
+    {
+      "path": "modis/2019/modis_2019_Cuba.csv",
+      "bytes": 354423
+    },
+    {
+      "path": "modis/2020/modis_2020_Cuba.csv",
+      "bytes": 724781
+    },
+    {
+      "path": "modis/2021/modis_2021_Cuba.csv",
+      "bytes": 550086
+    },
+    {
+      "path": "modis/2022/modis_2022_Cuba.csv",
+      "bytes": 342074
+    },
+    {
+      "path": "modis/2023/modis_2023_Cuba.csv",
+      "bytes": 882069
+    },
+    {
+      "path": "modis/2024/modis_2024_Cuba.csv",
+      "bytes": 586719
+    },
+    {
+      "path": "modis/2025/modis_2025_Cuba.csv",
+      "bytes": 874087
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Cuba.csv",
+      "bytes": 630697
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Cuba.csv",
+      "bytes": 1422143
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Cuba.csv",
+      "bytes": 3102957
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Cuba.csv",
+      "bytes": 2355756
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Cuba.csv",
+      "bytes": 1655951
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Cuba.csv",
+      "bytes": 3595286
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Cuba.csv",
+      "bytes": 2562603
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Cuba.csv",
+      "bytes": 3619348
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Cuba.csv",
+      "bytes": 1760525
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Cuba.csv",
+      "bytes": 2065563
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Cuba.csv",
+      "bytes": 1571603
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Cuba.csv",
+      "bytes": 2474026
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Cuba.csv",
+      "bytes": 1470109
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Cuba.csv",
+      "bytes": 2331023
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Cuba.csv",
+      "bytes": 1243472
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Cuba.csv",
+      "bytes": 1403651
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Cuba.csv",
+      "bytes": 3077625
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Cuba.csv",
+      "bytes": 2363474
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Cuba.csv",
+      "bytes": 1644079
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Cuba.csv",
+      "bytes": 3523983
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Cuba.csv",
+      "bytes": 2515151
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Cuba.csv",
+      "bytes": 3544204
+    }
+  ],
+  "body_hash": "fbdabbe6baee9828"
+}

@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Comoros.csv",
+      "bytes": 505
+    },
+    {
+      "path": "modis/2002/modis_2002_Comoros.csv",
+      "bytes": 660
+    },
+    {
+      "path": "modis/2003/modis_2003_Comoros.csv",
+      "bytes": 2398
+    },
+    {
+      "path": "modis/2004/modis_2004_Comoros.csv",
+      "bytes": 2014
+    },
+    {
+      "path": "modis/2005/modis_2005_Comoros.csv",
+      "bytes": 5092
+    },
+    {
+      "path": "modis/2006/modis_2006_Comoros.csv",
+      "bytes": 4993
+    },
+    {
+      "path": "modis/2007/modis_2007_Comoros.csv",
+      "bytes": 4046
+    },
+    {
+      "path": "modis/2008/modis_2008_Comoros.csv",
+      "bytes": 4686
+    },
+    {
+      "path": "modis/2009/modis_2009_Comoros.csv",
+      "bytes": 2382
+    },
+    {
+      "path": "modis/2010/modis_2010_Comoros.csv",
+      "bytes": 3227
+    },
+    {
+      "path": "modis/2011/modis_2011_Comoros.csv",
+      "bytes": 1745
+    },
+    {
+      "path": "modis/2012/modis_2012_Comoros.csv",
+      "bytes": 1994
+    },
+    {
+      "path": "modis/2013/modis_2013_Comoros.csv",
+      "bytes": 2862
+    },
+    {
+      "path": "modis/2014/modis_2014_Comoros.csv",
+      "bytes": 3396
+    },
+    {
+      "path": "modis/2015/modis_2015_Comoros.csv",
+      "bytes": 3167
+    },
+    {
+      "path": "modis/2016/modis_2016_Comoros.csv",
+      "bytes": 1461
+    },
+    {
+      "path": "modis/2017/modis_2017_Comoros.csv",
+      "bytes": 1516
+    },
+    {
+      "path": "modis/2018/modis_2018_Comoros.csv",
+      "bytes": 3692
+    },
+    {
+      "path": "modis/2019/modis_2019_Comoros.csv",
+      "bytes": 3276
+    },
+    {
+      "path": "modis/2020/modis_2020_Comoros.csv",
+      "bytes": 1232
+    },
+    {
+      "path": "modis/2021/modis_2021_Comoros.csv",
+      "bytes": 2101
+    },
+    {
+      "path": "modis/2022/modis_2022_Comoros.csv",
+      "bytes": 835
+    },
+    {
+      "path": "modis/2023/modis_2023_Comoros.csv",
+      "bytes": 1548
+    },
+    {
+      "path": "modis/2024/modis_2024_Comoros.csv",
+      "bytes": 5982
+    },
+    {
+      "path": "modis/2025/modis_2025_Comoros.csv",
+      "bytes": 1164
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Comoros.csv",
+      "bytes": 17391
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Comoros.csv",
+      "bytes": 24703
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Comoros.csv",
+      "bytes": 7768
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Comoros.csv",
+      "bytes": 16470
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Comoros.csv",
+      "bytes": 5004
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Comoros.csv",
+      "bytes": 10609
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Comoros.csv",
+      "bytes": 37478
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Comoros.csv",
+      "bytes": 9954
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Comoros.csv",
+      "bytes": 10364
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Comoros.csv",
+      "bytes": 20108
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Comoros.csv",
+      "bytes": 16858
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Comoros.csv",
+      "bytes": 25785
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Comoros.csv",
+      "bytes": 9940
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Comoros.csv",
+      "bytes": 12973
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Comoros.csv",
+      "bytes": 15837
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Comoros.csv",
+      "bytes": 18893
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Comoros.csv",
+      "bytes": 8148
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Comoros.csv",
+      "bytes": 14630
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Comoros.csv",
+      "bytes": 4951
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Comoros.csv",
+      "bytes": 7504
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Comoros.csv",
+      "bytes": 31419
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Comoros.csv",
+      "bytes": 10842
+    }
+  ],
+  "body_hash": "f021351543a6c2a0"
+}

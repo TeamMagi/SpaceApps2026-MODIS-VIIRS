@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Guinea-Bissau.csv",
+      "bytes": 9527
+    },
+    {
+      "path": "modis/2001/modis_2001_Guinea-Bissau.csv",
+      "bytes": 123831
+    },
+    {
+      "path": "modis/2002/modis_2002_Guinea-Bissau.csv",
+      "bytes": 161962
+    },
+    {
+      "path": "modis/2003/modis_2003_Guinea-Bissau.csv",
+      "bytes": 484475
+    },
+    {
+      "path": "modis/2004/modis_2004_Guinea-Bissau.csv",
+      "bytes": 452884
+    },
+    {
+      "path": "modis/2005/modis_2005_Guinea-Bissau.csv",
+      "bytes": 420135
+    },
+    {
+      "path": "modis/2006/modis_2006_Guinea-Bissau.csv",
+      "bytes": 411602
+    },
+    {
+      "path": "modis/2007/modis_2007_Guinea-Bissau.csv",
+      "bytes": 436915
+    },
+    {
+      "path": "modis/2008/modis_2008_Guinea-Bissau.csv",
+      "bytes": 384206
+    },
+    {
+      "path": "modis/2009/modis_2009_Guinea-Bissau.csv",
+      "bytes": 464324
+    },
+    {
+      "path": "modis/2010/modis_2010_Guinea-Bissau.csv",
+      "bytes": 357454
+    },
+    {
+      "path": "modis/2011/modis_2011_Guinea-Bissau.csv",
+      "bytes": 453834
+    },
+    {
+      "path": "modis/2012/modis_2012_Guinea-Bissau.csv",
+      "bytes": 431369
+    },
+    {
+      "path": "modis/2013/modis_2013_Guinea-Bissau.csv",
+      "bytes": 347963
+    },
+    {
+      "path": "modis/2014/modis_2014_Guinea-Bissau.csv",
+      "bytes": 398521
+    },
+    {
+      "path": "modis/2015/modis_2015_Guinea-Bissau.csv",
+      "bytes": 425618
+    },
+    {
+      "path": "modis/2016/modis_2016_Guinea-Bissau.csv",
+      "bytes": 395005
+    },
+    {
+      "path": "modis/2017/modis_2017_Guinea-Bissau.csv",
+      "bytes": 297724
+    },
+    {
+      "path": "modis/2018/modis_2018_Guinea-Bissau.csv",
+      "bytes": 342763
+    },
+    {
+      "path": "modis/2019/modis_2019_Guinea-Bissau.csv",
+      "bytes": 383409
+    },
+    {
+      "path": "modis/2020/modis_2020_Guinea-Bissau.csv",
+      "bytes": 404957
+    },
+    {
+      "path": "modis/2021/modis_2021_Guinea-Bissau.csv",
+      "bytes": 272058
+    },
+    {
+      "path": "modis/2022/modis_2022_Guinea-Bissau.csv",
+      "bytes": 278905
+    },
+    {
+      "path": "modis/2023/modis_2023_Guinea-Bissau.csv",
+      "bytes": 294918
+    },
+    {
+      "path": "modis/2024/modis_2024_Guinea-Bissau.csv",
+      "bytes": 400429
+    },
+    {
+      "path": "modis/2025/modis_2025_Guinea-Bissau.csv",
+      "bytes": 275038
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Guinea-Bissau.csv",
+      "bytes": 791944
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Guinea-Bissau.csv",
+      "bytes": 1555118
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Guinea-Bissau.csv",
+      "bytes": 1590887
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Guinea-Bissau.csv",
+      "bytes": 1267632
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Guinea-Bissau.csv",
+      "bytes": 1268977
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Guinea-Bissau.csv",
+      "bytes": 1246838
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Guinea-Bissau.csv",
+      "bytes": 1529404
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Guinea-Bissau.csv",
+      "bytes": 1066301
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Guinea-Bissau.csv",
+      "bytes": 1552314
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Guinea-Bissau.csv",
+      "bytes": 1544500
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Guinea-Bissau.csv",
+      "bytes": 1803973
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Guinea-Bissau.csv",
+      "bytes": 1725157
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Guinea-Bissau.csv",
+      "bytes": 1624646
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Guinea-Bissau.csv",
+      "bytes": 1318617
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Guinea-Bissau.csv",
+      "bytes": 1495474
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Guinea-Bissau.csv",
+      "bytes": 1591787
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Guinea-Bissau.csv",
+      "bytes": 1640513
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Guinea-Bissau.csv",
+      "bytes": 1161667
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Guinea-Bissau.csv",
+      "bytes": 1184029
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Guinea-Bissau.csv",
+      "bytes": 1229496
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Guinea-Bissau.csv",
+      "bytes": 1418072
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Guinea-Bissau.csv",
+      "bytes": 1037878
+    }
+  ],
+  "body_hash": "03c8c3808f7f149a"
+}

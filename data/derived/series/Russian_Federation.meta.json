@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Russian_Federation.csv",
+      "bytes": 124838
+    },
+    {
+      "path": "modis/2001/modis_2001_Russian_Federation.csv",
+      "bytes": 14642614
+    },
+    {
+      "path": "modis/2002/modis_2002_Russian_Federation.csv",
+      "bytes": 28329810
+    },
+    {
+      "path": "modis/2003/modis_2003_Russian_Federation.csv",
+      "bytes": 50585943
+    },
+    {
+      "path": "modis/2004/modis_2004_Russian_Federation.csv",
+      "bytes": 18967272
+    },
+    {
+      "path": "modis/2005/modis_2005_Russian_Federation.csv",
+      "bytes": 23204121
+    },
+    {
+      "path": "modis/2006/modis_2006_Russian_Federation.csv",
+      "bytes": 30108313
+    },
+    {
+      "path": "modis/2007/modis_2007_Russian_Federation.csv",
+      "bytes": 20435589
+    },
+    {
+      "path": "modis/2008/modis_2008_Russian_Federation.csv",
+      "bytes": 36090730
+    },
+    {
+      "path": "modis/2009/modis_2009_Russian_Federation.csv",
+      "bytes": 25207593
+    },
+    {
+      "path": "modis/2010/modis_2010_Russian_Federation.csv",
+      "bytes": 23525274
+    },
+    {
+      "path": "modis/2011/modis_2011_Russian_Federation.csv",
+      "bytes": 22239418
+    },
+    {
+      "path": "modis/2012/modis_2012_Russian_Federation.csv",
+      "bytes": 37672637
+    },
+    {
+      "path": "modis/2013/modis_2013_Russian_Federation.csv",
+      "bytes": 18376967
+    },
+    {
+      "path": "modis/2014/modis_2014_Russian_Federation.csv",
+      "bytes": 27032833
+    },
+    {
+      "path": "modis/2015/modis_2015_Russian_Federation.csv",
+      "bytes": 19289087
+    },
+    {
+      "path": "modis/2016/modis_2016_Russian_Federation.csv",
+      "bytes": 22912114
+    },
+    {
+      "path": "modis/2017/modis_2017_Russian_Federation.csv",
+      "bytes": 17765425
+    },
+    {
+      "path": "modis/2018/modis_2018_Russian_Federation.csv",
+      "bytes": 21140666
+    },
+    {
+      "path": "modis/2019/modis_2019_Russian_Federation.csv",
+      "bytes": 29038220
+    },
+    {
+      "path": "modis/2020/modis_2020_Russian_Federation.csv",
+      "bytes": 27539381
+    },
+    {
+      "path": "modis/2021/modis_2021_Russian_Federation.csv",
+      "bytes": 34909251
+    },
+    {
+      "path": "modis/2022/modis_2022_Russian_Federation.csv",
+      "bytes": 13310559
+    },
+    {
+      "path": "modis/2023/modis_2023_Russian_Federation.csv",
+      "bytes": 17640203
+    },
+    {
+      "path": "modis/2024/modis_2024_Russian_Federation.csv",
+      "bytes": 20558662
+    },
+    {
+      "path": "modis/2025/modis_2025_Russian_Federation.csv",
+      "bytes": 10272923
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Russian_Federation.csv",
+      "bytes": 81231302
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Russian_Federation.csv",
+      "bytes": 124388059
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Russian_Federation.csv",
+      "bytes": 115258166
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Russian_Federation.csv",
+      "bytes": 149819228
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Russian_Federation.csv",
+      "bytes": 64369511
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Russian_Federation.csv",
+      "bytes": 71223103
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Russian_Federation.csv",
+      "bytes": 98970786
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Russian_Federation.csv",
+      "bytes": 47402307
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Russian_Federation.csv",
+      "bytes": 159040952
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Russian_Federation.csv",
+      "bytes": 79236686
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Russian_Federation.csv",
+      "bytes": 108287574
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Russian_Federation.csv",
+      "bytes": 84877927
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Russian_Federation.csv",
+      "bytes": 106779308
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Russian_Federation.csv",
+      "bytes": 72608774
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Russian_Federation.csv",
+      "bytes": 84542475
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Russian_Federation.csv",
+      "bytes": 122806233
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Russian_Federation.csv",
+      "bytes": 113271122
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Russian_Federation.csv",
+      "bytes": 146048979
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Russian_Federation.csv",
+      "bytes": 51441933
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Russian_Federation.csv",
+      "bytes": 72997082
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Russian_Federation.csv",
+      "bytes": 76029411
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Russian_Federation.csv",
+      "bytes": 47272768
+    }
+  ],
+  "body_hash": "fcdd4c75ce59b3fb"
+}

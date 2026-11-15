@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 155589
+    },
+    {
+      "path": "modis/2001/modis_2001_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 6187938
+    },
+    {
+      "path": "modis/2002/modis_2002_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 17264516
+    },
+    {
+      "path": "modis/2003/modis_2003_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 29693881
+    },
+    {
+      "path": "modis/2004/modis_2004_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 34651975
+    },
+    {
+      "path": "modis/2005/modis_2005_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 34975312
+    },
+    {
+      "path": "modis/2006/modis_2006_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 33079386
+    },
+    {
+      "path": "modis/2007/modis_2007_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 30031364
+    },
+    {
+      "path": "modis/2008/modis_2008_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 32391810
+    },
+    {
+      "path": "modis/2009/modis_2009_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 34682641
+    },
+    {
+      "path": "modis/2010/modis_2010_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 35600657
+    },
+    {
+      "path": "modis/2011/modis_2011_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 33402966
+    },
+    {
+      "path": "modis/2012/modis_2012_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 31850297
+    },
+    {
+      "path": "modis/2013/modis_2013_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 36140157
+    },
+    {
+      "path": "modis/2014/modis_2014_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 32707527
+    },
+    {
+      "path": "modis/2015/modis_2015_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 36652278
+    },
+    {
+      "path": "modis/2016/modis_2016_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 39468457
+    },
+    {
+      "path": "modis/2017/modis_2017_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 35129675
+    },
+    {
+      "path": "modis/2018/modis_2018_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 35824351
+    },
+    {
+      "path": "modis/2019/modis_2019_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 35829560
+    },
+    {
+      "path": "modis/2020/modis_2020_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 36945704
+    },
+    {
+      "path": "modis/2021/modis_2021_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 37495259
+    },
+    {
+      "path": "modis/2022/modis_2022_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 35091591
+    },
+    {
+      "path": "modis/2023/modis_2023_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 35785233
+    },
+    {
+      "path": "modis/2024/modis_2024_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 40903559
+    },
+    {
+      "path": "modis/2025/modis_2025_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 31808501
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 120554841
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 144099008
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 152122125
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 149077967
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 145182392
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 144906045
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 174714400
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 156616954
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 122373885
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 142037309
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 129559662
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 145754929
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 156982293
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 141651797
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 142804021
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 143104757
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 149000242
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 146902938
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 123681193
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 143761150
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 155270814
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Democratic_Republic_of_the_Congo.csv",
+      "bytes": 153332652
+    }
+  ],
+  "body_hash": "ed5fe228b7fe9400"
+}

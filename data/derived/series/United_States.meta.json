@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_United_States.csv",
+      "bytes": 299227
+    },
+    {
+      "path": "modis/2001/modis_2001_United_States.csv",
+      "bytes": 3556141
+    },
+    {
+      "path": "modis/2002/modis_2002_United_States.csv",
+      "bytes": 6322657
+    },
+    {
+      "path": "modis/2003/modis_2003_United_States.csv",
+      "bytes": 9028563
+    },
+    {
+      "path": "modis/2004/modis_2004_United_States.csv",
+      "bytes": 12523541
+    },
+    {
+      "path": "modis/2005/modis_2005_United_States.csv",
+      "bytes": 13525387
+    },
+    {
+      "path": "modis/2006/modis_2006_United_States.csv",
+      "bytes": 9988649
+    },
+    {
+      "path": "modis/2007/modis_2007_United_States.csv",
+      "bytes": 11250103
+    },
+    {
+      "path": "modis/2008/modis_2008_United_States.csv",
+      "bytes": 9426378
+    },
+    {
+      "path": "modis/2009/modis_2009_United_States.csv",
+      "bytes": 9081301
+    },
+    {
+      "path": "modis/2010/modis_2010_United_States.csv",
+      "bytes": 7719174
+    },
+    {
+      "path": "modis/2011/modis_2011_United_States.csv",
+      "bytes": 9749666
+    },
+    {
+      "path": "modis/2012/modis_2012_United_States.csv",
+      "bytes": 10853454
+    },
+    {
+      "path": "modis/2013/modis_2013_United_States.csv",
+      "bytes": 8074775
+    },
+    {
+      "path": "modis/2014/modis_2014_United_States.csv",
+      "bytes": 7774285
+    },
+    {
+      "path": "modis/2015/modis_2015_United_States.csv",
+      "bytes": 11628581
+    },
+    {
+      "path": "modis/2016/modis_2016_United_States.csv",
+      "bytes": 8879583
+    },
+    {
+      "path": "modis/2017/modis_2017_United_States.csv",
+      "bytes": 12063842
+    },
+    {
+      "path": "modis/2018/modis_2018_United_States.csv",
+      "bytes": 10488759
+    },
+    {
+      "path": "modis/2019/modis_2019_United_States.csv",
+      "bytes": 8554573
+    },
+    {
+      "path": "modis/2020/modis_2020_United_States.csv",
+      "bytes": 12343543
+    },
+    {
+      "path": "modis/2021/modis_2021_United_States.csv",
+      "bytes": 13123878
+    },
+    {
+      "path": "modis/2022/modis_2022_United_States.csv",
+      "bytes": 10424099
+    },
+    {
+      "path": "modis/2023/modis_2023_United_States.csv",
+      "bytes": 7572283
+    },
+    {
+      "path": "modis/2024/modis_2024_United_States.csv",
+      "bytes": 10006305
+    },
+    {
+      "path": "modis/2025/modis_2025_United_States.csv",
+      "bytes": 8874396
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_United_States.csv",
+      "bytes": 37835646
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_United_States.csv",
+      "bytes": 36948805
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_United_States.csv",
+      "bytes": 54537603
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_United_States.csv",
+      "bytes": 54976027
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_United_States.csv",
+      "bytes": 44718974
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_United_States.csv",
+      "bytes": 31926156
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_United_States.csv",
+      "bytes": 43790729
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_United_States.csv",
+      "bytes": 39681027
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_United_States.csv",
+      "bytes": 42840430
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_United_States.csv",
+      "bytes": 32294061
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_United_States.csv",
+      "bytes": 30061749
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_United_States.csv",
+      "bytes": 46447362
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_United_States.csv",
+      "bytes": 34510507
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_United_States.csv",
+      "bytes": 47618030
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_United_States.csv",
+      "bytes": 44442753
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_United_States.csv",
+      "bytes": 36202018
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_United_States.csv",
+      "bytes": 53815954
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_United_States.csv",
+      "bytes": 53156381
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_United_States.csv",
+      "bytes": 42396210
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_United_States.csv",
+      "bytes": 30962191
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_United_States.csv",
+      "bytes": 38675162
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_United_States.csv",
+      "bytes": 37453338
+    }
+  ],
+  "body_hash": "c5edf7fea3e0cec0"
+}

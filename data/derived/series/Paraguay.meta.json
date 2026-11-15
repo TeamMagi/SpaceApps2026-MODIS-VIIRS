@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Paraguay.csv",
+      "bytes": 79087
+    },
+    {
+      "path": "modis/2001/modis_2001_Paraguay.csv",
+      "bytes": 1479395
+    },
+    {
+      "path": "modis/2002/modis_2002_Paraguay.csv",
+      "bytes": 3759927
+    },
+    {
+      "path": "modis/2003/modis_2003_Paraguay.csv",
+      "bytes": 5237950
+    },
+    {
+      "path": "modis/2004/modis_2004_Paraguay.csv",
+      "bytes": 3550735
+    },
+    {
+      "path": "modis/2005/modis_2005_Paraguay.csv",
+      "bytes": 3965418
+    },
+    {
+      "path": "modis/2006/modis_2006_Paraguay.csv",
+      "bytes": 3749692
+    },
+    {
+      "path": "modis/2007/modis_2007_Paraguay.csv",
+      "bytes": 5071029
+    },
+    {
+      "path": "modis/2008/modis_2008_Paraguay.csv",
+      "bytes": 3353608
+    },
+    {
+      "path": "modis/2009/modis_2009_Paraguay.csv",
+      "bytes": 2690432
+    },
+    {
+      "path": "modis/2010/modis_2010_Paraguay.csv",
+      "bytes": 3318747
+    },
+    {
+      "path": "modis/2011/modis_2011_Paraguay.csv",
+      "bytes": 3436967
+    },
+    {
+      "path": "modis/2012/modis_2012_Paraguay.csv",
+      "bytes": 2909583
+    },
+    {
+      "path": "modis/2013/modis_2013_Paraguay.csv",
+      "bytes": 3943074
+    },
+    {
+      "path": "modis/2014/modis_2014_Paraguay.csv",
+      "bytes": 2364690
+    },
+    {
+      "path": "modis/2015/modis_2015_Paraguay.csv",
+      "bytes": 2279591
+    },
+    {
+      "path": "modis/2016/modis_2016_Paraguay.csv",
+      "bytes": 3181502
+    },
+    {
+      "path": "modis/2017/modis_2017_Paraguay.csv",
+      "bytes": 3673762
+    },
+    {
+      "path": "modis/2018/modis_2018_Paraguay.csv",
+      "bytes": 2393448
+    },
+    {
+      "path": "modis/2019/modis_2019_Paraguay.csv",
+      "bytes": 3404346
+    },
+    {
+      "path": "modis/2020/modis_2020_Paraguay.csv",
+      "bytes": 5627133
+    },
+    {
+      "path": "modis/2021/modis_2021_Paraguay.csv",
+      "bytes": 3625822
+    },
+    {
+      "path": "modis/2022/modis_2022_Paraguay.csv",
+      "bytes": 2730197
+    },
+    {
+      "path": "modis/2023/modis_2023_Paraguay.csv",
+      "bytes": 2837269
+    },
+    {
+      "path": "modis/2024/modis_2024_Paraguay.csv",
+      "bytes": 3346661
+    },
+    {
+      "path": "modis/2025/modis_2025_Paraguay.csv",
+      "bytes": 1633400
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Paraguay.csv",
+      "bytes": 7542679
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Paraguay.csv",
+      "bytes": 11760828
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Paraguay.csv",
+      "bytes": 19425938
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Paraguay.csv",
+      "bytes": 13116400
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Paraguay.csv",
+      "bytes": 10093196
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Paraguay.csv",
+      "bytes": 9471168
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Paraguay.csv",
+      "bytes": 11171455
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Paraguay.csv",
+      "bytes": 5935525
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Paraguay.csv",
+      "bytes": 9589917
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Paraguay.csv",
+      "bytes": 13325185
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Paraguay.csv",
+      "bytes": 8049068
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Paraguay.csv",
+      "bytes": 7246444
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Paraguay.csv",
+      "bytes": 10298112
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Paraguay.csv",
+      "bytes": 12106688
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Paraguay.csv",
+      "bytes": 7797665
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Paraguay.csv",
+      "bytes": 11950047
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Paraguay.csv",
+      "bytes": 19846881
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Paraguay.csv",
+      "bytes": 12602738
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Paraguay.csv",
+      "bytes": 9906059
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Paraguay.csv",
+      "bytes": 9767453
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Paraguay.csv",
+      "bytes": 10862250
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Paraguay.csv",
+      "bytes": 5854846
+    }
+  ],
+  "body_hash": "f67209d68e5fafeb"
+}

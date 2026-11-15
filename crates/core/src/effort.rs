@@ -217,7 +217,6 @@ mod tests {
             frp_lower: 27.6,
             frp_upper: 32.4,
             vza_factor: None,
-            calibration_ratio: None,
             n_obs: platforms.len() as u16,
             platforms,
             confidence: Confidence::Nominal,

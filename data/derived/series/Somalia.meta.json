@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Somalia.csv",
+      "bytes": 2393
+    },
+    {
+      "path": "modis/2001/modis_2001_Somalia.csv",
+      "bytes": 17420
+    },
+    {
+      "path": "modis/2002/modis_2002_Somalia.csv",
+      "bytes": 26761
+    },
+    {
+      "path": "modis/2003/modis_2003_Somalia.csv",
+      "bytes": 130947
+    },
+    {
+      "path": "modis/2004/modis_2004_Somalia.csv",
+      "bytes": 64406
+    },
+    {
+      "path": "modis/2005/modis_2005_Somalia.csv",
+      "bytes": 79708
+    },
+    {
+      "path": "modis/2006/modis_2006_Somalia.csv",
+      "bytes": 28817
+    },
+    {
+      "path": "modis/2007/modis_2007_Somalia.csv",
+      "bytes": 67862
+    },
+    {
+      "path": "modis/2008/modis_2008_Somalia.csv",
+      "bytes": 63147
+    },
+    {
+      "path": "modis/2009/modis_2009_Somalia.csv",
+      "bytes": 32839
+    },
+    {
+      "path": "modis/2010/modis_2010_Somalia.csv",
+      "bytes": 50075
+    },
+    {
+      "path": "modis/2011/modis_2011_Somalia.csv",
+      "bytes": 32844
+    },
+    {
+      "path": "modis/2012/modis_2012_Somalia.csv",
+      "bytes": 58198
+    },
+    {
+      "path": "modis/2013/modis_2013_Somalia.csv",
+      "bytes": 61715
+    },
+    {
+      "path": "modis/2014/modis_2014_Somalia.csv",
+      "bytes": 51998
+    },
+    {
+      "path": "modis/2015/modis_2015_Somalia.csv",
+      "bytes": 24930
+    },
+    {
+      "path": "modis/2016/modis_2016_Somalia.csv",
+      "bytes": 29986
+    },
+    {
+      "path": "modis/2017/modis_2017_Somalia.csv",
+      "bytes": 19851
+    },
+    {
+      "path": "modis/2018/modis_2018_Somalia.csv",
+      "bytes": 14811
+    },
+    {
+      "path": "modis/2019/modis_2019_Somalia.csv",
+      "bytes": 30746
+    },
+    {
+      "path": "modis/2020/modis_2020_Somalia.csv",
+      "bytes": 21446
+    },
+    {
+      "path": "modis/2021/modis_2021_Somalia.csv",
+      "bytes": 30348
+    },
+    {
+      "path": "modis/2022/modis_2022_Somalia.csv",
+      "bytes": 14866
+    },
+    {
+      "path": "modis/2023/modis_2023_Somalia.csv",
+      "bytes": 22313
+    },
+    {
+      "path": "modis/2024/modis_2024_Somalia.csv",
+      "bytes": 20398
+    },
+    {
+      "path": "modis/2025/modis_2025_Somalia.csv",
+      "bytes": 23700
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Somalia.csv",
+      "bytes": 69809
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Somalia.csv",
+      "bytes": 200166
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Somalia.csv",
+      "bytes": 165269
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Somalia.csv",
+      "bytes": 231334
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Somalia.csv",
+      "bytes": 162629
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Somalia.csv",
+      "bytes": 138675
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Somalia.csv",
+      "bytes": 183410
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Somalia.csv",
+      "bytes": 248630
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Somalia.csv",
+      "bytes": 359140
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Somalia.csv",
+      "bytes": 321408
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Somalia.csv",
+      "bytes": 331733
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Somalia.csv",
+      "bytes": 143950
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Somalia.csv",
+      "bytes": 244634
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Somalia.csv",
+      "bytes": 143134
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Somalia.csv",
+      "bytes": 95361
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Somalia.csv",
+      "bytes": 191427
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Somalia.csv",
+      "bytes": 153196
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Somalia.csv",
+      "bytes": 237809
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Somalia.csv",
+      "bytes": 144749
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Somalia.csv",
+      "bytes": 130488
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Somalia.csv",
+      "bytes": 165110
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Somalia.csv",
+      "bytes": 250556
+    }
+  ],
+  "body_hash": "9903e08e5a28cc71"
+}

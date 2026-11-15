@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Israel.csv",
+      "bytes": 911
+    },
+    {
+      "path": "modis/2001/modis_2001_Israel.csv",
+      "bytes": 8753
+    },
+    {
+      "path": "modis/2002/modis_2002_Israel.csv",
+      "bytes": 10936
+    },
+    {
+      "path": "modis/2003/modis_2003_Israel.csv",
+      "bytes": 16009
+    },
+    {
+      "path": "modis/2004/modis_2004_Israel.csv",
+      "bytes": 9905
+    },
+    {
+      "path": "modis/2005/modis_2005_Israel.csv",
+      "bytes": 18230
+    },
+    {
+      "path": "modis/2006/modis_2006_Israel.csv",
+      "bytes": 15812
+    },
+    {
+      "path": "modis/2007/modis_2007_Israel.csv",
+      "bytes": 13475
+    },
+    {
+      "path": "modis/2008/modis_2008_Israel.csv",
+      "bytes": 8249
+    },
+    {
+      "path": "modis/2009/modis_2009_Israel.csv",
+      "bytes": 8154
+    },
+    {
+      "path": "modis/2010/modis_2010_Israel.csv",
+      "bytes": 29878
+    },
+    {
+      "path": "modis/2011/modis_2011_Israel.csv",
+      "bytes": 9952
+    },
+    {
+      "path": "modis/2012/modis_2012_Israel.csv",
+      "bytes": 7939
+    },
+    {
+      "path": "modis/2013/modis_2013_Israel.csv",
+      "bytes": 13139
+    },
+    {
+      "path": "modis/2014/modis_2014_Israel.csv",
+      "bytes": 8378
+    },
+    {
+      "path": "modis/2015/modis_2015_Israel.csv",
+      "bytes": 8865
+    },
+    {
+      "path": "modis/2016/modis_2016_Israel.csv",
+      "bytes": 12649
+    },
+    {
+      "path": "modis/2017/modis_2017_Israel.csv",
+      "bytes": 8212
+    },
+    {
+      "path": "modis/2018/modis_2018_Israel.csv",
+      "bytes": 8184
+    },
+    {
+      "path": "modis/2019/modis_2019_Israel.csv",
+      "bytes": 14803
+    },
+    {
+      "path": "modis/2020/modis_2020_Israel.csv",
+      "bytes": 10018
+    },
+    {
+      "path": "modis/2021/modis_2021_Israel.csv",
+      "bytes": 12868
+    },
+    {
+      "path": "modis/2022/modis_2022_Israel.csv",
+      "bytes": 6169
+    },
+    {
+      "path": "modis/2023/modis_2023_Israel.csv",
+      "bytes": 12142
+    },
+    {
+      "path": "modis/2024/modis_2024_Israel.csv",
+      "bytes": 24684
+    },
+    {
+      "path": "modis/2025/modis_2025_Israel.csv",
+      "bytes": 13102
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Israel.csv",
+      "bytes": 84657
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Israel.csv",
+      "bytes": 107233
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Israel.csv",
+      "bytes": 81466
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Israel.csv",
+      "bytes": 114517
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Israel.csv",
+      "bytes": 80352
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Israel.csv",
+      "bytes": 105359
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Israel.csv",
+      "bytes": 172175
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Israel.csv",
+      "bytes": 98732
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Israel.csv",
+      "bytes": 101254
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Israel.csv",
+      "bytes": 156440
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Israel.csv",
+      "bytes": 115325
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Israel.csv",
+      "bytes": 110304
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Israel.csv",
+      "bytes": 126495
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Israel.csv",
+      "bytes": 113934
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Israel.csv",
+      "bytes": 99911
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Israel.csv",
+      "bytes": 116381
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Israel.csv",
+      "bytes": 79460
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Israel.csv",
+      "bytes": 115612
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Israel.csv",
+      "bytes": 77219
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Israel.csv",
+      "bytes": 98583
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Israel.csv",
+      "bytes": 135573
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Israel.csv",
+      "bytes": 99444
+    }
+  ],
+  "body_hash": "87cbbc9aa54fc725"
+}

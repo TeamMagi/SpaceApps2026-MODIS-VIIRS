@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Kazakhstan.csv",
+      "bytes": 44648
+    },
+    {
+      "path": "modis/2001/modis_2001_Kazakhstan.csv",
+      "bytes": 2712708
+    },
+    {
+      "path": "modis/2002/modis_2002_Kazakhstan.csv",
+      "bytes": 8364729
+    },
+    {
+      "path": "modis/2003/modis_2003_Kazakhstan.csv",
+      "bytes": 8248698
+    },
+    {
+      "path": "modis/2004/modis_2004_Kazakhstan.csv",
+      "bytes": 7866171
+    },
+    {
+      "path": "modis/2005/modis_2005_Kazakhstan.csv",
+      "bytes": 5804728
+    },
+    {
+      "path": "modis/2006/modis_2006_Kazakhstan.csv",
+      "bytes": 6498687
+    },
+    {
+      "path": "modis/2007/modis_2007_Kazakhstan.csv",
+      "bytes": 4527679
+    },
+    {
+      "path": "modis/2008/modis_2008_Kazakhstan.csv",
+      "bytes": 5996076
+    },
+    {
+      "path": "modis/2009/modis_2009_Kazakhstan.csv",
+      "bytes": 3262056
+    },
+    {
+      "path": "modis/2010/modis_2010_Kazakhstan.csv",
+      "bytes": 4871218
+    },
+    {
+      "path": "modis/2011/modis_2011_Kazakhstan.csv",
+      "bytes": 2155900
+    },
+    {
+      "path": "modis/2012/modis_2012_Kazakhstan.csv",
+      "bytes": 4523434
+    },
+    {
+      "path": "modis/2013/modis_2013_Kazakhstan.csv",
+      "bytes": 1567549
+    },
+    {
+      "path": "modis/2014/modis_2014_Kazakhstan.csv",
+      "bytes": 3144780
+    },
+    {
+      "path": "modis/2015/modis_2015_Kazakhstan.csv",
+      "bytes": 3299128
+    },
+    {
+      "path": "modis/2016/modis_2016_Kazakhstan.csv",
+      "bytes": 1760242
+    },
+    {
+      "path": "modis/2017/modis_2017_Kazakhstan.csv",
+      "bytes": 5639837
+    },
+    {
+      "path": "modis/2018/modis_2018_Kazakhstan.csv",
+      "bytes": 2420644
+    },
+    {
+      "path": "modis/2019/modis_2019_Kazakhstan.csv",
+      "bytes": 4023187
+    },
+    {
+      "path": "modis/2020/modis_2020_Kazakhstan.csv",
+      "bytes": 2895398
+    },
+    {
+      "path": "modis/2021/modis_2021_Kazakhstan.csv",
+      "bytes": 2494899
+    },
+    {
+      "path": "modis/2022/modis_2022_Kazakhstan.csv",
+      "bytes": 1464847
+    },
+    {
+      "path": "modis/2023/modis_2023_Kazakhstan.csv",
+      "bytes": 1183774
+    },
+    {
+      "path": "modis/2024/modis_2024_Kazakhstan.csv",
+      "bytes": 585518
+    },
+    {
+      "path": "modis/2025/modis_2025_Kazakhstan.csv",
+      "bytes": 1225095
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Kazakhstan.csv",
+      "bytes": 8384249
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Kazakhstan.csv",
+      "bytes": 14766632
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Kazakhstan.csv",
+      "bytes": 10131597
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Kazakhstan.csv",
+      "bytes": 9481735
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Kazakhstan.csv",
+      "bytes": 6915249
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Kazakhstan.csv",
+      "bytes": 5016699
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Kazakhstan.csv",
+      "bytes": 2891665
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Kazakhstan.csv",
+      "bytes": 5077477
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Kazakhstan.csv",
+      "bytes": 15560509
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Kazakhstan.csv",
+      "bytes": 5956825
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Kazakhstan.csv",
+      "bytes": 11841182
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Kazakhstan.csv",
+      "bytes": 12254332
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Kazakhstan.csv",
+      "bytes": 6654298
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Kazakhstan.csv",
+      "bytes": 20503310
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Kazakhstan.csv",
+      "bytes": 8761310
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Kazakhstan.csv",
+      "bytes": 14368849
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Kazakhstan.csv",
+      "bytes": 10097248
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Kazakhstan.csv",
+      "bytes": 9527616
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Kazakhstan.csv",
+      "bytes": 6577559
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Kazakhstan.csv",
+      "bytes": 5142520
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Kazakhstan.csv",
+      "bytes": 2640761
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Kazakhstan.csv",
+      "bytes": 5019297
+    }
+  ],
+  "body_hash": "f5e75d65a768e6bc"
+}

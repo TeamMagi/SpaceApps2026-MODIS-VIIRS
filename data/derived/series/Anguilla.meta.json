@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2010/modis_2010_Anguilla.csv",
+      "bytes": 204
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Anguilla.csv",
+      "bytes": 291
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Anguilla.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Anguilla.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Anguilla.csv",
+      "bytes": 208
+    }
+  ],
+  "body_hash": "8021625e56015246"
+}

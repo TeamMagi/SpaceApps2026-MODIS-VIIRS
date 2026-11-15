@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Andorra.csv",
+      "bytes": 282
+    },
+    {
+      "path": "modis/2005/modis_2005_Andorra.csv",
+      "bytes": 201
+    },
+    {
+      "path": "modis/2008/modis_2008_Andorra.csv",
+      "bytes": 277
+    },
+    {
+      "path": "modis/2013/modis_2013_Andorra.csv",
+      "bytes": 201
+    },
+    {
+      "path": "modis/2016/modis_2016_Andorra.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2017/modis_2017_Andorra.csv",
+      "bytes": 281
+    },
+    {
+      "path": "modis/2018/modis_2018_Andorra.csv",
+      "bytes": 280
+    },
+    {
+      "path": "modis/2019/modis_2019_Andorra.csv",
+      "bytes": 203
+    },
+    {
+      "path": "modis/2020/modis_2020_Andorra.csv",
+      "bytes": 281
+    },
+    {
+      "path": "modis/2022/modis_2022_Andorra.csv",
+      "bytes": 201
+    },
+    {
+      "path": "modis/2023/modis_2023_Andorra.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2024/modis_2024_Andorra.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Andorra.csv",
+      "bytes": 279
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Andorra.csv",
+      "bytes": 205
+    }
+  ],
+  "body_hash": "c933cc17e9b641bc"
+}

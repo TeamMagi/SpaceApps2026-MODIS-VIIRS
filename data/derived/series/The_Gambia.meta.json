@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_The_Gambia.csv",
+      "bytes": 8538
+    },
+    {
+      "path": "modis/2001/modis_2001_The_Gambia.csv",
+      "bytes": 58898
+    },
+    {
+      "path": "modis/2002/modis_2002_The_Gambia.csv",
+      "bytes": 58260
+    },
+    {
+      "path": "modis/2003/modis_2003_The_Gambia.csv",
+      "bytes": 53797
+    },
+    {
+      "path": "modis/2004/modis_2004_The_Gambia.csv",
+      "bytes": 84635
+    },
+    {
+      "path": "modis/2005/modis_2005_The_Gambia.csv",
+      "bytes": 88874
+    },
+    {
+      "path": "modis/2006/modis_2006_The_Gambia.csv",
+      "bytes": 126595
+    },
+    {
+      "path": "modis/2007/modis_2007_The_Gambia.csv",
+      "bytes": 98164
+    },
+    {
+      "path": "modis/2008/modis_2008_The_Gambia.csv",
+      "bytes": 81578
+    },
+    {
+      "path": "modis/2009/modis_2009_The_Gambia.csv",
+      "bytes": 101793
+    },
+    {
+      "path": "modis/2010/modis_2010_The_Gambia.csv",
+      "bytes": 83018
+    },
+    {
+      "path": "modis/2011/modis_2011_The_Gambia.csv",
+      "bytes": 103286
+    },
+    {
+      "path": "modis/2012/modis_2012_The_Gambia.csv",
+      "bytes": 65709
+    },
+    {
+      "path": "modis/2013/modis_2013_The_Gambia.csv",
+      "bytes": 83514
+    },
+    {
+      "path": "modis/2014/modis_2014_The_Gambia.csv",
+      "bytes": 58990
+    },
+    {
+      "path": "modis/2015/modis_2015_The_Gambia.csv",
+      "bytes": 39794
+    },
+    {
+      "path": "modis/2016/modis_2016_The_Gambia.csv",
+      "bytes": 60046
+    },
+    {
+      "path": "modis/2017/modis_2017_The_Gambia.csv",
+      "bytes": 77329
+    },
+    {
+      "path": "modis/2018/modis_2018_The_Gambia.csv",
+      "bytes": 73389
+    },
+    {
+      "path": "modis/2019/modis_2019_The_Gambia.csv",
+      "bytes": 58055
+    },
+    {
+      "path": "modis/2020/modis_2020_The_Gambia.csv",
+      "bytes": 86011
+    },
+    {
+      "path": "modis/2021/modis_2021_The_Gambia.csv",
+      "bytes": 77296
+    },
+    {
+      "path": "modis/2022/modis_2022_The_Gambia.csv",
+      "bytes": 79115
+    },
+    {
+      "path": "modis/2023/modis_2023_The_Gambia.csv",
+      "bytes": 115744
+    },
+    {
+      "path": "modis/2024/modis_2024_The_Gambia.csv",
+      "bytes": 107012
+    },
+    {
+      "path": "modis/2025/modis_2025_The_Gambia.csv",
+      "bytes": 74946
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_The_Gambia.csv",
+      "bytes": 167754
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_The_Gambia.csv",
+      "bytes": 336006
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_The_Gambia.csv",
+      "bytes": 417499
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_The_Gambia.csv",
+      "bytes": 416972
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_The_Gambia.csv",
+      "bytes": 453022
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_The_Gambia.csv",
+      "bytes": 617276
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_The_Gambia.csv",
+      "bytes": 517129
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_The_Gambia.csv",
+      "bytes": 391339
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_The_Gambia.csv",
+      "bytes": 351741
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_The_Gambia.csv",
+      "bytes": 396121
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_The_Gambia.csv",
+      "bytes": 351226
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_The_Gambia.csv",
+      "bytes": 219216
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_The_Gambia.csv",
+      "bytes": 388884
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_The_Gambia.csv",
+      "bytes": 415575
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_The_Gambia.csv",
+      "bytes": 387750
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_The_Gambia.csv",
+      "bytes": 329785
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_The_Gambia.csv",
+      "bytes": 424595
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_The_Gambia.csv",
+      "bytes": 397461
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_The_Gambia.csv",
+      "bytes": 448527
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_The_Gambia.csv",
+      "bytes": 601400
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_The_Gambia.csv",
+      "bytes": 517934
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_The_Gambia.csv",
+      "bytes": 397753
+    }
+  ],
+  "body_hash": "63288a7d19ec38b3"
+}

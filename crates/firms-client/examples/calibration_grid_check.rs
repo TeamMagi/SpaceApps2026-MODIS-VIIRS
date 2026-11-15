@@ -7,6 +7,7 @@ use pyrosync_core::calibration::calibration_for;
 use pyrosync_core::config::CalibrationConfig;
 use pyrosync_core::dedup::remove_interscan_duplicates;
 use pyrosync_core::models::{DayNight, Hotspot, Sensor};
+use pyrosync_core::vza::vza_from_scan;
 use pyrosync_firms::archive::ArchiveClient;
 use pyrosync_firms::parse::retain_wildfires;
 use tracing_subscriber::EnvFilter;
@@ -23,9 +24,25 @@ struct Args {
     max_dt_min: f64,
 }
 
+fn r_rel(theta_rad: f64) -> f64 {
+    0.2017 * theta_rad.powi(2) + 0.0168 * theta_rad + 1.0
+}
+
+fn modis_r_rel(h: &Hotspot) -> f64 {
+    let vza_deg = h
+        .vza
+        .filter(|v| v.is_finite())
+        .or_else(|| vza_from_scan(h.scan));
+    match vza_deg {
+        Some(deg) => r_rel(deg.abs().to_radians()),
+        None => 1.0,
+    }
+}
+
 #[derive(Default)]
 struct SensorCellStats {
     sum_frp: f64,
+    sum_frp_vza: f64,
     count: u64,
     sum_sec_of_day: f64,
 }
@@ -33,6 +50,12 @@ struct SensorCellStats {
 impl SensorCellStats {
     fn add(&mut self, h: &Hotspot) {
         self.sum_frp += h.frp;
+        let factor = if h.sensor.is_modis() {
+            modis_r_rel(h)
+        } else {
+            1.0
+        };
+        self.sum_frp_vza += h.frp * factor;
         self.count += 1;
         let sec = f64::from(h.acquired.num_seconds_from_midnight())
             + f64::from(h.acquired.nanosecond()) * 1e-9;
@@ -48,6 +71,7 @@ impl SensorCellStats {
 struct BandAgg {
     n_cells: usize,
     sum_modis_frp: f64,
+    sum_modis_vza_frp: f64,
     sum_viirs_frp: f64,
     sum_modis_count: u64,
     sum_viirs_count: u64,
@@ -306,6 +330,7 @@ async fn main() -> Result<()> {
         let agg = &mut bands[bucket];
         agg.n_cells += 1;
         agg.sum_modis_frp += m_stats.sum_frp;
+        agg.sum_modis_vza_frp += m_stats.sum_frp_vza;
         agg.sum_viirs_frp += v_stats.sum_frp;
         agg.sum_modis_count += m_stats.count;
         agg.sum_viirs_count += v_stats.count;
@@ -364,7 +389,7 @@ async fn main() -> Result<()> {
 
     println!();
     println!(
-        "{:<20} {:>7} {:>10} {:>10} {:>10} {:>10} {:>8} {:>9} {:>12} {:>12}",
+        "{:<20} {:>7} {:>10} {:>10} {:>10} {:>10} {:>8} {:>9} {:>12} {:>12} {:>10} {:>10}",
         "band",
         "n_cells",
         "ratio_sum",
@@ -374,12 +399,15 @@ async fn main() -> Result<()> {
         "model",
         "det_v/m",
         "modis_mw",
-        "viirs_mw"
+        "viirs_mw",
+        "ratio_vza",
+        "mean_rrel"
     );
-    println!("{}", "-".repeat(116));
+    println!("{}", "-".repeat(138));
 
     let mut active_bands = 0usize;
     let mut total_modis_frp = 0.0;
+    let mut total_modis_vza_frp = 0.0;
     let mut total_viirs_frp = 0.0;
     let mut total_modis_count = 0u64;
     let mut total_viirs_count = 0u64;
@@ -391,6 +419,7 @@ async fn main() -> Result<()> {
         }
         active_bands += 1;
         total_modis_frp += agg.sum_modis_frp;
+        total_modis_vza_frp += agg.sum_modis_vza_frp;
         total_viirs_frp += agg.sum_viirs_frp;
         total_modis_count += agg.sum_modis_count;
         total_viirs_count += agg.sum_viirs_count;
@@ -399,6 +428,8 @@ async fn main() -> Result<()> {
         agg.model_ratios.sort_by(f64::total_cmp);
 
         let ratio_of_sums = agg.sum_viirs_frp / agg.sum_modis_frp;
+        let ratio_vza = agg.sum_viirs_frp / agg.sum_modis_vza_frp;
+        let mean_rrel = agg.sum_modis_vza_frp / agg.sum_modis_frp;
         let med = percentile(&agg.cell_ratios, 0.50);
         let q25 = percentile(&agg.cell_ratios, 0.25);
         let q75 = percentile(&agg.cell_ratios, 0.75);
@@ -406,7 +437,7 @@ async fn main() -> Result<()> {
         let det_ratio = agg.sum_viirs_count as f64 / agg.sum_modis_count as f64;
 
         println!(
-            "{:<20} {:>7} {:>10.4} {:>10.4} {:>10.4} {:>10.4} {:>8.4} {:>9.4} {:>12.1} {:>12.1}",
+            "{:<20} {:>7} {:>10.4} {:>10.4} {:>10.4} {:>10.4} {:>8.4} {:>9.4} {:>12.1} {:>12.1} {:>10.4} {:>10.4}",
             label,
             agg.n_cells,
             ratio_of_sums,
@@ -416,14 +447,16 @@ async fn main() -> Result<()> {
             model_med,
             det_ratio,
             agg.sum_modis_frp,
-            agg.sum_viirs_frp
+            agg.sum_viirs_frp,
+            ratio_vza,
+            mean_rrel
         );
     }
 
     if active_bands > 1 {
-        println!("{}", "-".repeat(116));
+        println!("{}", "-".repeat(138));
         println!(
-            "{:<20} {:>7} {:>10.4} {:>10} {:>10} {:>10} {:>8} {:>9.4} {:>12.1} {:>12.1}",
+            "{:<20} {:>7} {:>10.4} {:>10} {:>10} {:>10} {:>8} {:>9.4} {:>12.1} {:>12.1} {:>10.4} {:>10.4}",
             "All bands",
             common_cells,
             total_viirs_frp / total_modis_frp,
@@ -433,7 +466,9 @@ async fn main() -> Result<()> {
             "-",
             total_viirs_count as f64 / total_modis_count as f64,
             total_modis_frp,
-            total_viirs_frp
+            total_viirs_frp,
+            total_viirs_frp / total_modis_vza_frp,
+            total_modis_vza_frp / total_modis_frp
         );
     }
 

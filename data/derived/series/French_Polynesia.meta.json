@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_French_Polynesia.csv",
+      "bytes": 210
+    },
+    {
+      "path": "modis/2001/modis_2001_French_Polynesia.csv",
+      "bytes": 374
+    },
+    {
+      "path": "modis/2002/modis_2002_French_Polynesia.csv",
+      "bytes": 1917
+    },
+    {
+      "path": "modis/2003/modis_2003_French_Polynesia.csv",
+      "bytes": 1820
+    },
+    {
+      "path": "modis/2004/modis_2004_French_Polynesia.csv",
+      "bytes": 609
+    },
+    {
+      "path": "modis/2005/modis_2005_French_Polynesia.csv",
+      "bytes": 451
+    },
+    {
+      "path": "modis/2006/modis_2006_French_Polynesia.csv",
+      "bytes": 923
+    },
+    {
+      "path": "modis/2007/modis_2007_French_Polynesia.csv",
+      "bytes": 932
+    },
+    {
+      "path": "modis/2008/modis_2008_French_Polynesia.csv",
+      "bytes": 1080
+    },
+    {
+      "path": "modis/2009/modis_2009_French_Polynesia.csv",
+      "bytes": 1418
+    },
+    {
+      "path": "modis/2010/modis_2010_French_Polynesia.csv",
+      "bytes": 1096
+    },
+    {
+      "path": "modis/2011/modis_2011_French_Polynesia.csv",
+      "bytes": 1659
+    },
+    {
+      "path": "modis/2012/modis_2012_French_Polynesia.csv",
+      "bytes": 1564
+    },
+    {
+      "path": "modis/2013/modis_2013_French_Polynesia.csv",
+      "bytes": 1585
+    },
+    {
+      "path": "modis/2014/modis_2014_French_Polynesia.csv",
+      "bytes": 1087
+    },
+    {
+      "path": "modis/2015/modis_2015_French_Polynesia.csv",
+      "bytes": 1185
+    },
+    {
+      "path": "modis/2016/modis_2016_French_Polynesia.csv",
+      "bytes": 614
+    },
+    {
+      "path": "modis/2017/modis_2017_French_Polynesia.csv",
+      "bytes": 1023
+    },
+    {
+      "path": "modis/2018/modis_2018_French_Polynesia.csv",
+      "bytes": 1036
+    },
+    {
+      "path": "modis/2019/modis_2019_French_Polynesia.csv",
+      "bytes": 2256
+    },
+    {
+      "path": "modis/2020/modis_2020_French_Polynesia.csv",
+      "bytes": 2260
+    },
+    {
+      "path": "modis/2021/modis_2021_French_Polynesia.csv",
+      "bytes": 1987
+    },
+    {
+      "path": "modis/2022/modis_2022_French_Polynesia.csv",
+      "bytes": 1599
+    },
+    {
+      "path": "modis/2023/modis_2023_French_Polynesia.csv",
+      "bytes": 1926
+    },
+    {
+      "path": "modis/2024/modis_2024_French_Polynesia.csv",
+      "bytes": 1949
+    },
+    {
+      "path": "modis/2025/modis_2025_French_Polynesia.csv",
+      "bytes": 1031
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_French_Polynesia.csv",
+      "bytes": 707
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_French_Polynesia.csv",
+      "bytes": 1286
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_French_Polynesia.csv",
+      "bytes": 794
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_French_Polynesia.csv",
+      "bytes": 954
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_French_Polynesia.csv",
+      "bytes": 873
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_French_Polynesia.csv",
+      "bytes": 1122
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_French_Polynesia.csv",
+      "bytes": 1625
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_French_Polynesia.csv",
+      "bytes": 544
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_French_Polynesia.csv",
+      "bytes": 3842
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_French_Polynesia.csv",
+      "bytes": 1518
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_French_Polynesia.csv",
+      "bytes": 768
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_French_Polynesia.csv",
+      "bytes": 1096
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_French_Polynesia.csv",
+      "bytes": 854
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_French_Polynesia.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_French_Polynesia.csv",
+      "bytes": 931
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_French_Polynesia.csv",
+      "bytes": 2221
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_French_Polynesia.csv",
+      "bytes": 693
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_French_Polynesia.csv",
+      "bytes": 1566
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_French_Polynesia.csv",
+      "bytes": 1178
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_French_Polynesia.csv",
+      "bytes": 933
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_French_Polynesia.csv",
+      "bytes": 1349
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_French_Polynesia.csv",
+      "bytes": 611
+    }
+  ],
+  "body_hash": "b0f6bc7702bfc3ec"
+}

@@ -24,45 +24,45 @@ radius_km = 2.0
 window_secs = 10800
 
 [vza]
-# MODIS viewing-zenith correction ratio R = a*theta^2 + b*theta + c (theta in radians).
-# These coefficients are uncalibrated placeholders, not fitted values.
-a = 0.85
-b = 0.12
+# MODIS viewing-zenith correction ratio R_rel(theta) = a*theta^2 + b*theta + c (theta in radians),
+# normalized at nadir from Zheng et al. (2026) Eq. 9 & Fig. 4 (0.24*theta^2 + 0.02*theta + 1.19)
+# by dividing by 1.19 so nadir equals 1.0 (base level is measured separately in k_c).
+a = 0.2017
+b = 0.0168
 c = 1.0
 
 [calibration]
-# Latitude-band MODIS->VIIRS FRP scaling applied only to ModisOnly records (Matched and
-# ViirsOnly already use VIIRS FRP). Ratios are VIIRS/MODIS from Li et al. (2018),
-# "Comparison of Fire Radiative Power Estimates From VIIRS and MODIS Observations"
-# (JGR: Atmospheres, doi:10.1029/2017JD027823), mirrored by |lat| across hemispheres.
-# Transition gaps between bands (50-55 deg) are linearly interpolated; |lat| > 70 clamps to
-# the last band. ratio_sigma values are derived spread estimates, not fitted sigmas.
+# Pre-VIIRS (2000-2011) cell completeness factor k_c = sum(VIIRS) / sum(MODIS * R_rel(theta)),
+# applied ONLY to CalendarCell.total_frp in monthly cells with no VIIRS-platform detections.
+# Measured from collocated Aqua MODIS vs SNPP 375 m daytime data (<= 20 min, 1x1 deg cell-day;
+# 2019 fit, 2020 hold-out), mirrored by |lat| across hemispheres with linear interpolation in
+# 50-55 deg and clamping above 70 deg. Consistent with Li et al. (2020) and Sofiev & Kouznetsov (2026).
 enabled = true
 
 [[calibration.bands]]
 min_abs_lat = 0.0
 max_abs_lat = 30.0
-ratio = 1.16
-ratio_sigma = 0.13
+ratio = 1.11
+ratio_sigma = 0.08
 
 [[calibration.bands]]
 min_abs_lat = 30.0
 max_abs_lat = 50.0
-ratio = 0.97
-ratio_sigma = 0.03
+ratio = 1.18
+ratio_sigma = 0.15
 
 [[calibration.bands]]
 min_abs_lat = 55.0
 max_abs_lat = 70.0
-ratio = 0.82
-ratio_sigma = 0.18
+ratio = 1.28
+ratio_sigma = 0.11
 
 [uncertainty]
 # Analytical FRP confidence bounds combining sensor noise, VZA correction error, and
-# MODIS->VIIRS calibration uncertainty. Default sensor-noise and VZA error parameters
-# below are initial assumptions, not published values.
+# MODIS scale/completeness uncertainty. Parameters below are model assumptions, not published values.
 modis_sensor_sigma = 0.12
 viirs_sensor_sigma = 0.08
 vza_error_coeff = 0.05
+modis_scale_sigma = 0.10
 # Gaussian z-multiplier (z = 1.0 gives ~68.27% two-sided confidence).
 z = 1.0

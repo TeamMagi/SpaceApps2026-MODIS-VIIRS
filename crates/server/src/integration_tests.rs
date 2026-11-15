@@ -727,12 +727,12 @@ async fn slow_upstream_hits_request_timeout_with_504() {
 #[case::stats("/api/stats?west=26&south=36&east=45&north=42&days=1")]
 #[case::availability("/api/availability")]
 #[tokio::test]
-async fn firms_endpoints_without_api_key_return_500_with_reason(#[case] uri: &str) {
+async fn firms_endpoints_without_api_key_return_503_with_reason(#[case] uri: &str) {
     let app = app(None, None, None);
     let reply = call(&app, uri).await;
     assert_eq!(
         reply.status,
-        StatusCode::INTERNAL_SERVER_ERROR,
+        StatusCode::SERVICE_UNAVAILABLE,
         "uri {uri} body: {}",
         reply.body
     );

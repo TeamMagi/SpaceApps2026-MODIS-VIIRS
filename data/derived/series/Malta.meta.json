@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2003/modis_2003_Malta.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2004/modis_2004_Malta.csv",
+      "bytes": 358
+    },
+    {
+      "path": "modis/2005/modis_2005_Malta.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2006/modis_2006_Malta.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2008/modis_2008_Malta.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2009/modis_2009_Malta.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2011/modis_2011_Malta.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2012/modis_2012_Malta.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2013/modis_2013_Malta.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2017/modis_2017_Malta.csv",
+      "bytes": 667
+    },
+    {
+      "path": "modis/2018/modis_2018_Malta.csv",
+      "bytes": 282
+    },
+    {
+      "path": "modis/2020/modis_2020_Malta.csv",
+      "bytes": 362
+    },
+    {
+      "path": "modis/2021/modis_2021_Malta.csv",
+      "bytes": 438
+    },
+    {
+      "path": "modis/2022/modis_2022_Malta.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2023/modis_2023_Malta.csv",
+      "bytes": 277
+    },
+    {
+      "path": "modis/2024/modis_2024_Malta.csv",
+      "bytes": 283
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Malta.csv",
+      "bytes": 1416
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Malta.csv",
+      "bytes": 1410
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Malta.csv",
+      "bytes": 1175
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Malta.csv",
+      "bytes": 1014
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Malta.csv",
+      "bytes": 1814
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Malta.csv",
+      "bytes": 935
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Malta.csv",
+      "bytes": 1173
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Malta.csv",
+      "bytes": 852
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Malta.csv",
+      "bytes": 832
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Malta.csv",
+      "bytes": 1220
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Malta.csv",
+      "bytes": 834
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Malta.csv",
+      "bytes": 1693
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Malta.csv",
+      "bytes": 676
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Malta.csv",
+      "bytes": 1772
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Malta.csv",
+      "bytes": 916
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Malta.csv",
+      "bytes": 1305
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Malta.csv",
+      "bytes": 910
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Malta.csv",
+      "bytes": 993
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Malta.csv",
+      "bytes": 1383
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Malta.csv",
+      "bytes": 1148
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Malta.csv",
+      "bytes": 516
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Malta.csv",
+      "bytes": 1220
+    }
+  ],
+  "body_hash": "94f4355c0a65b102"
+}

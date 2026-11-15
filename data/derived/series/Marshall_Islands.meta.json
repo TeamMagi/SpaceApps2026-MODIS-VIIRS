@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2009/modis_2009_Marshall_Islands.csv",
+      "bytes": 204
+    }
+  ],
+  "body_hash": "d3f1769c42fe1724"
+}

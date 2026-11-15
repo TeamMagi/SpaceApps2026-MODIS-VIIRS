@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 4098
+    },
+    {
+      "path": "modis/2001/modis_2001_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 19504
+    },
+    {
+      "path": "modis/2002/modis_2002_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 23927
+    },
+    {
+      "path": "modis/2003/modis_2003_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 39766
+    },
+    {
+      "path": "modis/2004/modis_2004_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 39087
+    },
+    {
+      "path": "modis/2005/modis_2005_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 49100
+    },
+    {
+      "path": "modis/2006/modis_2006_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 54840
+    },
+    {
+      "path": "modis/2007/modis_2007_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 132325
+    },
+    {
+      "path": "modis/2008/modis_2008_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 67950
+    },
+    {
+      "path": "modis/2009/modis_2009_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 31959
+    },
+    {
+      "path": "modis/2010/modis_2010_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 39088
+    },
+    {
+      "path": "modis/2011/modis_2011_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 94058
+    },
+    {
+      "path": "modis/2012/modis_2012_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 122668
+    },
+    {
+      "path": "modis/2013/modis_2013_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 65464
+    },
+    {
+      "path": "modis/2014/modis_2014_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 44954
+    },
+    {
+      "path": "modis/2015/modis_2015_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 54934
+    },
+    {
+      "path": "modis/2016/modis_2016_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 38065
+    },
+    {
+      "path": "modis/2017/modis_2017_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 63497
+    },
+    {
+      "path": "modis/2018/modis_2018_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 42784
+    },
+    {
+      "path": "modis/2019/modis_2019_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 89142
+    },
+    {
+      "path": "modis/2020/modis_2020_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 53341
+    },
+    {
+      "path": "modis/2021/modis_2021_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 71728
+    },
+    {
+      "path": "modis/2022/modis_2022_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 27782
+    },
+    {
+      "path": "modis/2023/modis_2023_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 36728
+    },
+    {
+      "path": "modis/2024/modis_2024_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 91446
+    },
+    {
+      "path": "modis/2025/modis_2025_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 45340
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 181306
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 358646
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 176397
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 249313
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 120506
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 150436
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 384075
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 194871
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 421918
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 229154
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 155701
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 205713
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 166053
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 302502
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 187717
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 356565
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 186716
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 229609
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 113403
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 149469
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 343780
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Macedonia_Former_Yugoslav_Republic_of.csv",
+      "bytes": 184251
+    }
+  ],
+  "body_hash": "7e6911e1445d77cf"
+}

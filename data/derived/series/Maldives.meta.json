@@ -1,0 +1,179 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Maldives.csv",
+      "bytes": 430
+    },
+    {
+      "path": "modis/2001/modis_2001_Maldives.csv",
+      "bytes": 1797
+    },
+    {
+      "path": "modis/2002/modis_2002_Maldives.csv",
+      "bytes": 2540
+    },
+    {
+      "path": "modis/2003/modis_2003_Maldives.csv",
+      "bytes": 2840
+    },
+    {
+      "path": "modis/2004/modis_2004_Maldives.csv",
+      "bytes": 2782
+    },
+    {
+      "path": "modis/2005/modis_2005_Maldives.csv",
+      "bytes": 4686
+    },
+    {
+      "path": "modis/2006/modis_2006_Maldives.csv",
+      "bytes": 2913
+    },
+    {
+      "path": "modis/2007/modis_2007_Maldives.csv",
+      "bytes": 4291
+    },
+    {
+      "path": "modis/2008/modis_2008_Maldives.csv",
+      "bytes": 3583
+    },
+    {
+      "path": "modis/2009/modis_2009_Maldives.csv",
+      "bytes": 3907
+    },
+    {
+      "path": "modis/2010/modis_2010_Maldives.csv",
+      "bytes": 3153
+    },
+    {
+      "path": "modis/2011/modis_2011_Maldives.csv",
+      "bytes": 4435
+    },
+    {
+      "path": "modis/2012/modis_2012_Maldives.csv",
+      "bytes": 3370
+    },
+    {
+      "path": "modis/2013/modis_2013_Maldives.csv",
+      "bytes": 2913
+    },
+    {
+      "path": "modis/2014/modis_2014_Maldives.csv",
+      "bytes": 2316
+    },
+    {
+      "path": "modis/2015/modis_2015_Maldives.csv",
+      "bytes": 2684
+    },
+    {
+      "path": "modis/2016/modis_2016_Maldives.csv",
+      "bytes": 3887
+    },
+    {
+      "path": "modis/2017/modis_2017_Maldives.csv",
+      "bytes": 2700
+    },
+    {
+      "path": "modis/2018/modis_2018_Maldives.csv",
+      "bytes": 2439
+    },
+    {
+      "path": "modis/2019/modis_2019_Maldives.csv",
+      "bytes": 2191
+    },
+    {
+      "path": "modis/2020/modis_2020_Maldives.csv",
+      "bytes": 2103
+    },
+    {
+      "path": "modis/2021/modis_2021_Maldives.csv",
+      "bytes": 3212
+    },
+    {
+      "path": "modis/2022/modis_2022_Maldives.csv",
+      "bytes": 2570
+    },
+    {
+      "path": "modis/2023/modis_2023_Maldives.csv",
+      "bytes": 2131
+    },
+    {
+      "path": "modis/2024/modis_2024_Maldives.csv",
+      "bytes": 906
+    },
+    {
+      "path": "modis/2025/modis_2025_Maldives.csv",
+      "bytes": 577
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Maldives.csv",
+      "bytes": 1397
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Maldives.csv",
+      "bytes": 2511
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Maldives.csv",
+      "bytes": 2426
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Maldives.csv",
+      "bytes": 1468
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Maldives.csv",
+      "bytes": 603
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Maldives.csv",
+      "bytes": 516
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Maldives.csv",
+      "bytes": 591
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Maldives.csv",
+      "bytes": 437
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Maldives.csv",
+      "bytes": 1754
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Maldives.csv",
+      "bytes": 2286
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Maldives.csv",
+      "bytes": 1833
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Maldives.csv",
+      "bytes": 1447
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Maldives.csv",
+      "bytes": 1746
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Maldives.csv",
+      "bytes": 1750
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Maldives.csv",
+      "bytes": 976
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Maldives.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Maldives.csv",
+      "bytes": 202
+    }
+  ],
+  "body_hash": "3c09887a39e25eca"
+}

@@ -1,0 +1,111 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2005/modis_2005_Saint_Helena.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2007/modis_2007_Saint_Helena.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2012/modis_2012_Saint_Helena.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2013/modis_2013_Saint_Helena.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2015/modis_2015_Saint_Helena.csv",
+      "bytes": 367
+    },
+    {
+      "path": "modis/2017/modis_2017_Saint_Helena.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2018/modis_2018_Saint_Helena.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2019/modis_2019_Saint_Helena.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2020/modis_2020_Saint_Helena.csv",
+      "bytes": 205
+    },
+    {
+      "path": "modis/2021/modis_2021_Saint_Helena.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2024/modis_2024_Saint_Helena.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Saint_Helena.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Saint_Helena.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Saint_Helena.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Saint_Helena.csv",
+      "bytes": 291
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Saint_Helena.csv",
+      "bytes": 291
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Saint_Helena.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Saint_Helena.csv",
+      "bytes": 373
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Saint_Helena.csv",
+      "bytes": 285
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Saint_Helena.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Saint_Helena.csv",
+      "bytes": 367
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Saint_Helena.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Saint_Helena.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Saint_Helena.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Saint_Helena.csv",
+      "bytes": 366
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Saint_Helena.csv",
+      "bytes": 208
+    }
+  ],
+  "body_hash": "48f8e79c1ff10108"
+}

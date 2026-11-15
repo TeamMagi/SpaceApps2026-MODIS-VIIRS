@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Uruguay.csv",
+      "bytes": 6946
+    },
+    {
+      "path": "modis/2001/modis_2001_Uruguay.csv",
+      "bytes": 20913
+    },
+    {
+      "path": "modis/2002/modis_2002_Uruguay.csv",
+      "bytes": 104073
+    },
+    {
+      "path": "modis/2003/modis_2003_Uruguay.csv",
+      "bytes": 145645
+    },
+    {
+      "path": "modis/2004/modis_2004_Uruguay.csv",
+      "bytes": 162348
+    },
+    {
+      "path": "modis/2005/modis_2005_Uruguay.csv",
+      "bytes": 96015
+    },
+    {
+      "path": "modis/2006/modis_2006_Uruguay.csv",
+      "bytes": 88629
+    },
+    {
+      "path": "modis/2007/modis_2007_Uruguay.csv",
+      "bytes": 87757
+    },
+    {
+      "path": "modis/2008/modis_2008_Uruguay.csv",
+      "bytes": 150427
+    },
+    {
+      "path": "modis/2009/modis_2009_Uruguay.csv",
+      "bytes": 111606
+    },
+    {
+      "path": "modis/2010/modis_2010_Uruguay.csv",
+      "bytes": 128130
+    },
+    {
+      "path": "modis/2011/modis_2011_Uruguay.csv",
+      "bytes": 108513
+    },
+    {
+      "path": "modis/2012/modis_2012_Uruguay.csv",
+      "bytes": 99112
+    },
+    {
+      "path": "modis/2013/modis_2013_Uruguay.csv",
+      "bytes": 94316
+    },
+    {
+      "path": "modis/2014/modis_2014_Uruguay.csv",
+      "bytes": 68889
+    },
+    {
+      "path": "modis/2015/modis_2015_Uruguay.csv",
+      "bytes": 158257
+    },
+    {
+      "path": "modis/2016/modis_2016_Uruguay.csv",
+      "bytes": 70826
+    },
+    {
+      "path": "modis/2017/modis_2017_Uruguay.csv",
+      "bytes": 61374
+    },
+    {
+      "path": "modis/2018/modis_2018_Uruguay.csv",
+      "bytes": 72862
+    },
+    {
+      "path": "modis/2019/modis_2019_Uruguay.csv",
+      "bytes": 93245
+    },
+    {
+      "path": "modis/2020/modis_2020_Uruguay.csv",
+      "bytes": 138956
+    },
+    {
+      "path": "modis/2021/modis_2021_Uruguay.csv",
+      "bytes": 83845
+    },
+    {
+      "path": "modis/2022/modis_2022_Uruguay.csv",
+      "bytes": 90200
+    },
+    {
+      "path": "modis/2023/modis_2023_Uruguay.csv",
+      "bytes": 72924
+    },
+    {
+      "path": "modis/2024/modis_2024_Uruguay.csv",
+      "bytes": 47320
+    },
+    {
+      "path": "modis/2025/modis_2025_Uruguay.csv",
+      "bytes": 84042
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Uruguay.csv",
+      "bytes": 131362
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Uruguay.csv",
+      "bytes": 238827
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Uruguay.csv",
+      "bytes": 456163
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Uruguay.csv",
+      "bytes": 284242
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Uruguay.csv",
+      "bytes": 267509
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Uruguay.csv",
+      "bytes": 219729
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Uruguay.csv",
+      "bytes": 121605
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Uruguay.csv",
+      "bytes": 258102
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Uruguay.csv",
+      "bytes": 249195
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Uruguay.csv",
+      "bytes": 249603
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Uruguay.csv",
+      "bytes": 153052
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Uruguay.csv",
+      "bytes": 436738
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Uruguay.csv",
+      "bytes": 186897
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Uruguay.csv",
+      "bytes": 171757
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Uruguay.csv",
+      "bytes": 205990
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Uruguay.csv",
+      "bytes": 238279
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Uruguay.csv",
+      "bytes": 437815
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Uruguay.csv",
+      "bytes": 257472
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Uruguay.csv",
+      "bytes": 250981
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Uruguay.csv",
+      "bytes": 218626
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Uruguay.csv",
+      "bytes": 110910
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Uruguay.csv",
+      "bytes": 242158
+    }
+  ],
+  "body_hash": "9866b237b62ff1f7"
+}

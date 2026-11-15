@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Bahamas.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2001/modis_2001_Bahamas.csv",
+      "bytes": 7108
+    },
+    {
+      "path": "modis/2002/modis_2002_Bahamas.csv",
+      "bytes": 9300
+    },
+    {
+      "path": "modis/2003/modis_2003_Bahamas.csv",
+      "bytes": 5021
+    },
+    {
+      "path": "modis/2004/modis_2004_Bahamas.csv",
+      "bytes": 41115
+    },
+    {
+      "path": "modis/2005/modis_2005_Bahamas.csv",
+      "bytes": 27382
+    },
+    {
+      "path": "modis/2006/modis_2006_Bahamas.csv",
+      "bytes": 21951
+    },
+    {
+      "path": "modis/2007/modis_2007_Bahamas.csv",
+      "bytes": 18212
+    },
+    {
+      "path": "modis/2008/modis_2008_Bahamas.csv",
+      "bytes": 28807
+    },
+    {
+      "path": "modis/2009/modis_2009_Bahamas.csv",
+      "bytes": 21131
+    },
+    {
+      "path": "modis/2010/modis_2010_Bahamas.csv",
+      "bytes": 7836
+    },
+    {
+      "path": "modis/2011/modis_2011_Bahamas.csv",
+      "bytes": 42213
+    },
+    {
+      "path": "modis/2012/modis_2012_Bahamas.csv",
+      "bytes": 12796
+    },
+    {
+      "path": "modis/2013/modis_2013_Bahamas.csv",
+      "bytes": 31629
+    },
+    {
+      "path": "modis/2014/modis_2014_Bahamas.csv",
+      "bytes": 11859
+    },
+    {
+      "path": "modis/2015/modis_2015_Bahamas.csv",
+      "bytes": 16338
+    },
+    {
+      "path": "modis/2016/modis_2016_Bahamas.csv",
+      "bytes": 21061
+    },
+    {
+      "path": "modis/2017/modis_2017_Bahamas.csv",
+      "bytes": 41972
+    },
+    {
+      "path": "modis/2018/modis_2018_Bahamas.csv",
+      "bytes": 11815
+    },
+    {
+      "path": "modis/2019/modis_2019_Bahamas.csv",
+      "bytes": 17610
+    },
+    {
+      "path": "modis/2020/modis_2020_Bahamas.csv",
+      "bytes": 28992
+    },
+    {
+      "path": "modis/2021/modis_2021_Bahamas.csv",
+      "bytes": 17403
+    },
+    {
+      "path": "modis/2022/modis_2022_Bahamas.csv",
+      "bytes": 6247
+    },
+    {
+      "path": "modis/2023/modis_2023_Bahamas.csv",
+      "bytes": 10493
+    },
+    {
+      "path": "modis/2024/modis_2024_Bahamas.csv",
+      "bytes": 22608
+    },
+    {
+      "path": "modis/2025/modis_2025_Bahamas.csv",
+      "bytes": 43808
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Bahamas.csv",
+      "bytes": 19965
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Bahamas.csv",
+      "bytes": 104378
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Bahamas.csv",
+      "bytes": 141928
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Bahamas.csv",
+      "bytes": 94601
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Bahamas.csv",
+      "bytes": 42692
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Bahamas.csv",
+      "bytes": 60545
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Bahamas.csv",
+      "bytes": 123000
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Bahamas.csv",
+      "bytes": 256761
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Bahamas.csv",
+      "bytes": 87264
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Bahamas.csv",
+      "bytes": 189993
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Bahamas.csv",
+      "bytes": 58910
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Bahamas.csv",
+      "bytes": 81697
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Bahamas.csv",
+      "bytes": 124094
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Bahamas.csv",
+      "bytes": 234108
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Bahamas.csv",
+      "bytes": 53556
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Bahamas.csv",
+      "bytes": 101760
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Bahamas.csv",
+      "bytes": 120643
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Bahamas.csv",
+      "bytes": 89702
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Bahamas.csv",
+      "bytes": 43332
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Bahamas.csv",
+      "bytes": 55334
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Bahamas.csv",
+      "bytes": 114775
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Bahamas.csv",
+      "bytes": 278437
+    }
+  ],
+  "body_hash": "4e8fbf6abba36707"
+}

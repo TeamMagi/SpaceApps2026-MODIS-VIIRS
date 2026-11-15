@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Ecuador.csv",
+      "bytes": 102429
+    },
+    {
+      "path": "modis/2001/modis_2001_Ecuador.csv",
+      "bytes": 99883
+    },
+    {
+      "path": "modis/2002/modis_2002_Ecuador.csv",
+      "bytes": 123444
+    },
+    {
+      "path": "modis/2003/modis_2003_Ecuador.csv",
+      "bytes": 230024
+    },
+    {
+      "path": "modis/2004/modis_2004_Ecuador.csv",
+      "bytes": 272179
+    },
+    {
+      "path": "modis/2005/modis_2005_Ecuador.csv",
+      "bytes": 396964
+    },
+    {
+      "path": "modis/2006/modis_2006_Ecuador.csv",
+      "bytes": 199327
+    },
+    {
+      "path": "modis/2007/modis_2007_Ecuador.csv",
+      "bytes": 336840
+    },
+    {
+      "path": "modis/2008/modis_2008_Ecuador.csv",
+      "bytes": 242200
+    },
+    {
+      "path": "modis/2009/modis_2009_Ecuador.csv",
+      "bytes": 459133
+    },
+    {
+      "path": "modis/2010/modis_2010_Ecuador.csv",
+      "bytes": 155621
+    },
+    {
+      "path": "modis/2011/modis_2011_Ecuador.csv",
+      "bytes": 320402
+    },
+    {
+      "path": "modis/2012/modis_2012_Ecuador.csv",
+      "bytes": 295900
+    },
+    {
+      "path": "modis/2013/modis_2013_Ecuador.csv",
+      "bytes": 341123
+    },
+    {
+      "path": "modis/2014/modis_2014_Ecuador.csv",
+      "bytes": 185514
+    },
+    {
+      "path": "modis/2015/modis_2015_Ecuador.csv",
+      "bytes": 251475
+    },
+    {
+      "path": "modis/2016/modis_2016_Ecuador.csv",
+      "bytes": 468540
+    },
+    {
+      "path": "modis/2017/modis_2017_Ecuador.csv",
+      "bytes": 255189
+    },
+    {
+      "path": "modis/2018/modis_2018_Ecuador.csv",
+      "bytes": 416485
+    },
+    {
+      "path": "modis/2019/modis_2019_Ecuador.csv",
+      "bytes": 226942
+    },
+    {
+      "path": "modis/2020/modis_2020_Ecuador.csv",
+      "bytes": 389569
+    },
+    {
+      "path": "modis/2021/modis_2021_Ecuador.csv",
+      "bytes": 198363
+    },
+    {
+      "path": "modis/2022/modis_2022_Ecuador.csv",
+      "bytes": 575413
+    },
+    {
+      "path": "modis/2023/modis_2023_Ecuador.csv",
+      "bytes": 191344
+    },
+    {
+      "path": "modis/2024/modis_2024_Ecuador.csv",
+      "bytes": 540673
+    },
+    {
+      "path": "modis/2025/modis_2025_Ecuador.csv",
+      "bytes": 211404
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Ecuador.csv",
+      "bytes": 2009059
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Ecuador.csv",
+      "bytes": 1054874
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Ecuador.csv",
+      "bytes": 1936715
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Ecuador.csv",
+      "bytes": 925229
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Ecuador.csv",
+      "bytes": 2737214
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Ecuador.csv",
+      "bytes": 869071
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Ecuador.csv",
+      "bytes": 2578207
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Ecuador.csv",
+      "bytes": 1139935
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Ecuador.csv",
+      "bytes": 1455901
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Ecuador.csv",
+      "bytes": 1422537
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Ecuador.csv",
+      "bytes": 1094389
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Ecuador.csv",
+      "bytes": 1315026
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Ecuador.csv",
+      "bytes": 1963432
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Ecuador.csv",
+      "bytes": 987513
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Ecuador.csv",
+      "bytes": 2096736
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Ecuador.csv",
+      "bytes": 1001898
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Ecuador.csv",
+      "bytes": 1830536
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Ecuador.csv",
+      "bytes": 900964
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Ecuador.csv",
+      "bytes": 2612616
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Ecuador.csv",
+      "bytes": 778576
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Ecuador.csv",
+      "bytes": 2494528
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Ecuador.csv",
+      "bytes": 1169501
+    }
+  ],
+  "body_hash": "2581ec7f08acaa56"
+}

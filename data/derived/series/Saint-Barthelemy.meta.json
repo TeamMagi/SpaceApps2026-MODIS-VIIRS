@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Saint-Barthelemy.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2021/modis_2021_Saint-Barthelemy.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Saint-Barthelemy.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Saint-Barthelemy.csv",
+      "bytes": 367
+    }
+  ],
+  "body_hash": "8c94cbaeaed4a149"
+}

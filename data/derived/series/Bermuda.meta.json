@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2015/modis_2015_Bermuda.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2020/modis_2020_Bermuda.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Bermuda.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Bermuda.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Bermuda.csv",
+      "bytes": 207
+    }
+  ],
+  "body_hash": "33845262d858b683"
+}

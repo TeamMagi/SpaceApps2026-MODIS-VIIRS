@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Mauritius.csv",
+      "bytes": 290
+    },
+    {
+      "path": "modis/2001/modis_2001_Mauritius.csv",
+      "bytes": 2181
+    },
+    {
+      "path": "modis/2002/modis_2002_Mauritius.csv",
+      "bytes": 3399
+    },
+    {
+      "path": "modis/2003/modis_2003_Mauritius.csv",
+      "bytes": 2615
+    },
+    {
+      "path": "modis/2004/modis_2004_Mauritius.csv",
+      "bytes": 2756
+    },
+    {
+      "path": "modis/2005/modis_2005_Mauritius.csv",
+      "bytes": 2535
+    },
+    {
+      "path": "modis/2006/modis_2006_Mauritius.csv",
+      "bytes": 4920
+    },
+    {
+      "path": "modis/2007/modis_2007_Mauritius.csv",
+      "bytes": 2443
+    },
+    {
+      "path": "modis/2008/modis_2008_Mauritius.csv",
+      "bytes": 1291
+    },
+    {
+      "path": "modis/2009/modis_2009_Mauritius.csv",
+      "bytes": 2984
+    },
+    {
+      "path": "modis/2010/modis_2010_Mauritius.csv",
+      "bytes": 5067
+    },
+    {
+      "path": "modis/2011/modis_2011_Mauritius.csv",
+      "bytes": 2615
+    },
+    {
+      "path": "modis/2012/modis_2012_Mauritius.csv",
+      "bytes": 2765
+    },
+    {
+      "path": "modis/2013/modis_2013_Mauritius.csv",
+      "bytes": 5148
+    },
+    {
+      "path": "modis/2014/modis_2014_Mauritius.csv",
+      "bytes": 5473
+    },
+    {
+      "path": "modis/2015/modis_2015_Mauritius.csv",
+      "bytes": 2700
+    },
+    {
+      "path": "modis/2016/modis_2016_Mauritius.csv",
+      "bytes": 1966
+    },
+    {
+      "path": "modis/2017/modis_2017_Mauritius.csv",
+      "bytes": 2549
+    },
+    {
+      "path": "modis/2018/modis_2018_Mauritius.csv",
+      "bytes": 2634
+    },
+    {
+      "path": "modis/2019/modis_2019_Mauritius.csv",
+      "bytes": 3397
+    },
+    {
+      "path": "modis/2020/modis_2020_Mauritius.csv",
+      "bytes": 2811
+    },
+    {
+      "path": "modis/2021/modis_2021_Mauritius.csv",
+      "bytes": 1154
+    },
+    {
+      "path": "modis/2022/modis_2022_Mauritius.csv",
+      "bytes": 2978
+    },
+    {
+      "path": "modis/2023/modis_2023_Mauritius.csv",
+      "bytes": 850
+    },
+    {
+      "path": "modis/2024/modis_2024_Mauritius.csv",
+      "bytes": 3072
+    },
+    {
+      "path": "modis/2025/modis_2025_Mauritius.csv",
+      "bytes": 1477
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Mauritius.csv",
+      "bytes": 15739
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Mauritius.csv",
+      "bytes": 20191
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Mauritius.csv",
+      "bytes": 28152
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Mauritius.csv",
+      "bytes": 13447
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Mauritius.csv",
+      "bytes": 18998
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Mauritius.csv",
+      "bytes": 8998
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Mauritius.csv",
+      "bytes": 21288
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Mauritius.csv",
+      "bytes": 11006
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Mauritius.csv",
+      "bytes": 15756
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Mauritius.csv",
+      "bytes": 24896
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Mauritius.csv",
+      "bytes": 25591
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Mauritius.csv",
+      "bytes": 10259
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Mauritius.csv",
+      "bytes": 15744
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Mauritius.csv",
+      "bytes": 13684
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Mauritius.csv",
+      "bytes": 12736
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Mauritius.csv",
+      "bytes": 17340
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Mauritius.csv",
+      "bytes": 24494
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Mauritius.csv",
+      "bytes": 11145
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Mauritius.csv",
+      "bytes": 16329
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Mauritius.csv",
+      "bytes": 5999
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Mauritius.csv",
+      "bytes": 16402
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Mauritius.csv",
+      "bytes": 10023
+    }
+  ],
+  "body_hash": "21492094a4c63638"
+}

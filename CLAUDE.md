@@ -22,6 +22,12 @@
 - Rust edition: **2024**, workspace resolver: **2**.
 - Frontend: React 19 + TypeScript strict mode.
 
+### Görev Takibi Kuralları
+- Projenin **tek** görev listesi `GOREVLER.md`'dir. Ayrı görev dosyası (GOREVLER2.md vb.) açılmaz; yeni görevler ilgili kişinin bölümüne eklenir.
+- Her görev başlığının başında onay kutusu bulunur: `[ ]` = yapılmadı, `[X]` = tamamlandı (ör. `### [ ] G5 — ...`).
+- Görevi tamamlayan kişi, "Bitti sayılır" şartı sağlandığında kendi görevinin kutusunu (başlıkta ve özet tablosunda) `[X]` yapar. Şart sağlanmadan `[X]` konmaz.
+- Görev metinleri silinmez veya kısaltılmaz; kapanış ve durum bilgisi görevin altına not olarak eklenir.
+
 ### Güvenlik
 - `.env` dosyaları commit edilmez, `.env.example` şablon olarak tutulur.
 - API anahtarları environment variable üzerinden okunur, hiçbir zaman hard-code edilmez.

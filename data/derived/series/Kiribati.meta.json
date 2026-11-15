@@ -1,0 +1,91 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2004/modis_2004_Kiribati.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2009/modis_2009_Kiribati.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2012/modis_2012_Kiribati.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2014/modis_2014_Kiribati.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2020/modis_2020_Kiribati.csv",
+      "bytes": 773
+    },
+    {
+      "path": "modis/2025/modis_2025_Kiribati.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Kiribati.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Kiribati.csv",
+      "bytes": 1518
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Kiribati.csv",
+      "bytes": 372
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Kiribati.csv",
+      "bytes": 537
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Kiribati.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Kiribati.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Kiribati.csv",
+      "bytes": 1433
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Kiribati.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Kiribati.csv",
+      "bytes": 364
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Kiribati.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Kiribati.csv",
+      "bytes": 2118
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Kiribati.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Kiribati.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Kiribati.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Kiribati.csv",
+      "bytes": 1478
+    }
+  ],
+  "body_hash": "83605a87027b3173"
+}

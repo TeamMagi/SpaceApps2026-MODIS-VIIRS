@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Albania.csv",
+      "bytes": 801
+    },
+    {
+      "path": "modis/2001/modis_2001_Albania.csv",
+      "bytes": 13193
+    },
+    {
+      "path": "modis/2002/modis_2002_Albania.csv",
+      "bytes": 5077
+    },
+    {
+      "path": "modis/2003/modis_2003_Albania.csv",
+      "bytes": 70336
+    },
+    {
+      "path": "modis/2004/modis_2004_Albania.csv",
+      "bytes": 12946
+    },
+    {
+      "path": "modis/2005/modis_2005_Albania.csv",
+      "bytes": 26802
+    },
+    {
+      "path": "modis/2006/modis_2006_Albania.csv",
+      "bytes": 11942
+    },
+    {
+      "path": "modis/2007/modis_2007_Albania.csv",
+      "bytes": 419135
+    },
+    {
+      "path": "modis/2008/modis_2008_Albania.csv",
+      "bytes": 49218
+    },
+    {
+      "path": "modis/2009/modis_2009_Albania.csv",
+      "bytes": 25660
+    },
+    {
+      "path": "modis/2010/modis_2010_Albania.csv",
+      "bytes": 22494
+    },
+    {
+      "path": "modis/2011/modis_2011_Albania.csv",
+      "bytes": 113465
+    },
+    {
+      "path": "modis/2012/modis_2012_Albania.csv",
+      "bytes": 290452
+    },
+    {
+      "path": "modis/2013/modis_2013_Albania.csv",
+      "bytes": 13838
+    },
+    {
+      "path": "modis/2014/modis_2014_Albania.csv",
+      "bytes": 9499
+    },
+    {
+      "path": "modis/2015/modis_2015_Albania.csv",
+      "bytes": 28791
+    },
+    {
+      "path": "modis/2016/modis_2016_Albania.csv",
+      "bytes": 15104
+    },
+    {
+      "path": "modis/2017/modis_2017_Albania.csv",
+      "bytes": 127299
+    },
+    {
+      "path": "modis/2018/modis_2018_Albania.csv",
+      "bytes": 15987
+    },
+    {
+      "path": "modis/2019/modis_2019_Albania.csv",
+      "bytes": 41194
+    },
+    {
+      "path": "modis/2020/modis_2020_Albania.csv",
+      "bytes": 41001
+    },
+    {
+      "path": "modis/2021/modis_2021_Albania.csv",
+      "bytes": 82213
+    },
+    {
+      "path": "modis/2022/modis_2022_Albania.csv",
+      "bytes": 42666
+    },
+    {
+      "path": "modis/2023/modis_2023_Albania.csv",
+      "bytes": 23685
+    },
+    {
+      "path": "modis/2024/modis_2024_Albania.csv",
+      "bytes": 63237
+    },
+    {
+      "path": "modis/2025/modis_2025_Albania.csv",
+      "bytes": 88161
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Albania.csv",
+      "bytes": 86801
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Albania.csv",
+      "bytes": 181378
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Albania.csv",
+      "bytes": 192061
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Albania.csv",
+      "bytes": 341382
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Albania.csv",
+      "bytes": 193649
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Albania.csv",
+      "bytes": 98975
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Albania.csv",
+      "bytes": 302116
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Albania.csv",
+      "bytes": 349237
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Albania.csv",
+      "bytes": 1177670
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Albania.csv",
+      "bytes": 78481
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Albania.csv",
+      "bytes": 58505
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Albania.csv",
+      "bytes": 152629
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Albania.csv",
+      "bytes": 86019
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Albania.csv",
+      "bytes": 513371
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Albania.csv",
+      "bytes": 83208
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Albania.csv",
+      "bytes": 172732
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Albania.csv",
+      "bytes": 182401
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Albania.csv",
+      "bytes": 334289
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Albania.csv",
+      "bytes": 138291
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Albania.csv",
+      "bytes": 100980
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Albania.csv",
+      "bytes": 248643
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Albania.csv",
+      "bytes": 347189
+    }
+  ],
+  "body_hash": "2cfb832da0b0ff16"
+}

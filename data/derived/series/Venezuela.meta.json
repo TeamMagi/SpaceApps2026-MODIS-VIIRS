@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Venezuela.csv",
+      "bytes": 201789
+    },
+    {
+      "path": "modis/2001/modis_2001_Venezuela.csv",
+      "bytes": 2147170
+    },
+    {
+      "path": "modis/2002/modis_2002_Venezuela.csv",
+      "bytes": 1686885
+    },
+    {
+      "path": "modis/2003/modis_2003_Venezuela.csv",
+      "bytes": 4878620
+    },
+    {
+      "path": "modis/2004/modis_2004_Venezuela.csv",
+      "bytes": 3271104
+    },
+    {
+      "path": "modis/2005/modis_2005_Venezuela.csv",
+      "bytes": 3614432
+    },
+    {
+      "path": "modis/2006/modis_2006_Venezuela.csv",
+      "bytes": 3231849
+    },
+    {
+      "path": "modis/2007/modis_2007_Venezuela.csv",
+      "bytes": 3858895
+    },
+    {
+      "path": "modis/2008/modis_2008_Venezuela.csv",
+      "bytes": 3320300
+    },
+    {
+      "path": "modis/2009/modis_2009_Venezuela.csv",
+      "bytes": 3342479
+    },
+    {
+      "path": "modis/2010/modis_2010_Venezuela.csv",
+      "bytes": 3645197
+    },
+    {
+      "path": "modis/2011/modis_2011_Venezuela.csv",
+      "bytes": 2276943
+    },
+    {
+      "path": "modis/2012/modis_2012_Venezuela.csv",
+      "bytes": 2784723
+    },
+    {
+      "path": "modis/2013/modis_2013_Venezuela.csv",
+      "bytes": 4347359
+    },
+    {
+      "path": "modis/2014/modis_2014_Venezuela.csv",
+      "bytes": 4593439
+    },
+    {
+      "path": "modis/2015/modis_2015_Venezuela.csv",
+      "bytes": 3888538
+    },
+    {
+      "path": "modis/2016/modis_2016_Venezuela.csv",
+      "bytes": 3898566
+    },
+    {
+      "path": "modis/2017/modis_2017_Venezuela.csv",
+      "bytes": 3351623
+    },
+    {
+      "path": "modis/2018/modis_2018_Venezuela.csv",
+      "bytes": 5009664
+    },
+    {
+      "path": "modis/2019/modis_2019_Venezuela.csv",
+      "bytes": 5737442
+    },
+    {
+      "path": "modis/2020/modis_2020_Venezuela.csv",
+      "bytes": 6517695
+    },
+    {
+      "path": "modis/2021/modis_2021_Venezuela.csv",
+      "bytes": 3356996
+    },
+    {
+      "path": "modis/2022/modis_2022_Venezuela.csv",
+      "bytes": 4217054
+    },
+    {
+      "path": "modis/2023/modis_2023_Venezuela.csv",
+      "bytes": 5298753
+    },
+    {
+      "path": "modis/2024/modis_2024_Venezuela.csv",
+      "bytes": 7199079
+    },
+    {
+      "path": "modis/2025/modis_2025_Venezuela.csv",
+      "bytes": 4202237
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Venezuela.csv",
+      "bytes": 9237597
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Venezuela.csv",
+      "bytes": 25554394
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Venezuela.csv",
+      "bytes": 29716255
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Venezuela.csv",
+      "bytes": 14063403
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Venezuela.csv",
+      "bytes": 18867845
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Venezuela.csv",
+      "bytes": 22159510
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Venezuela.csv",
+      "bytes": 32110337
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Venezuela.csv",
+      "bytes": 18594354
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Venezuela.csv",
+      "bytes": 11050956
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Venezuela.csv",
+      "bytes": 20017994
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Venezuela.csv",
+      "bytes": 21375502
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Venezuela.csv",
+      "bytes": 18723076
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Venezuela.csv",
+      "bytes": 20197318
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Venezuela.csv",
+      "bytes": 14751701
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Venezuela.csv",
+      "bytes": 21481565
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Venezuela.csv",
+      "bytes": 25114723
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Venezuela.csv",
+      "bytes": 29441376
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Venezuela.csv",
+      "bytes": 13909857
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Venezuela.csv",
+      "bytes": 18519761
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Venezuela.csv",
+      "bytes": 22131985
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Venezuela.csv",
+      "bytes": 32486730
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Venezuela.csv",
+      "bytes": 18421390
+    }
+  ],
+  "body_hash": "365ea0baf5ec002e"
+}

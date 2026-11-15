@@ -1,0 +1,155 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 359
+    },
+    {
+      "path": "modis/2004/modis_2004_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 663
+    },
+    {
+      "path": "modis/2007/modis_2007_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 285
+    },
+    {
+      "path": "modis/2012/modis_2012_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2013/modis_2013_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 823
+    },
+    {
+      "path": "modis/2014/modis_2014_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 285
+    },
+    {
+      "path": "modis/2015/modis_2015_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2016/modis_2016_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 601
+    },
+    {
+      "path": "modis/2017/modis_2017_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2020/modis_2020_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 374
+    },
+    {
+      "path": "modis/2021/modis_2021_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 287
+    },
+    {
+      "path": "modis/2022/modis_2022_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 212
+    },
+    {
+      "path": "modis/2023/modis_2023_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 1257
+    },
+    {
+      "path": "modis/2024/modis_2024_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2025/modis_2025_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 371
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 5812
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 4618
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 3141
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 5571
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 15333
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 16669
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 10993
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 16789
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 9167
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 25108
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 21836
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 12101
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 6329
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 5821
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 5534
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 5745
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 4551
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 5744
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 14418
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 17657
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 12315
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Heard_I_and_McDonald_Islands.csv",
+      "bytes": 16054
+    }
+  ],
+  "body_hash": "55b5ed6b21cfac21"
+}

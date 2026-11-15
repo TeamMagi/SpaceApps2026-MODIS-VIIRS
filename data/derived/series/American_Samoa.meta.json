@@ -1,0 +1,87 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2004/modis_2004_American_Samoa.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2007/modis_2007_American_Samoa.csv",
+      "bytes": 210
+    },
+    {
+      "path": "modis/2009/modis_2009_American_Samoa.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2010/modis_2010_American_Samoa.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2011/modis_2011_American_Samoa.csv",
+      "bytes": 291
+    },
+    {
+      "path": "modis/2012/modis_2012_American_Samoa.csv",
+      "bytes": 287
+    },
+    {
+      "path": "modis/2014/modis_2014_American_Samoa.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2015/modis_2015_American_Samoa.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2016/modis_2016_American_Samoa.csv",
+      "bytes": 290
+    },
+    {
+      "path": "modis/2017/modis_2017_American_Samoa.csv",
+      "bytes": 210
+    },
+    {
+      "path": "modis/2018/modis_2018_American_Samoa.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2021/modis_2021_American_Samoa.csv",
+      "bytes": 293
+    },
+    {
+      "path": "modis/2022/modis_2022_American_Samoa.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2023/modis_2023_American_Samoa.csv",
+      "bytes": 447
+    },
+    {
+      "path": "modis/2024/modis_2024_American_Samoa.csv",
+      "bytes": 445
+    },
+    {
+      "path": "modis/2025/modis_2025_American_Samoa.csv",
+      "bytes": 212
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_American_Samoa.csv",
+      "bytes": 212
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_American_Samoa.csv",
+      "bytes": 292
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_American_Samoa.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_American_Samoa.csv",
+      "bytes": 210
+    }
+  ],
+  "body_hash": "dd476536213c445f"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Syria.csv",
+      "bytes": 16430
+    },
+    {
+      "path": "modis/2001/modis_2001_Syria.csv",
+      "bytes": 193684
+    },
+    {
+      "path": "modis/2002/modis_2002_Syria.csv",
+      "bytes": 150693
+    },
+    {
+      "path": "modis/2003/modis_2003_Syria.csv",
+      "bytes": 194461
+    },
+    {
+      "path": "modis/2004/modis_2004_Syria.csv",
+      "bytes": 99013
+    },
+    {
+      "path": "modis/2005/modis_2005_Syria.csv",
+      "bytes": 39356
+    },
+    {
+      "path": "modis/2006/modis_2006_Syria.csv",
+      "bytes": 51181
+    },
+    {
+      "path": "modis/2007/modis_2007_Syria.csv",
+      "bytes": 58638
+    },
+    {
+      "path": "modis/2008/modis_2008_Syria.csv",
+      "bytes": 11999
+    },
+    {
+      "path": "modis/2009/modis_2009_Syria.csv",
+      "bytes": 75561
+    },
+    {
+      "path": "modis/2010/modis_2010_Syria.csv",
+      "bytes": 101383
+    },
+    {
+      "path": "modis/2011/modis_2011_Syria.csv",
+      "bytes": 58293
+    },
+    {
+      "path": "modis/2012/modis_2012_Syria.csv",
+      "bytes": 95487
+    },
+    {
+      "path": "modis/2013/modis_2013_Syria.csv",
+      "bytes": 210285
+    },
+    {
+      "path": "modis/2014/modis_2014_Syria.csv",
+      "bytes": 60154
+    },
+    {
+      "path": "modis/2015/modis_2015_Syria.csv",
+      "bytes": 161353
+    },
+    {
+      "path": "modis/2016/modis_2016_Syria.csv",
+      "bytes": 118288
+    },
+    {
+      "path": "modis/2017/modis_2017_Syria.csv",
+      "bytes": 174951
+    },
+    {
+      "path": "modis/2018/modis_2018_Syria.csv",
+      "bytes": 40835
+    },
+    {
+      "path": "modis/2019/modis_2019_Syria.csv",
+      "bytes": 461468
+    },
+    {
+      "path": "modis/2020/modis_2020_Syria.csv",
+      "bytes": 267129
+    },
+    {
+      "path": "modis/2021/modis_2021_Syria.csv",
+      "bytes": 47752
+    },
+    {
+      "path": "modis/2022/modis_2022_Syria.csv",
+      "bytes": 26278
+    },
+    {
+      "path": "modis/2023/modis_2023_Syria.csv",
+      "bytes": 118145
+    },
+    {
+      "path": "modis/2024/modis_2024_Syria.csv",
+      "bytes": 156576
+    },
+    {
+      "path": "modis/2025/modis_2025_Syria.csv",
+      "bytes": 92227
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Syria.csv",
+      "bytes": 573831
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Syria.csv",
+      "bytes": 2699800
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Syria.csv",
+      "bytes": 1756475
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Syria.csv",
+      "bytes": 880451
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Syria.csv",
+      "bytes": 725784
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Syria.csv",
+      "bytes": 1064128
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Syria.csv",
+      "bytes": 1323496
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Syria.csv",
+      "bytes": 756780
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Syria.csv",
+      "bytes": 817379
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Syria.csv",
+      "bytes": 1135797
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Syria.csv",
+      "bytes": 562068
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Syria.csv",
+      "bytes": 983629
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Syria.csv",
+      "bytes": 752567
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Syria.csv",
+      "bytes": 1011369
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Syria.csv",
+      "bytes": 648812
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Syria.csv",
+      "bytes": 2695697
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Syria.csv",
+      "bytes": 1803515
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Syria.csv",
+      "bytes": 862524
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Syria.csv",
+      "bytes": 697347
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Syria.csv",
+      "bytes": 1015789
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Syria.csv",
+      "bytes": 1213371
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Syria.csv",
+      "bytes": 700608
+    }
+  ],
+  "body_hash": "a3deafecdecac6f6"
+}

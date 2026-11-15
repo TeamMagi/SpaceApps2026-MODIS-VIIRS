@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Myanmar.csv",
+      "bytes": 12785
+    },
+    {
+      "path": "modis/2001/modis_2001_Myanmar.csv",
+      "bytes": 1239292
+    },
+    {
+      "path": "modis/2002/modis_2002_Myanmar.csv",
+      "bytes": 931440
+    },
+    {
+      "path": "modis/2003/modis_2003_Myanmar.csv",
+      "bytes": 4540683
+    },
+    {
+      "path": "modis/2004/modis_2004_Myanmar.csv",
+      "bytes": 6875569
+    },
+    {
+      "path": "modis/2005/modis_2005_Myanmar.csv",
+      "bytes": 4904042
+    },
+    {
+      "path": "modis/2006/modis_2006_Myanmar.csv",
+      "bytes": 4756172
+    },
+    {
+      "path": "modis/2007/modis_2007_Myanmar.csv",
+      "bytes": 7397795
+    },
+    {
+      "path": "modis/2008/modis_2008_Myanmar.csv",
+      "bytes": 4446353
+    },
+    {
+      "path": "modis/2009/modis_2009_Myanmar.csv",
+      "bytes": 6440193
+    },
+    {
+      "path": "modis/2010/modis_2010_Myanmar.csv",
+      "bytes": 7046989
+    },
+    {
+      "path": "modis/2011/modis_2011_Myanmar.csv",
+      "bytes": 3914272
+    },
+    {
+      "path": "modis/2012/modis_2012_Myanmar.csv",
+      "bytes": 6213560
+    },
+    {
+      "path": "modis/2013/modis_2013_Myanmar.csv",
+      "bytes": 5371401
+    },
+    {
+      "path": "modis/2014/modis_2014_Myanmar.csv",
+      "bytes": 5241971
+    },
+    {
+      "path": "modis/2015/modis_2015_Myanmar.csv",
+      "bytes": 4492847
+    },
+    {
+      "path": "modis/2016/modis_2016_Myanmar.csv",
+      "bytes": 3966813
+    },
+    {
+      "path": "modis/2017/modis_2017_Myanmar.csv",
+      "bytes": 3644331
+    },
+    {
+      "path": "modis/2018/modis_2018_Myanmar.csv",
+      "bytes": 3310320
+    },
+    {
+      "path": "modis/2019/modis_2019_Myanmar.csv",
+      "bytes": 4600942
+    },
+    {
+      "path": "modis/2020/modis_2020_Myanmar.csv",
+      "bytes": 5223251
+    },
+    {
+      "path": "modis/2021/modis_2021_Myanmar.csv",
+      "bytes": 4736928
+    },
+    {
+      "path": "modis/2022/modis_2022_Myanmar.csv",
+      "bytes": 2449386
+    },
+    {
+      "path": "modis/2023/modis_2023_Myanmar.csv",
+      "bytes": 5343538
+    },
+    {
+      "path": "modis/2024/modis_2024_Myanmar.csv",
+      "bytes": 4314827
+    },
+    {
+      "path": "modis/2025/modis_2025_Myanmar.csv",
+      "bytes": 3893868
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Myanmar.csv",
+      "bytes": 6457185
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Myanmar.csv",
+      "bytes": 30040657
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Myanmar.csv",
+      "bytes": 33440929
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Myanmar.csv",
+      "bytes": 28476066
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Myanmar.csv",
+      "bytes": 18809300
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Myanmar.csv",
+      "bytes": 33846895
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Myanmar.csv",
+      "bytes": 27346919
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Myanmar.csv",
+      "bytes": 24122802
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Myanmar.csv",
+      "bytes": 29267404
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Myanmar.csv",
+      "bytes": 32004850
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Myanmar.csv",
+      "bytes": 31565660
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Myanmar.csv",
+      "bytes": 27290251
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Myanmar.csv",
+      "bytes": 25781135
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Myanmar.csv",
+      "bytes": 22402675
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Myanmar.csv",
+      "bytes": 20520105
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Myanmar.csv",
+      "bytes": 29796300
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Myanmar.csv",
+      "bytes": 32441238
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Myanmar.csv",
+      "bytes": 27517664
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Myanmar.csv",
+      "bytes": 18207372
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Myanmar.csv",
+      "bytes": 33236859
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Myanmar.csv",
+      "bytes": 26462763
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Myanmar.csv",
+      "bytes": 23699963
+    }
+  ],
+  "body_hash": "8e5d07560f0aa8d9"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Ukraine.csv",
+      "bytes": 6164
+    },
+    {
+      "path": "modis/2001/modis_2001_Ukraine.csv",
+      "bytes": 2173087
+    },
+    {
+      "path": "modis/2002/modis_2002_Ukraine.csv",
+      "bytes": 2301449
+    },
+    {
+      "path": "modis/2003/modis_2003_Ukraine.csv",
+      "bytes": 1046646
+    },
+    {
+      "path": "modis/2004/modis_2004_Ukraine.csv",
+      "bytes": 1667361
+    },
+    {
+      "path": "modis/2005/modis_2005_Ukraine.csv",
+      "bytes": 3335596
+    },
+    {
+      "path": "modis/2006/modis_2006_Ukraine.csv",
+      "bytes": 2151803
+    },
+    {
+      "path": "modis/2007/modis_2007_Ukraine.csv",
+      "bytes": 2770723
+    },
+    {
+      "path": "modis/2008/modis_2008_Ukraine.csv",
+      "bytes": 4100126
+    },
+    {
+      "path": "modis/2009/modis_2009_Ukraine.csv",
+      "bytes": 2997613
+    },
+    {
+      "path": "modis/2010/modis_2010_Ukraine.csv",
+      "bytes": 1523457
+    },
+    {
+      "path": "modis/2011/modis_2011_Ukraine.csv",
+      "bytes": 2093350
+    },
+    {
+      "path": "modis/2012/modis_2012_Ukraine.csv",
+      "bytes": 1506794
+    },
+    {
+      "path": "modis/2013/modis_2013_Ukraine.csv",
+      "bytes": 1038306
+    },
+    {
+      "path": "modis/2014/modis_2014_Ukraine.csv",
+      "bytes": 3970619
+    },
+    {
+      "path": "modis/2015/modis_2015_Ukraine.csv",
+      "bytes": 3763746
+    },
+    {
+      "path": "modis/2016/modis_2016_Ukraine.csv",
+      "bytes": 1996393
+    },
+    {
+      "path": "modis/2017/modis_2017_Ukraine.csv",
+      "bytes": 2690193
+    },
+    {
+      "path": "modis/2018/modis_2018_Ukraine.csv",
+      "bytes": 1477476
+    },
+    {
+      "path": "modis/2019/modis_2019_Ukraine.csv",
+      "bytes": 2202817
+    },
+    {
+      "path": "modis/2020/modis_2020_Ukraine.csv",
+      "bytes": 2059275
+    },
+    {
+      "path": "modis/2021/modis_2021_Ukraine.csv",
+      "bytes": 840842
+    },
+    {
+      "path": "modis/2022/modis_2022_Ukraine.csv",
+      "bytes": 1197154
+    },
+    {
+      "path": "modis/2023/modis_2023_Ukraine.csv",
+      "bytes": 930660
+    },
+    {
+      "path": "modis/2024/modis_2024_Ukraine.csv",
+      "bytes": 1896955
+    },
+    {
+      "path": "modis/2025/modis_2025_Ukraine.csv",
+      "bytes": 1353901
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Ukraine.csv",
+      "bytes": 5612496
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Ukraine.csv",
+      "bytes": 8007464
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Ukraine.csv",
+      "bytes": 7609738
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Ukraine.csv",
+      "bytes": 3759202
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Ukraine.csv",
+      "bytes": 4781263
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Ukraine.csv",
+      "bytes": 3427493
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Ukraine.csv",
+      "bytes": 7723176
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Ukraine.csv",
+      "bytes": 5528685
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Ukraine.csv",
+      "bytes": 5662142
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Ukraine.csv",
+      "bytes": 5018837
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Ukraine.csv",
+      "bytes": 13069120
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Ukraine.csv",
+      "bytes": 13422703
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Ukraine.csv",
+      "bytes": 7719849
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Ukraine.csv",
+      "bytes": 9336732
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Ukraine.csv",
+      "bytes": 5681980
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Ukraine.csv",
+      "bytes": 7799660
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Ukraine.csv",
+      "bytes": 7368722
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Ukraine.csv",
+      "bytes": 3672672
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Ukraine.csv",
+      "bytes": 4050951
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Ukraine.csv",
+      "bytes": 3396970
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Ukraine.csv",
+      "bytes": 6769679
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Ukraine.csv",
+      "bytes": 5284868
+    }
+  ],
+  "body_hash": "a53c3fe66ee57816"
+}

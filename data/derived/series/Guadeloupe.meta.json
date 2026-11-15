@@ -1,0 +1,187 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Guadeloupe.csv",
+      "bytes": 986
+    },
+    {
+      "path": "modis/2002/modis_2002_Guadeloupe.csv",
+      "bytes": 281
+    },
+    {
+      "path": "modis/2003/modis_2003_Guadeloupe.csv",
+      "bytes": 673
+    },
+    {
+      "path": "modis/2006/modis_2006_Guadeloupe.csv",
+      "bytes": 1000
+    },
+    {
+      "path": "modis/2007/modis_2007_Guadeloupe.csv",
+      "bytes": 519
+    },
+    {
+      "path": "modis/2008/modis_2008_Guadeloupe.csv",
+      "bytes": 282
+    },
+    {
+      "path": "modis/2009/modis_2009_Guadeloupe.csv",
+      "bytes": 361
+    },
+    {
+      "path": "modis/2010/modis_2010_Guadeloupe.csv",
+      "bytes": 832
+    },
+    {
+      "path": "modis/2011/modis_2011_Guadeloupe.csv",
+      "bytes": 279
+    },
+    {
+      "path": "modis/2012/modis_2012_Guadeloupe.csv",
+      "bytes": 676
+    },
+    {
+      "path": "modis/2013/modis_2013_Guadeloupe.csv",
+      "bytes": 434
+    },
+    {
+      "path": "modis/2014/modis_2014_Guadeloupe.csv",
+      "bytes": 744
+    },
+    {
+      "path": "modis/2015/modis_2015_Guadeloupe.csv",
+      "bytes": 1547
+    },
+    {
+      "path": "modis/2016/modis_2016_Guadeloupe.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2017/modis_2017_Guadeloupe.csv",
+      "bytes": 359
+    },
+    {
+      "path": "modis/2018/modis_2018_Guadeloupe.csv",
+      "bytes": 353
+    },
+    {
+      "path": "modis/2019/modis_2019_Guadeloupe.csv",
+      "bytes": 523
+    },
+    {
+      "path": "modis/2020/modis_2020_Guadeloupe.csv",
+      "bytes": 681
+    },
+    {
+      "path": "modis/2021/modis_2021_Guadeloupe.csv",
+      "bytes": 522
+    },
+    {
+      "path": "modis/2022/modis_2022_Guadeloupe.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2023/modis_2023_Guadeloupe.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2024/modis_2024_Guadeloupe.csv",
+      "bytes": 365
+    },
+    {
+      "path": "modis/2025/modis_2025_Guadeloupe.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Guadeloupe.csv",
+      "bytes": 1268
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Guadeloupe.csv",
+      "bytes": 2401
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Guadeloupe.csv",
+      "bytes": 2564
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Guadeloupe.csv",
+      "bytes": 2648
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Guadeloupe.csv",
+      "bytes": 1430
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Guadeloupe.csv",
+      "bytes": 1838
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Guadeloupe.csv",
+      "bytes": 536
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Guadeloupe.csv",
+      "bytes": 1184
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Guadeloupe.csv",
+      "bytes": 2109
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Guadeloupe.csv",
+      "bytes": 1797
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Guadeloupe.csv",
+      "bytes": 4492
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Guadeloupe.csv",
+      "bytes": 2039
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Guadeloupe.csv",
+      "bytes": 1002
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Guadeloupe.csv",
+      "bytes": 1953
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Guadeloupe.csv",
+      "bytes": 2577
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Guadeloupe.csv",
+      "bytes": 1801
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Guadeloupe.csv",
+      "bytes": 2257
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Guadeloupe.csv",
+      "bytes": 2263
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Guadeloupe.csv",
+      "bytes": 2263
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Guadeloupe.csv",
+      "bytes": 1319
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Guadeloupe.csv",
+      "bytes": 685
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Guadeloupe.csv",
+      "bytes": 1162
+    }
+  ],
+  "body_hash": "a15f48b4b728205c"
+}

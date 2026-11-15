@@ -1,0 +1,151 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2002/modis_2002_Cayman_Islands.csv",
+      "bytes": 281
+    },
+    {
+      "path": "modis/2003/modis_2003_Cayman_Islands.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2004/modis_2004_Cayman_Islands.csv",
+      "bytes": 280
+    },
+    {
+      "path": "modis/2005/modis_2005_Cayman_Islands.csv",
+      "bytes": 361
+    },
+    {
+      "path": "modis/2006/modis_2006_Cayman_Islands.csv",
+      "bytes": 436
+    },
+    {
+      "path": "modis/2008/modis_2008_Cayman_Islands.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2011/modis_2011_Cayman_Islands.csv",
+      "bytes": 759
+    },
+    {
+      "path": "modis/2013/modis_2013_Cayman_Islands.csv",
+      "bytes": 290
+    },
+    {
+      "path": "modis/2014/modis_2014_Cayman_Islands.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2015/modis_2015_Cayman_Islands.csv",
+      "bytes": 205
+    },
+    {
+      "path": "modis/2020/modis_2020_Cayman_Islands.csv",
+      "bytes": 282
+    },
+    {
+      "path": "modis/2023/modis_2023_Cayman_Islands.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2024/modis_2024_Cayman_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2025/modis_2025_Cayman_Islands.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Cayman_Islands.csv",
+      "bytes": 447
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Cayman_Islands.csv",
+      "bytes": 779
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Cayman_Islands.csv",
+      "bytes": 613
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Cayman_Islands.csv",
+      "bytes": 1420
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Cayman_Islands.csv",
+      "bytes": 1101
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Cayman_Islands.csv",
+      "bytes": 781
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Cayman_Islands.csv",
+      "bytes": 456
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Cayman_Islands.csv",
+      "bytes": 617
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Cayman_Islands.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Cayman_Islands.csv",
+      "bytes": 758
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Cayman_Islands.csv",
+      "bytes": 1078
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Cayman_Islands.csv",
+      "bytes": 362
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Cayman_Islands.csv",
+      "bytes": 446
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Cayman_Islands.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Cayman_Islands.csv",
+      "bytes": 599
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Cayman_Islands.csv",
+      "bytes": 604
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Cayman_Islands.csv",
+      "bytes": 762
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Cayman_Islands.csv",
+      "bytes": 845
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Cayman_Islands.csv",
+      "bytes": 604
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Cayman_Islands.csv",
+      "bytes": 679
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Cayman_Islands.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Cayman_Islands.csv",
+      "bytes": 763
+    }
+  ],
+  "body_hash": "6d45c9f16e813ea6"
+}

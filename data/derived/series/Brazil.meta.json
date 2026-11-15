@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Brazil.csv",
+      "bytes": 1230110
+    },
+    {
+      "path": "modis/2001/modis_2001_Brazil.csv",
+      "bytes": 11573915
+    },
+    {
+      "path": "modis/2002/modis_2002_Brazil.csv",
+      "bytes": 41363929
+    },
+    {
+      "path": "modis/2003/modis_2003_Brazil.csv",
+      "bytes": 43221429
+    },
+    {
+      "path": "modis/2004/modis_2004_Brazil.csv",
+      "bytes": 50055215
+    },
+    {
+      "path": "modis/2005/modis_2005_Brazil.csv",
+      "bytes": 49808640
+    },
+    {
+      "path": "modis/2006/modis_2006_Brazil.csv",
+      "bytes": 32007517
+    },
+    {
+      "path": "modis/2007/modis_2007_Brazil.csv",
+      "bytes": 55275659
+    },
+    {
+      "path": "modis/2008/modis_2008_Brazil.csv",
+      "bytes": 27929984
+    },
+    {
+      "path": "modis/2009/modis_2009_Brazil.csv",
+      "bytes": 19676239
+    },
+    {
+      "path": "modis/2010/modis_2010_Brazil.csv",
+      "bytes": 46059831
+    },
+    {
+      "path": "modis/2011/modis_2011_Brazil.csv",
+      "bytes": 21378854
+    },
+    {
+      "path": "modis/2012/modis_2012_Brazil.csv",
+      "bytes": 31692432
+    },
+    {
+      "path": "modis/2013/modis_2013_Brazil.csv",
+      "bytes": 17345997
+    },
+    {
+      "path": "modis/2014/modis_2014_Brazil.csv",
+      "bytes": 24512988
+    },
+    {
+      "path": "modis/2015/modis_2015_Brazil.csv",
+      "bytes": 33035087
+    },
+    {
+      "path": "modis/2016/modis_2016_Brazil.csv",
+      "bytes": 26308349
+    },
+    {
+      "path": "modis/2017/modis_2017_Brazil.csv",
+      "bytes": 30642832
+    },
+    {
+      "path": "modis/2018/modis_2018_Brazil.csv",
+      "bytes": 18455696
+    },
+    {
+      "path": "modis/2019/modis_2019_Brazil.csv",
+      "bytes": 29901181
+    },
+    {
+      "path": "modis/2020/modis_2020_Brazil.csv",
+      "bytes": 32395704
+    },
+    {
+      "path": "modis/2021/modis_2021_Brazil.csv",
+      "bytes": 27209512
+    },
+    {
+      "path": "modis/2022/modis_2022_Brazil.csv",
+      "bytes": 28905347
+    },
+    {
+      "path": "modis/2023/modis_2023_Brazil.csv",
+      "bytes": 28810183
+    },
+    {
+      "path": "modis/2024/modis_2024_Brazil.csv",
+      "bytes": 42592737
+    },
+    {
+      "path": "modis/2025/modis_2025_Brazil.csv",
+      "bytes": 19063013
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Brazil.csv",
+      "bytes": 69462288
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Brazil.csv",
+      "bytes": 117273613
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Brazil.csv",
+      "bytes": 133694824
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Brazil.csv",
+      "bytes": 106794467
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Brazil.csv",
+      "bytes": 118728944
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Brazil.csv",
+      "bytes": 107204252
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Brazil.csv",
+      "bytes": 162517975
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Brazil.csv",
+      "bytes": 69822157
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Brazil.csv",
+      "bytes": 129965118
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Brazil.csv",
+      "bytes": 69169523
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Brazil.csv",
+      "bytes": 99320029
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Brazil.csv",
+      "bytes": 136919538
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Brazil.csv",
+      "bytes": 103907223
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Brazil.csv",
+      "bytes": 122998462
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Brazil.csv",
+      "bytes": 72954097
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Brazil.csv",
+      "bytes": 116363499
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Brazil.csv",
+      "bytes": 132968184
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Brazil.csv",
+      "bytes": 106421293
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Brazil.csv",
+      "bytes": 112003139
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Brazil.csv",
+      "bytes": 107163080
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Brazil.csv",
+      "bytes": 154270311
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Brazil.csv",
+      "bytes": 68706593
+    }
+  ],
+  "body_hash": "ac56248ccfb623ed"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Poland.csv",
+      "bytes": 731
+    },
+    {
+      "path": "modis/2001/modis_2001_Poland.csv",
+      "bytes": 54610
+    },
+    {
+      "path": "modis/2002/modis_2002_Poland.csv",
+      "bytes": 117225
+    },
+    {
+      "path": "modis/2003/modis_2003_Poland.csv",
+      "bytes": 251322
+    },
+    {
+      "path": "modis/2004/modis_2004_Poland.csv",
+      "bytes": 116021
+    },
+    {
+      "path": "modis/2005/modis_2005_Poland.csv",
+      "bytes": 128505
+    },
+    {
+      "path": "modis/2006/modis_2006_Poland.csv",
+      "bytes": 77764
+    },
+    {
+      "path": "modis/2007/modis_2007_Poland.csv",
+      "bytes": 70664
+    },
+    {
+      "path": "modis/2008/modis_2008_Poland.csv",
+      "bytes": 71238
+    },
+    {
+      "path": "modis/2009/modis_2009_Poland.csv",
+      "bytes": 79837
+    },
+    {
+      "path": "modis/2010/modis_2010_Poland.csv",
+      "bytes": 59530
+    },
+    {
+      "path": "modis/2011/modis_2011_Poland.csv",
+      "bytes": 79847
+    },
+    {
+      "path": "modis/2012/modis_2012_Poland.csv",
+      "bytes": 95678
+    },
+    {
+      "path": "modis/2013/modis_2013_Poland.csv",
+      "bytes": 52985
+    },
+    {
+      "path": "modis/2014/modis_2014_Poland.csv",
+      "bytes": 81174
+    },
+    {
+      "path": "modis/2015/modis_2015_Poland.csv",
+      "bytes": 94005
+    },
+    {
+      "path": "modis/2016/modis_2016_Poland.csv",
+      "bytes": 45313
+    },
+    {
+      "path": "modis/2017/modis_2017_Poland.csv",
+      "bytes": 35571
+    },
+    {
+      "path": "modis/2018/modis_2018_Poland.csv",
+      "bytes": 52788
+    },
+    {
+      "path": "modis/2019/modis_2019_Poland.csv",
+      "bytes": 54574
+    },
+    {
+      "path": "modis/2020/modis_2020_Poland.csv",
+      "bytes": 48608
+    },
+    {
+      "path": "modis/2021/modis_2021_Poland.csv",
+      "bytes": 23100
+    },
+    {
+      "path": "modis/2022/modis_2022_Poland.csv",
+      "bytes": 44770
+    },
+    {
+      "path": "modis/2023/modis_2023_Poland.csv",
+      "bytes": 28865
+    },
+    {
+      "path": "modis/2024/modis_2024_Poland.csv",
+      "bytes": 45648
+    },
+    {
+      "path": "modis/2025/modis_2025_Poland.csv",
+      "bytes": 56092
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Poland.csv",
+      "bytes": 556604
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Poland.csv",
+      "bytes": 516129
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Poland.csv",
+      "bytes": 450723
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Poland.csv",
+      "bytes": 392970
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Poland.csv",
+      "bytes": 466427
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Poland.csv",
+      "bytes": 362680
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Poland.csv",
+      "bytes": 471069
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Poland.csv",
+      "bytes": 444742
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Poland.csv",
+      "bytes": 557248
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Poland.csv",
+      "bytes": 496203
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Poland.csv",
+      "bytes": 565049
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Poland.csv",
+      "bytes": 643955
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Poland.csv",
+      "bytes": 508521
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Poland.csv",
+      "bytes": 412280
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Poland.csv",
+      "bytes": 592611
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Poland.csv",
+      "bytes": 502474
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Poland.csv",
+      "bytes": 436073
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Poland.csv",
+      "bytes": 381609
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Poland.csv",
+      "bytes": 420518
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Poland.csv",
+      "bytes": 340823
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Poland.csv",
+      "bytes": 418146
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Poland.csv",
+      "bytes": 447359
+    }
+  ],
+  "body_hash": "28ae94c22d4affe0"
+}

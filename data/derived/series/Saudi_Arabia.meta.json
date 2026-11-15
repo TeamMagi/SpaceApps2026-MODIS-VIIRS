@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Saudi_Arabia.csv",
+      "bytes": 11409
+    },
+    {
+      "path": "modis/2001/modis_2001_Saudi_Arabia.csv",
+      "bytes": 78419
+    },
+    {
+      "path": "modis/2002/modis_2002_Saudi_Arabia.csv",
+      "bytes": 108907
+    },
+    {
+      "path": "modis/2003/modis_2003_Saudi_Arabia.csv",
+      "bytes": 105289
+    },
+    {
+      "path": "modis/2004/modis_2004_Saudi_Arabia.csv",
+      "bytes": 168614
+    },
+    {
+      "path": "modis/2005/modis_2005_Saudi_Arabia.csv",
+      "bytes": 144608
+    },
+    {
+      "path": "modis/2006/modis_2006_Saudi_Arabia.csv",
+      "bytes": 139801
+    },
+    {
+      "path": "modis/2007/modis_2007_Saudi_Arabia.csv",
+      "bytes": 148866
+    },
+    {
+      "path": "modis/2008/modis_2008_Saudi_Arabia.csv",
+      "bytes": 156209
+    },
+    {
+      "path": "modis/2009/modis_2009_Saudi_Arabia.csv",
+      "bytes": 238081
+    },
+    {
+      "path": "modis/2010/modis_2010_Saudi_Arabia.csv",
+      "bytes": 220246
+    },
+    {
+      "path": "modis/2011/modis_2011_Saudi_Arabia.csv",
+      "bytes": 157613
+    },
+    {
+      "path": "modis/2012/modis_2012_Saudi_Arabia.csv",
+      "bytes": 196891
+    },
+    {
+      "path": "modis/2013/modis_2013_Saudi_Arabia.csv",
+      "bytes": 178720
+    },
+    {
+      "path": "modis/2014/modis_2014_Saudi_Arabia.csv",
+      "bytes": 177687
+    },
+    {
+      "path": "modis/2015/modis_2015_Saudi_Arabia.csv",
+      "bytes": 225948
+    },
+    {
+      "path": "modis/2016/modis_2016_Saudi_Arabia.csv",
+      "bytes": 223656
+    },
+    {
+      "path": "modis/2017/modis_2017_Saudi_Arabia.csv",
+      "bytes": 203446
+    },
+    {
+      "path": "modis/2018/modis_2018_Saudi_Arabia.csv",
+      "bytes": 195641
+    },
+    {
+      "path": "modis/2019/modis_2019_Saudi_Arabia.csv",
+      "bytes": 236229
+    },
+    {
+      "path": "modis/2020/modis_2020_Saudi_Arabia.csv",
+      "bytes": 194870
+    },
+    {
+      "path": "modis/2021/modis_2021_Saudi_Arabia.csv",
+      "bytes": 182891
+    },
+    {
+      "path": "modis/2022/modis_2022_Saudi_Arabia.csv",
+      "bytes": 193483
+    },
+    {
+      "path": "modis/2023/modis_2023_Saudi_Arabia.csv",
+      "bytes": 274818
+    },
+    {
+      "path": "modis/2024/modis_2024_Saudi_Arabia.csv",
+      "bytes": 272795
+    },
+    {
+      "path": "modis/2025/modis_2025_Saudi_Arabia.csv",
+      "bytes": 258981
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Saudi_Arabia.csv",
+      "bytes": 2031105
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Saudi_Arabia.csv",
+      "bytes": 2904121
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Saudi_Arabia.csv",
+      "bytes": 2896165
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Saudi_Arabia.csv",
+      "bytes": 2818024
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Saudi_Arabia.csv",
+      "bytes": 2919901
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Saudi_Arabia.csv",
+      "bytes": 3125479
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Saudi_Arabia.csv",
+      "bytes": 3338245
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Saudi_Arabia.csv",
+      "bytes": 3617394
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Saudi_Arabia.csv",
+      "bytes": 2693904
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Saudi_Arabia.csv",
+      "bytes": 2967710
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Saudi_Arabia.csv",
+      "bytes": 2918377
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Saudi_Arabia.csv",
+      "bytes": 2997992
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Saudi_Arabia.csv",
+      "bytes": 3158320
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Saudi_Arabia.csv",
+      "bytes": 2844415
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Saudi_Arabia.csv",
+      "bytes": 2888955
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Saudi_Arabia.csv",
+      "bytes": 2987339
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Saudi_Arabia.csv",
+      "bytes": 2820563
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Saudi_Arabia.csv",
+      "bytes": 2730905
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Saudi_Arabia.csv",
+      "bytes": 2757053
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Saudi_Arabia.csv",
+      "bytes": 3135975
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Saudi_Arabia.csv",
+      "bytes": 3046618
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Saudi_Arabia.csv",
+      "bytes": 3392404
+    }
+  ],
+  "body_hash": "96a961855d758ecd"
+}

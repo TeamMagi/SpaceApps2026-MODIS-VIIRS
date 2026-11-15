@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Luxembourg.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2001/modis_2001_Luxembourg.csv",
+      "bytes": 1804
+    },
+    {
+      "path": "modis/2002/modis_2002_Luxembourg.csv",
+      "bytes": 1113
+    },
+    {
+      "path": "modis/2003/modis_2003_Luxembourg.csv",
+      "bytes": 3001
+    },
+    {
+      "path": "modis/2004/modis_2004_Luxembourg.csv",
+      "bytes": 1613
+    },
+    {
+      "path": "modis/2005/modis_2005_Luxembourg.csv",
+      "bytes": 1733
+    },
+    {
+      "path": "modis/2006/modis_2006_Luxembourg.csv",
+      "bytes": 2235
+    },
+    {
+      "path": "modis/2007/modis_2007_Luxembourg.csv",
+      "bytes": 2476
+    },
+    {
+      "path": "modis/2008/modis_2008_Luxembourg.csv",
+      "bytes": 2002
+    },
+    {
+      "path": "modis/2009/modis_2009_Luxembourg.csv",
+      "bytes": 1249
+    },
+    {
+      "path": "modis/2010/modis_2010_Luxembourg.csv",
+      "bytes": 3369
+    },
+    {
+      "path": "modis/2011/modis_2011_Luxembourg.csv",
+      "bytes": 3065
+    },
+    {
+      "path": "modis/2012/modis_2012_Luxembourg.csv",
+      "bytes": 2707
+    },
+    {
+      "path": "modis/2013/modis_2013_Luxembourg.csv",
+      "bytes": 2774
+    },
+    {
+      "path": "modis/2014/modis_2014_Luxembourg.csv",
+      "bytes": 2458
+    },
+    {
+      "path": "modis/2015/modis_2015_Luxembourg.csv",
+      "bytes": 3890
+    },
+    {
+      "path": "modis/2016/modis_2016_Luxembourg.csv",
+      "bytes": 2757
+    },
+    {
+      "path": "modis/2017/modis_2017_Luxembourg.csv",
+      "bytes": 4981
+    },
+    {
+      "path": "modis/2018/modis_2018_Luxembourg.csv",
+      "bytes": 6318
+    },
+    {
+      "path": "modis/2019/modis_2019_Luxembourg.csv",
+      "bytes": 5643
+    },
+    {
+      "path": "modis/2020/modis_2020_Luxembourg.csv",
+      "bytes": 3516
+    },
+    {
+      "path": "modis/2021/modis_2021_Luxembourg.csv",
+      "bytes": 4944
+    },
+    {
+      "path": "modis/2022/modis_2022_Luxembourg.csv",
+      "bytes": 3484
+    },
+    {
+      "path": "modis/2023/modis_2023_Luxembourg.csv",
+      "bytes": 3844
+    },
+    {
+      "path": "modis/2024/modis_2024_Luxembourg.csv",
+      "bytes": 1921
+    },
+    {
+      "path": "modis/2025/modis_2025_Luxembourg.csv",
+      "bytes": 2567
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Luxembourg.csv",
+      "bytes": 63380
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Luxembourg.csv",
+      "bytes": 61024
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Luxembourg.csv",
+      "bytes": 54609
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Luxembourg.csv",
+      "bytes": 57397
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Luxembourg.csv",
+      "bytes": 64909
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Luxembourg.csv",
+      "bytes": 49579
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Luxembourg.csv",
+      "bytes": 24421
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Luxembourg.csv",
+      "bytes": 28889
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Luxembourg.csv",
+      "bytes": 34924
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Luxembourg.csv",
+      "bytes": 40087
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Luxembourg.csv",
+      "bytes": 47430
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Luxembourg.csv",
+      "bytes": 41226
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Luxembourg.csv",
+      "bytes": 45714
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Luxembourg.csv",
+      "bytes": 50849
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Luxembourg.csv",
+      "bytes": 65216
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Luxembourg.csv",
+      "bytes": 63733
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Luxembourg.csv",
+      "bytes": 52569
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Luxembourg.csv",
+      "bytes": 52398
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Luxembourg.csv",
+      "bytes": 52027
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Luxembourg.csv",
+      "bytes": 53296
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Luxembourg.csv",
+      "bytes": 23452
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Luxembourg.csv",
+      "bytes": 25128
+    }
+  ],
+  "body_hash": "0d84041cbf8da7f5"
+}

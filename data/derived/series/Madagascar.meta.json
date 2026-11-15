@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Madagascar.csv",
+      "bytes": 94906
+    },
+    {
+      "path": "modis/2001/modis_2001_Madagascar.csv",
+      "bytes": 1814272
+    },
+    {
+      "path": "modis/2002/modis_2002_Madagascar.csv",
+      "bytes": 3120896
+    },
+    {
+      "path": "modis/2003/modis_2003_Madagascar.csv",
+      "bytes": 5052798
+    },
+    {
+      "path": "modis/2004/modis_2004_Madagascar.csv",
+      "bytes": 3530544
+    },
+    {
+      "path": "modis/2005/modis_2005_Madagascar.csv",
+      "bytes": 5928450
+    },
+    {
+      "path": "modis/2006/modis_2006_Madagascar.csv",
+      "bytes": 4455670
+    },
+    {
+      "path": "modis/2007/modis_2007_Madagascar.csv",
+      "bytes": 5255496
+    },
+    {
+      "path": "modis/2008/modis_2008_Madagascar.csv",
+      "bytes": 4288924
+    },
+    {
+      "path": "modis/2009/modis_2009_Madagascar.csv",
+      "bytes": 5390186
+    },
+    {
+      "path": "modis/2010/modis_2010_Madagascar.csv",
+      "bytes": 5049362
+    },
+    {
+      "path": "modis/2011/modis_2011_Madagascar.csv",
+      "bytes": 5141458
+    },
+    {
+      "path": "modis/2012/modis_2012_Madagascar.csv",
+      "bytes": 4641628
+    },
+    {
+      "path": "modis/2013/modis_2013_Madagascar.csv",
+      "bytes": 5548325
+    },
+    {
+      "path": "modis/2014/modis_2014_Madagascar.csv",
+      "bytes": 4696241
+    },
+    {
+      "path": "modis/2015/modis_2015_Madagascar.csv",
+      "bytes": 4709085
+    },
+    {
+      "path": "modis/2016/modis_2016_Madagascar.csv",
+      "bytes": 5904766
+    },
+    {
+      "path": "modis/2017/modis_2017_Madagascar.csv",
+      "bytes": 4559962
+    },
+    {
+      "path": "modis/2018/modis_2018_Madagascar.csv",
+      "bytes": 4979263
+    },
+    {
+      "path": "modis/2019/modis_2019_Madagascar.csv",
+      "bytes": 4428140
+    },
+    {
+      "path": "modis/2020/modis_2020_Madagascar.csv",
+      "bytes": 5112125
+    },
+    {
+      "path": "modis/2021/modis_2021_Madagascar.csv",
+      "bytes": 4153821
+    },
+    {
+      "path": "modis/2022/modis_2022_Madagascar.csv",
+      "bytes": 3913014
+    },
+    {
+      "path": "modis/2023/modis_2023_Madagascar.csv",
+      "bytes": 4608152
+    },
+    {
+      "path": "modis/2024/modis_2024_Madagascar.csv",
+      "bytes": 5479476
+    },
+    {
+      "path": "modis/2025/modis_2025_Madagascar.csv",
+      "bytes": 3927897
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Madagascar.csv",
+      "bytes": 28715043
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Madagascar.csv",
+      "bytes": 26542126
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Madagascar.csv",
+      "bytes": 31225448
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Madagascar.csv",
+      "bytes": 26272141
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Madagascar.csv",
+      "bytes": 23514968
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Madagascar.csv",
+      "bytes": 27682844
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Madagascar.csv",
+      "bytes": 33303590
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Madagascar.csv",
+      "bytes": 26289530
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Madagascar.csv",
+      "bytes": 26390337
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Madagascar.csv",
+      "bytes": 32319266
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Madagascar.csv",
+      "bytes": 27482173
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Madagascar.csv",
+      "bytes": 26959750
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Madagascar.csv",
+      "bytes": 33496622
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Madagascar.csv",
+      "bytes": 26894681
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Madagascar.csv",
+      "bytes": 28703061
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Madagascar.csv",
+      "bytes": 26035626
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Madagascar.csv",
+      "bytes": 30879442
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Madagascar.csv",
+      "bytes": 25777413
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Madagascar.csv",
+      "bytes": 21747510
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Madagascar.csv",
+      "bytes": 27424462
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Madagascar.csv",
+      "bytes": 29315435
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Madagascar.csv",
+      "bytes": 25237734
+    }
+  ],
+  "body_hash": "a6c531e0ff29a0b5"
+}

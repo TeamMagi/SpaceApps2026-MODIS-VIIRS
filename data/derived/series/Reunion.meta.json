@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Reunion.csv",
+      "bytes": 5930
+    },
+    {
+      "path": "modis/2001/modis_2001_Reunion.csv",
+      "bytes": 10101
+    },
+    {
+      "path": "modis/2002/modis_2002_Reunion.csv",
+      "bytes": 18891
+    },
+    {
+      "path": "modis/2003/modis_2003_Reunion.csv",
+      "bytes": 17313
+    },
+    {
+      "path": "modis/2004/modis_2004_Reunion.csv",
+      "bytes": 34044
+    },
+    {
+      "path": "modis/2005/modis_2005_Reunion.csv",
+      "bytes": 21533
+    },
+    {
+      "path": "modis/2006/modis_2006_Reunion.csv",
+      "bytes": 69473
+    },
+    {
+      "path": "modis/2007/modis_2007_Reunion.csv",
+      "bytes": 26354
+    },
+    {
+      "path": "modis/2008/modis_2008_Reunion.csv",
+      "bytes": 6046
+    },
+    {
+      "path": "modis/2009/modis_2009_Reunion.csv",
+      "bytes": 3035
+    },
+    {
+      "path": "modis/2010/modis_2010_Reunion.csv",
+      "bytes": 16132
+    },
+    {
+      "path": "modis/2011/modis_2011_Reunion.csv",
+      "bytes": 5279
+    },
+    {
+      "path": "modis/2012/modis_2012_Reunion.csv",
+      "bytes": 742
+    },
+    {
+      "path": "modis/2013/modis_2013_Reunion.csv",
+      "bytes": 907
+    },
+    {
+      "path": "modis/2014/modis_2014_Reunion.csv",
+      "bytes": 987
+    },
+    {
+      "path": "modis/2015/modis_2015_Reunion.csv",
+      "bytes": 86112
+    },
+    {
+      "path": "modis/2016/modis_2016_Reunion.csv",
+      "bytes": 8739
+    },
+    {
+      "path": "modis/2017/modis_2017_Reunion.csv",
+      "bytes": 27794
+    },
+    {
+      "path": "modis/2018/modis_2018_Reunion.csv",
+      "bytes": 50702
+    },
+    {
+      "path": "modis/2019/modis_2019_Reunion.csv",
+      "bytes": 24617
+    },
+    {
+      "path": "modis/2020/modis_2020_Reunion.csv",
+      "bytes": 9892
+    },
+    {
+      "path": "modis/2021/modis_2021_Reunion.csv",
+      "bytes": 19134
+    },
+    {
+      "path": "modis/2022/modis_2022_Reunion.csv",
+      "bytes": 30265
+    },
+    {
+      "path": "modis/2023/modis_2023_Reunion.csv",
+      "bytes": 14559
+    },
+    {
+      "path": "modis/2024/modis_2024_Reunion.csv",
+      "bytes": 701
+    },
+    {
+      "path": "modis/2025/modis_2025_Reunion.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Reunion.csv",
+      "bytes": 165416
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Reunion.csv",
+      "bytes": 122140
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Reunion.csv",
+      "bytes": 49037
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Reunion.csv",
+      "bytes": 87263
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Reunion.csv",
+      "bytes": 159122
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Reunion.csv",
+      "bytes": 68469
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Reunion.csv",
+      "bytes": 1519
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Reunion.csv",
+      "bytes": 374
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Reunion.csv",
+      "bytes": 1324
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Reunion.csv",
+      "bytes": 3864
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Reunion.csv",
+      "bytes": 5760
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Reunion.csv",
+      "bytes": 308461
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Reunion.csv",
+      "bytes": 47013
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Reunion.csv",
+      "bytes": 108527
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Reunion.csv",
+      "bytes": 161941
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Reunion.csv",
+      "bytes": 117895
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Reunion.csv",
+      "bytes": 55495
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Reunion.csv",
+      "bytes": 85779
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Reunion.csv",
+      "bytes": 161041
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Reunion.csv",
+      "bytes": 58683
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Reunion.csv",
+      "bytes": 1319
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Reunion.csv",
+      "bytes": 845
+    }
+  ],
+  "body_hash": "4522db1e8d5a9ab8"
+}

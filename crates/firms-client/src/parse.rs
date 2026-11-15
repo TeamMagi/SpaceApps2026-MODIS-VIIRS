@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use chrono::{NaiveDate, NaiveTime, TimeZone, Utc};
 use pyrosync_core::models::*;
 
@@ -31,28 +31,36 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
 
     let mut hotspots = Vec::new();
 
-    for result in reader.records() {
-        let record = result.context("Failed to parse CSV record")?;
+    for (index, result) in reader.records().enumerate() {
+        let row = index + 1;
+        let record = result.with_context(|| format!("failed to parse CSV data row {row}"))?;
 
-        let lat: f64 = record[lat_idx].parse().context("Invalid latitude")?;
-        let lon: f64 = record[lon_idx].parse().context("Invalid longitude")?;
+        let lat = parse_number(field(&record, lat_idx, row, "latitude")?, "latitude", row)?;
+        let lon = parse_number(
+            field(&record, lon_idx, row, "longitude")?,
+            "longitude",
+            row,
+        )?;
 
         let brightness: f64 = bright_idx
             .and_then(|i| record.get(i)?.parse().ok())
             .unwrap_or(0.0);
 
-        let frp: f64 = record[frp_idx].parse().unwrap_or(0.0);
+        let frp = parse_number(field(&record, frp_idx, row, "frp")?, "frp", row)?;
 
         let confidence = conf_idx
             .and_then(|i| record.get(i))
             .map(parse_confidence)
             .unwrap_or(Confidence::Nominal);
 
-        let date = NaiveDate::parse_from_str(&record[date_idx], "%Y-%m-%d")
-            .context("Invalid acq_date")?;
+        let date_str = field(&record, date_idx, row, "acq_date")?;
+        let date = NaiveDate::parse_from_str(date_str.trim(), "%Y-%m-%d")
+            .with_context(|| format!("CSV data row {row}: invalid `acq_date` value {date_str:?}"))?;
 
-        let time_str = &record[time_idx];
-        let time = parse_hhmm(time_str).context("Invalid acq_time")?;
+        let time_str = field(&record, time_idx, row, "acq_time")?;
+        let time = parse_hhmm(time_str).with_context(|| {
+            format!("CSV data row {row}: invalid `acq_time` value {time_str:?}")
+        })?;
 
         let acquired = Utc
             .from_utc_datetime(&date.and_time(time));
@@ -65,24 +73,35 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
             .and_then(|i| record.get(i)?.parse().ok())
             .unwrap_or(1.0);
 
-        let satellite = sat_idx
-            .and_then(|i| record.get(i).map(|s| s.to_string()))
-            .unwrap_or_default();
+        let satellite = match sat_idx {
+            Some(i) => field(&record, i, row, "satellite")?,
+            None => "",
+        }
+        .trim()
+        .to_string();
 
-        let daynight = dn_idx
-            .and_then(|i| record.get(i))
-            .map(|s| match s {
+        let daynight = match dn_idx {
+            Some(i) => match field(&record, i, row, "daynight")?.trim() {
                 "D" => DayNight::Day,
-                _ => DayNight::Night,
-            })
-            .unwrap_or(DayNight::Day);
+                "N" => DayNight::Night,
+                other => {
+                    bail!("CSV data row {row}: invalid `daynight` value {other:?} (expected D or N)")
+                }
+            },
+            // Some synthetic NRT inputs omit the column entirely; there is no value to validate.
+            None => DayNight::Day,
+        };
 
         let sensor = match source {
             s if s.contains("MODIS") => {
-                if satellite.contains("Terra") || satellite == "T" {
-                    Sensor::ModisTerra
-                } else {
-                    Sensor::ModisAqua
+                match satellite.to_ascii_lowercase().as_str() {
+                    "t" | "terra" => Sensor::ModisTerra,
+                    "a" | "aqua" => Sensor::ModisAqua,
+                    // Older feeds omit the column, and historically that meant Aqua.
+                    _ if sat_idx.is_none() => Sensor::ModisAqua,
+                    _ => bail!(
+                        "CSV data row {row}: invalid `satellite` value {satellite:?} for MODIS"
+                    ),
                 }
             }
             s if s.contains("SNPP") => Sensor::ViirsSNPP,
@@ -91,11 +110,21 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
             _ => Sensor::ViirsSNPP,
         };
 
-        let fire_type = type_idx
-            .and_then(|i| record.get(i))
-            .and_then(|s| s.trim().parse::<u8>().ok())
-            .map(FireType::from_code)
-            .unwrap_or(FireType::VegetationFire);
+        let fire_type = match type_idx {
+            Some(i) => {
+                let code = field(&record, i, row, "type")?.trim();
+                if code.is_empty() {
+                    // Some SP exports leave `type` blank; keeping the historical default stops
+                    // those detections from being dropped later as non-wildfire.
+                    FireType::VegetationFire
+                } else {
+                    FireType::from_code(code.parse::<u8>().with_context(|| {
+                        format!("CSV data row {row}: invalid `type` value {code:?}")
+                    })?)
+                }
+            }
+            None => FireType::VegetationFire,
+        };
 
         // FIRMS omits viewing zenith angle; derive it from MODIS along-scan pixel expansion,
         // leaving VIIRS as None because VIIRS uses different swath geometry and needs no correction.
@@ -125,6 +154,28 @@ pub fn parse_csv(csv_text: &str, source: &str) -> Result<Vec<Hotspot>> {
     Ok(hotspots)
 }
 
+fn field<'a>(
+    record: &'a csv::StringRecord,
+    idx: usize,
+    row: usize,
+    name: &str,
+) -> Result<&'a str> {
+    record
+        .get(idx)
+        .ok_or_else(|| anyhow!("CSV data row {row}: missing `{name}` field"))
+}
+
+fn parse_number(value: &str, name: &str, row: usize) -> Result<f64> {
+    let parsed: f64 = value
+        .trim()
+        .parse()
+        .with_context(|| format!("CSV data row {row}: invalid `{name}` value {value:?}"))?;
+    if !parsed.is_finite() {
+        bail!("CSV data row {row}: non-finite `{name}` value {value:?}");
+    }
+    Ok(parsed)
+}
+
 /// Drops non-vegetation detections so volcanoes, flares and offshore sources do not pollute
 /// the burn calendar.
 pub fn retain_wildfires(hotspots: &mut Vec<Hotspot>) {
@@ -137,6 +188,7 @@ pub fn retain_wildfires(hotspots: &mut Vec<Hotspot>) {
 }
 
 fn parse_confidence(s: &str) -> Confidence {
+    let s = s.trim();
     match s.to_lowercase().as_str() {
         "h" | "high" => Confidence::High,
         "n" | "nominal" => Confidence::Nominal,
@@ -231,11 +283,11 @@ mod tests {
     }
 
     #[test]
-    fn empty_or_unparseable_type_defaults_to_vegetation_fire() {
+    fn blank_type_defaults_to_vegetation_fire_and_numeric_codes_map() {
         let csv = concat!(
             "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n",
             "-20.1,57.5,330.5,1.0,1.0,2024-01-15,1015,Terra,MODIS,75,6.1NRT,290.1,12.5,D,\n",
-            "-20.2,57.6,340.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,80,6.1NRT,290.1,20.0,D,x\n",
+            "-20.2,57.6,340.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,80,6.1NRT,290.1,20.0,D,0\n",
             "-20.3,57.7,320.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,60,6.1NRT,290.1,8.0,N,3\n",
             "-20.4,57.8,320.0,1.0,1.0,2024-01-15,1015,Terra,MODIS,60,6.1NRT,290.1,8.0,N,9\n",
         );
@@ -319,6 +371,198 @@ mod tests {
             hotspots[0].acquired,
             Utc.with_ymd_and_hms(2024, 1, 15, 6, 14, 0).unwrap()
         );
+    }
+
+    #[test]
+    fn short_data_row_reports_missing_frp_instead_of_panicking() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time\n",
+            "39.0,32.0\n",
+        );
+        let err = parse_csv(csv, "MODIS_NRT").unwrap_err().to_string();
+        assert!(err.contains("row 1"), "unexpected error: {err}");
+        assert!(err.contains("frp"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn non_numeric_latitude_reports_row_and_field() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time\n",
+            "39.0,32.0,10,2024-01-15,1015\n",
+            "not-a-number,32.0,10,2024-01-15,1015\n",
+        );
+        let err = parse_csv(csv, "MODIS_NRT").unwrap_err().to_string();
+        assert!(err.contains("row 2"), "unexpected error: {err}");
+        assert!(err.contains("latitude"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn non_finite_lat_lon_frp_are_rejected() {
+        for (field, row) in [
+            ("latitude", "-20.1,57.5,12.5,2024-01-15,1015"),
+            ("longitude", "-20.1,57.5,12.5,2024-01-15,1015"),
+            ("frp", "-20.1,57.5,12.5,2024-01-15,1015"),
+        ] {
+            let row = match field {
+                "latitude" => row.replacen("-20.1", "NaN", 1),
+                "longitude" => row.replacen("57.5", "inf", 1),
+                _ => row.replacen("12.5", "-inf", 1),
+            };
+            let csv = format!(
+                "latitude,longitude,frp,acq_date,acq_time\n{row}\n"
+            );
+            let err = parse_csv(&csv, "MODIS_NRT").unwrap_err().to_string();
+            assert!(err.contains("row 1"), "{field}: unexpected error: {err}");
+            assert!(err.contains(field), "{field}: unexpected error: {err}");
+        }
+    }
+
+    #[test]
+    fn invalid_acq_date_reports_row_and_field() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time\n",
+            "-20.1,57.5,12.5,2024-01-15,1015\n",
+            "-20.2,57.6,12.5,2024-13-40,1015\n",
+        );
+        let err = parse_csv(csv, "MODIS_NRT").unwrap_err().to_string();
+        assert!(err.contains("row 2"), "unexpected error: {err}");
+        assert!(err.contains("acq_date"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn invalid_acq_time_reports_row_and_field() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time\n",
+            "-20.1,57.5,12.5,2024-01-15,1015\n",
+            "-20.2,57.6,12.5,2024-01-15,2561\n",
+        );
+        let err = parse_csv(csv, "MODIS_NRT").unwrap_err().to_string();
+        assert!(err.contains("row 2"), "unexpected error: {err}");
+        assert!(err.contains("acq_time"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn confidence_is_trimmed_without_changing_thresholds() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,confidence,daynight\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, 85 ,N\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, 30 ,N\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, 29 ,N\n",
+            "-20.1,57.5,12.5,2024-01-15,1015,79,N\n",
+            "-20.1,57.5,12.5,2024-01-15,1015,80,N\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, H ,N\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, l ,N\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        let got: Vec<Confidence> = hotspots.iter().map(|h| h.confidence).collect();
+        assert_eq!(
+            got,
+            vec![
+                Confidence::High,
+                Confidence::Nominal,
+                Confidence::Low,
+                Confidence::Nominal,
+                Confidence::High,
+                Confidence::High,
+                Confidence::Low,
+            ]
+        );
+    }
+
+    #[test]
+    fn daynight_is_trimmed_and_validated() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,daynight\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, D \n",
+            "-20.2,57.6,12.5,2024-01-15,1015,N\n",
+            "-20.3,57.7,12.5,2024-01-15,1015,X\n",
+        );
+        let err = parse_csv(csv, "MODIS_NRT").unwrap_err().to_string();
+        assert!(err.contains("row 3"), "unexpected error: {err}");
+        assert!(err.contains("daynight"), "unexpected error: {err}");
+
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,daynight\n",
+            "-20.1,57.5,12.5,2024-01-15,1015, D \n",
+            "-20.2,57.6,12.5,2024-01-15,1015,N\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        assert_eq!(hotspots[0].daynight, DayNight::Day);
+        assert_eq!(hotspots[1].daynight, DayNight::Night);
+    }
+
+    #[test]
+    fn daynight_column_absent_defaults_to_day() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time\n",
+            "-20.1,57.5,12.5,2024-01-15,1015\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_NRT").unwrap();
+        assert_eq!(hotspots[0].daynight, DayNight::Day);
+    }
+
+    #[test]
+    fn non_numeric_type_is_rejected() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,type\n",
+            "-20.1,57.5,12.5,2024-01-15,1015,x\n",
+        );
+        let err = parse_csv(csv, "MODIS_SP").unwrap_err().to_string();
+        assert!(err.contains("row 1"), "unexpected error: {err}");
+        assert!(err.contains("type"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn blank_type_defaults_to_vegetation_fire() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,type\n",
+            "-20.1,57.5,12.5,2024-01-15,1015,\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_SP").unwrap();
+        assert_eq!(hotspots[0].fire_type, FireType::VegetationFire);
+    }
+
+    #[test]
+    fn modis_satellite_variants_map_to_terra_and_aqua() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,satellite\n",
+            "-20.1,57.5,12.5,2024-01-15,1015,T\n",
+            "-20.2,57.6,12.5,2024-01-15,1015, Terra \n",
+            "-20.3,57.7,12.5,2024-01-15,1015,a\n",
+            "-20.4,57.8,12.5,2024-01-15,1015,AQUA\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_SP").unwrap();
+        let got: Vec<Sensor> = hotspots.iter().map(|h| h.sensor).collect();
+        assert_eq!(
+            got,
+            vec![
+                Sensor::ModisTerra,
+                Sensor::ModisTerra,
+                Sensor::ModisAqua,
+                Sensor::ModisAqua,
+            ]
+        );
+    }
+
+    #[test]
+    fn invalid_modis_satellite_is_rejected() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time,satellite\n",
+            "-20.1,57.5,12.5,2024-01-15,1015,N20\n",
+        );
+        let err = parse_csv(csv, "MODIS_SP").unwrap_err().to_string();
+        assert!(err.contains("row 1"), "unexpected error: {err}");
+        assert!(err.contains("satellite"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn missing_modis_satellite_column_still_defaults_to_aqua() {
+        let csv = concat!(
+            "latitude,longitude,frp,acq_date,acq_time\n",
+            "-20.1,57.5,12.5,2024-01-15,1015\n",
+        );
+        let hotspots = parse_csv(csv, "MODIS_SP").unwrap();
+        assert_eq!(hotspots[0].sensor, Sensor::ModisAqua);
     }
 
     #[test]

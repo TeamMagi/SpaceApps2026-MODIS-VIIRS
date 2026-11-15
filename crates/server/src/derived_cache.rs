@@ -1,9 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::time::SystemTime;
 
 use axum::body::Bytes;
 use serde::{Deserialize, Serialize};
@@ -98,12 +99,34 @@ struct SeriesMeta {
     body_hash: String,
 }
 
+#[derive(Clone, PartialEq, Eq)]
+struct FileFingerprint {
+    len: u64,
+    modified: SystemTime,
+}
+
+struct CachedSeriesValidity {
+    meta: FileFingerprint,
+    body: FileFingerprint,
+    stamp: SeriesStamp,
+    valid: bool,
+}
+
+fn file_fingerprint(path: &Path) -> io::Result<Option<FileFingerprint>> {
+    let meta = fs::metadata(path)?;
+    Ok(meta.modified().ok().map(|modified| FileFingerprint {
+        len: meta.len(),
+        modified,
+    }))
+}
+
 /// Persistent on-disk cache for `/api/series` JSON responses.
 pub struct DerivedCache {
     dir: PathBuf,
     read_only: bool,
     warned_unwritable: AtomicBool,
     warned_regions: Mutex<HashSet<String>>,
+    validity_cache: Mutex<HashMap<String, CachedSeriesValidity>>,
 }
 
 impl DerivedCache {
@@ -114,6 +137,7 @@ impl DerivedCache {
             read_only: false,
             warned_unwritable: AtomicBool::new(false),
             warned_regions: Mutex::new(HashSet::new()),
+            validity_cache: Mutex::new(HashMap::new()),
         }
     }
 
@@ -124,6 +148,7 @@ impl DerivedCache {
             read_only: true,
             warned_unwritable: AtomicBool::new(false),
             warned_regions: Mutex::new(HashSet::new()),
+            validity_cache: Mutex::new(HashMap::new()),
         }
     }
 
@@ -231,9 +256,55 @@ impl DerivedCache {
         Some((body_path, meta))
     }
 
-    /// Checks whether a cached `/api/series` metadata stamp matches `expected` without reading the body.
+    /// Checks whether cached `/api/series` metadata and body exist, match `expected`, and pass
+    /// the body checksum check, caching the result until either file's size or modified time changes.
     pub fn has_valid_series(&self, region: &str, expected: &SeriesStamp) -> bool {
-        self.read_matching_meta(region, expected).is_some()
+        let Some((_, body_path, meta_path)) = self.series_paths(region) else {
+            return false;
+        };
+        let (Ok(meta_fp), Ok(body_fp)) = (file_fingerprint(&meta_path), file_fingerprint(&body_path))
+        else {
+            self.validity_cache
+                .lock()
+                .expect("validity_cache lock")
+                .remove(region);
+            return false;
+        };
+
+        if let (Some(meta_fp), Some(body_fp)) = (meta_fp.as_ref(), body_fp.as_ref()) {
+            let cache = self.validity_cache.lock().expect("validity_cache lock");
+            if let Some(entry) = cache.get(region)
+                && &entry.meta == meta_fp
+                && &entry.body == body_fp
+                && &entry.stamp == expected
+            {
+                return entry.valid;
+            }
+        }
+
+        let valid = self.read_series(region, expected).is_some();
+
+        if let (Some(meta_fp), Some(body_fp)) = (meta_fp, body_fp) {
+            // Confirm files did not change concurrently during validation so we never cache a torn state.
+            if file_fingerprint(&meta_path).ok().flatten().as_ref() == Some(&meta_fp)
+                && file_fingerprint(&body_path).ok().flatten().as_ref() == Some(&body_fp)
+            {
+                self.validity_cache
+                    .lock()
+                    .expect("validity_cache lock")
+                    .insert(
+                        region.to_string(),
+                        CachedSeriesValidity {
+                            meta: meta_fp,
+                            body: body_fp,
+                            stamp: expected.clone(),
+                            valid,
+                        },
+                    );
+            }
+        }
+
+        valid
     }
 
     /// Reads cached `/api/series` bytes if the stamp and body checksum match `expected`.
@@ -327,6 +398,70 @@ impl DerivedCache {
             return Err(err);
         }
 
+        self.validity_cache
+            .lock()
+            .expect("validity_cache lock")
+            .remove(region);
+
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn has_valid_series_validates_body_and_caches_by_file_metadata() {
+        let dir = std::env::temp_dir().join(format!(
+            "pyrosync-derived-cache-test-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        let cache = DerivedCache::new(dir.clone());
+        let stamp = SeriesStamp::for_region(
+            &PipelineConfig::default(),
+            &[ArchiveFileStamp {
+                path: "modis/2020/modis_2020_Test.csv".to_string(),
+                bytes: 123,
+            }],
+        );
+        let body = br#"{"region":"Test","years":[]}"#;
+        cache.write_series("Test", &stamp, body).unwrap();
+
+        assert!(cache.has_valid_series("Test", &stamp));
+
+        let (_, body_path, _) = cache.series_paths("Test").unwrap();
+        let orig_mtime = fs::metadata(&body_path).unwrap().modified().unwrap();
+
+        // Corrupt 1 byte while keeping exact len + modified: memory cache must serve the cached result
+        // without re-reading the body on every check.
+        let mut corrupt = body.to_vec();
+        corrupt[0] ^= 0x01;
+        fs::write(&body_path, &corrupt).unwrap();
+        fs::OpenOptions::new()
+            .write(true)
+            .open(&body_path)
+            .unwrap()
+            .set_modified(orig_mtime)
+            .unwrap();
+        assert!(cache.has_valid_series("Test", &stamp));
+
+        // Bumping modified invalidates the memory cache, forcing body checksum verification.
+        let next_mtime = orig_mtime + Duration::from_secs(5);
+        fs::OpenOptions::new()
+            .write(true)
+            .open(&body_path)
+            .unwrap()
+            .set_modified(next_mtime)
+            .unwrap();
+        assert!(!cache.has_valid_series("Test", &stamp));
+
+        // Restoring valid body via write_series invalidates the cached `false` entry.
+        cache.write_series("Test", &stamp, body).unwrap();
+        assert!(cache.has_valid_series("Test", &stamp));
+
+        let _ = fs::remove_dir_all(&dir);
     }
 }

@@ -1,0 +1,43 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2012/modis_2012_Guernsey.csv",
+      "bytes": 281
+    },
+    {
+      "path": "modis/2019/modis_2019_Guernsey.csv",
+      "bytes": 202
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Guernsey.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Guernsey.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Guernsey.csv",
+      "bytes": 449
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Guernsey.csv",
+      "bytes": 284
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Guernsey.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Guernsey.csv",
+      "bytes": 285
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Guernsey.csv",
+      "bytes": 284
+    }
+  ],
+  "body_hash": "d173e7b8ce7570c8"
+}

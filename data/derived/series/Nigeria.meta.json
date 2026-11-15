@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Nigeria.csv",
+      "bytes": 1036503
+    },
+    {
+      "path": "modis/2001/modis_2001_Nigeria.csv",
+      "bytes": 3446869
+    },
+    {
+      "path": "modis/2002/modis_2002_Nigeria.csv",
+      "bytes": 4912735
+    },
+    {
+      "path": "modis/2003/modis_2003_Nigeria.csv",
+      "bytes": 7782852
+    },
+    {
+      "path": "modis/2004/modis_2004_Nigeria.csv",
+      "bytes": 8405665
+    },
+    {
+      "path": "modis/2005/modis_2005_Nigeria.csv",
+      "bytes": 7695680
+    },
+    {
+      "path": "modis/2006/modis_2006_Nigeria.csv",
+      "bytes": 7404968
+    },
+    {
+      "path": "modis/2007/modis_2007_Nigeria.csv",
+      "bytes": 8002309
+    },
+    {
+      "path": "modis/2008/modis_2008_Nigeria.csv",
+      "bytes": 7098542
+    },
+    {
+      "path": "modis/2009/modis_2009_Nigeria.csv",
+      "bytes": 5711092
+    },
+    {
+      "path": "modis/2010/modis_2010_Nigeria.csv",
+      "bytes": 5856311
+    },
+    {
+      "path": "modis/2011/modis_2011_Nigeria.csv",
+      "bytes": 5135858
+    },
+    {
+      "path": "modis/2012/modis_2012_Nigeria.csv",
+      "bytes": 4964875
+    },
+    {
+      "path": "modis/2013/modis_2013_Nigeria.csv",
+      "bytes": 4309706
+    },
+    {
+      "path": "modis/2014/modis_2014_Nigeria.csv",
+      "bytes": 4311906
+    },
+    {
+      "path": "modis/2015/modis_2015_Nigeria.csv",
+      "bytes": 4940515
+    },
+    {
+      "path": "modis/2016/modis_2016_Nigeria.csv",
+      "bytes": 5486381
+    },
+    {
+      "path": "modis/2017/modis_2017_Nigeria.csv",
+      "bytes": 5413163
+    },
+    {
+      "path": "modis/2018/modis_2018_Nigeria.csv",
+      "bytes": 5231915
+    },
+    {
+      "path": "modis/2019/modis_2019_Nigeria.csv",
+      "bytes": 4472119
+    },
+    {
+      "path": "modis/2020/modis_2020_Nigeria.csv",
+      "bytes": 5608713
+    },
+    {
+      "path": "modis/2021/modis_2021_Nigeria.csv",
+      "bytes": 5485896
+    },
+    {
+      "path": "modis/2022/modis_2022_Nigeria.csv",
+      "bytes": 5428958
+    },
+    {
+      "path": "modis/2023/modis_2023_Nigeria.csv",
+      "bytes": 4830474
+    },
+    {
+      "path": "modis/2024/modis_2024_Nigeria.csv",
+      "bytes": 5651895
+    },
+    {
+      "path": "modis/2025/modis_2025_Nigeria.csv",
+      "bytes": 4746813
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Nigeria.csv",
+      "bytes": 9138725
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Nigeria.csv",
+      "bytes": 31413728
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Nigeria.csv",
+      "bytes": 35958796
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Nigeria.csv",
+      "bytes": 36091053
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Nigeria.csv",
+      "bytes": 37809054
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Nigeria.csv",
+      "bytes": 32640929
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Nigeria.csv",
+      "bytes": 36797885
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Nigeria.csv",
+      "bytes": 33620073
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Nigeria.csv",
+      "bytes": 22423960
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Nigeria.csv",
+      "bytes": 29673370
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Nigeria.csv",
+      "bytes": 30126792
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Nigeria.csv",
+      "bytes": 32673242
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Nigeria.csv",
+      "bytes": 36218424
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Nigeria.csv",
+      "bytes": 37001033
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Nigeria.csv",
+      "bytes": 33570814
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Nigeria.csv",
+      "bytes": 30770896
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Nigeria.csv",
+      "bytes": 35075615
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Nigeria.csv",
+      "bytes": 35472709
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Nigeria.csv",
+      "bytes": 36532515
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Nigeria.csv",
+      "bytes": 31090148
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Nigeria.csv",
+      "bytes": 36466830
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Nigeria.csv",
+      "bytes": 32780810
+    }
+  ],
+  "body_hash": "645e4e89ab29a1a6"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Malawi.csv",
+      "bytes": 2982
+    },
+    {
+      "path": "modis/2001/modis_2001_Malawi.csv",
+      "bytes": 258779
+    },
+    {
+      "path": "modis/2002/modis_2002_Malawi.csv",
+      "bytes": 716704
+    },
+    {
+      "path": "modis/2003/modis_2003_Malawi.csv",
+      "bytes": 930516
+    },
+    {
+      "path": "modis/2004/modis_2004_Malawi.csv",
+      "bytes": 722938
+    },
+    {
+      "path": "modis/2005/modis_2005_Malawi.csv",
+      "bytes": 1023344
+    },
+    {
+      "path": "modis/2006/modis_2006_Malawi.csv",
+      "bytes": 713170
+    },
+    {
+      "path": "modis/2007/modis_2007_Malawi.csv",
+      "bytes": 900181
+    },
+    {
+      "path": "modis/2008/modis_2008_Malawi.csv",
+      "bytes": 975527
+    },
+    {
+      "path": "modis/2009/modis_2009_Malawi.csv",
+      "bytes": 724241
+    },
+    {
+      "path": "modis/2010/modis_2010_Malawi.csv",
+      "bytes": 806574
+    },
+    {
+      "path": "modis/2011/modis_2011_Malawi.csv",
+      "bytes": 873828
+    },
+    {
+      "path": "modis/2012/modis_2012_Malawi.csv",
+      "bytes": 960534
+    },
+    {
+      "path": "modis/2013/modis_2013_Malawi.csv",
+      "bytes": 829568
+    },
+    {
+      "path": "modis/2014/modis_2014_Malawi.csv",
+      "bytes": 697446
+    },
+    {
+      "path": "modis/2015/modis_2015_Malawi.csv",
+      "bytes": 784108
+    },
+    {
+      "path": "modis/2016/modis_2016_Malawi.csv",
+      "bytes": 780682
+    },
+    {
+      "path": "modis/2017/modis_2017_Malawi.csv",
+      "bytes": 611745
+    },
+    {
+      "path": "modis/2018/modis_2018_Malawi.csv",
+      "bytes": 648287
+    },
+    {
+      "path": "modis/2019/modis_2019_Malawi.csv",
+      "bytes": 679323
+    },
+    {
+      "path": "modis/2020/modis_2020_Malawi.csv",
+      "bytes": 669593
+    },
+    {
+      "path": "modis/2021/modis_2021_Malawi.csv",
+      "bytes": 604968
+    },
+    {
+      "path": "modis/2022/modis_2022_Malawi.csv",
+      "bytes": 489333
+    },
+    {
+      "path": "modis/2023/modis_2023_Malawi.csv",
+      "bytes": 542775
+    },
+    {
+      "path": "modis/2024/modis_2024_Malawi.csv",
+      "bytes": 615845
+    },
+    {
+      "path": "modis/2025/modis_2025_Malawi.csv",
+      "bytes": 509712
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Malawi.csv",
+      "bytes": 4766941
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Malawi.csv",
+      "bytes": 5096788
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Malawi.csv",
+      "bytes": 5220575
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Malawi.csv",
+      "bytes": 4795963
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Malawi.csv",
+      "bytes": 4251789
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Malawi.csv",
+      "bytes": 4095763
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Malawi.csv",
+      "bytes": 4522362
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Malawi.csv",
+      "bytes": 4020040
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Malawi.csv",
+      "bytes": 6103254
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Malawi.csv",
+      "bytes": 5809052
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Malawi.csv",
+      "bytes": 5261247
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Malawi.csv",
+      "bytes": 5497285
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Malawi.csv",
+      "bytes": 5475714
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Malawi.csv",
+      "bytes": 4675544
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Malawi.csv",
+      "bytes": 4622004
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Malawi.csv",
+      "bytes": 4943638
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Malawi.csv",
+      "bytes": 4962847
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Malawi.csv",
+      "bytes": 4663531
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Malawi.csv",
+      "bytes": 3860118
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Malawi.csv",
+      "bytes": 4164374
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Malawi.csv",
+      "bytes": 3548632
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Malawi.csv",
+      "bytes": 3916796
+    }
+  ],
+  "body_hash": "fc460f4b424e4b14"
+}

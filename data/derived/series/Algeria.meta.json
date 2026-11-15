@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Algeria.csv",
+      "bytes": 32842
+    },
+    {
+      "path": "modis/2001/modis_2001_Algeria.csv",
+      "bytes": 332810
+    },
+    {
+      "path": "modis/2002/modis_2002_Algeria.csv",
+      "bytes": 465330
+    },
+    {
+      "path": "modis/2003/modis_2003_Algeria.csv",
+      "bytes": 699091
+    },
+    {
+      "path": "modis/2004/modis_2004_Algeria.csv",
+      "bytes": 670149
+    },
+    {
+      "path": "modis/2005/modis_2005_Algeria.csv",
+      "bytes": 707437
+    },
+    {
+      "path": "modis/2006/modis_2006_Algeria.csv",
+      "bytes": 840439
+    },
+    {
+      "path": "modis/2007/modis_2007_Algeria.csv",
+      "bytes": 1008940
+    },
+    {
+      "path": "modis/2008/modis_2008_Algeria.csv",
+      "bytes": 834847
+    },
+    {
+      "path": "modis/2009/modis_2009_Algeria.csv",
+      "bytes": 797098
+    },
+    {
+      "path": "modis/2010/modis_2010_Algeria.csv",
+      "bytes": 810237
+    },
+    {
+      "path": "modis/2011/modis_2011_Algeria.csv",
+      "bytes": 668472
+    },
+    {
+      "path": "modis/2012/modis_2012_Algeria.csv",
+      "bytes": 1220691
+    },
+    {
+      "path": "modis/2013/modis_2013_Algeria.csv",
+      "bytes": 742755
+    },
+    {
+      "path": "modis/2014/modis_2014_Algeria.csv",
+      "bytes": 872324
+    },
+    {
+      "path": "modis/2015/modis_2015_Algeria.csv",
+      "bytes": 702688
+    },
+    {
+      "path": "modis/2016/modis_2016_Algeria.csv",
+      "bytes": 773383
+    },
+    {
+      "path": "modis/2017/modis_2017_Algeria.csv",
+      "bytes": 805786
+    },
+    {
+      "path": "modis/2018/modis_2018_Algeria.csv",
+      "bytes": 526394
+    },
+    {
+      "path": "modis/2019/modis_2019_Algeria.csv",
+      "bytes": 702092
+    },
+    {
+      "path": "modis/2020/modis_2020_Algeria.csv",
+      "bytes": 895930
+    },
+    {
+      "path": "modis/2021/modis_2021_Algeria.csv",
+      "bytes": 602392
+    },
+    {
+      "path": "modis/2022/modis_2022_Algeria.csv",
+      "bytes": 456620
+    },
+    {
+      "path": "modis/2023/modis_2023_Algeria.csv",
+      "bytes": 416366
+    },
+    {
+      "path": "modis/2024/modis_2024_Algeria.csv",
+      "bytes": 352881
+    },
+    {
+      "path": "modis/2025/modis_2025_Algeria.csv",
+      "bytes": 400997
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Algeria.csv",
+      "bytes": 5546727
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Algeria.csv",
+      "bytes": 7782048
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Algeria.csv",
+      "bytes": 7725026
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Algeria.csv",
+      "bytes": 6874314
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Algeria.csv",
+      "bytes": 7406186
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Algeria.csv",
+      "bytes": 7300335
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Algeria.csv",
+      "bytes": 6932584
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Algeria.csv",
+      "bytes": 7143397
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Algeria.csv",
+      "bytes": 8203770
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Algeria.csv",
+      "bytes": 7127922
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Algeria.csv",
+      "bytes": 7998924
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Algeria.csv",
+      "bytes": 7364169
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Algeria.csv",
+      "bytes": 7852387
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Algeria.csv",
+      "bytes": 8347277
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Algeria.csv",
+      "bytes": 7320523
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Algeria.csv",
+      "bytes": 8008188
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Algeria.csv",
+      "bytes": 7911840
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Algeria.csv",
+      "bytes": 6910874
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Algeria.csv",
+      "bytes": 7077238
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Algeria.csv",
+      "bytes": 7324359
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Algeria.csv",
+      "bytes": 6590991
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Algeria.csv",
+      "bytes": 7214446
+    }
+  ],
+  "body_hash": "8e41773aece71ea3"
+}

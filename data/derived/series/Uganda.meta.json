@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Uganda.csv",
+      "bytes": 140776
+    },
+    {
+      "path": "modis/2001/modis_2001_Uganda.csv",
+      "bytes": 633198
+    },
+    {
+      "path": "modis/2002/modis_2002_Uganda.csv",
+      "bytes": 906466
+    },
+    {
+      "path": "modis/2003/modis_2003_Uganda.csv",
+      "bytes": 2102390
+    },
+    {
+      "path": "modis/2004/modis_2004_Uganda.csv",
+      "bytes": 1574867
+    },
+    {
+      "path": "modis/2005/modis_2005_Uganda.csv",
+      "bytes": 2700518
+    },
+    {
+      "path": "modis/2006/modis_2006_Uganda.csv",
+      "bytes": 821677
+    },
+    {
+      "path": "modis/2007/modis_2007_Uganda.csv",
+      "bytes": 2086772
+    },
+    {
+      "path": "modis/2008/modis_2008_Uganda.csv",
+      "bytes": 1559122
+    },
+    {
+      "path": "modis/2009/modis_2009_Uganda.csv",
+      "bytes": 1164898
+    },
+    {
+      "path": "modis/2010/modis_2010_Uganda.csv",
+      "bytes": 1506573
+    },
+    {
+      "path": "modis/2011/modis_2011_Uganda.csv",
+      "bytes": 1341640
+    },
+    {
+      "path": "modis/2012/modis_2012_Uganda.csv",
+      "bytes": 2038786
+    },
+    {
+      "path": "modis/2013/modis_2013_Uganda.csv",
+      "bytes": 1903085
+    },
+    {
+      "path": "modis/2014/modis_2014_Uganda.csv",
+      "bytes": 1354525
+    },
+    {
+      "path": "modis/2015/modis_2015_Uganda.csv",
+      "bytes": 1760391
+    },
+    {
+      "path": "modis/2016/modis_2016_Uganda.csv",
+      "bytes": 2025368
+    },
+    {
+      "path": "modis/2017/modis_2017_Uganda.csv",
+      "bytes": 1596726
+    },
+    {
+      "path": "modis/2018/modis_2018_Uganda.csv",
+      "bytes": 1536354
+    },
+    {
+      "path": "modis/2019/modis_2019_Uganda.csv",
+      "bytes": 879500
+    },
+    {
+      "path": "modis/2020/modis_2020_Uganda.csv",
+      "bytes": 1335641
+    },
+    {
+      "path": "modis/2021/modis_2021_Uganda.csv",
+      "bytes": 1305295
+    },
+    {
+      "path": "modis/2022/modis_2022_Uganda.csv",
+      "bytes": 846972
+    },
+    {
+      "path": "modis/2023/modis_2023_Uganda.csv",
+      "bytes": 1149533
+    },
+    {
+      "path": "modis/2024/modis_2024_Uganda.csv",
+      "bytes": 944839
+    },
+    {
+      "path": "modis/2025/modis_2025_Uganda.csv",
+      "bytes": 1235305
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Uganda.csv",
+      "bytes": 3184950
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Uganda.csv",
+      "bytes": 5826724
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Uganda.csv",
+      "bytes": 7263378
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Uganda.csv",
+      "bytes": 7319371
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Uganda.csv",
+      "bytes": 5265913
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Uganda.csv",
+      "bytes": 7015097
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Uganda.csv",
+      "bytes": 6021032
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Uganda.csv",
+      "bytes": 8012045
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Uganda.csv",
+      "bytes": 7884897
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Uganda.csv",
+      "bytes": 9829326
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Uganda.csv",
+      "bytes": 7832078
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Uganda.csv",
+      "bytes": 10037939
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Uganda.csv",
+      "bytes": 11551733
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Uganda.csv",
+      "bytes": 8564464
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Uganda.csv",
+      "bytes": 8239512
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Uganda.csv",
+      "bytes": 5590646
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Uganda.csv",
+      "bytes": 7091938
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Uganda.csv",
+      "bytes": 7536480
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Uganda.csv",
+      "bytes": 5216247
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Uganda.csv",
+      "bytes": 6896931
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Uganda.csv",
+      "bytes": 5573534
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Uganda.csv",
+      "bytes": 7872640
+    }
+  ],
+  "body_hash": "65c4e7a79307b79c"
+}

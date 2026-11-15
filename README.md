@@ -92,6 +92,8 @@ Harmonization thresholds (interscan dedup, fleet consolidation, cross-sensor mat
 
 ## Quick Start
 
+> Team members: see [SETUP.md](SETUP.md) for the full first-time setup guide (in Turkish).
+
 ### With Docker
 
 Start the server and live NRT endpoints without downloading the historical archive:

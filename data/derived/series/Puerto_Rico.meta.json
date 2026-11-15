@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Puerto_Rico.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2001/modis_2001_Puerto_Rico.csv",
+      "bytes": 2398
+    },
+    {
+      "path": "modis/2002/modis_2002_Puerto_Rico.csv",
+      "bytes": 3382
+    },
+    {
+      "path": "modis/2003/modis_2003_Puerto_Rico.csv",
+      "bytes": 5479
+    },
+    {
+      "path": "modis/2004/modis_2004_Puerto_Rico.csv",
+      "bytes": 4541
+    },
+    {
+      "path": "modis/2005/modis_2005_Puerto_Rico.csv",
+      "bytes": 11374
+    },
+    {
+      "path": "modis/2006/modis_2006_Puerto_Rico.csv",
+      "bytes": 6007
+    },
+    {
+      "path": "modis/2007/modis_2007_Puerto_Rico.csv",
+      "bytes": 11596
+    },
+    {
+      "path": "modis/2008/modis_2008_Puerto_Rico.csv",
+      "bytes": 6962
+    },
+    {
+      "path": "modis/2009/modis_2009_Puerto_Rico.csv",
+      "bytes": 5219
+    },
+    {
+      "path": "modis/2010/modis_2010_Puerto_Rico.csv",
+      "bytes": 4791
+    },
+    {
+      "path": "modis/2011/modis_2011_Puerto_Rico.csv",
+      "bytes": 9256
+    },
+    {
+      "path": "modis/2012/modis_2012_Puerto_Rico.csv",
+      "bytes": 8269
+    },
+    {
+      "path": "modis/2013/modis_2013_Puerto_Rico.csv",
+      "bytes": 10191
+    },
+    {
+      "path": "modis/2014/modis_2014_Puerto_Rico.csv",
+      "bytes": 7225
+    },
+    {
+      "path": "modis/2015/modis_2015_Puerto_Rico.csv",
+      "bytes": 5837
+    },
+    {
+      "path": "modis/2016/modis_2016_Puerto_Rico.csv",
+      "bytes": 3966
+    },
+    {
+      "path": "modis/2017/modis_2017_Puerto_Rico.csv",
+      "bytes": 4079
+    },
+    {
+      "path": "modis/2018/modis_2018_Puerto_Rico.csv",
+      "bytes": 4645
+    },
+    {
+      "path": "modis/2019/modis_2019_Puerto_Rico.csv",
+      "bytes": 7974
+    },
+    {
+      "path": "modis/2020/modis_2020_Puerto_Rico.csv",
+      "bytes": 3290
+    },
+    {
+      "path": "modis/2021/modis_2021_Puerto_Rico.csv",
+      "bytes": 4408
+    },
+    {
+      "path": "modis/2022/modis_2022_Puerto_Rico.csv",
+      "bytes": 2479
+    },
+    {
+      "path": "modis/2023/modis_2023_Puerto_Rico.csv",
+      "bytes": 4259
+    },
+    {
+      "path": "modis/2024/modis_2024_Puerto_Rico.csv",
+      "bytes": 3506
+    },
+    {
+      "path": "modis/2025/modis_2025_Puerto_Rico.csv",
+      "bytes": 3432
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Puerto_Rico.csv",
+      "bytes": 19473
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Puerto_Rico.csv",
+      "bytes": 36733
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Puerto_Rico.csv",
+      "bytes": 16955
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Puerto_Rico.csv",
+      "bytes": 20884
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Puerto_Rico.csv",
+      "bytes": 14073
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Puerto_Rico.csv",
+      "bytes": 18036
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Puerto_Rico.csv",
+      "bytes": 15488
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Puerto_Rico.csv",
+      "bytes": 10294
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Puerto_Rico.csv",
+      "bytes": 27611
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Puerto_Rico.csv",
+      "bytes": 44466
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Puerto_Rico.csv",
+      "bytes": 35610
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Puerto_Rico.csv",
+      "bytes": 37232
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Puerto_Rico.csv",
+      "bytes": 11708
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Puerto_Rico.csv",
+      "bytes": 19629
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Puerto_Rico.csv",
+      "bytes": 27499
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Puerto_Rico.csv",
+      "bytes": 38611
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Puerto_Rico.csv",
+      "bytes": 14115
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Puerto_Rico.csv",
+      "bytes": 16370
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Puerto_Rico.csv",
+      "bytes": 12102
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Puerto_Rico.csv",
+      "bytes": 17965
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Puerto_Rico.csv",
+      "bytes": 14486
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Puerto_Rico.csv",
+      "bytes": 11379
+    }
+  ],
+  "body_hash": "2d242901f5237ce2"
+}

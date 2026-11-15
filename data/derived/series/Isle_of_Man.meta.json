@@ -1,0 +1,83 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2002/modis_2002_Isle_of_Man.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2003/modis_2003_Isle_of_Man.csv",
+      "bytes": 583
+    },
+    {
+      "path": "modis/2007/modis_2007_Isle_of_Man.csv",
+      "bytes": 366
+    },
+    {
+      "path": "modis/2013/modis_2013_Isle_of_Man.csv",
+      "bytes": 200
+    },
+    {
+      "path": "modis/2015/modis_2015_Isle_of_Man.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2018/modis_2018_Isle_of_Man.csv",
+      "bytes": 205
+    },
+    {
+      "path": "modis/2023/modis_2023_Isle_of_Man.csv",
+      "bytes": 204
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Isle_of_Man.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Isle_of_Man.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Isle_of_Man.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Isle_of_Man.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Isle_of_Man.csv",
+      "bytes": 363
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Isle_of_Man.csv",
+      "bytes": 834
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Isle_of_Man.csv",
+      "bytes": 364
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Isle_of_Man.csv",
+      "bytes": 518
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Isle_of_Man.csv",
+      "bytes": 361
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Isle_of_Man.csv",
+      "bytes": 441
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Isle_of_Man.csv",
+      "bytes": 595
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Isle_of_Man.csv",
+      "bytes": 206
+    }
+  ],
+  "body_hash": "c6f4dec335c37bf0"
+}

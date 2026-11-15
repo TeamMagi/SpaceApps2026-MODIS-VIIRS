@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Austria.csv",
+      "bytes": 1070
+    },
+    {
+      "path": "modis/2001/modis_2001_Austria.csv",
+      "bytes": 19697
+    },
+    {
+      "path": "modis/2002/modis_2002_Austria.csv",
+      "bytes": 34111
+    },
+    {
+      "path": "modis/2003/modis_2003_Austria.csv",
+      "bytes": 50754
+    },
+    {
+      "path": "modis/2004/modis_2004_Austria.csv",
+      "bytes": 44917
+    },
+    {
+      "path": "modis/2005/modis_2005_Austria.csv",
+      "bytes": 49352
+    },
+    {
+      "path": "modis/2006/modis_2006_Austria.csv",
+      "bytes": 46335
+    },
+    {
+      "path": "modis/2007/modis_2007_Austria.csv",
+      "bytes": 60417
+    },
+    {
+      "path": "modis/2008/modis_2008_Austria.csv",
+      "bytes": 50738
+    },
+    {
+      "path": "modis/2009/modis_2009_Austria.csv",
+      "bytes": 36777
+    },
+    {
+      "path": "modis/2010/modis_2010_Austria.csv",
+      "bytes": 44556
+    },
+    {
+      "path": "modis/2011/modis_2011_Austria.csv",
+      "bytes": 58370
+    },
+    {
+      "path": "modis/2012/modis_2012_Austria.csv",
+      "bytes": 50049
+    },
+    {
+      "path": "modis/2013/modis_2013_Austria.csv",
+      "bytes": 44030
+    },
+    {
+      "path": "modis/2014/modis_2014_Austria.csv",
+      "bytes": 48383
+    },
+    {
+      "path": "modis/2015/modis_2015_Austria.csv",
+      "bytes": 46224
+    },
+    {
+      "path": "modis/2016/modis_2016_Austria.csv",
+      "bytes": 35875
+    },
+    {
+      "path": "modis/2017/modis_2017_Austria.csv",
+      "bytes": 44242
+    },
+    {
+      "path": "modis/2018/modis_2018_Austria.csv",
+      "bytes": 33989
+    },
+    {
+      "path": "modis/2019/modis_2019_Austria.csv",
+      "bytes": 42108
+    },
+    {
+      "path": "modis/2020/modis_2020_Austria.csv",
+      "bytes": 36680
+    },
+    {
+      "path": "modis/2021/modis_2021_Austria.csv",
+      "bytes": 41909
+    },
+    {
+      "path": "modis/2022/modis_2022_Austria.csv",
+      "bytes": 43434
+    },
+    {
+      "path": "modis/2023/modis_2023_Austria.csv",
+      "bytes": 43194
+    },
+    {
+      "path": "modis/2024/modis_2024_Austria.csv",
+      "bytes": 39590
+    },
+    {
+      "path": "modis/2025/modis_2025_Austria.csv",
+      "bytes": 48816
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Austria.csv",
+      "bytes": 173886
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Austria.csv",
+      "bytes": 210365
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Austria.csv",
+      "bytes": 184936
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Austria.csv",
+      "bytes": 220923
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Austria.csv",
+      "bytes": 227307
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Austria.csv",
+      "bytes": 201242
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Austria.csv",
+      "bytes": 197045
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Austria.csv",
+      "bytes": 233197
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Austria.csv",
+      "bytes": 220417
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Austria.csv",
+      "bytes": 210159
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Austria.csv",
+      "bytes": 251356
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Austria.csv",
+      "bytes": 257970
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Austria.csv",
+      "bytes": 205559
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Austria.csv",
+      "bytes": 228912
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Austria.csv",
+      "bytes": 192668
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Austria.csv",
+      "bytes": 204296
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Austria.csv",
+      "bytes": 179990
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Austria.csv",
+      "bytes": 219412
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Austria.csv",
+      "bytes": 210955
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Austria.csv",
+      "bytes": 198331
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Austria.csv",
+      "bytes": 174153
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Austria.csv",
+      "bytes": 231553
+    }
+  ],
+  "body_hash": "744122e90e4501e4"
+}

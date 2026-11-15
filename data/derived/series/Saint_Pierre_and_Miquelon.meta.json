@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 291
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 367
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 446
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Saint_Pierre_and_Miquelon.csv",
+      "bytes": 523
+    }
+  ],
+  "body_hash": "c0e3565b24f512d3"
+}

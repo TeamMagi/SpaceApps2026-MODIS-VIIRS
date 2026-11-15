@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Sierra_Leone.csv",
+      "bytes": 7937
+    },
+    {
+      "path": "modis/2001/modis_2001_Sierra_Leone.csv",
+      "bytes": 231529
+    },
+    {
+      "path": "modis/2002/modis_2002_Sierra_Leone.csv",
+      "bytes": 254778
+    },
+    {
+      "path": "modis/2003/modis_2003_Sierra_Leone.csv",
+      "bytes": 2042944
+    },
+    {
+      "path": "modis/2004/modis_2004_Sierra_Leone.csv",
+      "bytes": 1509885
+    },
+    {
+      "path": "modis/2005/modis_2005_Sierra_Leone.csv",
+      "bytes": 1095560
+    },
+    {
+      "path": "modis/2006/modis_2006_Sierra_Leone.csv",
+      "bytes": 1871517
+    },
+    {
+      "path": "modis/2007/modis_2007_Sierra_Leone.csv",
+      "bytes": 2376347
+    },
+    {
+      "path": "modis/2008/modis_2008_Sierra_Leone.csv",
+      "bytes": 1684399
+    },
+    {
+      "path": "modis/2009/modis_2009_Sierra_Leone.csv",
+      "bytes": 2837374
+    },
+    {
+      "path": "modis/2010/modis_2010_Sierra_Leone.csv",
+      "bytes": 1469050
+    },
+    {
+      "path": "modis/2011/modis_2011_Sierra_Leone.csv",
+      "bytes": 1685931
+    },
+    {
+      "path": "modis/2012/modis_2012_Sierra_Leone.csv",
+      "bytes": 2606430
+    },
+    {
+      "path": "modis/2013/modis_2013_Sierra_Leone.csv",
+      "bytes": 2333688
+    },
+    {
+      "path": "modis/2014/modis_2014_Sierra_Leone.csv",
+      "bytes": 2708952
+    },
+    {
+      "path": "modis/2015/modis_2015_Sierra_Leone.csv",
+      "bytes": 2741898
+    },
+    {
+      "path": "modis/2016/modis_2016_Sierra_Leone.csv",
+      "bytes": 1865575
+    },
+    {
+      "path": "modis/2017/modis_2017_Sierra_Leone.csv",
+      "bytes": 1941942
+    },
+    {
+      "path": "modis/2018/modis_2018_Sierra_Leone.csv",
+      "bytes": 1556268
+    },
+    {
+      "path": "modis/2019/modis_2019_Sierra_Leone.csv",
+      "bytes": 1922872
+    },
+    {
+      "path": "modis/2020/modis_2020_Sierra_Leone.csv",
+      "bytes": 1773991
+    },
+    {
+      "path": "modis/2021/modis_2021_Sierra_Leone.csv",
+      "bytes": 1329919
+    },
+    {
+      "path": "modis/2022/modis_2022_Sierra_Leone.csv",
+      "bytes": 1378384
+    },
+    {
+      "path": "modis/2023/modis_2023_Sierra_Leone.csv",
+      "bytes": 2036392
+    },
+    {
+      "path": "modis/2024/modis_2024_Sierra_Leone.csv",
+      "bytes": 2123703
+    },
+    {
+      "path": "modis/2025/modis_2025_Sierra_Leone.csv",
+      "bytes": 1290753
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Sierra_Leone.csv",
+      "bytes": 2910423
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Sierra_Leone.csv",
+      "bytes": 7172681
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Sierra_Leone.csv",
+      "bytes": 6679078
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Sierra_Leone.csv",
+      "bytes": 5294348
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Sierra_Leone.csv",
+      "bytes": 6407478
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Sierra_Leone.csv",
+      "bytes": 6899434
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Sierra_Leone.csv",
+      "bytes": 7543069
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Sierra_Leone.csv",
+      "bytes": 5820469
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Sierra_Leone.csv",
+      "bytes": 7459291
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Sierra_Leone.csv",
+      "bytes": 6880942
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Sierra_Leone.csv",
+      "bytes": 8857938
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Sierra_Leone.csv",
+      "bytes": 9226061
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Sierra_Leone.csv",
+      "bytes": 6611784
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Sierra_Leone.csv",
+      "bytes": 6247085
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Sierra_Leone.csv",
+      "bytes": 6229398
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Sierra_Leone.csv",
+      "bytes": 7178064
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Sierra_Leone.csv",
+      "bytes": 6312453
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Sierra_Leone.csv",
+      "bytes": 5238395
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Sierra_Leone.csv",
+      "bytes": 6876689
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Sierra_Leone.csv",
+      "bytes": 6962589
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Sierra_Leone.csv",
+      "bytes": 7625836
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Sierra_Leone.csv",
+      "bytes": 5796922
+    }
+  ],
+  "body_hash": "2947179d77692080"
+}

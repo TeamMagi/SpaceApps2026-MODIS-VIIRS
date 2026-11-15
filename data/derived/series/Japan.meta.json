@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Japan.csv",
+      "bytes": 7526
+    },
+    {
+      "path": "modis/2001/modis_2001_Japan.csv",
+      "bytes": 89121
+    },
+    {
+      "path": "modis/2002/modis_2002_Japan.csv",
+      "bytes": 119324
+    },
+    {
+      "path": "modis/2003/modis_2003_Japan.csv",
+      "bytes": 150688
+    },
+    {
+      "path": "modis/2004/modis_2004_Japan.csv",
+      "bytes": 198801
+    },
+    {
+      "path": "modis/2005/modis_2005_Japan.csv",
+      "bytes": 180675
+    },
+    {
+      "path": "modis/2006/modis_2006_Japan.csv",
+      "bytes": 182588
+    },
+    {
+      "path": "modis/2007/modis_2007_Japan.csv",
+      "bytes": 193617
+    },
+    {
+      "path": "modis/2008/modis_2008_Japan.csv",
+      "bytes": 207243
+    },
+    {
+      "path": "modis/2009/modis_2009_Japan.csv",
+      "bytes": 152357
+    },
+    {
+      "path": "modis/2010/modis_2010_Japan.csv",
+      "bytes": 239800
+    },
+    {
+      "path": "modis/2011/modis_2011_Japan.csv",
+      "bytes": 200528
+    },
+    {
+      "path": "modis/2012/modis_2012_Japan.csv",
+      "bytes": 189419
+    },
+    {
+      "path": "modis/2013/modis_2013_Japan.csv",
+      "bytes": 224520
+    },
+    {
+      "path": "modis/2014/modis_2014_Japan.csv",
+      "bytes": 206186
+    },
+    {
+      "path": "modis/2015/modis_2015_Japan.csv",
+      "bytes": 198468
+    },
+    {
+      "path": "modis/2016/modis_2016_Japan.csv",
+      "bytes": 228596
+    },
+    {
+      "path": "modis/2017/modis_2017_Japan.csv",
+      "bytes": 234172
+    },
+    {
+      "path": "modis/2018/modis_2018_Japan.csv",
+      "bytes": 280481
+    },
+    {
+      "path": "modis/2019/modis_2019_Japan.csv",
+      "bytes": 257581
+    },
+    {
+      "path": "modis/2020/modis_2020_Japan.csv",
+      "bytes": 223907
+    },
+    {
+      "path": "modis/2021/modis_2021_Japan.csv",
+      "bytes": 278255
+    },
+    {
+      "path": "modis/2022/modis_2022_Japan.csv",
+      "bytes": 229817
+    },
+    {
+      "path": "modis/2023/modis_2023_Japan.csv",
+      "bytes": 294580
+    },
+    {
+      "path": "modis/2024/modis_2024_Japan.csv",
+      "bytes": 258885
+    },
+    {
+      "path": "modis/2025/modis_2025_Japan.csv",
+      "bytes": 248060
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Japan.csv",
+      "bytes": 2014583
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Japan.csv",
+      "bytes": 2546643
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Japan.csv",
+      "bytes": 2281515
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Japan.csv",
+      "bytes": 2585797
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Japan.csv",
+      "bytes": 2362753
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Japan.csv",
+      "bytes": 2335779
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Japan.csv",
+      "bytes": 2174420
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Japan.csv",
+      "bytes": 2270498
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Japan.csv",
+      "bytes": 2333066
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Japan.csv",
+      "bytes": 2873818
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Japan.csv",
+      "bytes": 2665207
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Japan.csv",
+      "bytes": 2429909
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Japan.csv",
+      "bytes": 2273005
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Japan.csv",
+      "bytes": 2549610
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Japan.csv",
+      "bytes": 2704074
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Japan.csv",
+      "bytes": 2466771
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Japan.csv",
+      "bytes": 2139661
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Japan.csv",
+      "bytes": 2497425
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Japan.csv",
+      "bytes": 2180513
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Japan.csv",
+      "bytes": 2306747
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Japan.csv",
+      "bytes": 1969392
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Japan.csv",
+      "bytes": 2146674
+    }
+  ],
+  "body_hash": "a07f70951f2b9779"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Zimbabwe.csv",
+      "bytes": 29504
+    },
+    {
+      "path": "modis/2001/modis_2001_Zimbabwe.csv",
+      "bytes": 922641
+    },
+    {
+      "path": "modis/2002/modis_2002_Zimbabwe.csv",
+      "bytes": 1396797
+    },
+    {
+      "path": "modis/2003/modis_2003_Zimbabwe.csv",
+      "bytes": 1577058
+    },
+    {
+      "path": "modis/2004/modis_2004_Zimbabwe.csv",
+      "bytes": 2053676
+    },
+    {
+      "path": "modis/2005/modis_2005_Zimbabwe.csv",
+      "bytes": 2326797
+    },
+    {
+      "path": "modis/2006/modis_2006_Zimbabwe.csv",
+      "bytes": 1952375
+    },
+    {
+      "path": "modis/2007/modis_2007_Zimbabwe.csv",
+      "bytes": 2396013
+    },
+    {
+      "path": "modis/2008/modis_2008_Zimbabwe.csv",
+      "bytes": 2872794
+    },
+    {
+      "path": "modis/2009/modis_2009_Zimbabwe.csv",
+      "bytes": 2436434
+    },
+    {
+      "path": "modis/2010/modis_2010_Zimbabwe.csv",
+      "bytes": 2652028
+    },
+    {
+      "path": "modis/2011/modis_2011_Zimbabwe.csv",
+      "bytes": 2838650
+    },
+    {
+      "path": "modis/2012/modis_2012_Zimbabwe.csv",
+      "bytes": 2155484
+    },
+    {
+      "path": "modis/2013/modis_2013_Zimbabwe.csv",
+      "bytes": 1728336
+    },
+    {
+      "path": "modis/2014/modis_2014_Zimbabwe.csv",
+      "bytes": 1907915
+    },
+    {
+      "path": "modis/2015/modis_2015_Zimbabwe.csv",
+      "bytes": 2078430
+    },
+    {
+      "path": "modis/2016/modis_2016_Zimbabwe.csv",
+      "bytes": 1436748
+    },
+    {
+      "path": "modis/2017/modis_2017_Zimbabwe.csv",
+      "bytes": 1618929
+    },
+    {
+      "path": "modis/2018/modis_2018_Zimbabwe.csv",
+      "bytes": 1988729
+    },
+    {
+      "path": "modis/2019/modis_2019_Zimbabwe.csv",
+      "bytes": 1929468
+    },
+    {
+      "path": "modis/2020/modis_2020_Zimbabwe.csv",
+      "bytes": 870288
+    },
+    {
+      "path": "modis/2021/modis_2021_Zimbabwe.csv",
+      "bytes": 1640836
+    },
+    {
+      "path": "modis/2022/modis_2022_Zimbabwe.csv",
+      "bytes": 1922190
+    },
+    {
+      "path": "modis/2023/modis_2023_Zimbabwe.csv",
+      "bytes": 2356026
+    },
+    {
+      "path": "modis/2024/modis_2024_Zimbabwe.csv",
+      "bytes": 1538061
+    },
+    {
+      "path": "modis/2025/modis_2025_Zimbabwe.csv",
+      "bytes": 1265309
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Zimbabwe.csv",
+      "bytes": 10087497
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Zimbabwe.csv",
+      "bytes": 9537612
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Zimbabwe.csv",
+      "bytes": 5058164
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Zimbabwe.csv",
+      "bytes": 8387595
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Zimbabwe.csv",
+      "bytes": 10434772
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Zimbabwe.csv",
+      "bytes": 10919663
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Zimbabwe.csv",
+      "bytes": 8001528
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Zimbabwe.csv",
+      "bytes": 6799933
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Zimbabwe.csv",
+      "bytes": 10123456
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Zimbabwe.csv",
+      "bytes": 8539276
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Zimbabwe.csv",
+      "bytes": 9582698
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Zimbabwe.csv",
+      "bytes": 10264521
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Zimbabwe.csv",
+      "bytes": 7237015
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Zimbabwe.csv",
+      "bytes": 8099425
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Zimbabwe.csv",
+      "bytes": 10170983
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Zimbabwe.csv",
+      "bytes": 9520634
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Zimbabwe.csv",
+      "bytes": 5058908
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Zimbabwe.csv",
+      "bytes": 8342579
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Zimbabwe.csv",
+      "bytes": 9763886
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Zimbabwe.csv",
+      "bytes": 11030782
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Zimbabwe.csv",
+      "bytes": 6791164
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Zimbabwe.csv",
+      "bytes": 6588970
+    }
+  ],
+  "body_hash": "f25f82ddea666d10"
+}
