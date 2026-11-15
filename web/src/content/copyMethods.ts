@@ -58,7 +58,7 @@ export const methodsPageCopyEn = {
   methodsDetailMatchWhat:
     "Each VIIRS observation is assigned to its nearest MODIS observation inside the matching radius and time window. The best-scoring VIIRS observation (spatial closeness 0.6, temporal closeness 0.4) seeds the match, and every VIIRS pixel of that pass within 10 minutes of the seed is summed into one matched record, so FRP and observation counts add up (1 MODIS = N VIIRS).",
   methodsDetailMatchWhy:
-    "MODIS and VIIRS overpasses of one fire are at least 34 minutes apart (median about 158 minutes), so a wide window is needed to avoid counting the same fire twice.",
+    "Terra (about 10:30) never passes together with VIIRS, and S-NPP and NOAA-20 are about 50 minutes apart, so the same fire is often seen hours apart: in live samples from 4 regions, co-located pairs were at least 34 minutes apart (median about 158 minutes). A wide window avoids counting one fire twice. Aqua and S-NPP both pass around 13:30, so the archive also holds many pairs within 20 minutes; those near-simultaneous matches are flagged separately for radiometric comparison and the completeness factor k_c was measured from such Aqua/S-NPP pairs.",
   methodsDetailMatchIo: "Fleet observations → matched records, plus MODIS-only and VIIRS-only remainders",
   methodsDetailFuseWhat:
     "For matched records, the VIIRS (375 m) position and the summed VIIRS FRP are kept, with the higher confidence of the records involved. Every record gets an analytic FRP interval from sensor noise and VZA error; MODIS-only records also carry a MODIS scale uncertainty.",
@@ -165,7 +165,7 @@ export const methodsPageCopyTr: { readonly [K in keyof typeof methodsPageCopyEn]
   methodsDetailMatchWhat:
     "Her VIIRS gözlemi, eşleştirme yarıçapı ve zaman penceresi içindeki en yakın MODIS gözlemine atanır. En yüksek skorlu VIIRS gözlemi (mekânsal yakınlık 0,6, zamansal yakınlık 0,4) eşleşmeyi başlatır; aynı geçişin başlangıç gözleminden en fazla 10 dakika uzaktaki tüm VIIRS pikselleri tek bir eşleşmiş kayıtta toplanır, böylece FRP ve gözlem sayıları toplanır (1 MODIS = N VIIRS).",
   methodsDetailMatchWhy:
-    "Bir yangının MODIS ve VIIRS geçişleri en az 34 dakika arayla gelir (medyan yaklaşık 158 dakika); aynı yangını iki kez saymamak için geniş bir pencere gerekir.",
+    "Terra (yaklaşık 10:30) hiçbir zaman VIIRS ile birlikte geçmez, S-NPP ile NOAA-20 arasında da yaklaşık 50 dakika vardır; bu yüzden aynı yangın çoğu zaman saatler arayla görülür: 4 bölgedeki canlı örneklerde aynı konumdaki çiftler en az 34 dakika aralıklıydı (medyan yaklaşık 158 dakika). Geniş pencere, tek bir yangını iki kez saymayı önler. Aqua ve S-NPP ise ikisi de yaklaşık 13:30'da geçtiği için arşivde 20 dakika içinde gözlenen çok sayıda çift vardır; bu neredeyse eşzamanlı eşleşmeler radyometrik karşılaştırma için ayrıca işaretlenir ve tamlık katsayısı k_c bu tür Aqua/S-NPP çiftlerinden ölçülmüştür.",
   methodsDetailMatchIo: "Filo gözlemleri → eşleşmiş kayıtlar, artı yalnız MODIS ve yalnız VIIRS kalanları",
   methodsDetailFuseWhat:
     "Eşleşen kayıtlarda VIIRS (375 m) konumu ve toplanan VIIRS FRP'si, ilgili kayıtların yüksek güveniyle birlikte tutulur. Her kayda sensör gürültüsü ve VZA hatasından analitik bir FRP aralığı verilir; yalnız MODIS kayıtları ayrıca MODIS ölçek belirsizliği taşır.",

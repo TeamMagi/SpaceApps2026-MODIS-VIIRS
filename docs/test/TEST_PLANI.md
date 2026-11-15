@@ -190,7 +190,7 @@ Otomatik testler "kod belirtime uyuyor" der. Geçerleme "çıktı gerçek dünya
 | 2018 ve 2023 geçişleri | TC-VAL-023 | 2023 hiç ölçülmedi (arşivde NOAA-21 yok) | **Yapılmadı** |
 | Terra-only dönem anomali kuralı | TC-VAL-024 | **Kaldı**: 3818/3884 satır (BUG-10) | Tamamlandı; açık hata |
 | Bütünlük, mevsimsellik, arşiv SHA-256 (10095/10095) | TC-VAL-025..028 | Geçti | Tamamlandı |
-| Model parametreleri: MODIS σ 0,266 (yayımlanmış), VIIRS σ 0,08 (**geçici varsayım**, 0 eşzamanlı çift), `k_c` hold-out, aralık kapsama oranı | TC-VAL-040..043 | VIIRS σ ölçülemedi; kapsama oranı yapılmadı | Kısmi |
+| Model parametreleri: MODIS σ 0,266 (yayımlanmış), VIIRS σ 0,08 (**geçici varsayım**, S-NPP / NOAA-20 arasında ≤ 5 dk içinde 0 eşzamanlı çift), `k_c` hold-out, aralık kapsama oranı | TC-VAL-040..043 | VIIRS σ ölçülemedi; kapsama oranı yapılmadı | Kısmi |
 | İç doğrulama paketi (G12: placebo, LOYO, model-baseline kapısı) | TC-VAL-044 | Referans ölçüm kayıtlı; bu çalışmada doğrulanmadı | Kısmi |
 | Methods sayfası ve jüri demosu | TC-VAL-045, G5 | Bekliyor | Yapılmadı |
 

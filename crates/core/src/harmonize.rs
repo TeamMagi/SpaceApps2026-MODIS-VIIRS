@@ -10,7 +10,7 @@ use crate::vza;
 
 pub(crate) const MATCH_RADIUS_KM: f64 = 2.0;
 // 180 minutes: orbital geometry separates MODIS and VIIRS overpasses of the same fire
-// (min 34 min, median ~158 min in live FIRMS data), so a narrow window yields zero matches.
+// (min 34 min, median ~158 min in four live NRT regions), so a narrow window yields few matches.
 pub(crate) const MATCH_WINDOW_SECS: i64 = 10_800;
 // Radiometric comparison pairs need near-coincident overpasses; the literature accepts 5 min
 // and at most 20 min.
@@ -55,12 +55,13 @@ pub struct HarmonizeLinks {
 /// 4. Quality-priority fusion (VIIRS preferred) and non-mutating MODIS VZA correction
 ///
 /// Cross-sensor semantics: `HotspotSource::Matched` represents observations of the same
-/// fire event by both sensors rather than simultaneous observations. In live FIRMS data,
-/// co-located MODIS/VIIRS pairs arrive at least 34 minutes apart with a median of ~158 minutes;
-/// the previous 5-minute window produced zero matches. The 180-minute window exists to
-/// prevent double-counting the same fire event, not for simultaneous radiometric comparison.
-/// VZA coefficient calibration requires simultaneous pairs and cannot be performed from FIRMS
-/// NRT data alone—it requires granule- or archive-level imagery.
+/// fire event by both sensors rather than simultaneous observations. In four live FIRMS NRT
+/// regions, co-located MODIS/VIIRS pairs were at least 34 minutes apart (median ~158 minutes).
+/// In the 2000–2025 country archive, near-simultaneous Aqua/S-NPP pairs are plentiful and form
+/// `simultaneous_matched` for measuring `k_c`; Terra does not coincide with VIIRS, and S-NPP /
+/// NOAA-20 are ~50 minutes apart, so the 180-minute window remains useful for same-fire matching.
+/// The VZA curve and VIIRS sigma 0.08 remain literature-based/provisional, not re-fitted here;
+/// archive pairs allow a diagnostic check, which this code does not perform.
 pub fn harmonize(modis: Vec<Hotspot>, viirs: Vec<Hotspot>) -> Vec<HarmonizedHotspot> {
     harmonize_with_config(modis, viirs, &PipelineConfig::default())
 }

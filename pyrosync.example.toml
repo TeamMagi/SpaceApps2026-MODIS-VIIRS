@@ -19,11 +19,17 @@ radius_km = 2.0
 [matching]
 # Maximum MODIS-to-VIIRS distance in km for a cross-sensor match (at most 10).
 radius_km = 2.0
-# Maximum MODIS-to-VIIRS time difference in seconds (180 minutes: same-fire MODIS/VIIRS
-# overpasses are at least 34 minutes apart in FIRMS data, so a narrow window finds no matches).
+# Maximum MODIS-to-VIIRS time difference in seconds (180 minutes for same-fire matching).
+# In 4 live NRT regions (G2), co-located pairs were at least 34 min apart (median ~158 min).
+# The 2000-2025 FIRMS country archive has plentiful Aqua/S-NPP pairs within 20 min
+# (both cross the equator around 13:30); Terra (~10:30) does not coincide with VIIRS,
+# and S-NPP/NOAA-20 are ~50 min apart, so the wider matching window is still needed.
 window_secs = 10800
 # Matched records with a MODIS-to-VIIRS time difference within this many seconds form the
-# simultaneous subset used for radiometric estimation only.
+# simultaneous_matched subset, reserved for radiometric comparisons (k_c itself was measured
+# separately from near-simultaneous Aqua/S-NPP cell-day pairs).
+# Archive pairs allow a diagnostic check, not performed in code; the Zheng et al. (2026)
+# VZA curve and provisional VIIRS sigma 0.08 are not re-fitted.
 simultaneous_window_secs = 1200
 
 [vza]
