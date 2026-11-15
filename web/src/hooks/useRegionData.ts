@@ -1253,6 +1253,7 @@ export function useMapPoints(): UseMapPointsResult {
         frpAngleCorrectionPct: null,
         filters: UNFILTERED,
         tropicalSwathGap: null,
+        overpass: null,
       };
     }
 
@@ -1273,6 +1274,7 @@ export function useMapPoints(): UseMapPointsResult {
       frpAngleCorrectionPct,
       filters: activeData.filters,
       tropicalSwathGap: activeData.tropicalSwathGap,
+      overpass: activeData.overpass,
       fusionModel: activeData.fusionModel,
       fusionComparison: activeData.fusionComparison,
     };

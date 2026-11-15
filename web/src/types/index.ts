@@ -92,7 +92,7 @@ export type ActivePhase = Exclude<Phase, "idle">;
 export type PhaseDurations = Readonly<Record<ActivePhase, number>>;
 
 /** Overlay panels. `receipt` is the correction receipt popover under the count. */
-export type DrawerId = "methods" | "settings" | "briefing" | "receipt";
+export type DrawerId = "methods" | "settings" | "briefing" | "cell" | "receipt";
 
 export interface PipelineDedupConfig {
   maxTimeDiffSecs: number;
@@ -274,6 +274,8 @@ export interface MapPointSet {
   fusionComparison?: FusionComparison | null;
   /** From `/api/points`, measured on the period's whole year; null outside the tropical belt. */
   tropicalSwathGap: TropicalSwathGapInfo | null;
+  /** Overpass-time medians of the period's raw detections; null when the server predates the field. */
+  overpass: readonly OverpassMedian[] | null;
 }
 
 export interface MonthCell {
@@ -419,6 +421,31 @@ export interface CalendarCell {
   countRecovered?: number;
   countRecoveredLower?: number;
   countRecoveredUpper?: number;
+  /** S10 Mondrian conformal band for totalFrp; only on country-wide, min_confidence=low queries with a calibrated table. */
+  conformal?: ConformalBand;
+}
+
+/** Sensor/fleet reproducibility band for a month's total FRP in MW (not ground-truth accuracy). */
+export interface ConformalBand {
+  p68Lower: number;
+  p68Upper: number;
+  p90Lower: number;
+  p90Upper: number;
+  era: "pre_viirs" | "viirs";
+  bin: number;
+  nCal: number;
+  extrapolated: boolean;
+}
+
+/** Median local solar overpass time of one platform and day/night pass (from `/api/points`). */
+export interface OverpassMedian {
+  platform: string;
+  daynight: DayNight;
+  /** "HH:MM" */
+  medianLocalSolarTime: string;
+  /** Minutes after local solar midnight, in [0, 1440). */
+  medianMinutes: number;
+  n: number;
 }
 
 export interface EffortFactor {

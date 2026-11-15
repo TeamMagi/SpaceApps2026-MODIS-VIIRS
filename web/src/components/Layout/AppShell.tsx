@@ -3,6 +3,7 @@
  *
  * Desktop (>= 1024 px, reference 1366x768, no page scroll):
  *   header 48 | command row 96 (headline 40% · toggle · count) | pipeline 36 |
+ *   drift note (only while the Orbital Drift strip is shown; auto height) |
  *   main: map 58% left, right column = cliff chart 220 + burn calendar (rest, >= 260) | bottom bar 44.
  *   The 40/18/42 column split makes the toggle column end exactly where the 58% map ends.
  * Mobile (single column, in this order): headline, count, map (clamp 360px-640px / 60dvh),
@@ -84,6 +85,8 @@ export interface AppShellProps {
   toggle: ReactNode;
   count: ReactNode;
   pipeline: ReactNode;
+  /** Optional full-width note under the pipeline strip; renders nothing (and takes no space) when empty. */
+  drift?: ReactNode;
   map: ReactNode;
   chart: ReactNode;
   calendar: ReactNode;
@@ -97,6 +100,7 @@ export default function AppShell({
   toggle,
   count,
   pipeline,
+  drift,
   map,
   chart,
   calendar,
@@ -118,6 +122,9 @@ export default function AppShell({
         </div>
         <div className={styles.pipeline}>
           <ErrorBoundary>{pipeline}</ErrorBoundary>
+        </div>
+        <div className={styles.drift}>
+          <ErrorBoundary>{drift}</ErrorBoundary>
         </div>
         <div className={styles.map} data-tour="map">
           <ErrorBoundary>{map}</ErrorBoundary>

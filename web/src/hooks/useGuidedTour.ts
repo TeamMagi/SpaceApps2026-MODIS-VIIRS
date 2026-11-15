@@ -110,7 +110,11 @@ export function useGuidedTour(): void {
         }
       }
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      first?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+      // The card floats at the bottom, so on the long Methods page the highlighted block goes to the top.
+      first?.scrollIntoView({
+        block: step.route === "methods" ? "start" : "nearest",
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
     });
     return () => {
       window.cancelAnimationFrame(frame);

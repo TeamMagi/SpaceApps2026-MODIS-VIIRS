@@ -23,7 +23,7 @@ export const tourCopyEn = {
     "China banned open straw burning in 2013. Raw detections rise 10% from 2012 to 2018, as if the ban failed. The harmonized series drops 32%, and S-NPP alone drops 24%. Burning moved in season: in Northeast China and the North China Plain the December–May share of fire energy rose from 27% to 73%.",
   tourStepValidationTitle: "Live validation",
   tourStepValidationBody:
-    "Placebo step test: at the 2012 and 2018 sensor seams the harmonized count is indistinguishable from ordinary months (mean rank 0.49 and 0.51), while raw counts stand out (p = 0.002–0.039). Leave-one-year-out: the effort normalization error is 0.052 vs 1.79 without it, and the model beats both baselines in 10 of 10 countries. This page lists the method's limits.",
+    "Placebo step test: at the 2012 and 2018 sensor seams the harmonized count is indistinguishable from ordinary months (mean rank 0.49 and 0.51), while raw counts stand out (p = 0.002–0.039). Leave-one-year-out: the effort normalization error is 0.052 vs 1.79 without it, and the model beats both baselines in 10 of 10 countries. Below, the ±1σ Mondrian (conformal) band and the Orbital Drift strip are explained, and the limits of the method are listed.",
 } as const;
 
 export const tourCopyTr = {
@@ -49,5 +49,5 @@ export const tourCopyTr = {
     "Çin 2013'te açık anız yakmayı yasakladı. Ham tespitler 2012'den 2018'e %10 artıyor; sanki yasak işe yaramamış. Harmonize seri %32 düşüyor, tek başına S-NPP de %24 düşüş gösteriyor. Yakma mevsim değiştirdi: Kuzeydoğu Çin ve Kuzey Çin Ovası'nda yangın enerjisinin Aralık–Mayıs payı %27'den %73'e çıktı.",
   tourStepValidationTitle: "Canlı doğrulama",
   tourStepValidationBody:
-    "Placebo adım testi: 2012 ve 2018 sensör dikişlerinde harmonize sayım sıradan aylardan ayırt edilemiyor (ortalama sıra 0,49 ve 0,51), ham sayım ise belirgin biçimde ayrışıyor (p = 0,002–0,039). Yıl-dışarıda (LOYO) testi: efor normalizasyonunun hatası 0,052, normalizasyonsuz 1,79; model 10 ülkenin 10'unda iki baseline'ı da yeniyor. Bu sayfa yöntemin sınırlarını listeliyor.",
+    "Placebo adım testi: 2012 ve 2018 sensör dikişlerinde harmonize sayım sıradan aylardan ayırt edilemiyor (ortalama sıra 0,49 ve 0,51), ham sayım ise belirgin biçimde ayrışıyor (p = 0,002–0,039). Yıl-dışarıda (LOYO) testi: efor normalizasyonunun hatası 0,052, normalizasyonsuz 1,79; model 10 ülkenin 10'unda iki baseline'ı da yeniyor. Aşağıda ±1σ Mondrian (konformal) bandı ve Yörünge Sürüklenmesi şeridi açıklanıyor, yöntemin sınırları listeleniyor.",
 } as const;
