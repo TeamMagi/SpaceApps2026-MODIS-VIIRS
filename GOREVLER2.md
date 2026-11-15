@@ -79,22 +79,25 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 | G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | ⏸ |
 | G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | ⏸ |
 | G10 | Export engine + /api/export | Görkem | v1:G4 | R7, S6 | ✅ |
-| C5 | Methods sayfası + disclaimer tasarımı | Can | v1:C1 | R6, S8 | ⏸ |
-| C6 | Export UI + brifingi tasarımı | Can | v1:C1 | R7 | ⏸ |
-| C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | v1:C1 | K3, K4 | ⏸ |
-| R6 | Methods/About sayfası implementasyonu | Serhat | C5, v1:R1 | — | ⏸ |
+| C5 | Methods sayfası + disclaimer tasarımı | Can | v1:C1 | R6, S8 | ✅ |
+| C6 | Export UI + brifingi tasarımı | Can | v1:C1 | R7 | ✅ |
+| C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | v1:C1 | K3, K4 | ✅ |
+| R6 | Methods/About sayfası implementasyonu | Serhat | C5, v1:R1 | — | ⬜ |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | ⏸ |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, v1:R1 | — | ⏸ |
 | S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | ⏸ |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | v1:G1 | R7 | ⏸ |
-| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | ⏸ |
+| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | ⬜ |
 | K1 | Live/demo/fallback modu | Sadık | v1:R4 | R8 | ⏸ |
 | K2 | Config ayarları frontend paneli | Sadık | G7, v1:R1 | — | ⏸ |
 | K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, v1:R1 | — | ⏸ |
-| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, v1:R1 | — | ⏸ |
+| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, v1:R1 | — | ⬜ |
 
 **Şu an başlanabilecekler:**
-- **Can:** C5, C6, C7 — v1:C1 (UI konsept) bitmişse hepsine başlayabilir.
+- **Can:** C5, C6, C7 tamamlandı (2026-11-15).
+- **Serhat:** R6 — C5 tasarımı hazır (`docs/TASARIM_METHODS.md`).
+- **Samet:** S8 — C5'teki referans formatı ve aşama eşlemesi hazır.
+- **Sadık:** K4 — C7 palet kararları ve renk denetimi hazır (`docs/TASARIM_BELIRSIZLIK_RENK.md`, `docs/RENK_DENETIMI.md`).
 - **Samet:** S7 — v1:G1 (FIRMS API) bitmişse Türkiye verisi çekmeye başlayabilir.
 
 **Kritik yollar:**
@@ -162,7 +165,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 
 ## Can'ın görevleri
 
-### C5 — Methods sayfası + bilimsel disclaimer tasarımı ⏸
+### C5 — Methods sayfası + bilimsel disclaimer tasarımı ✅
 - **Bekler:** v1:C1 · **Açar:** R6, S8
 - Pipeline'ın nasıl çalıştığını açıklayan sayfa tasarımı:
   - 7 aşamalı pipeline diyagramı (görsel akış)
@@ -172,8 +175,12 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Bilimsel referans listesi formatı (akademik makalelere atıf)
   - Disclaimer banner tasarımı: "Bu değerler model tahminidir" uyarısı
 - **Bitti sayılır:** wireframe'de Methods sayfası var; pipeline görseli okunabilir; disclaimer yerleşimi belirgin ama rahatsız edici değil.
+- **Çıktı (Can, 2026-11-15):** `docs/TASARIM_METHODS.md`. İçeriği: çekmece + `/methods` tam sayfa ortak bileşen kararı; Mermaid + masaüstü/mobil pipeline wireframe'i; aşama başına parametre tablosu (koddaki varsayılanlarla); VZA grafiği ve örnek değer tablosu; H3 res 8 görseli; APA 7 referans/aşama eşleme formatı; disclaimer banner'ı; R6 ve S8 devir listeleri.
+- **Bulgular:**
+  - `MIMARI.md` eşleştirme penceresini 5 dk yazıyor; kodda `MATCH_WINDOW_SECS = 10_800` (180 dk).
+  - VZA katsayıları yer tutucu: tarama kenarında R≈2.24 çıkıyor, `uncertainty.rs` yorumu ise ≈4.0 varsayıyor.
 
-### C6 — Export UI + acil müdahale brifingi tasarımı ⏸
+### C6 — Export UI + acil müdahale brifingi tasarımı ✅
 - **Bekler:** v1:C1 · **Açar:** R7
 - İki ilişkili özelliğin tasarımı:
   - **Export:** indirme butonu konumu, format seçimi (CSV/GeoJSON), dosya adı gösterimi
@@ -182,8 +189,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Print-friendly layout (jüri basabilir)
 - **Kaynak:** Strateji 1.1 — "Acil müdahale brifingi — tek tıkla bölge raporu"
 - **Bitti sayılır:** export butonu ve brifingi paneli wireframe'de; brifingi içeriği (hangi metrikler, hangi sırada) belirlenmiş.
+- **Çıktı (Can, 2026-11-15):** `docs/TASARIM_EXPORT_BRIFING.md`. İçeriği: export butonu yerleşimi ve CSV/GeoJSON seçimi; export durumları; mevcut `BriefingDrawer`'ın korunması kararı; veri kaynağıyla eşlenmiş 9 sıralı metrik (7'si bugünkü veriyle hesaplanabilir); masaüstü/mobil/durum wireframe'leri; A4 yazdırma görünümü; R7 devir listesi.
+- **Bulgular (R7/Görkem için):**
+  - Sunucu `pyrosync_{west}_{south}_{east}_{north}_{YYYYMMDD}` dosya adını gönderiyor; frontend ise `pyrosync_{region}_{date}` kullanıyor.
+  - `days` parametresi `1..=5` ile sınırlı, bu yüzden "son 7 gün" metriği için pencere uyumu gerekiyor.
+  - G9 alanları (`frp_lower`, `frp_upper`, `mean_frp_*`) henüz `web/src/types` içine eşlenmemiş.
 
-### C7 — Belirsizlik gösterimi + erişilebilir renk skalası tasarımı ⏸
+### C7 — Belirsizlik gösterimi + erişilebilir renk skalası tasarımı ✅
 - **Bekler:** v1:C1 · **Açar:** K3, K4
 - Bilimsel verilerin doğru görselleştirilmesi:
   - **Belirsizlik:** error bar / confidence band / shaded area — hangi yöntem hangi chart'ta
@@ -194,12 +206,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Light/dark mode'da renk kontrastı
 - **Kaynak:** Yarışma gereksinimleri — "Color ramps"; fire-harmony — belirsizlik gösterimi
 - **Bitti sayılır:** renk paleti renk körlüğü simülatörüyle test edilmiş; belirsizlik gösterimi her chart tipi için tanımlanmış.
+- **Çıktı (Can, 2026-11-15):** `docs/TASARIM_BELIRSIZLIK_RENK.md`. İçeriği: grafik türüne göre belirsizlik karar tablosu (bant, hata çubuğu, takvimde kesikli kenar, haritada opaklık, tooltip formatı); sıralı/sapma/kategorik roller; viridis/cividis alternatifleri; quantile kararı ve lejant wireframe'i; palet seçici; K3 ve K4 devir listeleri.
+- **Simülatör:**
+  - `tools/cvd_check.py` (Machado 2009 + CIEDE2000 + WCAG) çalıştırıldı, rapor `docs/RENK_DENETIMI.md` içinde.
+  - Mevcut token'larda 7 FAIL ve 5 WARN çıktı.
+  - Önerilen düzeltmelerle FAIL sayısı 2'ye iniyor (düşük FRP adımlarının zemin kontrastı; bilinçli olarak kabul edildi, hale ile çözülüyor).
+  - Yeniden üretmek için: `python tools/cvd_check.py --out docs/RENK_DENETIMI.md`.
 
 ---
 
 ## Serhat'ın görevleri
 
-### R6 — Methods/About sayfası implementasyonu ⏸
+### R6 — Methods/About sayfası implementasyonu ⬜
 - **Bekler:** C5, v1:R1 · **Açar:** —
 - Can'ın C5 tasarımını koda dökmek:
   - `/methods` route (React Router veya conditional render)
@@ -259,7 +277,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 - **Kaynak:** Strateji 1.1 — "Türkiye ve Akdeniz havzası özel case study — jüri için farklı ve dikkat çekici"
 - **Bitti sayılır:** `data/case-study/turkey/` altında en az 3 yıl veri var; 2021 Akdeniz yangınları anomali olarak belirgin; JSON formatı frontend'le uyumlu.
 
-### S8 — Bilimsel referans ve disclaimer içerik ⏸
+### S8 — Bilimsel referans ve disclaimer içerik ⬜
 - **Bekler:** C5 · **Açar:** —
 - Methods sayfası için bilimsel içerik hazırlığı:
   - Her pipeline aşaması için 2–3 cümle açıklama (teknik ama anlaşılır)
@@ -307,7 +325,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 - **Kaynak:** fire-harmony — belirsizlik gösterimi; Can'ın C7 tasarımına uygun
 - **Bitti sayılır:** en az 2 chart tipinde belirsizlik görünüyor; tooltip'te aralık var; yüksek VZA'lı noktalar geniş aralıklı (görsel olarak ayırt edilebilir).
 
-### K4 — Erişilebilir renk skalası sistemi ⏸
+### K4 — Erişilebilir renk skalası sistemi ⬜
 - **Bekler:** C7, v1:R1 · **Açar:** —
 - Yarışma gereksinimlerinden "color ramps" + erişilebilirlik:
   - Renk skalası modülü: sequential (FRP), diverging (anomaly), categorical (sensör)
