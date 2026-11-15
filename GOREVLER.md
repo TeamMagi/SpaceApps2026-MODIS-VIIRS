@@ -277,7 +277,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K11 | Şiddet rejimli Ω (effort.rs) | Sadık | K10 | G11 | [X] |
 | K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [X] |
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
-| K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [ ] etiketler tamam, regresyonla kurtarım yapılmadı |
+| K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [X] |
 | K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
 | K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [ ] 2012/2018 ölçüldü; 2023 arşivde yok |
 | K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [X] |
@@ -291,7 +291,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
 - **Yusuf:** Y1, Y3, Y4, Y5, Y6, Y7 tamamlandı. Bağımlılıkları tamamlanan Y2 (sensör karşılaştırma grafikleri), Y8 ve Y9 doğrudan başlayabilir. (`Y10` G12'yi bekliyor.)
-- **Sadık:** K1, K2, K4, K5, K8, K9, K10, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
+- **Sadık:** K1, K2, K4, K5, K8, K9, K10, K11, K12 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -1241,13 +1241,25 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, Yol Haritası #9 (+ `[15, Şek. 6], [23, Eq. 3–6]`, `fire-harmony`)
 - **Bitti sayılır:** `calibration.rs` ay × biyom × gündüz/gece tablosu ve güç-yasası küçük yangın bütçesi ile savan/orman/tarım ayrımı yapıyor; mevcut testler fallback ile geçiyor.
 
-### [ ] K12 — Aqua öncesi dönem kurtarımı ve kesinti etiketleri
+### [X] K12 — Aqua öncesi dönem kurtarımı ve kesinti etiketleri
 - **Bekler:** — · **Açar:** —
 - `2000-11..2002-06` Aqua öncesi Terra döneminin Remy & Kaiser (2014) `[18, Özet, Tablo 4]` `2°×2° → 12°×12°` uyarlanabilir bölgesel regresyonu (`N ≥ 400`, top `%10` bulut-farkı aykırı elemesi; literatürde `>%95` yanlılık giderimi) ile kurtarılması (`K8` kararıyla uyumlu)
 - Takvim ve efor meta verisine tarihsel anomali/kesinti etiketlerinin eklenmesi: Kasım 2000 öncesi Terra (`[11, Bölüm 6; 26, Bölüm 2.2.1]`), 2000–2002 tam kesintileri (`6–17 Ağu 2000`, `16 Haz–2 Tem 2001`, `21–29 Mar 2002` `[18, Bölüm 4]`), 3 Nisan / 15 Ekim 2012 öncesi SNPP (`Mx5.3/Mx6.3` `[13, Bölüm 4.2]`) ve `2021+` yörünge sürüklenmesi (`fire-harmony`, `FireHarmonize`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P4, Yol Haritası #11 (+ `[11, 13, 18, 26]`, `fire-harmony`)
 - **Bitti sayılır:** `2000-11..2002-06` dönemi uyarlanabilir regresyonla kurtarılıyor ve belirtilen tüm kesinti/anomali dönemleri `calendar.rs`/`effort.rs` meta verisinde etiketleniyor.
 - **Durum (2026-11-15):** KISMEN yapıldı. Etiketleme tamam: `crates/core/src/quality.rs` (`QualityFlag`: `terra_early_record`, `terra_outage`, `snpp_early_calibration`, `snpp_spurious_scan_lines`, `modis_orbital_drift`), `CalendarCell.quality_flags` ve yanıtların `warnings` dizisinde bayrak başına bir özet satırı; Terra kesinti pencereleri `events::KNOWN_OUTAGES` ile tek kaynaktan geliyor. Etiketli aylar normalizasyondan veya anomali tabanından ÇIKARILMIYOR (yalnız etiket). Yan etki: 2021 ve sonrası MODIS içeren her yanıt artık bir `MODIS orbital drift` uyarısı taşıyor (canlı NRT yanıtları dahil). Regresyonla kurtarım (Remy & Kaiser 2014) YAPILMADI: yöntem bulut farkı verisi istiyor (FIRMS'te yok), makale yerelde yok ve `K8`'in "kıyaslanamaz işaretle" kararını tersine çevirdiği için önce karar gerekiyor.
+- **Güncelleme (Serhat, 2026-11-15):** Kalan iki konu ele alındı. **(1) Drift uyarısı:** `modis_orbital_drift` ucu açık bir dönem (2021 → bugün) olduğu için artık yanıtların `warnings` dizisine yazılmıyor (`QualityFlag::is_open_ended` / `reported_as_warning`, `quality.rs`); hücrelerdeki `quality_flags` içinde duruyor (Y9 şeridi oradan okuyabilir). Sınırlı tarihsel bayraklar (Terra erken kayıt, Terra kesintileri, S-NPP erken kalibrasyon ve tarama çizgileri) uyarı vermeye devam ediyor. **(2) Kurtarım:** Remy & Kaiser (2014) birebir uygulanamıyor (bulut-farkı verisi FIRMS'te yok), bu yüzden uyarlanmış bir sürüm yazıldı: `crates/core/src/pre_aqua.rs`. Kalibrasyon 2002-07..2020-12 aylarında (Aqua sonrası, yörünge sürüklenmesi öncesi) yapılıyor: takvim ayı başına `k = Σ(MODIS toplam) / Σ(Terra'nın gördüğü)`. `N ≥ 400` Terra kaydı aranıyor; yetmezse havuz ±1 ay, ±2 ay, tüm yıl diye genişliyor (makaledeki `2°→12°` büyümenin karşılığı). Bulut-farkı elemesinin yerine medyandan en uzak %10'luk ay oranları atılıyor. 2000-11..2002-06 arasındaki Terra-only aylar için `CalendarCell`'e `count_recovered`, `count_recovered_lower`, `count_recovered_upper` yazılıyor ve yanıta bir uyarı satırı ekleniyor. `K8` kararı korunuyor: bu aylarda `count_normalized`, `effort_omega` ve `anomaly` yine boş; kurtarılan değer ayrı ve açıkça tahmin. `PipelineConfig` ve `DERIVED_SCHEMA_VERSION` değişmedi; takvim sunucuda anlık hesaplandığı için `data/derived` etkilenmiyor. **Doğrulama (hold-out):** `crates/firms-client/examples/pre_aqua_recovery_check.rs`, Area API `MODIS_SP`, Türkiye bbox, 2003-01..2008-12 (2192 transaction, hata yok, K5 cache'inde). 2003-01..2004-08 arasındaki 20 ayda Aqua yokmuş gibi davranıldı, katsayılar kalan aylardan kalibre edildi:
+
+  | 20 aylık hold-out | Değer |
+  |---|---|
+  | Terra'nın gördüğü (kurtarımsız) | 6.359 |
+  | Kurtarılan tahmin | 11.078 |
+  | Gerçek MODIS toplamı | 11.330 |
+  | Yanlılık, kurtarım öncesi | −%43,9 |
+  | Yanlılık, kurtarım sonrası | **−%2,2** |
+  | Giderilen yanlılık | **%95** |
+
+  Aylık `k` 1,52 (Haziran) ile 2,92 (Ocak) arasında değişiyor. **Sınırlar:** alt/üst bant bir tahmin aralığı değil (aylık oranların 10–90. yüzdeliği); gerçek değer 20 ayın yalnız 9'unda bandın içinde, yani bant tek tek aylar için dar. Toplamda yanlılık iyi gideriliyor, tek tek aylarda (özellikle az yangınlı kış aylarında) hata büyük olabilir. Hold-out, kalibrasyonla aynı cihaz ve iklim dönemini paylaşıyor; Aqua öncesi dönem için bağımsız bir gerçek değer yok. Doğrulama yalnız Türkiye'de yapıldı. Makaledeki bulut-farkı elemesi uygulanmadı. Arayüz yeni alanları henüz göstermiyor. `cargo test --workspace` (core 346, server 202), `npm run typecheck`, `npm test` (53), `npm run build` temiz; clippy'de tek hata bu işten bağımsız (`density.rs` test yardımcısı, 9 argüman).
 
 ### [ ] K6 — 2023 (NOAA-21) efor geçişini ölçme
 - **Bekler:** K5 · **Açar:** —
@@ -1328,4 +1340,4 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 11 (`S1–S4, S6–S11, S13`) | 2 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 3 (`Y5–Y7`) | 7 (`Y1–Y4, Y8–Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 10 (`K1, K2, K4, K5, K8, K9, K10, K11, K12, K13`) | 4 (`K3, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
