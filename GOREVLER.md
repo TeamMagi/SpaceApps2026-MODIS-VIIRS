@@ -639,6 +639,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 ## Samet'in görevleri
 
 > **Not (2026-11-15):** `docs/API.md` içinde `vza.mean_frp_reduction_pct` alanı hâlâ "ortalama VZA-only FRP azalması" olarak tarif ediliyor. VZA düzeltmesi artık çarpma olduğu için bu alan negatif değer döner (negatif = artış); açıklama buna göre güncellenmeli ve yeni `vza.mean_frp_adjustment_pct` alanının (pozitif = artış) tercih edildiği belirtilmeli.
+> **Durum:** Samet tarafından düzeltildi (`72db891`).
 
 ### [X] S1 — Core crate unit testleri
 - **Bekler:** G2 · **Açar:** S5
