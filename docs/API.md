@@ -30,6 +30,7 @@ Son doğrulama: 2026-11-15 · commit 8846819 · örnekler bu sürümden yakaland
 | `GET /api/availability` | FIRMS kaynaklarının tarih aralıkları | FIRMS canlı API | Gerekir | Yok |
 | `GET /api/harmonize` | Harmonize kayıtlar, takvim, effort, belirsizlik, rapor | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/compare` | Ham ve harmonize sayıların karşılaştırması | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
+| `GET /api/sensitivity` | Eşleştirme yarıçapı ve zaman penceresi duyarlılık önizlemesi | FIRMS canlı API (NRT ve SP) | Gerekir | Yok |
 | `GET /api/stats` | Toplamlar, sensör kırılımı, pipeline metrikleri | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/export` | Harmonize hotspot'lar, CSV veya GeoJSON dosyası | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/calendar` | Ülke bazında tarihsel aylık yanma takvimi | Yerel FIRMS ülke arşivi (yalnızca okuma) | Gerekmez | Var |
@@ -1021,6 +1022,57 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
 
 - Önbellek ve zaman aşımı davranışı `harmonize` ile aynıdır.
 - VZA istatistikleri harmonize kayıtlardan hesaplanır. VZA katsayıları yer tutucu değerler olabilir; düzeltme büyüklüğü göstergesel okunmalıdır.
+
+## GET /api/sensitivity
+
+FireHarmonize tarzı duyarlılık önizlemesi. Aynı bbox ve zaman penceresi için FIRMS verisi bir kez çekilir, sonra her `radius_km` x `window_min` hücresinde MODIS ve VIIRS eşleştirmesi yeniden çalıştırılır. Yanıt, eşleşen, yalnızca MODIS ve yalnızca VIIRS kayıt sayılarının yarıçap ve pencere ile nasıl değiştiğini gösterir. Diğer yapılandırma değerleri (`dedup`, `fleet`, `vza`) sunucunun etkin `PipelineConfig` değerleridir. Yanıt önbelleğe alınmaz ve `X-Cache` başlığı yoktur.
+
+### Parametreler
+
+| Ad | Tip | Zorunlu | Açıklama |
+|---|---|---|---|
+| `west`, `south`, `east`, `north` | sayı | Evet | `harmonize` ile aynı bbox kuralları |
+| `days` veya `start` + `end` | sayı / tarih | Evet | `harmonize` ile aynı zaman penceresi kuralları |
+| `radius_km` | virgülle ayrılmış sayılar | Evet | Eşleştirme yarıçapları. Her değer `0 < r <= 10` olmalıdır. En çok 5 farklı değer |
+| `window_min` | virgülle ayrılmış tam sayılar | Evet | Eşleştirme pencereleri, dakika. Her değer `0..=1440` olmalıdır. En çok 5 farklı değer |
+
+Değerler sıralanır ve tekrarlar atılır, böylece ızgara en çok 5x5 hücredir.
+
+### Örnek istek
+
+```bash
+curl -s "http://localhost:3001/api/sensitivity?west=26&south=36&east=45&north=42&days=1&radius_km=0.5,2&window_min=30,60"
+```
+
+### Örnek yanıt
+
+Sayılar test düzeneğindeki sentetik FIRMS verisinden alındı; yapı gerçektir. Tek aday çift 0,14 km ve 60 dk arayla ayrıdır.
+
+```json
+{
+  "raw_modis": 2,
+  "raw_viirs": 3,
+  "radius_km": [0.5, 2.0],
+  "window_min": [30, 60],
+  "cells": [
+    {"radius_km": 0.5, "window_min": 30, "matched": 0, "modis_only": 2, "viirs_only": 2, "harmonized_total": 4},
+    {"radius_km": 0.5, "window_min": 60, "matched": 1, "modis_only": 1, "viirs_only": 1, "harmonized_total": 3},
+    {"radius_km": 2.0, "window_min": 30, "matched": 0, "modis_only": 2, "viirs_only": 2, "harmonized_total": 4},
+    {"radius_km": 2.0, "window_min": 60, "matched": 1, "modis_only": 1, "viirs_only": 1, "harmonized_total": 3}
+  ]
+}
+```
+
+`cells` önce yarıçapa, sonra pencereye göre artan sırada gelir. Yarıçap veya pencere büyüdükçe `matched` azalmaz.
+
+### Hatalar
+
+| Durum | Neden | Gövde |
+|---|---|---|
+| 400 | `radius_km` veya `window_min` yok, bbox parçası eksik | JSON: `Failed to deserialize query string: ...` |
+| 400 | Değer sayı değil, `radius_km` 0 veya negatif ya da 10'dan büyük, `window_min` negatif ya da 1440'tan büyük, bir eksende 5'ten fazla farklı değer, geçersiz bbox veya zaman penceresi | JSON `{"error": "..."}` |
+| 503 | `FIRMS_API_KEY` tanımlı değil | JSON `{"error": "..."}` |
+| 502, 504 | FIRMS hatası veya `REQUEST_TIMEOUT_SECS` aşıldı | JSON `{"error": "..."}` |
 
 ## GET /api/stats
 

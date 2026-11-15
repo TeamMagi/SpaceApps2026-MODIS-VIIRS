@@ -9,11 +9,13 @@
 ## Dizin Yapısı
 
 ```
+mock.html           → Sentetik önizleme girişi (src/mocks/preview.tsx)
 public/
 ├── geo/            → Üretilen regions.json (commit'lenir) ve SOURCE.md
 └── globe/          → 3D küre dünya dokusu ve tile'lar (commit'lenir)
 scripts/
-└── build-geo.mjs   → public/geo/regions.json üretim betiği
+├── build-geo.mjs      → public/geo/regions.json üretim betiği
+└── generate-mocks.mjs → src/mocks/ sentetik JSON fixture üretim betiği
 tests/
 ├── *.test.ts       → node:test birim testleri
 └── fixtures/       → Paylaşılan test fixture'ları
@@ -24,24 +26,29 @@ src/
 │   ├── Header/     → Üst çubuk, bölge seçici, dil ve mod rozeti
 │   ├── Headline/   → Soru / cevap başlığı
 │   ├── Toggle/     → Raw ↔ Harmonized geçiş düğmesi
-│   ├── Stats/      → Sayı farkı ve düzeltme fişi
+│   ├── Stats/      → Sayı farkı ve düzeltme fişi (Receipt, StatsCards)
 │   ├── Pipeline/   → 7 aşamalı harmonizasyon şeridi
 │   ├── Map/        → HotspotMap, FlatMap, GlobeMap, FootprintLens, PointDetail, MapLegend,
 │   │                 engine/ (2D canvas: renderer, viewport, LOD, point index, hit testing),
 │   │                 globe/ (three.js 3D küre: scene, tiles, textures, picking)
-│   ├── Charts/     → Uçurum grafiği (elle yazılmış SVG)
+│   ├── Charts/     → Uçurum grafiği ve SensorComparison (sensör karşılaştırma grafiği, elle yazılmış SVG)
 │   ├── Calendar/   → Radyal yanma takvimi (BurnCalendar) ve tooltip
 │   ├── BottomBar/  → Alt şerit (model uyarısı, CSV, brifing)
-│   └── Drawers/    → Sağdan açılan çekmeceler (Methods, Briefing)
+│   ├── Drawers/    → Sağdan açılan çekmeceler (Methods, Briefing)
+│   └── Methods/    → Tam Methods sayfası (#/methods: MethodsPage, MethodsPipeline akordeon, VzaCurveFigure, H3GridFigure, MethodsReferences, DisclaimerBanner, MethodsLink, useMethodsConfig)
 ├── content/
 │   ├── copy.ts     → Ana sözlük (EN + TR, tipli), t(), createTranslator
-│   └── copyMap.ts, copyRegion.ts, copyState.ts → copy.ts içine birleştirilen parçalar
-├── hooks/          → Custom React hooks (useHarmonizeTransition, useCopy, vb.)
+│   ├── copyMap.ts, copyRegion.ts, copyState.ts, copyMethods.ts, copyAnalytics.ts → copy.ts parçaları
+│   └── references.ts → Methods sayfası kaynakça listesi
+├── hooks/          → Custom React hooks (useHarmonizeTransition, useCopy, useRoute, vb.)
 ├── lib/
 │   ├── geo/        → firmsCountries.json, loadGeo.ts, projection.ts, regionMatch.ts
+│   ├── route.ts    → Hash router (#/methods[/section], METHODS_SECTIONS)
 │   └── ...         → Diğer yardımcılar (urlState, formatlama vb.)
+├── mocks/          → Yalnızca mock.html önizlemesi için sentetik geliştirme fixture'ları (Y5)
 ├── services/
-│   └── api.ts      → Rust backend API katmanı (/api → localhost:3001; mock fallback yoktur)
+│   ├── api.ts            → Rust backend API katmanı (/api → localhost:3001; ana uygulamada mock fallback yoktur)
+│   └── pipelineConfig.ts → Methods sayfası için GET /api/config tipleri ve fetch
 ├── store/
 │   └── useAppStore.ts → zustand uygulama durumu
 ├── styles/         → tokens.css + global.css
@@ -56,9 +63,12 @@ src/
 
 - Her bileşen kendi alt dizininde bulunur: `components/FeatureName/FeatureName.tsx`.
 - Props interface'leri bileşen dosyasında tanımlanır; paylaşılan tipler `types/index.ts`'te tutulur.
-- API çağrıları bileşenlerde yapılmaz, `services/api.ts` kullanılır. Mock verisi yoktur; `make dev-backend` çalışmıyorsa UI hata/boş durumlarını gösterir.
+- API çağrıları bileşenlerde yapılmaz, `services/api.ts` kullanılır. Ana uygulamada mock fallback yoktur (veriyi yalnızca backend'den okur; `make dev-backend` çalışmıyorsa hata/boş durumlarını gösterir) ve `src/mocks/`'tan asla import edilmez.
+- `src/mocks/` sentetik geliştirme fixture'larını içerir (Y5: `hotspots.json`, `calendar.json`, `stats.json`, `raw-platforms.json`, `metadata.json`, `index.ts`, `preview.tsx`, `README.md`; NASA verisi veya pipeline çıktısı değildir). Yalnızca `npm run dev` altında `http://localhost:5173/mock.html` (`web/mock.html` → `src/mocks/preview.tsx`) ayrı önizleme girişi tarafından kullanılır. JSON fixture'lar elle düzenlenmez; repo kökünden deterministik seed ile `node web/scripts/generate-mocks.mjs` ile yeniden üretilir (ayrıntılar `src/mocks/README.md`).
 - State yönetimi için custom hook'lar `hooks/` dizininde oluşturulur.
-- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
+- **Yönlendirme (routing):** Hash tabanlıdır (`useRoute`, `lib/route.ts`). Rotalar `#/` ile başlar (`#/methods[/section]`, bölümler `lib/route.ts` içindeki `METHODS_SECTIONS`); dashboard'un kendi URL durumu (`lib/urlState.ts` ile üretilen `#region=...`) asla `/` ile başlamaz. Backend'de SPA fallback olmadığı için pathname routing kullanılmaz (`/methods` yenilendiğinde 404 verir).
+- **Zorunlu alan ekleme:** `types/index.ts`, bir API yanıt tipi veya `UrlState` içine zorunlu bir alan eklendiğinde bu nesneyi oluşturan tüm yerler güncellenmelidir: `services/api.ts` eşleyicileri, `src/mocks/index.ts`, `hooks/useRoute.ts` (`serializeHash` çağrısı) ve `tests/`. `npm run typecheck` yalnızca `src/` altındakileri yakalar; `tests/` tip kontrolünden geçmediği için elle aranmalıdır.
+- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`, `copyMethods.ts`, `copyAnalytics.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
 - Tüm animasyon zamanlaması `useHarmonizeTransition` (tek saat) üzerinden okunur; bileşenler kendi geçiş zamanlayıcısı kurmaz.
 - Raw modu, `revealAnswer` true olmadan harmonize cevabı (sayı, başlık veya fiş) asla sızdırmaz.
 

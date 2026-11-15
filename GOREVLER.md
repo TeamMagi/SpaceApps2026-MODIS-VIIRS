@@ -508,6 +508,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - "Model vs Baseline Gate" (`eg-firetrack`): harmonize seri baz çizgiyi yenemiyorsa doğrulama çıktısında ve arayüzde uyarı bayrağı ile işaretlenir
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ `[24]`, `fire-harmony`, `flare-chronos`, `eg-firetrack`)
 - **Bitti sayılır:** placebo adım testi, yıl-bloklu LOYO ve Model vs Baseline Gate otomatik doğrulama testleri koşuyor; baz çizgiyi yenemeyen bölge/dönemler arayüzde işaretleniyor.
+- **Durum (2026-11-15):** Araç ve referans ölçüm hazır — `crates/firms-client/examples/validation_suite.rs`, sonuçlar `docs/DOGRULAMA_PAKETI.md` (10 ülke, 2000–2025). Placebo (10 ülke birleşik sıra testi): ham sayım üç dikişte de placebo'dan ayrışıyor (pozitif kontrol; Wilcoxon p = 0,002–0,039); `count_normalized` 2012 ve 2018'de placebo'dan ayırt edilemiyor (ortalama sıra 0,49 ve 0,51); `total_frp` 2012'de 0,52; F 2012'de 0,61, 2018'de 0,69 (anlamlı değil ama tropik ülkelerde dağılımın üst ucunda — R10/K11 ile beklenen iyileşme). LOYO: Ω modelinin yıl-dışarıda hatası 0,052, normalizasyonsuz baseline 1,79, kalıcılık baseline'ı 0,41; kapı 10/10 ülkede iki baseline'a karşı da GEÇTİ. Açık kalanlar: testlerin otomatik koşması (CI) ve baseline'ı yenemeyen bölge/dönemlerin arayüzde işaretlenmesi; R10 ve K11 sonrası yeniden ölçüm.
 
 ### [ ] G5 — Sunum materyali + demo senaryosu
 - **Bekler:** G4, R5, Y1 · **Açar:** G6

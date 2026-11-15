@@ -204,6 +204,39 @@ pub fn haversine_km(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     R * 2.0 * a.sqrt().asin()
 }
 
+/// Scan angle where VIIRS switches from zone 1 to the 3-to-1 aggregation zone [09 §2; 13 Fig. 5].
+pub const VIIRS_ZONE2_START_DEG: f64 = 31.72;
+/// Scan angle where VIIRS switches to the 2-to-1 aggregation zone [09 §2; 13 Fig. 5].
+pub const VIIRS_ZONE3_START_DEG: f64 = 44.86;
+/// Outermost VIIRS scan angle [09 §2; 13 Fig. 5].
+pub const VIIRS_SCAN_EDGE_DEG: f64 = 56.28;
+
+/// VIIRS aggregation zone (1..=3) for a scan angle in degrees, or `None` past the scan edge.
+/// A boundary angle belongs to the outer zone. The sign of the angle is ignored.
+pub fn viirs_zone(scan_angle_deg: f64) -> Option<u8> {
+    let angle = scan_angle_deg.abs();
+    if angle.is_nan() || angle > VIIRS_SCAN_EDGE_DEG {
+        None
+    } else if angle >= VIIRS_ZONE3_START_DEG {
+        Some(3)
+    } else if angle >= VIIRS_ZONE2_START_DEG {
+        Some(2)
+    } else {
+        Some(1)
+    }
+}
+
+/// Detector samples aggregated into one pixel and outer bow-tie rows deleted, for a zone from
+/// [`viirs_zone`] [09 §2; 13 Fig. 5].
+pub fn viirs_zone_layout(zone: u8) -> Option<(u8, u8)> {
+    match zone {
+        1 => Some((1, 0)),
+        2 => Some((3, 4)),
+        3 => Some((2, 8)),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -234,6 +267,36 @@ mod tests {
             vza: None,
             fire_type: FireType::VegetationFire,
         }
+    }
+
+    #[test]
+    fn viirs_zone_boundaries_on_both_signs() {
+        let eps = 1e-6;
+        for sign in [1.0, -1.0] {
+            let z = |deg: f64| viirs_zone(sign * deg);
+            assert_eq!(z(0.0), Some(1));
+            assert_eq!(z(VIIRS_ZONE2_START_DEG - eps), Some(1));
+            assert_eq!(z(VIIRS_ZONE2_START_DEG), Some(2));
+            assert_eq!(z(VIIRS_ZONE2_START_DEG + eps), Some(2));
+            assert_eq!(z(VIIRS_ZONE3_START_DEG - eps), Some(2));
+            assert_eq!(z(VIIRS_ZONE3_START_DEG), Some(3));
+            assert_eq!(z(VIIRS_ZONE3_START_DEG + eps), Some(3));
+            assert_eq!(z(VIIRS_SCAN_EDGE_DEG - eps), Some(3));
+            assert_eq!(z(VIIRS_SCAN_EDGE_DEG), Some(3));
+            assert_eq!(z(VIIRS_SCAN_EDGE_DEG + eps), None);
+        }
+        assert_eq!(viirs_zone(f64::NAN), None);
+    }
+
+    #[test]
+    fn viirs_zone_layout_matches_aggregation_and_deleted_rows() {
+        assert_eq!(viirs_zone_layout(1), Some((1, 0)));
+        assert_eq!(viirs_zone_layout(2), Some((3, 4)));
+        assert_eq!(viirs_zone_layout(3), Some((2, 8)));
+        assert_eq!(viirs_zone_layout(0), None);
+        assert_eq!(viirs_zone_layout(4), None);
+        let at_edge = viirs_zone(31.72).and_then(viirs_zone_layout);
+        assert_eq!(at_edge, Some((3, 4)));
     }
 
     #[test]

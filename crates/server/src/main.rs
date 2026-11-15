@@ -3,6 +3,7 @@ mod derived_cache;
 #[cfg(test)]
 mod integration_tests;
 mod pipeline_config;
+mod sensitivity;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
@@ -796,6 +797,7 @@ fn build_router(
         .route("/harmonize", get(harmonize))
         .route("/availability", get(availability))
         .route("/compare", get(compare))
+        .route("/sensitivity", get(sensitivity::sensitivity))
         .route("/stats", get(stats))
         .route("/calendar", get(calendar))
         .route("/export", get(export))
