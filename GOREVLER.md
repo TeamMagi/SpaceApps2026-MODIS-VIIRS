@@ -221,20 +221,20 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | G10 | Export engine + /api/export | Görkem | G4 | R7, S6 | [X] |
 | G11 | Yeni metriklerin süreklilik analizi | Görkem | R10, K11 | G12 | [ ] |
 | G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [ ] |
-| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5 [X], Y1/G12/C8/C11/R12/Y8 bekliyor) |
+| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11 [X], Y1/G12/R12/Y8 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
 | C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | [X] |
 | C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | [X] |
-| C9 | Statik kaynak / gaz meşalesi maskesi ve SAMA gece filtresi | Can | — | C11 | [ ] |
-| C10 | Tropikal swath boşluğu bayrağı | Can | — | — | [ ] |
-| C12 | Opsiyonel düşük güven filtresi ve duman/atmosfer belirsizlik notu | Can | — | — | [ ] |
-| C8 | Footprint Lens | Can | — | R12, G5 | [ ] |
+| C9 | Statik kaynak / gaz meşalesi maskesi ve SAMA gece filtresi | Can | — | C11 | [X] |
+| C10 | Tropikal swath boşluğu bayrağı | Can | — | — | [X] |
+| C12 | Opsiyonel düşük güven filtresi ve duman/atmosfer belirsizlik notu | Can | — | — | [X] |
+| C8 | Footprint Lens | Can | — | R12, G5 | [X] |
 | C5 | Methods sayfası + disclaimer tasarımı | Can | C1 | R6, S8 | [X] |
 | C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | C1 | K3, K4 | [X] |
 | C6 | Export UI + brifingi tasarımı | Can | C1 | R7 | [X] |
-| C11 | Vaka çalışması: Çin anız yakma yasağı paradoksu | Can | C9 | G5 | [ ] |
+| C11 | Vaka çalışması: Çin anız yakma yasağı paradoksu | Can | C9 | G5 | [X] |
 | R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | [X] |
 | R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | [X] |
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
@@ -246,7 +246,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
-| R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [ ] |
+| R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [ ] (R9, C8 [X]) |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | [X] |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | [X] |
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
@@ -286,9 +286,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [ ] bekliyor |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, C8, C11, R12, Y8`).
-- **Can:** C1–C7 tamamlandı. Açık görevlerden şu an başlanabilecekler: C8, C9, C10, C12 (`Bekler: —`). (`C11` ise `C9`'u bekliyor.)
-- **Serhat:** R1–R5 tamamlandı. Açık görevlerden şu an başlanabilecekler: R9, R10, R11 (`Bekler: —`). (`R6` artık başlayabilir (C5 bitti); `R7` S7'yi, `R8` K1'i, `R12` R9+C8'i bekliyor.)
+- **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
+- **Can:** C1–C12 tamamlandı; açık görev kalmadı.
+- **Serhat:** R1–R6, R9, R11 tamamlandı; R10 sürüyor. Açık görevlerden şu an başlanabilecekler: R12 (`R9, C8` bitti). (`R7` S7'yi, `R8` K1'i bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** Şu an başlanabilecekler: K1 (R4 bitti), K2 (G7, R1 bitti), K5, K8, K9, K10, K12, K13 (`Bekler: —`). (`K3, K4` artık başlayabilir (C7 bitti); `K6, K7` K5'i; `K11` K10'u; `K14` K13'ü bekliyor.)
@@ -300,7 +300,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 4. **R1 + Y5 + Y6 → Y1–Y4:** Yusuf'un grafikleri Y5 (mock veri), S4 ve (Y3 için) Y6'yı bekliyor. R1 bitti.
 5. **K10 → K11 + R10 → G11 → G12 → G5:** Piksel tespit limiti ve 1-to-N ayak izi toplamı olmadan süreklilik analizi, iç doğrulama paketi ve final sunum kapanamaz.
 6. **S9 → S10 → G12 → S12 / Y10:** Gerçekçi MODIS/VIIRS `σ` ve Mondrian split conformal aralıkları iç doğrulamayı ve 4 biyomluk dış doğrulama pilotlarını besler.
-7. **C9 → C11 → G5 ve R9 + C8 → R12 → G5:** Statik/SAMA maskesi Çin vaka çalışmasını; yeni API alanları + Footprint Lens 60 saniyelik rehberli turu ve sunumu açar.
+7. **~~C9 → C11~~ → G5 ve ~~R9 + C8~~ → R12 → G5:** Statik/SAMA maskesi (`C9`), Çin vaka çalışması (`C11`), yeni API alanları (`R9`) ve Footprint Lens (`C8`) tamamlandı; `R12` artık başlayabilir, `G5` kalan sunum/doğrulama bağımlılıklarını bekliyor.
 8. **G4 → G10 → R7:** Export backend hazır; R7 için C6 tasarım ve S7 case study bekleniyor.
 9. **C5 + S13 → S8 / R6:** Methods sayfası tasarımı (C5) ve güncellenmiş referans/boşluk listesi (S13) hem içeriği (S8) hem frontend sayfasını (R6) besler.
 10. **R4 → K1 → R8:** Fallback modu API bağlantısına bağlı; model seçimi de fallback'e bağlı.
@@ -583,37 +583,47 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Doğrulama (2026-11-15):** Her iki mod, 3 vuruşlu geçiş koreografisi ve istatistik fişi `R5` (`✅`) ile doğrulandı. (Not: 7 düğümlü pipeline şeridinde ayrı bir "filo" düğümü yok; `useHarmonizeTransition.ts` koreografisine dokunmamak için filo sayısı bölünme metninde gösteriliyor.)
 - **Bitti sayılır:** toggle'ın her iki durumu ve geçiş animasyonunun tasarımı tamamlanmış; Serhat implementasyon için hazır.
 
-### [ ] C9 — Statik kaynak / gaz meşalesi maskesi ve SAMA gece filtresi
+### [X] C9 — Statik kaynak / gaz meşalesi maskesi ve SAMA gece filtresi
 - **Bekler:** — · **Açar:** C11
 - `crates/core/src/models.rs` içindeki `FireType::is_wildfire()` (`type != 0` atılması) kuralına ek olarak, çok yıllık kalıcı sıcak hücre maskesi (`[06, 10, 19]`; boreal Rusya gece tespitlerinin `%47–67` MODIS / `%55` VIIRS payı, `fire-harmony` `%96.3` gürültü temizliği) uygulanması; H3 kalıcılık eşiği arşivden ölçülecek
 - Güney Atlantik Anomalisi (`SAMA`) gece proton gürültüsü filtresi (`[09, Bölüm 2.1]`, `flare-chronos` SNPP satırlarının `-%4.63`'ü): SAMA coğrafi sınırı içindeki gece gürültüsünün temizlenmesi
 - Her iki filtrenin `crates/core/src/config.rs` (`PipelineConfig`) üzerinden bağımsız olarak açılıp kapatılabilmesi ve elenen kayıt sayılarının pipeline istatistiklerinde raporlanması
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, Yol Haritası #4 (+ `[06, 09, 10, 19]`, `fire-harmony`, `flare-chronos`)
 - **Bitti sayılır:** `PipelineConfig` üzerinden açılıp kapatılabilen kalıcı sıcak hücre maskesi ve SAMA gece filtresi çalışıyor; testlerde filtrelenen kayıt sayısı raporlanıyor.
+- **Çıktı (Can, 2026-11-15):** `crates/core/src/static_mask.rs` ve `crates/core/src/sama.rs` (`9db0a53`, `68aef04`, + düzeltme). `PipelineConfig` içine `static_mask` (varsayılan açık, `min_active_months = 10`) ve `sama` (varsayılan kapalı) bölümleri ile `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS`, `PYROSYNC_SAMA_ENABLED` ortam değişkenleri eklendi. Kural: bir H3 r7 hücresi ilgili takvim yılında `≥ 10` farklı ayda `type = 0` tespiti içeriyorsa o yıl için maskeleniyor. `static_masked` ve `sama_removed` sayaçları `/api/series` (`years[]`), `/api/points` (`stages`) yanıtlarına ve `Receipt` bileşenine eklendi. SAMA kutusu `110°W–11°E, 55°S–7°N` (NASA DRL VFIRE375 SPA kılavuzu v1.9) olarak tanımlandı ve yalnızca VIIRS gece tespitlerine uygulanıyor; Collection 2 SAMA düşük güvenli pikselleri zaten temizlediği ve aşırı izole gece gürültüsü ölçülmediği için (`%1,0–2,6` vs gündüz `%3,9–7,2`) varsayılanı kapalı tutuldu. `DERIVED_SCHEMA_VERSION` `2 → 3` yükseltildi ve paketli `data/derived` yeniden üretildi.
+- **Doğrulama (2026-11-15):** Eşik `crates/firms-client/examples/static_mask_check.rs` (`tools/static-mask-check.sh`) ile ölçüldü: 10 ay eşiğinde örneklenen tüm ülkelerde kesinlik `≥ %80` (Irak `%96`, Cezayir `%96`, Nijerya `%89`, Rusya `%93`, ABD `%89`, Endonezya `%89`, Avustralya `%84`, Portekiz `%100`). 2019 örneğinde Irak'ta `10.385` satır (`%9,1`), Cezayir'de `9.473` satır (`%22,8`) elendi; testler geçiyor.
+- **Bulgu:** VIIRS C2 kılavuzu §6.1 uyarınca v1–2 aylık dosyalarda `type` alanı hatalı (statik kaynaklar `type 0` olarak etiketlenmiş): Irak `type-0` satırlarının `%32`'si, Cezayir `type-0` satırlarının `%42`'si FIRMS statik hücrelerinde yer alıyor.
+- **Not (NRT):** NRT uç noktaları (`/api/harmonize`, `/api/compare`, `/api/stats`) artık `static_masked` / `sama_removed` sayılarını da raporlar ve maske tüm uç noktalarda güven filtresinden önce kurulur.
 
-### [ ] C10 — Tropikal swath boşluğu bayrağı
+### [X] C10 — Tropikal swath boşluğu bayrağı
 - **Bekler:** — · **Açar:** —
 - `30°G–30°K` (`30°S–30°N`) kuşağında MODIS ekvatoral swath boşluklarının (`388.1 km`) aylık VIIRS FRP'nin `%10.7–12.5`'ini kaçırması (`[14, Bölüm 4.4]`) nedeniyle `crates/core/src/calendar.rs` ve efor meta verisine `tropical_swath_gap` bayrağı eklenmesi
 - `calibration.rs` ve `effort.rs` içinde bu kaybın çift sayılmamasının sağlanması (`docs/REFERANS_ANALIZI.md` P1(d) uyarısı); opsiyonel telafi katsayısı açıldığında belirsizliğe (`uncertainty.rs`) yansıtılması
 - Arayüzde tropikal bölge seçildiğinde takvim/efor meta verisinden bilgilendirici not gösterilmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P4, Yol Haritası #13 (+ `[14, Bölüm 4.4]`)
 - **Bitti sayılır:** `30°G–30°K` sorgularında takvim/efor meta verisinde `tropical_swath_gap` bayrağı ve arayüz notu dönüyor; opsiyonel düzeltme açıkken belirsizlik bandı güncelleniyor ve çift sayım yok.
+- **Çıktı (Can, 2026-11-15):** `a0b1b15` ile `/api/calendar` ve `/api/harmonize` yanıtlarının `effort` nesnesine ve `/api/points` üst seviyesine `tropical_swath_gap` eklendi (`/api/series` değiştirilmedi). Alan ağırlıklı kuşak payı `(sin(min(N, 30°)) − sin(max(S, −30°))) / (sin N − sin S)` formülüyle hesaplanıyor; `388,1 km` swath boşluğu ve `%10,7–12,5` kayıp `[14, 4.4]` raporlanıyor. Opsiyonel `[uncertainty] tropical_swath_gap_compensation` ayarı (varsayılan `false`) açıldığında `g = 1/(1 − 0,116) ≈ 1,131` ve `σ ≈ 0,0115` değerleri `uncertainty::combine_factors` üzerinden kareler toplamıyla (quadrature) birleştiriliyor. Arayüzde `BurnCalendar` içine bilgilendirici not (EN/TR) eklendi.
+- **Doğrulama (2026-11-15):** Çift sayım analizinde `k_c` (`1,11`) yalnızca her iki sensörün de gördüğü hücre-günleri kullandığından swath boşluğu kaybını dışarıda bırakıyor; `Ω` ve tespit sayıları hiçbir zaman telafi edilmiyor ve VIIRS ayları çarpan almıyor. Testler geçiyor.
 
-### [ ] C12 — Opsiyonel düşük güven filtresi ve duman/atmosfer belirsizlik notu
+### [X] C12 — Opsiyonel düşük güven filtresi ve duman/atmosfer belirsizlik notu
 - **Bekler:** — · **Açar:** —
 - Backend API endpoint'lerine (`/api/harmonize`, `/api/compare`, `/api/stats`, `/api/export`) `min_confidence` parametresi eklenmesi (`Confidence::Low` hariç tutabilme; VIIRS `low` sınıfının Doğu Çin parlak çatılarda `%40` komisyon `[09, Bölüm 4.2]`, G. Afrika termik santralde `%10.1` ICE `[10, Tablo 5]`, Suudi Arabistan'da medyan `4.42 MW > nominal 1.89 MW` `[24, Tablo 3]` üretmesi nedeniyle)
 - API `uncertainty` meta verisine FIRMS verisinde `τ_4`/`β` bulunmadığı için tek-taraflı `~%7–22` aşağı yönlü atmosferik/bulut belirsizliği notu eklenmesi (`[16, Bölüm 4.1]` bulut kaybı MODIS `%22` / VIIRS `%12`, `[23, Eq. 2]` bölge bazlı `~%7`, ince duman `exp(-τ_4)` `[16, Denklem 12]`)
 - Arayüzde `Low` güven sınıfını hariç tutma anahtarı ve atmosferik belirsizlik açıklaması
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3 (+ `[09, 10, 11, 16, 23, 24]`)
 - **Bitti sayılır:** API'de `min_confidence` parametresi `Confidence::Low` kayıtlarını filtreliyor, meta veride `~%7–22` atmosferik belirsizlik notu dönüyor ve arayüzde filtre anahtarı çalışıyor.
+- **Çıktı (Can, 2026-11-15):** `92afb9f` ile `/api/harmonize`, `/api/compare`, `/api/stats`, `/api/export`, `/api/calendar` ve `/api/points` endpoint'lerine `min_confidence=low|nominal|high` parametresi eklendi (geçersiz değer `400` dönüyor); önbellek anahtarları `|conf=` ile ayrıştırıldı ve yanıtlara `filters: { min_confidence, excluded_detections }` ile `uncertainty.atmospheric_bias` (`downward`, `%7–22`, `applied: false`, kaynaklar `[16 §4.1, Eq. 12]`, `[23 Eq. 2]`) eklendi. Arayüzde `BottomBar` geçiş anahtarı, URL parametresi `conf=nominal` ve `Methods` çekmecesi notu eklendi; testler geçiyor.
+- **Sınır:** Önceden hesaplanmış `/api/series` endpoint'i filtrelenmiyor; arayüz bunu açıkça belirtiyor.
 
-### [ ] C8 — Footprint Lens
+### [X] C8 — Footprint Lens
 - **Bekler:** — · **Açar:** R12, G5
 - Harita üzerinde (`web/src/components/Map/`) seçilen bir MODIS ayak izinin (nadir `~1.0 km²`, tarama kenarı `55°–65°`'de `9.66–9.69 km²` `[01, 16]`) içine düşen 375 m VIIRS alt-piksellerini (`0.14–0.62 km²` `[09]`) gösteren etkileşimli mercek tasarımı ve UI bileşeni
 - Mercek içinde alan oranını (`flare-chronos` `74.23×` alan farkı) ve tespit eşiği farkını (MODIS `5.7 → 40–42 MW` vs VIIRS `0.7 → 3.7 MW` `[16, Tablo 1–2]`) görselleştirme
 - `Matched` ve `ModisOnly` olaylarında neden `1 MODIS = N VIIRS` olduğunu `60 Saniyelik Canlı Demo Akışı` (15–30 sn adımı) ile uyumlu biçimde açıklama
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P3, P7 (+ `[01, 09, 16]`, `flare-chronos`)
 - **Bitti sayılır:** harita üzerinde MODIS ayak izi içindeki 375 m VIIRS piksellerini, alan oranını (`74×`) ve tespit eşiği farkını (`5.7→40 MW` vs `0.7→3.7 MW`) gösteren mercek bileşeni çalışıyor.
+- **Çıktı (Can, 2026-11-15):** `web/src/lib/footprint.ts` ve `web/src/components/Map/FootprintLens.tsx` (`c90f40c`). MODIS ham tespitleri ile `Matched` ve `ModisOnly` harmonize noktalarının nokta kartından açılıyor; küresel piksel geometrisiyle (nadir `1×1 km`, `55°` kenar `≈ 4,83×2,00 km ≈ 9,7 km²`) ölçekli `375 m` ızgara (`~7×` nadir, `~69×` kenar; `74×` `flare-chronos` referansı gösteriliyor), ayak izi ve `±180 dk` içindeki gerçek VIIRS tespitleri ile tespit eşikleri (MODIS `5,7→40 MW` gündüz / `3,7→39 MW` gece vs VIIRS `3,7 / 0,7 MW` `[16]`) gösteriliyor. `Esc`/odak yönetimi eklendi; `375 px` mobilde kontrol edildi ve testler geçiyor.
+- **Sınır:** API `RawPoint` yapısında FIRMS `scan`/`track` alanları bulunmadığından ham moddaki ayak izi swath modelinden kestiriliyor (`scan`/`track` kod yolu mevcut ve test edilmiş durumda).
 
 ### [X] C5 — Methods sayfası + bilimsel disclaimer tasarımı
 - **Bekler:** C1 · **Açar:** R6, S8
@@ -654,13 +664,15 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Çıktı (Can, 2026-11-15):** `docs/TASARIM_EXPORT_BRIFING.md` — export butonu yerleşimi ve CSV/GeoJSON seçimi, export durumları, mevcut `BriefingDrawer`'ın korunması kararı, veri kaynağıyla eşlenmiş 9 sıralı metrik, masaüstü/mobil/durum wireframe'leri, A4 yazdırma görünümü, R7 devir listesi.
 - **Bulgular (R7/Görkem için):** sunucu export dosya adı `pyrosync_{west}_{south}_{east}_{north}_{YYYYMMDD}`, frontend `pyrosync_{region}_{date}`; `days` `1..=5` ile sınırlı ("son 7 gün" metriği için pencere uyumu gerekir).
 
-### [ ] C11 — Vaka çalışması: Çin anız yakma yasağı paradoksu
+### [X] C11 — Vaka çalışması: Çin anız yakma yasağı paradoksu
 - **Bekler:** C9 · **Açar:** G5
 - 2013–2018 Çin anız yakma yasağı döneminde büyük yakmaların (`>4000 kg`) azalırken küçük (`<2500 kg`) ve kış-ilkbahar yakmalarına kayması paradoksunu (`[28, Şek. 9; 30]`; `-%46.9` PM2.5, `4.256` kurtarılan hayat `[28]`, MODIS-tabanlı FINN/GFED `%85` eksik tahmin `[28, Tablo 3]`) kendi arşivimizle (`2010–2022`, `C9` statik kaynak temizliği sonrası) analiz etme
 - Ham seride 2012 SNPP ve 2018 NOAA-20 sıçramalarının yasak başarısını nasıl gizlediğini, harmonize seride (`total_frp`, `count_normalized`, mevsim kayması) nasıl görünür olduğunu gösteren ham vs harmonize grafik üretimi
 - `G5` sunumu ve `60 Saniyelik Canlı Demo Akışı` (30–45 sn adımı) için sunuma hazır kısa anlatı metni hazırlama
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7 (+ `[22, 28, 29, 30]`)
 - **Bitti sayılır:** kendi arşivimizden üretilen Çin 2010–2022 ham vs harmonize grafiği ve politika kaymasını özetleyen kısa sunum metni depoda.
+- **Çıktı (Can, 2026-11-15):** `crates/firms-client/examples/china_ban_case.rs`, `docs/VAKA_CIN_ANIZ.md` ve `docs/vaka/` altında CSV/JSON çıktıları ile `china_ban_series.svg` ve `china_ban_shift.svg` (`2ef5e58`). `2012 → 2018` ulusal seride ham tespit sayısı `+%10,5` artarken harmonize `count_normalized` `−%31,8` (kuşakta `−%34,9`), tek başına S-NPP ise `−%23,5` azaldı. Kuşaktaki mevsim kaymasında Ara–May FRP payı `%26,5` (2010–12) → `%45,7` (2013–18) → `%73,4` (2019–22) olarak ölçüldü; testler geçiyor.
+- **Bulgu:** Boyut kayması (büyük → küçük yangın) FRP vekiliyle doğrulanamadı ve raporda dürüstçe belirtildi. Pipeline sahipleri için not: harmonize `total_frp` `Ω`'ya bölünmediği için 2018'de NOAA-20 basamağı (ham MODIS FRP'ye kıyasla `+%31`) varlığını koruyor; manşet metrik olarak `count_normalized` kullanılmalı.
 
 ---
 
@@ -1214,7 +1226,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Kişi | Görev sayısı | Tamamlanan | Açık | Ağırlık | Odak |
 |------|-------------|------------|------|---------|------|
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
-| Can | 12 (C1–C12) | 4 (`C1–C4`) | 8 (`C9, C10, C12, C8, C5, C7, C6, C11`) | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası |
+| Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 5 (`R1–R5`) | 7 (`R10, R11, R9, R8, R6, R7, R12`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
