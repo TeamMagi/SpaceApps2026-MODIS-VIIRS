@@ -45,6 +45,11 @@ fn override_from_env(
     set(env, "PYROSYNC_FLEET_RADIUS_KM", &mut config.fleet.radius_km)?;
     set(env, "PYROSYNC_MATCH_RADIUS_KM", &mut config.matching.radius_km)?;
     set(env, "PYROSYNC_MATCH_WINDOW_SECS", &mut config.matching.window_secs)?;
+    set(
+        env,
+        "PYROSYNC_MATCH_SIMULTANEOUS_WINDOW_SECS",
+        &mut config.matching.simultaneous_window_secs,
+    )?;
     set(env, "PYROSYNC_VZA_A", &mut config.vza.a)?;
     set(env, "PYROSYNC_VZA_B", &mut config.vza.b)?;
     set(env, "PYROSYNC_VZA_C", &mut config.vza.c)?;

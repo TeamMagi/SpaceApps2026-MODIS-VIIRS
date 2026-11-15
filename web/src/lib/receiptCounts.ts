@@ -7,6 +7,7 @@ export interface PeriodStageCounts {
   readonly interscanRemoved: number;
   readonly fleetMerged: number;
   readonly matchedPairs: number;
+  readonly viirsAggregated: number;
   readonly doubleCounts: number;
   readonly harmonized: number;
 }
@@ -35,6 +36,7 @@ export function aggregateRegionTotals(years: readonly YearlyPoint[]): RegionTota
   let interscanRemoved = 0;
   let fleetMerged = 0;
   let matched = 0;
+  let viirsAggregated = 0;
 
   for (const y of years) {
     modis += y.rawModis;
@@ -46,6 +48,7 @@ export function aggregateRegionTotals(years: readonly YearlyPoint[]): RegionTota
     interscanRemoved += y.interscanRemoved;
     fleetMerged += y.fleetMerged;
     matched += y.matched;
+    viirsAggregated += y.viirsAggregated;
   }
 
   const doubleCounts = computeDoubleCounts({ raw, staticMasked, samaRemoved, harmonized });
@@ -61,6 +64,7 @@ export function aggregateRegionTotals(years: readonly YearlyPoint[]): RegionTota
     interscanRemoved,
     fleetMerged,
     matched,
+    viirsAggregated,
     doubleCounts,
     doubleCountShare,
   };
@@ -82,6 +86,7 @@ export function summarizePointStages(stages: PointStages): PeriodStageCounts {
     interscanRemoved: stages.interscanRemoved,
     fleetMerged: stages.fleetMerged,
     matchedPairs: stages.matchedPairs,
+    viirsAggregated: stages.viirsAggregated,
     doubleCounts,
     harmonized: stages.harmonized,
   };

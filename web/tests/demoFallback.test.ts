@@ -87,6 +87,7 @@ check("buildDemoPoints covers fixture year/month and returns well-formed empty r
     interscanRemoved: 0,
     fleetMerged: 0,
     matchedPairs: 0,
+    viirsAggregated: 0,
     harmonized: 0,
   });
 

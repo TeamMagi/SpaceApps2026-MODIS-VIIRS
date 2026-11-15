@@ -157,7 +157,7 @@ export default function Receipt({ id }: ReceiptProps) {
                 </div>
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.match.name)}</dt>
-                  <dd>{fmt.signed(-periodCounts.matchedPairs)}</dd>
+                  <dd>{fmt.signed(-(periodCounts.matchedPairs + periodCounts.viirsAggregated))}</dd>
                 </div>
                 <div className={styles.totalRow}>
                   <dt>{t("receiptUnique")}</dt>

@@ -98,7 +98,7 @@ Sunucu pencereyi kaynak başına en fazla 5 günlük FIRMS isteklerine böler. H
 
 ### Harmonizasyon hattı
 
-Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kaynak, deniz üstü) çıkarılır. FIRMS C2 aylık dosyalarında `type` alanı sürüm 1-2'de hatalı olduğundan statik kaynakların bir kısmı `type 0` olarak gelir; bunlar kalıcı sıcak hücre maskesiyle (`static_mask`) elenir. İsteğe bağlı SAMA gece filtresi (`sama`, varsayılan kapalı) bundan önce uygulanır. Ardından aynı sensörün tarama (interscan) çakışmaları kaldırılır. Aynı uydu ailesine ait kardeş uydular (fleet) birleştirilir: MODIS için 180 dakika, VIIRS için 60 dakika penceresi kullanılır. Son olarak MODIS ve VIIRS kayıtları 2 km ve 180 dakika içinde eşleştirilir ve tek kayda birleştirilir (`Matched`). Eşleşmeyen kayıtlar her iki sensörden korunur. MODIS FRP değerleri görüş açısına (VZA) göre düzeltilir ve kalibrasyon bantlarıyla (`/api/config` altındaki `calibration`) işlenir. Tüm eşikler `GET /api/config` ile okunabilir.
+Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kaynak, deniz üstü) çıkarılır. FIRMS C2 aylık dosyalarında `type` alanı sürüm 1-2'de hatalı olduğundan statik kaynakların bir kısmı `type 0` olarak gelir; bunlar kalıcı sıcak hücre maskesiyle (`static_mask`) elenir. İsteğe bağlı SAMA gece filtresi (`sama`, varsayılan kapalı) bundan önce uygulanır. Ardından aynı sensörün tarama (interscan) çakışmaları kaldırılır. Aynı uydu ailesine ait kardeş uydular (fleet) birleştirilir: MODIS için 180 dakika, VIIRS için 60 dakika penceresi kullanılır. Son olarak her VIIRS kaydı 2 km ve 180 dakika içindeki en yakın MODIS kaydına atanır; aynı geçişin (başlangıç gözleminden 10 dakika içindeki) tüm VIIRS pikselleri tek kayıtta toplanır (`Matched`, 1 MODIS = N VIIRS; FRP ve gözlem sayısı toplanır). Eşleşmeyen kayıtlar her iki sensörden korunur. MODIS FRP değerleri görüş açısına (VZA) göre düzeltilir ve kalibrasyon bantlarıyla (`/api/config` altındaki `calibration`) işlenir. Tüm eşikler `GET /api/config` ile okunabilir.
 
 ### CalendarCell
 
@@ -340,7 +340,8 @@ curl -s "http://localhost:3001/api/config"
   },
   "matching": {
     "radius_km": 2,
-    "window_secs": 10800
+    "window_secs": 10800,
+    "simultaneous_window_secs": 1200
   },
   "vza": {
     "a": 0.2017,
@@ -402,6 +403,7 @@ curl -s "http://localhost:3001/api/config"
 | `fleet.radius_km` | number | Filo birleştirme yarıçapı (km) |
 | `matching.radius_km` | number | MODIS/VIIRS eşleştirme yarıçapı (km, en fazla 10) |
 | `matching.window_secs` | integer | MODIS/VIIRS eşleştirme zaman penceresi (sn) |
+| `matching.simultaneous_window_secs` | integer | Radyometrik kestirim için eşzamanlı Matched alt kümesi penceresi (sn, varsayılan 1200) |
 | `vza.a`, `vza.b`, `vza.c` | number | MODIS VZA düzeltme polinomu `R_rel(θ) = a·θ² + b·θ + c` katsayıları (θ radyan) |
 | `calibration.enabled` | boolean | Pre-VIIRS tamlık katsayısı `k_c` uygulansın mı |
 | `calibration.bands[]` | array | Enlem bantları: `min_abs_lat`, `max_abs_lat` (|lat|, derece), `ratio` (`k_c`), `ratio_sigma` (`k_c` 1σ). 50-55° arası doğrusal geçiş, 70°'nin üstü son banda sabitlenir |
@@ -1969,6 +1971,7 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
       "raw_total": 69619,
       "harmonized": 43338,
       "matched": 4363,
+      "viirs_aggregated": 1210,
       "modis_only": 3477,
       "viirs_only": 35498,
       "static_masked": 0,
@@ -2042,6 +2045,7 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
 | `raw_modis`, `raw_viirs`, `raw_total` | integer | Ham sayımlar (tip 0). `raw_viirs` S-NPP ve NOAA-20 toplamıdır |
 | `harmonized` | integer | Yıl boyunca harmonize edilmiş kayıt sayısı |
 | `matched`, `modis_only`, `viirs_only` | integer | Harmonize kaynak dağılımı |
+| `viirs_aggregated` | integer | Bir MODIS ayak izinde tek Matched kayda toplanan ek VIIRS gözlemleri (ilk gözlemin ötesinde) |
 | `static_masked` | integer | Kalıcı sıcak hücre maskesiyle elenen ham kayıt sayısı |
 | `sama_removed` | integer | SAMA gece filtresiyle elenen ham VIIRS kayıt sayısı |
 | `interscan_removed` | integer | Tarama çakışması nedeniyle çıkarılan ham kayıt sayısı |
@@ -2264,6 +2268,7 @@ curl -s "http://localhost:3001/api/points?region=Turkey&year=2021&month=8&limit=
     "interscan_removed": 2638,
     "fleet_merged": 3889,
     "matched_pairs": 1245,
+    "viirs_aggregated": 310,
     "harmonized": 8390
   },
   "bbox": {
@@ -2328,6 +2333,7 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
     "interscan_removed": 2638,
     "fleet_merged": 3889,
     "matched_pairs": 1245,
+    "viirs_aggregated": 310,
     "harmonized": 8390
   },
   "bbox": {
@@ -2384,7 +2390,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `sama_removed` | SAMA gece filtresiyle elenen VIIRS satırları |
 | `interscan_removed` | Tarama çakışması ile çıkarılan satırlar |
 | `fleet_merged` | Kardeş uydu birleştirmesiyle kaldırılan kayıtlar |
-| `matched_pairs` | MODIS-VIIRS eşleşme çifti sayısı |
+| `matched_pairs` | Matched kayıt sayısı (MODIS ile eşleşen VIIRS geçişi) |
+| `viirs_aggregated` | Matched kayda ilk gözlemin ötesinde toplanan VIIRS gözlemleri; `harmonized = raw - static_masked - sama_removed - interscan_removed - fleet_merged - matched_pairs - viirs_aggregated` |
 | `harmonized` | Harmonize kayıt sayısı |
 
 #### Yangın olayları (`events`)
@@ -2527,6 +2534,7 @@ Hata gövdesi her zaman `{"error": "..."}` biçimindedir.
 | `PYROSYNC_FLEET_RADIUS_KM` | `2.0` | Filo birleştirme yarıçapı (km) |
 | `PYROSYNC_MATCH_RADIUS_KM` | `2.0` | MODIS/VIIRS eşleştirme yarıçapı (km, en fazla 10) |
 | `PYROSYNC_MATCH_WINDOW_SECS` | `10800` | MODIS/VIIRS eşleştirme zaman penceresi (sn) |
+| `PYROSYNC_MATCH_SIMULTANEOUS_WINDOW_SECS` | `1200` | Radyometrik kestirim için eşzamanlı Matched alt kümesi penceresi (sn) |
 | `PYROSYNC_VZA_A`, `PYROSYNC_VZA_B`, `PYROSYNC_VZA_C` | `0.2017`, `0.0168`, `1.0` | MODIS VZA düzeltme polinomu katsayıları |
 | `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre maskesi ve ay eşiği |
 | `PYROSYNC_SAMA_ENABLED` | `false` | SAMA gece VIIRS filtresi |

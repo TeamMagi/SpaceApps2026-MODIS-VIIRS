@@ -22,6 +22,9 @@ radius_km = 2.0
 # Maximum MODIS-to-VIIRS time difference in seconds (180 minutes: same-fire MODIS/VIIRS
 # overpasses are at least 34 minutes apart in FIRMS data, so a narrow window finds no matches).
 window_secs = 10800
+# Matched records with a MODIS-to-VIIRS time difference within this many seconds form the
+# simultaneous subset used for radiometric estimation only.
+simultaneous_window_secs = 1200
 
 [vza]
 # MODIS viewing-zenith correction ratio R_rel(theta) = a*theta^2 + b*theta + c (theta in radians),

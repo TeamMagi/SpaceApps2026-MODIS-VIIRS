@@ -26,7 +26,7 @@ export const mockPoints: PointsResponse = {
     frpLower: null,
     frpUpper: null,
   })),
-  stages: { ...pointsJson.stages, staticMasked: 0, samaRemoved: 0 },
+  stages: { ...pointsJson.stages, staticMasked: 0, samaRemoved: 0, viirsAggregated: 0 },
   filters: { minConfidence: 'low', excludedDetections: 0 },
   tropicalSwathGap: null,
 };
@@ -38,7 +38,7 @@ function snapshot(value: typeof statsJson.annual): AnalyticsSnapshot {
 const { frpMonths, ...seriesOnly } = seriesJson;
 export const mockSeries: SeriesResponse = {
   ...seriesOnly,
-  years: seriesOnly.years.map(year => ({ ...year, staticMasked: 0, samaRemoved: 0 })),
+  years: seriesOnly.years.map(year => ({ ...year, staticMasked: 0, samaRemoved: 0, viirsAggregated: 0 })),
   months: seriesOnly.months.map((m) => ({
     ...m,
     meanFrp: null,

@@ -23,6 +23,7 @@ const EMPTY_STAGES: PointStages = {
   interscanRemoved: 0,
   fleetMerged: 0,
   matchedPairs: 0,
+  viirsAggregated: 0,
   harmonized: 0,
 };
 
@@ -136,6 +137,7 @@ function buildStandardDemoPoints(params: FetchPointsParams): PointsResponse {
       interscanRemoved,
       fleetMerged,
       matchedPairs,
+      viirsAggregated: 0,
       harmonized: harmonized.length,
     },
     bbox: mockPoints.bbox,

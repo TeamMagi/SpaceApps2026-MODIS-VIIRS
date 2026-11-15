@@ -18,7 +18,8 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 /// logic that produces it changes, so previously persisted cache entries are invalidated.
 // v3: YearEntry adds static-mask and SAMA counts (static_masked, sama_removed).
 // v4: MonthEntry adds mean_frp, mean_frp_lower, and mean_frp_upper.
-pub const DERIVED_SCHEMA_VERSION: u32 = 4;
+// v5: YearEntry adds viirs_aggregated (1 MODIS = N VIIRS matching).
+pub const DERIVED_SCHEMA_VERSION: u32 = 5;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;
