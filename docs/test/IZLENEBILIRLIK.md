@@ -7,7 +7,7 @@
 | Üst belgeler | [TEST_PLANI.md](TEST_PLANI.md), [TEST_TASARIMI.md](TEST_TASARIMI.md) |
 | Gereksinim kaynakları | `GOREVLER.md` ("Bitti sayılır" şartları ve görev notları), `docs/API.md`, `crates/*/CLAUDE.md` |
 
-Son koşu (2026-11-15, birleşmiş `main`): Rust 600 geçti, 0 başarısız, 2 yoksayıldı (core 273, firms-client 140 + 9, server 178); web 32 geçti; clippy temiz; satır kapsamı %94,7. S6 (34 test, `78785f2`), S9 (varsayılan σ sabitleme), S11 (`/api/sensitivity`, `viirs_zone`) ve firms-client testleri (`6400ff4`, 70 test) birleşmiştir ve aşağıda yer alır. CI (`ci.yml`) tanımlıdır; GitHub'da yeşil çalıştığı **doğrulanmadı** (depo özel).
+Son koşu (2026-11-15, birleşmiş `main`, HEAD `49381eb`): Rust 728 geçti, 0 başarısız, 2 yoksayıldı (core 360, firms-client 143 + 9 + 5, server 211); web 59 geçti; clippy temiz; satır kapsamı %95,5. S6 (34 test, `78785f2`), S9 (varsayılan σ sabitleme), S11 (`/api/sensitivity`, `viirs_zone`) ve firms-client testleri (`6400ff4`, 70 test) birleşmiştir ve aşağıda yer alır. CI (`ci.yml`) tanımlıdır; GitHub'da yeşil çalıştığı **doğrulanmadı** (depo özel).
 
 **Durum anlamı.** Kapsandı: bağlı vakaların hepsinin koşulunu sınayan otomatik test var. Kısmi: bazı vakalar `EKSİK` veya yalnızca temsilci değer denendi. EKSİK: otomatik test yok. "Kapsandı", gereksinimin doğru olduğunu değil, davranışın sabitlendiğini söyler; bilimsel doğruluk için bkz. REQ-SCI satırları.
 
@@ -36,7 +36,7 @@ Otomatik test sütunu kısaltmaları TEST_TASARIMI §0 ile aynıdır; test işle
 | REQ-API-017 | Türetilmiş seri önbelleği: kaynak önceliği, damga geçersizleşmesi, bozuk dosya, yazılamayan dizin | `docs/API.md` series Notlar | TC-ST-050..056 | `srv::archive_api::series_*` (9) | Kapsandı |
 | REQ-API-018 | G4: `days` istekleri 10 s içinde yanıtlanır | G4 "Bitti sayılır" | (vaka yok) | Elle ölçüm (1,36 s en yavaş); otomatik yok | EKSİK |
 | REQ-API-019 | `/api/sensitivity`: `radius_km` ve `window_min` listeleri (≤ 5 değer; `0 < r ≤ 10`; `0..=1440`), `matched` yarıçap/pencere ile azalmaz | `docs/API.md` sensitivity; S11 | TC-API-300..314 | `srv::it::sensitivity_rejects_bad_radius`, `sensitivity_accepts_boundary_values`, `sensitivity_rejects_oversized_grid_or_bad_window`, `sensitivity_rejects_missing_parameter`, `sensitivity_matched_never_decreases_with_radius_or_window` | Kısmi (tam 5 değer, 503, tekrarların atılması, `harmonize` ile tutarlılık EKSİK) |
-| REQ-API-020 | `/api/series` anomalisi sensör geçişinden bağımsız ve Ω ile normalize; Terra-only aylar `null` (`/api/calendar` ile aynı kural) | Geçerleme bulgusu; `docs/API.md` CalendarCell kuralı | TC-API-220..223, TC-VAL-005, 020, 021, 024 | (yok) | **EKSİK, hata açık** (BUG-9, BUG-10: 138/138 bölgede +1,45σ kayma; 3818/3884 Terra-only satırda anomali) |
+| REQ-API-020 | `/api/series` anomalisi sensör geçişinden bağımsız ve Ω ile normalize; Terra-only aylar `null` (`/api/calendar` ile aynı kural) | Geçerleme bulgusu; `docs/API.md` CalendarCell kuralı | TC-API-220..223, TC-VAL-005, 020, 021, 024 | `srv::archive_api::series_harmonized_anomaly_is_effort_normalised_and_raw_anomaly_stays_raw`, `series_months_carry_effort_fields_and_skip_terra_only_months`, `series_anomalies_skip_terra_only_months_when_series_spans_terra_aqua`, `series_anomaly_baseline_ignores_terra_only_month`; çekirdek: `effort_months_omega_matches_whole_set_estimator_for_every_month`, `effort_months_merge_of_slices_equals_whole` | **Kısmi**: BUG-9 ve BUG-10 düzeltildi (`49381eb`, `c27c3bc`; 8 bölgede gerçek veriyle doğrulandı: z kayması +1,45σ → −0,13σ, Terra-only 160 ayda anomali 0). TC-API-222 (seri/takvim eşitliği) ve 223 yazılmadı |
 | REQ-API-021 | Paketli türetilmiş seri (`data/derived`) kodun şema sürümü ve yapılandırma özetiyle uyumlu | `docs/API.md` series Notlar (damga doğrulaması) | TC-API-224 | Kod tarafı damga uyuşmazlığını yakalar (`srv::archive_api::series_treats_v1_schema_with_mtime_secs_as_stale_and_recomputes`); **paketin kendisinin bayatlığını** yakalayan test yok | EKSİK (paket `schema_version: 2`, kod 3; sunucu yeniden hesaplıyor, bazı istekler 504) |
 
 ## 2. Harmonizasyon motoru
@@ -86,12 +86,12 @@ Otomatik test sütunu kısaltmaları TEST_TASARIMI §0 ile aynıdır; test işle
 | REQ | Gereksinim | Kaynak | Vaka | Otomatik test / kanıt | Durum |
 |-----|------------|--------|------|-----------------------|-------|
 | REQ-NFR-001 | Her push'ta CI: check, clippy `-D warnings`, test, coverage kapısı (%90), web build; Rust 1.100'e sabit, iş zaman aşımları | S5 "Bitti sayılır" | (CI) | `.github/workflows/ci.yml` | Kısmi (tanımlı; GitHub'da yeşil çalıştığı **doğrulanmadı**, depo özel; S5 açık) |
-| REQ-NFR-002 | Satır kapsamı ≥ %90 (CI kapısı) | TEST_PLANI §9 C3 | (CI) | `cargo llvm-cov --fail-under-lines 90`; ölçülen %94,7 (bölge %95,3, fonksiyon %94,5) | Kısmi (genel geçiyor; dosya bazlı değerler 6400ff4 sonrası yeniden ölçülmedi; dal kapsamı ölçülmüyor; yüksek kapsam BUG-9/10'u yakalamadı) |
+| REQ-NFR-002 | Satır kapsamı ≥ %90 (CI kapısı) | TEST_PLANI §9 C3 | (CI) | `cargo llvm-cov --fail-under-lines 90`; ölçülen %95,5 (bölge %95,9, fonksiyon %95,3) | Kısmi (genel geçiyor; dosya bazlı değerler 6400ff4 sonrası yeniden ölçülmedi; dal kapsamı ölçülmüyor; yüksek kapsam BUG-9/10'u yakalamadı) |
 | REQ-NFR-003 | Clippy temiz | S1 "Doğrulama" | (CI) | `cargo clippy ... -D warnings` | Kapsandı |
 | REQ-NFR-004 | Testler tekrarlanabilir (gerçek saat kullanılmaz) | F.I.R.S.T. (Hafta 4) | TC-ST-025 | 9b0ed86: saate bağlı olmayan testler sabit gün kullanıyor. `FirmsClient::fetch_all` ve `fetch_recent` `Utc::now()` okuyor (`client.rs`) | Kısmi (enjekte edilebilir `today` yok; backend değişikliği, açık iyileştirme) |
 | REQ-SEC-001 | Bağımlılıklarda bilinen zafiyet yok | OWASP/ISTQB iyi uygulama | (yok) | `cargo audit`, `npm audit` yok | EKSİK |
 | REQ-SCI-001 | 2000-bugün seri sensör geçişlerinde (2002, 2012, 2018, 2023) yapay sıçrama göstermez; `frp_per_detection_eq` 2012'de sürekli | G3, G8 "Bitti sayılır"; K6, K7 | TC-VAL-020..023 | Sentetik: `synthetic_sensor_transition_eliminates_artificial_jump_and_false_anomaly`. Gerçek veri (seri yolu): **Kaldı** (4,68× sıçrama, +1,45σ kayma); FRP alanları ve 2018/2023 yapılmadı | EKSİK (geçerleme başarısız veya yapılmadı) |
-| REQ-SCI-002 | Temmuz-Ağustos 2021 Antalya/Muğla yangınları takvimde anomali olarak belirgin; bilinen büyük olaylar görünür | S7 "Bitti sayılır" | TC-VAL-001..015 | Betikle geçerleme: 15 olaydan 10 geçti, 5 kaldı (Türkiye 2021-08 z 1,44; Yunanistan 2007-08 z 0,52). Antalya-Muğla bbox z 4,88 (önceki ölçüm). Otomatik test yok | Kısmi (elle) |
+| REQ-SCI-002 | Temmuz-Ağustos 2021 Antalya/Muğla yangınları takvimde anomali olarak belirgin; bilinen büyük olaylar görünür | S7 "Bitti sayılır" | TC-VAL-001..015 | Betikle geçerleme: 15 olaydan 11 geçti, 4 kaldı (Yunanistan 2007-08 BUG-9 düzeltmesiyle geçti, z 0,52 → 3,96; kalanlar düzeltmeden önceki ölçümlerdir ve yeniden ölçülmedi, örn. Türkiye 2021-08 z 1,44). Antalya-Muğla bbox z 4,88 (önceki ölçüm). Otomatik test yok | Kısmi (elle) |
 | REQ-SCI-003 | Belirsizlik parametreleri ölçülmüş/yayımlanmış: MODIS σ 0,266 (Freeborn 2014a); VIIRS σ; aralıklar ≈ %68 kapsar | G9 açık notu; S9; `docs/API.md` Belirsizlik | TC-VAL-040, 041, 043, TC-CORE-064 | MODIS σ yayımlanmış değerden; **VIIRS σ ölçülemedi** (SNPP-NOAA-20 ≈ 50 dk, 0 çift; 0,08 geçici); kapsama oranı yapılmadı; varsayılanlar test ile sabitlendi | Kısmi (parametre sabit, doğruluğu doğrulanmadı) |
 | REQ-SCI-004 | `k_c` katsayıları bağımsız veriyle doğrulanmıştır | G8 kapanış notu | TC-VAL-004 | Geliştirici hold-out (2020), bağımsız tekrar yok | Kısmi |
 | REQ-SCI-005 | Veri bütünlüğü: arşiv SHA-256, seri iç tutarlılığı (toplamlar, z kuralları) | `make verify-data`; `docs/API.md` series | TC-VAL-025, 027 | Betik ve SHA-256 doğrulaması (10095/10095 OK); otomatik test yok (CI'da yok) | Kısmi (elle geçti; CI'a alınmamış) |
@@ -101,8 +101,8 @@ Otomatik test sütunu kısaltmaları TEST_TASARIMI §0 ile aynıdır; test işle
 | Durum | Sayı |
 |-------|------|
 | Kapsandı | 26 |
-| Kısmi | 24 |
-| EKSİK | 8 |
+| Kısmi | 25 |
+| EKSİK | 7 |
 | Toplam REQ | 58 |
 
 ## 7. Boşluk özeti (risk sırasıyla)
@@ -111,7 +111,7 @@ Risk = etki × olasılık; etki, kullanıcıya yanlış sonuç gösterme veya se
 
 | Sıra | Boşluk | Risk nedeni | İlgili REQ / vaka | Önerilen eylem |
 |------|--------|-------------|--------------------|----------------|
-| 1 | **BUG-9 ve BUG-10 açık, ve hiçbir otomatik test bunları tanımıyor** (`/api/series` anomalisi Ω'suz, Terra-only aylara anomali; Yunanistan 2007-08 z 0,52) | Ürünün ana göstergesi (takvim anomalisi) 2013 sonrası her ayı "yüksek" gösteriyor; 600 yeşil test buna kördü | REQ-API-020, REQ-SCI-001, TC-API-220..223, TC-VAL-005, 020, 021, 024 | Önce belirtimi ve kabul testlerini yaz (TC-API-220..223), sonra düzeltme; `docs/API.md` serisi bölümüne geçici uyarı |
+| 1 | **ÇÖZÜLDÜ (2026-11-15, `49381eb`, `c27c3bc`): BUG-9 ve BUG-10 düzeltildi ve gerileme testleri yazıldı; eskiden hiçbir otomatik test bunları tanımıyordu** (`/api/series` anomalisi Ω'suz, Terra-only aylara anomali; Yunanistan 2007-08 z 0,52) | Ürünün ana göstergesi (takvim anomalisi) 2013 sonrası her ayı "yüksek" gösteriyor; 600 yeşil test buna kördü | REQ-API-020, REQ-SCI-001, TC-API-220..223, TC-VAL-005, 020, 021, 024 | Kalan: TC-API-222 ve 223, ve 138 bölgede yeniden ölçüm (paket yenilenince) |
 | 2 | **Bilimsel geçerlemenin yarısı yapılmadı**: FRP tabanlı süreklilik (`/api/calendar`), 2018 ve 2023 geçişleri, aralık kapsama oranı; VIIRS σ ölçülemedi (geçici 0,08) | Ürünün temel iddiası ("sensör geçişlerinden bağımsız seri") yalnız sayı tabanı için sınandı ve kaldı | REQ-SCI-001, 003, TC-VAL-022, 023, 040, 043 | `/api/calendar` çıktısıyla TC-VAL-022; VIIRS σ için yayımlanmış kaynak ya da farklı ölçüm yöntemi |
 | 3 | **BUG-8 açık**; yalnız `#[ignore]` testle sabit, uçtan uca gün sınırı vakası yok, `today` enjekte edilemiyor | Demo günlerce açık kalırsa en yeni veri sessizce (200 + uyarı) gelmez | REQ-FC-004, REQ-NFR-004, TC-ST-024, 025 | Enjekte edilebilir `today` (Görkem), TTL'li yenileme, ignore'un kaldırılması |
 | 4 | **Bayat paketli seri** (`schema_version` 2, kod 3): sunucu yeniden hesaplıyor, bazı istekler 504; bunu yakalayan test/CI adımı yok | Kullanıcıya görünen zaman aşımı; yapılandırma değişince tekrarlanır (R-14) | REQ-API-021, TC-API-224 | Paketi yeniden üret; paketin `schema_version` ve `config_hash` değerini koddakiyle karşılaştıran test ya da CI adımı |
