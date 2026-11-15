@@ -29,6 +29,7 @@
 | `quality.rs` | Tarihsel sensör anomalisi ve kesinti dönemleri için ay bazında `QualityFlag` etiketleri ve uyarı açıklamaları; süregelen (bitiş tarihsiz) bayraklar `is_open_ended()` ile yanıt `warnings`'inden hariç tutulur, hücre bayrağı olarak kalır |
 | `biome.rs` | Gömülü (`include_bytes!`) 0.25° MODIS IGBP biyom ızgarası (`data/landcover/biome_0p25.rle`, `PSBIOME1` RLE): `Biome`, `biome_at(lat, lon)`, `is_burnable`, `dominant_biome` ve doğrulamalı `BiomeGrid::decode`; çalışma anında dosya/I/O yok (K14 altyapısı) |
 | `pre_aqua.rs` | Terra-only dönem (2000-11..2002-06) için Remy & Kaiser (2014) uyarlaması kurtarma tahmini: `2002-07..2020-12` takvim-ayı Terra+Aqua/Terra oranı (havuz ≥ 400 Terra tespit olana dek ±1, ±2 ay, tüm aylara genişler; medyandan en uzak %10 ay çıkarılır), `CalendarCell.count_recovered*` (saf, bulut filtresi yok; K8 alanları `None` kalır) |
+| `overpass.rs` | Geçiş saati medyanları (serve-time, saf): UTC günlük saat + boylam/15 h = yerel güneş saati, platform × gündüz/gece grupları için 24 saatlik daire üzerinde medyan (`overpass_medians`, en az `MIN_OVERPASS_SAMPLES = 30`); `/api/points` `overpass` alanını besler, türetilmiş veriye ve `PipelineConfig`'e girmez |
 
 ## Teknik Kısıtlar
 

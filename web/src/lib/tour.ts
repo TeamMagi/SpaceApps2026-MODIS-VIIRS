@@ -1,6 +1,6 @@
 export const TOUR_STEP_MS = 15000;
 
-export type TourTarget = "toggle" | "chart" | "map" | "calendar" | "methods";
+export type TourTarget = "toggle" | "chart" | "map" | "calendar" | "methods" | "bands";
 
 export type TourStepId = "toggle" | "lens" | "case" | "validation";
 
@@ -15,7 +15,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   { id: "toggle", startSec: 0, targets: ["toggle", "chart"], route: "dashboard" },
   { id: "lens", startSec: 15, targets: ["map"], route: "dashboard" },
   { id: "case", startSec: 30, targets: ["chart", "calendar"], route: "dashboard" },
-  { id: "validation", startSec: 45, targets: ["methods"], route: "methods" },
+  { id: "validation", startSec: 45, targets: ["bands", "methods"], route: "methods" },
 ];
 
 /** Index of the step after `index`, or null once the last step is done. */

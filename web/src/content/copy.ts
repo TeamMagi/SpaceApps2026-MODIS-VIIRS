@@ -22,6 +22,7 @@ import { methodsPageCopyEn, methodsPageCopyTr } from "./copyMethods";
 import { tourCopyEn, tourCopyTr } from "./copyTour";
 import { fusionCopyEn, fusionCopyTr } from "./copyFusion";
 import { briefingCopyEn, briefingCopyTr } from "./copyBriefing";
+import { diagnosticsCopyEn, diagnosticsCopyTr } from "./copyDiagnostics";
 
 export const TR_REGION_NAMES: Readonly<Record<string, string>> = {
   Turkey: "Türkiye",
@@ -244,6 +245,34 @@ const enBase = {
   chartViewSwitchLabel: "Chart metric",
   chartTabDetections: "Detections",
   chartTabMeanFrp: "Mean FRP",
+  chartTabSensors: "Sensors",
+  sensorChartsLabel: "MODIS and VIIRS sensor comparison charts",
+  sensorSubSwitchLabel: "Sensor chart",
+  sensorSubMonthly: "Monthly",
+  sensorSubPairs: "FRP pairs",
+  sensorSubSources: "Sources",
+  sensorLegendModis: "MODIS",
+  sensorLegendViirs: "VIIRS",
+  sensorBarsTitle: "Raw detections by sensor · {year}",
+  sensorBarsLabel: "Monthly raw detections by sensor {year}",
+  sensorBarsHint: "Use the arrow keys to move between months.",
+  sensorBarsTooltip: "{month} · MODIS {modis} · VIIRS {viirs}",
+  sensorBarsNoData: "{month} · no data",
+  sensorPairsTitle: "Matched pairs · MODIS vs VIIRS FRP",
+  sensorPairsLabel: "Scatter plot of MODIS FRP against VIIRS FRP for matched pairs, logarithmic axes",
+  sensorPairsCaption: "x: mean FRP of the MODIS detections of a matched pixel. y: summed FRP of the VIIRS pixels matched to it (1 MODIS = N VIIRS). Log axes, MW.",
+  sensorPairsCount: "{count} matched pairs",
+  sensorPairsCountHeader: "Matched pairs",
+  sensorPairsMedian: "Median VIIRS/MODIS ratio {ratio}×",
+  sensorPairsMedianHeader: "Median VIIRS/MODIS ratio",
+  sensorPairsEmpty: "No matched MODIS+VIIRS pairs in the loaded points.",
+  sensorPairsReveal: "Switch to Harmonized to match MODIS and VIIRS detections and compare their FRP.",
+  sensorAxisModis: "MODIS FRP",
+  sensorAxisViirs: "VIIRS FRP",
+  sensorOneToOne: "1:1",
+  sensorTruncated: "The map loaded a sample of at most {limit} points; this chart uses that sample.",
+  sensorDonutRawTitle: "Raw detections by sensor",
+  sensorDonutRawNote: "Switch to Harmonized to see how many merge into matched records.",
   frpChartTitle: "Mean FRP per year · {first}–{last}",
   frpChartLabel: "Mean fire radiative power per year",
   frpLegendMean: "Mean FRP",
@@ -384,7 +413,7 @@ const enBase = {
   nrtTransactions: "{n} API calls",
 } as const;
 
-const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn, ...tourCopyEn, ...fusionCopyEn, ...briefingCopyEn } as const;
+const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn, ...tourCopyEn, ...fusionCopyEn, ...briefingCopyEn, ...diagnosticsCopyEn } as const;
 
 export type CopyKey = keyof typeof en;
 export type CopyDictionary = { readonly [K in CopyKey]: string };
@@ -577,6 +606,34 @@ const trBase = {
   chartViewSwitchLabel: "Grafik metriği",
   chartTabDetections: "Tespitler",
   chartTabMeanFrp: "Ortalama FRP",
+  chartTabSensors: "Sensörler",
+  sensorChartsLabel: "MODIS ve VIIRS sensör karşılaştırma grafikleri",
+  sensorSubSwitchLabel: "Sensör grafiği",
+  sensorSubMonthly: "Aylık",
+  sensorSubPairs: "FRP çiftleri",
+  sensorSubSources: "Kaynaklar",
+  sensorLegendModis: "MODIS",
+  sensorLegendViirs: "VIIRS",
+  sensorBarsTitle: "Sensöre göre ham tespitler · {year}",
+  sensorBarsLabel: "{year} sensöre göre aylık ham tespitler",
+  sensorBarsHint: "Aylar arasında gezinmek için ok tuşlarını kullan.",
+  sensorBarsTooltip: "{month} · MODIS {modis} · VIIRS {viirs}",
+  sensorBarsNoData: "{month} · veri yok",
+  sensorPairsTitle: "Eşleşen çiftler · MODIS ve VIIRS FRP",
+  sensorPairsLabel: "Eşleşen çiftlerde MODIS FRP'ye karşı VIIRS FRP serpilme grafiği, logaritmik eksenler",
+  sensorPairsCaption: "x: eşleşen pikselin MODIS tespitlerinin ortalama FRP'si. y: ona eşleşen VIIRS piksellerinin toplam FRP'si (1 MODIS = N VIIRS). Logaritmik eksenler, MW.",
+  sensorPairsCount: "{count} eşleşen çift",
+  sensorPairsCountHeader: "Eşleşen çift",
+  sensorPairsMedian: "Medyan VIIRS/MODIS oranı {ratio}×",
+  sensorPairsMedianHeader: "Medyan VIIRS/MODIS oranı",
+  sensorPairsEmpty: "Yüklenen noktalarda eşleşen MODIS+VIIRS çifti yok.",
+  sensorPairsReveal: "MODIS ve VIIRS tespitlerini eşleştirip FRP'lerini karşılaştırmak için Harmonize görünümüne geç.",
+  sensorAxisModis: "MODIS FRP",
+  sensorAxisViirs: "VIIRS FRP",
+  sensorOneToOne: "1:1",
+  sensorTruncated: "Harita en fazla {limit} noktalık bir örnek yükledi; bu grafik o örneği kullanır.",
+  sensorDonutRawTitle: "Sensöre göre ham tespitler",
+  sensorDonutRawNote: "Kaç tanesinin eşleşen kayıtlarda birleştiğini görmek için Harmonize görünümüne geç.",
   frpChartTitle: "Yıllık ortalama FRP · {first}–{last}",
   frpChartLabel: "Yıllık ortalama yangın ışınım gücü",
   frpLegendMean: "Ortalama FRP",
@@ -712,7 +769,7 @@ const trBase = {
   nrtTransactions: "{n} API çağrısı",
 } as const;
 
-const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr, ...tourCopyTr, ...fusionCopyTr, ...briefingCopyTr };
+const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr, ...tourCopyTr, ...fusionCopyTr, ...briefingCopyTr, ...diagnosticsCopyTr };
 
 export const copy: Readonly<Record<Lang, CopyDictionary>> = { en, tr };
 

@@ -15,6 +15,7 @@ import {
   type ConfidenceFilterInfo,
   type CalendarCell,
   type CliffSummary,
+  type ConformalBand,
   type CompareResponse,
   type EffortInfo,
   type FusionComparison,
@@ -22,6 +23,7 @@ import {
   type HarmonizedHotspot,
   type HarmonizedPoint,
   type HarmonizeResponse,
+  type OverpassMedian,
   type PipelineConfig,
   type PipelineOverrides,
   type MinConfidence,
@@ -260,6 +262,7 @@ interface WirePointsResponse {
   config_overridden?: boolean;
   filters?: WireConfidenceFilter | null;
   tropical_swath_gap?: unknown;
+  overpass?: unknown;
   fusion_model?: string;
   fusion_comparison?: WireFusionComparison | null;
 }
@@ -294,6 +297,7 @@ interface WireCalendarCell {
   count_recovered?: number;
   count_recovered_lower?: number;
   count_recovered_upper?: number;
+  conformal?: unknown;
 }
 
 interface WireEffortFactor {
@@ -543,6 +547,7 @@ export interface PointsResponse {
   configOverridden?: boolean;
   filters: ConfidenceFilterInfo;
   tropicalSwathGap: TropicalSwathGapInfo | null;
+  overpass: readonly OverpassMedian[] | null;
   fusionModel?: FusionModel;
   fusionComparison?: FusionComparison | null;
 }
@@ -753,7 +758,70 @@ function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
     ...(w.count_recovered !== undefined && { countRecovered: w.count_recovered }),
     ...(w.count_recovered_lower !== undefined && { countRecoveredLower: w.count_recovered_lower }),
     ...(w.count_recovered_upper !== undefined && { countRecoveredUpper: w.count_recovered_upper }),
+    ...conformalField(w.conformal),
   };
+}
+
+function conformalField(w: unknown): { conformal: ConformalBand } | Record<string, never> {
+  const conformal = adaptConformalBand(w);
+  return conformal ? { conformal } : {};
+}
+
+/** Absent when the server has no calibrated table; a malformed band is dropped rather than shown half-read. */
+export function adaptConformalBand(w: unknown): ConformalBand | null {
+  if (!isRecord(w)) return null;
+  const { p68_lower, p68_upper, p90_lower, p90_upper, era, bin, n_cal, extrapolated } = w;
+  if (
+    !finiteNumber(p68_lower) ||
+    !finiteNumber(p68_upper) ||
+    !finiteNumber(p90_lower) ||
+    !finiteNumber(p90_upper) ||
+    (era !== "pre_viirs" && era !== "viirs") ||
+    !finiteNumber(bin) ||
+    !finiteNumber(n_cal)
+  ) {
+    return null;
+  }
+  return {
+    p68Lower: p68_lower,
+    p68Upper: p68_upper,
+    p90Lower: p90_lower,
+    p90Upper: p90_upper,
+    era,
+    bin,
+    nCal: n_cal,
+    extrapolated: extrapolated === true,
+  };
+}
+
+/**
+ * `null` means the server sent no `overpass` field (older build), which is different from an empty
+ * list (the period had no group with enough detections). Malformed entries are skipped.
+ */
+export function adaptOverpass(w: unknown): readonly OverpassMedian[] | null {
+  if (!Array.isArray(w)) return null;
+  const out: OverpassMedian[] = [];
+  for (const item of w) {
+    if (!isRecord(item)) continue;
+    const { platform, daynight, median_local_solar_time, median_minutes, n } = item;
+    if (
+      typeof platform !== "string" ||
+      (daynight !== "Day" && daynight !== "Night") ||
+      typeof median_local_solar_time !== "string" ||
+      !finiteNumber(median_minutes) ||
+      !finiteNumber(n)
+    ) {
+      continue;
+    }
+    out.push({
+      platform,
+      daynight: daynight === "Night" ? DayNight.Night : DayNight.Day,
+      medianLocalSolarTime: median_local_solar_time,
+      medianMinutes: median_minutes,
+      n,
+    });
+  }
+  return out;
 }
 
 function adaptEffortInfo(w: WireEffortInfo): EffortInfo {
@@ -1166,6 +1234,7 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       configOverridden: Boolean(wire.config_overridden),
       filters: adaptFilters(wire.filters),
       tropicalSwathGap: adaptTropicalSwathGap(wire.tropical_swath_gap),
+      overpass: adaptOverpass(wire.overpass),
       fusionModel: adaptFusionModel(wire.fusion_model),
       fusionComparison: adaptFusionComparison(wire.fusion_comparison),
     };

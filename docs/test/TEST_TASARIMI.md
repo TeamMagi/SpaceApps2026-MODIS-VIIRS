@@ -5,7 +5,7 @@
 | Belge kimliği | PYRO-TT-001 (IEEE 829 test tasarım/vaka belirtimi) |
 | Üst belge | [TEST_PLANI.md](TEST_PLANI.md) |
 | İzlenebilirlik | [IZLENEBILIRLIK.md](IZLENEBILIRLIK.md) |
-| Durum tarihi | 2026-11-15 (birleşmiş `main`; Rust 600 geçti, 0 başarısız, 2 yoksayıldı; web 32 geçti) |
+| Durum tarihi | 2026-11-15 (birleşmiş `main`; Rust 728 geçti, 0 başarısız, 2 yoksayıldı; web 59 geçti) |
 | Teknikler | EP (zayıf), 3 değerli BVA, karar tablosu, durum geçişi (0-geçiş ve 1-geçiş), beyaz kutu kapsamı, geçerleme (§9) |
 
 Bu belge test koşullarını ve vakalarını tasarlar. Her satırın son sütunu o koşulu gerçekten sınayan mevcut otomatik testi adlandırır. Böyle bir test yoksa `EKSİK` yazılır. `EKSİK` bir hata değil, test edilmemiş bir koşuldur; "var olan testler geçiyor" cümlesi bu satırlar hakkında hiçbir şey söylemez.
@@ -451,7 +451,7 @@ Durumlar (yanıtı veren kaynak): `computed`, `memory`, `disk`, `bundled`. Önce
 
 ## 6. Frontend (REQ-WEB-001..003)
 
-Çerçeve: `node:test` ile `esbuild` paketli betikler (`npm test`, 18 dosya, 32 test geçti). Bileşen (React) testi, tarayıcı testi ve `web/src/services/api.ts` sözleşme dönüştürme testi yoktur.
+Çerçeve: `node:test` ile `esbuild` paketli betikler (`npm test`, 35 dosya, 59 test geçti). Bileşen (React) testi, tarayıcı testi ve `web/src/services/api.ts` sözleşme dönüştürme testi yoktur.
 
 | TC | Koşul | Otomatik test |
 |----|-------|---------------|
@@ -506,7 +506,7 @@ Otomatik testler "kod belirtime uyuyor" der; bu bölüm "çıktı gerçek dünya
 | TC-VAL-002 | Türkiye 2021-08 | z 1,44, sıra 5 (ham z 2,11, sıra 1; yıl sırası 7/26) | görünür | **Kaldı** (zayıf) |
 | TC-VAL-003 | Antalya-Muğla bbox 2021 (`/api/calendar`) | z 4,88, 284 ayın 1.'si (BUG-6 gözleminden; bu turda yeniden koşulmadı) | görünür | Geçti (önceki ölçüm) |
 | TC-VAL-004 | Yunanistan 2021-08 | z 3,59, sıra 1/1 | görünür | Geçti |
-| TC-VAL-005 | **Yunanistan 2007-08** | z 0,52, sıra 4/4; yalnız-MODIS z **3,63** | görünür | **Kaldı** (BUG-9) |
+| TC-VAL-005 | **Yunanistan 2007-08** | z 0,52, sıra 4/4; yalnız-MODIS z **3,63** | görünür | **Geçti** (BUG-9 düzeltildi, `49381eb`): harmonize z 3,96 (yeniden ölçüldü) |
 | TC-VAL-006 | Yunanistan 2018-07 (Mati; küçük alan) | z -0,23 | görünmez (negatif kontrol) | Geçti |
 | TC-VAL-007 | Avustralya 2019-12 ve 2020-01 | z 4,05 ve 3,66, sıra 1 | görünür | Geçti |
 | TC-VAL-008 | Kanada 2023-05..09 | z 4,00; 4,16; 2,97; 2,79; 4,71, hepsi sıra 1; yıl 1/26 | görünür | Geçti |
@@ -525,10 +525,10 @@ Otomatik testler "kod belirtime uyuyor" der; bu bölüm "çıktı gerçek dünya
 | TC | Kontrol | Ölçülen | Sonuç |
 |----|---------|---------|-------|
 | TC-VAL-020 | 2012 MODIS→VIIRS sayı sürekliliği: yıllık `harmonized`, 2009-11 ve 2013-15 | medyan oran 4,68× (ham 5,25×); 93/96 bölgede > 2×; `cliff` medyanı +%335 (98 bölge). Kısmen fiziksel (VIIRS 375 m duyarlılığı); sayıları normalize etmeyen bir seri için tasarım sınırı | **Kaldı** |
-| TC-VAL-021 | Aynı geçişte seri anomalisi kayması | ortalama z 2003-11: -0,66, 2013+: +0,52; bölge başına medyan kayma **+1,45σ**, 138/138 bölgede pozitif (ölçüt: < 0,5σ, ≥ %95 bölge) | **Kaldı** (BUG-9) |
+| TC-VAL-021 | Aynı geçişte seri anomalisi kayması | ortalama z 2003-11: -0,66, 2013+: +0,52; bölge başına medyan kayma **+1,45σ**, 138/138 bölgede pozitif (ölçüt: < 0,5σ, ≥ %95 bölge) | **Geçti** (BUG-9 düzeltildi): 8 bölgede medyan kayma −0,13σ (aralık −0,48..+0,41), 8/8 bölge ölçüt içinde; 138 bölgede yeniden ölçüm paket yenilenince |
 | TC-VAL-022 | `count_normalized`, `mean_frp`, `frp_per_detection_eq`, `total_frp` sürekliliği (2012) | seri dosyalarında alan yok | Çıkarımsız; `/api/calendar` ile yapılmadı |
 | TC-VAL-023 | 2018 (NOAA-20) ve 2023 (NOAA-21) geçişleri | arşiv NOAA-21 içermez; 2023 hiç ölçülmedi (G3 notu) | Yapılmadı |
-| TC-VAL-024 | Terra-only aylarda (2000-11..2002-06) anomali `null` | 3884 satırın 3818'inde anomali var | **Kaldı** (BUG-10) |
+| TC-VAL-024 | Terra-only aylarda (2000-11..2002-06) anomali `null` | 3884 satırın 3818'inde anomali vardı | **Geçti** (BUG-10 düzeltildi, `c27c3bc`): 8 bölgede 160 Terra-only ayın 0'ında anomali var |
 | TC-VAL-025 | Bütünlük: negatif sayı, `raw_total = modis + viirs`, ay→yıl toplamı, `harmonized ≤ raw`, yıllık kaynak toplamı, NaN ve \|z\|>5, z `null` kuralı | 5664 grupta ihlal 0 | Geçti |
 | TC-VAL-026 | Mevsimsellik makul mü (22 bölge; ör. Yunanistan 8-10-7, Avustralya 10-11-5) | tümü makul | Geçti (nitel) |
 | TC-VAL-027 | Arşiv bütünlüğü: SHA-256 doğrulama, 238 ülke, 2000-2025 | 10095/10095 dosya tamam (ayrı ölçüm) | Geçti |
@@ -547,14 +547,14 @@ Otomatik testler "kod belirtime uyuyor" der; bu bölüm "çıktı gerçek dünya
 
 ### 9.4 Bulgu: 600 yeşil test BUG-9 ve BUG-10'u yakalamadı
 
-Bu iki hata geçerleme sırasında bulundu; hiçbir otomatik test kırmadı. Neden: `/api/series` yolundaki `anomalies()` işlevi (`crates/server/src/archive_api.rs`) `count_normalized: Some(count)` ve `effort_omega: None` ile hücre kurar. Mevcut testler bu işlevin iç tutarlılığını sınar (popülasyon σ, ≥ 3 değer, toplam eşitlikleri) ama çıktının `/api/calendar` ile aynı yönde olduğunu ya da sensör geçişinden bağımsız olduğunu sınamaz. "Anomali sensör değişiminden bağımsız olmalı" belirtimi hiçbir testte yazılı değildi. Bu, "hata yok" yanılgısının somut örneğidir (TEST_PLANI §2).
+Bu iki hata geçerleme sırasında bulundu; hiçbir otomatik test kırmadı. Neden: `/api/series` yolundaki `anomalies()` işlevi (`crates/server/src/archive_api.rs`) `count_normalized: Some(count)` ve `effort_omega: None` ile hücre kurar. Mevcut testler bu işlevin iç tutarlılığını sınar (popülasyon σ, ≥ 3 değer, toplam eşitlikleri) ama çıktının `/api/calendar` ile aynı yönde olduğunu ya da sensör geçişinden bağımsız olduğunu sınamaz. "Anomali sensör değişiminden bağımsız olmalı" belirtimi hiçbir testte yazılı değildi. Bu, "hata yok" yanılgısının somut örneğidir (TEST_PLANI §2). Aynı gün düzeltildi: BUG-10 `c27c3bc`, BUG-9 `49381eb` (çekirdekte `EffortMonths`, sunucuda `effort_anomalies`); ham anomali (`anomaly_raw`) bilerek düzeltilmedi, sensör geçişi sıçramasını göstermeye devam eder.
 
-Önerilen otomatik gerileme vakaları (düzeltme sonrası yazılır; bugün başarısız olmaları beklenir):
+Otomatik gerileme vakaları (TC-API-220 ve 221 düzeltmelerle birlikte yazıldı; 222–224 henüz yok):
 
 | TC | Girdi | Beklenen | Otomatik test |
 |----|-------|----------|---------------|
-| TC-API-220 | İki dönemli sentetik seri (2013+ sayıları 4-5× büyük, olay yok) üzerinde `series` anomalisi | 2013+ ortalama z − 2003-11 ortalama z < 0,5σ | EKSİK (BUG-9, açık) |
-| TC-API-221 | `series` aylarında 2002-07 öncesi Terra-only ay | `anomaly` `null`, baz çizgisine girmez (`/api/calendar` kuralı) | EKSİK (BUG-10, açık) |
+| TC-API-220 | İki dönemli sentetik seri (2013+ sayıları 4-5× büyük, olay yok) üzerinde `series` anomalisi | 2013+ ortalama z − 2003-11 ortalama z < 0,5σ | `srv::archive_api::series_harmonized_anomaly_is_effort_normalised_and_raw_anomaly_stays_raw`, `series_months_carry_effort_fields_and_skip_terra_only_months` (BUG-9 düzeltildi) |
+| TC-API-221 | `series` aylarında 2002-07 öncesi Terra-only ay | `anomaly` `null`, baz çizgisine girmez (`/api/calendar` kuralı) | `srv::archive_api::series_anomalies_skip_terra_only_months_when_series_spans_terra_aqua`, `series_anomaly_baseline_ignores_terra_only_month` (BUG-10 düzeltildi) |
 | TC-API-222 | Aynı olay için `series` ve `/api/calendar` z'si aynı yönde, fark < 0,5 (ör. Türkiye 2021-07/08) | tutarlılık | EKSİK |
 | TC-API-223 | Yunanistan 2007-08 benzeri sentetik MODIS-dönemi olayı, VIIRS dönemi artışıyla birlikte | z ≥ 2,0 | EKSİK (TC-VAL-005 otomasyonu) |
 | TC-API-224 | Paketli seri (`data/derived/series/*.meta.json`) `schema_version` ve `config_hash` değerleri koddaki `DERIVED_SCHEMA_VERSION` ve etkin yapılandırma özetiyle eşit | bayat paket CI'da yakalanır | EKSİK. Bugün **başarısız olur**: paket `schema_version: 2`, kod `3`; sunucu paketi yok sayıp yeniden hesaplıyor ve bazı istekler 504 alabiliyor |
@@ -566,10 +566,10 @@ Bu iki hata geçerleme sırasında bulundu; hiçbir otomatik test kırmadı. Ned
 | Ölçü | Sayı |
 |------|------|
 | Tasarlanan vaka (benzersiz `TC-` kimliği) | 276 |
-| Mevcut otomatik testle tam kapsanan | 217 |
+| Mevcut otomatik testle tam kapsanan | 219 |
 | Kısmi (test var, ama sınır, dal veya üstbilgi eksik; ya da test `#[ignore]`) | 11 |
-| `EKSİK` (otomatik test yok) | 48 |
+| `EKSİK` (otomatik test yok) | 46 |
 
-**Geçerleme vakaları** (`TC-VAL`, otomatik değil): 30 vaka. Geçti 13, Kaldı 8 (TC-VAL-002, 005, 011, 013, 015, 020, 021, 024), Çıkarımsız 1, Yapılmadı/ölçülemedi/bekliyor 4, diğer (beklenen sapma, yayımlanmış değer, kısmi, referans kayıtlı) 4.
+**Geçerleme vakaları** (`TC-VAL`, otomatik değil): 30 vaka. Geçti 16, Kaldı 5 (TC-VAL-002, 011, 013, 015, 020), Çıkarımsız 1, Yapılmadı/ölçülemedi/bekliyor 4, diğer (beklenen sapma, yayımlanmış değer, kısmi, referans kayıtlı) 4.
 
-Sayım yöntemi: bu belgede `TC-` kimliklerini toplayıp, kimliğin tablo satırında `EKSİK` veya `Kısmi` geçip geçmediğine bakmak (kimlik başka satırın metninde anılıyorsa o satır sayılmaz). "Tam kapsanan", testin geçtiği anlamına gelmez; yalnızca koşulu sınayan bir test olduğunu söyler (son koşu: Rust 600 geçti, 2 yoksayıldı; web 32 geçti). Sınır değer vakalarında "kapsanan" yalnız belirtilen değer içindir; örneğin filo penceresi için 45 ve 70 dk denendi, tam 60 dk denenmedi (TC-CORE-014). Ortalama kapsam yüksek görünür (%94,7 satır) ama kapsanan vakaların bir kısmı BUG-9 ve BUG-10 gibi belirtim hatalarına kördür (§9.4).
+Sayım yöntemi: bu belgede `TC-` kimliklerini toplayıp, kimliğin tablo satırında `EKSİK` veya `Kısmi` geçip geçmediğine bakmak (kimlik başka satırın metninde anılıyorsa o satır sayılmaz). "Tam kapsanan", testin geçtiği anlamına gelmez; yalnızca koşulu sınayan bir test olduğunu söyler (son koşu: Rust 728 geçti, 2 yoksayıldı; web 59 geçti). Sınır değer vakalarında "kapsanan" yalnız belirtilen değer içindir; örneğin filo penceresi için 45 ve 70 dk denendi, tam 60 dk denenmedi (TC-CORE-014). Ortalama kapsam yüksek görünür (%95,5 satır) ama kapsanan vakaların bir kısmı BUG-9 ve BUG-10 gibi belirtim hatalarına kördür (§9.4).

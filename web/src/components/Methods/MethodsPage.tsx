@@ -140,6 +140,11 @@ export default function MethodsPage({ section }: { section: MethodsSection | nul
           </h2>
           <p className={styles.intro}>{t("disclaimer")}</p>
           <p className={styles.intro}>{t("methodsDisclaimerBody")}</p>
+          <div className={styles.bands} data-tour="bands">
+            <h3 className={styles.subheading}>{t("methodsBandsTitle")}</h3>
+            <p className={styles.intro}>{t("methodsBandsConformal")}</p>
+            <p className={styles.intro}>{t("methodsBandsDrift")}</p>
+          </div>
         </section>
       </main>
     </div>

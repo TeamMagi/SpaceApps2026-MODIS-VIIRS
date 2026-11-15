@@ -105,6 +105,10 @@ export interface AppState {
   calendarYear: number | null;
   yearPlaying: boolean;
   openDrawer: DrawerId | null;
+  /** Month shown by the cell diagnostic drawer (`openDrawer === "cell"`); independent of the month filter. */
+  diagnosticMonth: MonthRef | null;
+  /** The Orbital Drift strip was dismissed; session only, never persisted. */
+  driftDismissed: boolean;
   presentation: boolean;
   nrtDays: number;
   serverConfig: PipelineConfig | null;
@@ -133,6 +137,9 @@ export interface AppState {
   setYearPlaying: (playing: boolean) => void;
   stopYearPlayback: () => void;
   showDrawer: (id: DrawerId) => void;
+  /** Opens the cell diagnostic drawer for a month without changing the month filter. */
+  openCellDiagnostic: (month: MonthRef) => void;
+  dismissDrift: () => void;
   closeDrawer: () => void;
   toggleDrawer: (id: DrawerId) => void;
   setPresentation: (on: boolean) => void;
@@ -235,6 +242,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   calendarYear: initialUrl.month?.year ?? null,
   yearPlaying: false,
   openDrawer: null,
+  diagnosticMonth: null,
+  driftDismissed: false,
   presentation: false,
   nrtDays: 2,
   serverConfig: null,
@@ -279,6 +288,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (get().yearPlaying) set({ yearPlaying: false });
   },
   showDrawer: (id) => set({ openDrawer: id }),
+  openCellDiagnostic: (month) => set({ diagnosticMonth: month, openDrawer: "cell" }),
+  dismissDrift: () => set({ driftDismissed: true }),
   closeDrawer: () => set({ openDrawer: null }),
   toggleDrawer: (id) => set((s) => ({ openDrawer: s.openDrawer === id ? null : id })),
   setPresentation: (presentation) => set({ presentation }),

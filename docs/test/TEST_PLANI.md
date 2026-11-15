@@ -19,7 +19,7 @@ PyroSync, NASA FIRMS MODIS ve VIIRS yangın tespitlerini tek bir yanma takvimine
 
 **Amaç.** (1) API sözleşmesinin ve harmonizasyon kurallarının otomatik testlerle gerileme açısından korunması; (2) test edilmemiş alanların açıkça listelenmesi; (3) bilimsel geçerlemenin planlanması.
 
-**"Hata yok" yanılgısı (somut örnek).** Geçen testler hatasızlığı kanıtlamaz. 2026-11-15 itibarıyla `cargo test --workspace --locked` 600 test geçiriyor (0 başarısız, 2 yoksayılan), web 32 test geçiriyor, clippy temiz, satır kapsamı %94,7. Buna rağmen geçerleme çalışması iki ciddi hata buldu ve bunların hiçbirini otomatik test yakalamadı: **BUG-9** (`/api/series` anomalisi Ω ile normalize edilmiyor; 2012 MODIS→VIIRS geçişi 138 bölgenin 138'inde ortalama z'yi +1,45σ kaydırıyor ve Ağustos 2007 Yunanistan yangını z 0,52 ile kayboluyor, oysa yalnız-MODIS z'si 3,63) ve **BUG-10** (Terra-only aylar anomali alıyor: 3884 satırın 3818'i). Testler `anomalies()` işlevinin iç tutarlılığını sınıyordu; "anomali sensör geçişinden bağımsız olmalı" belirtimi hiçbir testte yoktu. Kapsam yüksekti çünkü kod çalıştırılıyordu, doğru olup olmadığı sorulmuyordu. Bu belge ayrıca API'nin arşiv uç noktalarında HTTP düzeyinde girdi doğrulamasının neredeyse hiç sınanmadığını ve BUG-8 gibi zamana bağlı bir hatanın yalnız bir `#[ignore]` testle sabitlendiğini kaydeder; hepsi [IZLENEBILIRLIK.md](IZLENEBILIRLIK.md) sonunda risk sırasıyla listelidir. Ayrıntı: [TEST_TASARIMI.md](TEST_TASARIMI.md) §9.4.
+**"Hata yok" yanılgısı (somut örnek).** Geçen testler hatasızlığı kanıtlamaz. Geçerleme çalışmasının yapıldığı anda (2026-11-15) `cargo test --workspace --locked` 600 test geçiriyordu (0 başarısız, 2 yoksayılan), web 32 test geçiyordu, clippy temizdi, satır kapsamı %94,7'ydi. Buna rağmen geçerleme çalışması iki ciddi hata buldu ve bunların hiçbirini otomatik test yakalamadı: **BUG-9** (`/api/series` anomalisi Ω ile normalize edilmiyor; 2012 MODIS→VIIRS geçişi 138 bölgenin 138'inde ortalama z'yi +1,45σ kaydırıyor ve Ağustos 2007 Yunanistan yangını z 0,52 ile kayboluyor, oysa yalnız-MODIS z'si 3,63) ve **BUG-10** (Terra-only aylar anomali alıyor: 3884 satırın 3818'i). Testler `anomalies()` işlevinin iç tutarlılığını sınıyordu; "anomali sensör geçişinden bağımsız olmalı" belirtimi hiçbir testte yoktu. Kapsam yüksekti çünkü kod çalıştırılıyordu, doğru olup olmadığı sorulmuyordu. Her iki hata aynı gün düzeltildi (BUG-10: `c27c3bc`, BUG-9: `49381eb`) ve belirtimi yazan gerileme testleri eklendi; `49381eb` itibarıyla 728 Rust testi, 59 web testi ve %95,5 satır kapsamı var. Bu belge ayrıca API'nin arşiv uç noktalarında HTTP düzeyinde girdi doğrulamasının neredeyse hiç sınanmadığını ve BUG-8 gibi zamana bağlı bir hatanın yalnız bir `#[ignore]` testle sabitlendiğini kaydeder; hepsi [IZLENEBILIRLIK.md](IZLENEBILIRLIK.md) sonunda risk sırasıyla listelidir. Ayrıntı: [TEST_TASARIMI.md](TEST_TASARIMI.md) §9.4.
 
 ## 3. Test öğeleri
 
@@ -72,12 +72,12 @@ PyroSync, NASA FIRMS MODIS ve VIIRS yangın tespitlerini tek bir yanma takvimine
 
 | Seviye | Ne sınanır | Nasıl | Mevcut durum (2026-11-15) |
 |--------|------------|-------|---------------------------|
-| Birim | `core` işlevleri; `firms-client` ayrıştırma/limiter/önbellek; `server` doğrulama ve önbellek yardımcıları; `web/src/lib` | `cargo test`, `node --test` | core 273 (1 yoksayılan), firms-client 140 (1 yoksayılan: BUG-8) + 9 (`archive_seed` ikilisi), server 178; web 32 |
+| Birim | `core` işlevleri; `firms-client` ayrıştırma/limiter/önbellek; `server` doğrulama ve önbellek yardımcıları; `web/src/lib` | `cargo test`, `node --test` | core 360 (1 yoksayılan), firms-client 143 (1 yoksayılan: BUG-8) + 9 (`archive_seed` ikilisi), server 211; web 59 |
 | Entegrasyon | `server` yönlendirici + gerçek `FirmsClient` + wiremock; çevrimdışı arşiv ile `calendar`; `sensitivity` | `crates/server/src/integration_tests.rs` (rstest tabloları dahil) | Var |
 | Sistem | Çalışan sunucu + arayüz, uçtan uca | Elle `curl` (S3 doğrulaması) | Otomatik yok |
 | Kabul | Jüri senaryosu, Türkiye/Akdeniz vaka çalışması (S7) | Elle | Planlandı, §11 |
 
-Test piramidi (Hafta 2 §4.3) gözetilir: taban geniş (birim ≈ 600 Rust testinin büyük çoğunluğu), orta dar (entegrasyon: wiremock ve rstest tabloları), tepe boş. Tepenin boşluğu bilinçli bir eksiklik olarak kayıtlıdır: "ters piramit" riski yoktur ama E2E güvencesi de yoktur.
+Test piramidi (Hafta 2 §4.3) gözetilir: taban geniş (birim ≈ 728 Rust testinin büyük çoğunluğu), orta dar (entegrasyon: wiremock ve rstest tabloları), tepe boş. Tepenin boşluğu bilinçli bir eksiklik olarak kayıtlıdır: "ters piramit" riski yoktur ama E2E güvencesi de yoktur.
 
 ### 6.2 Test türleri
 
@@ -141,17 +141,17 @@ Vaka sonuç durumları (Hafta 2 Tablo 6): BAŞARILI, BAŞARISIZ, ENGELLENDİ, AT
 
 | # | Ölçüt | Mevcut durum (2026-11-15) |
 |---|-------|---------------------------|
-| C1 | `cargo test --workspace --locked` tümü geçiyor | 600 geçti, 0 başarısız, 2 yoksayıldı (core 273, firms-client 140 + 9, server 178) |
+| C1 | `cargo test --workspace --locked` tümü geçiyor | 728 geçti, 0 başarısız, 2 yoksayıldı (core 360, firms-client 143 + 9 + 5, server 211) |
 | C2 | `cargo clippy --workspace --all-targets -- -D warnings` temiz | Temiz |
-| C3 | **Satır kapsamı ≥ %90** (CI kapısı: `cargo llvm-cov --fail-under-lines 90`; S5'te %80'den yükseltildi) | %94,7 (bölge %95,3, fonksiyon %94,5) |
-| C4 | Açık Kritik hata yok; açık Yüksek hata için yazılı karar var | Açık Yüksek: BUG-8, BUG-9 (karar bekliyor) |
+| C3 | **Satır kapsamı ≥ %90** (CI kapısı: `cargo llvm-cov --fail-under-lines 90`; S5'te %80'den yükseltildi) | %95,5 (bölge %95,9, fonksiyon %95,3) |
+| C4 | Açık Kritik hata yok; açık Yüksek hata için yazılı karar var | Açık Yüksek: BUG-8 (BUG-9 düzeltildi, `49381eb`) |
 | C5 | `web`: `npm ci`, `typecheck`, `test`, `build` geçiyor | `npm test` 32 geçti; CI'da tanımlı |
 | C6 | Her `REQ` en az bir vaka ile izlenebilir; `EKSİK` satırları risk sırasıyla bildirilmiş | [IZLENEBILIRLIK.md](IZLENEBILIRLIK.md) |
 | C7 | Sürüm notunda bilinen sınırlamalar ve geçerleme durumu belirtilmiş | §11 tamamlanana dek "geçerleme yapılmadı" yazılır |
 
 CI (`.github/workflows/ci.yml`, işler `rust`, `coverage`, `web`; Rust araç zinciri 1.100'e sabit, iş zaman aşımları var, kapsam kapısı %90) tanımlıdır. **GitHub'da yeşil çalıştığı doğrulanmadı** (depo özel; Actions sonucuna erişilemedi). C1-C5 değerleri Docker dev imajında yerel ölçümdür, CI kanıtı değildir (S5 açık).
 
-**Kapsam eşiği hakkında not.** Ders notları (Hafta 6) tipik hedef olarak %80 **dal** kapsamını verir. Dal kapsamı ölçülemediği için kapı satır kapsamıdır. Satır kapsamı dalları garanti etmez (SC en zayıf ölçüt, SC ⊆ BC) ve ortalama zayıf dosyaları gizler. 2026-11-15 öncesi ölçümde en düşük dosyalar şunlardı (firms-client'a 6400ff4 ile 70 test eklendi; dosya bazlı değerler **yeniden ölçülmedi**, genel değer %94,7):
+**Kapsam eşiği hakkında not.** Ders notları (Hafta 6) tipik hedef olarak %80 **dal** kapsamını verir. Dal kapsamı ölçülemediği için kapı satır kapsamıdır. Satır kapsamı dalları garanti etmez (SC en zayıf ölçüt, SC ⊆ BC) ve ortalama zayıf dosyaları gizler. 2026-11-15 öncesi ölçümde en düşük dosyalar şunlardı (firms-client'a 6400ff4 ile 70 test eklendi; dosya bazlı değerler **yeniden ölçülmedi**, genel değer %95,5):
 
 | Dosya | Satır kapsamı |
 |-------|---------------|
@@ -185,10 +185,10 @@ Otomatik testler "kod belirtime uyuyor" der. Geçerleme "çıktı gerçek dünya
 | Konu | Vakalar | Sonuç özeti | Durum |
 |------|---------|-------------|-------|
 | Bilinen olaylar (Kanada 2023, Portekiz 2017, Avustralya 2019-20, ABD 2020, Türkiye 2021, Rusya 2021, Bolivya 2024 ...) | TC-VAL-001..015 | 15 vakanın 10'u geçti (1'i negatif kontrol); 5'i kaldı: Yunanistan 2007-08 (z 0,52; yalnız-MODIS z 3,63), Türkiye 2021-08 (z 1,44), ABD 2020-08, Brezilya 2019/2020, Bolivya 2019 | Tamamlandı (seri yolu) |
-| 2012 MODIS→VIIRS sürekliliği (sayılar, anomali kayması) | TC-VAL-020, 021 | **Kaldı**: medyan 4,68× sıçrama; anomali kayması +1,45σ, 138/138 bölge (BUG-9) | Tamamlandı; açık hata |
+| 2012 MODIS→VIIRS sürekliliği (sayılar, anomali kayması) | TC-VAL-020, 021 | Karışık: yıllık sayı sıçraması sürüyor (medyan 4,68×; yıllık `harmonized` toplamları normalize edilmiyor, tasarım sınırı). Anomali kayması **düzeldi**: 8 bölgede medyan −0,13σ (önce +1,45σ, 138 bölge; BUG-9, `49381eb`) | Tamamlandı; 138 bölgede yeniden ölçüm paket yenilenince |
 | 2012 sürekliliği FRP tabanlı alanlar (`frp_per_detection_eq`, `mean_frp`, `total_frp`, `count_normalized`) | TC-VAL-022 | Seri dosyalarında yok; `/api/calendar` ile ölçülmeli | **Yapılmadı** |
 | 2018 ve 2023 geçişleri | TC-VAL-023 | 2023 hiç ölçülmedi (arşivde NOAA-21 yok) | **Yapılmadı** |
-| Terra-only dönem anomali kuralı | TC-VAL-024 | **Kaldı**: 3818/3884 satır (BUG-10) | Tamamlandı; açık hata |
+| Terra-only dönem anomali kuralı | TC-VAL-024 | **Geçti** (BUG-10 düzeltildi, `c27c3bc`): 8 bölgede 2002-07 öncesi 160 ayın 0'ında anomali var (önce 3818/3884 satır) | Tamamlandı |
 | Bütünlük, mevsimsellik, arşiv SHA-256 (10095/10095) | TC-VAL-025..028 | Geçti | Tamamlandı |
 | Model parametreleri: MODIS σ 0,266 (yayımlanmış), VIIRS σ 0,08 (**geçici varsayım**, S-NPP / NOAA-20 arasında ≤ 5 dk içinde 0 eşzamanlı çift), `k_c` hold-out, aralık kapsama oranı | TC-VAL-040..043 | VIIRS σ ölçülemedi; kapsama oranı yapılmadı | Kısmi |
 | İç doğrulama paketi (G12: placebo, LOYO, model-baseline kapısı) | TC-VAL-044 | Referans ölçüm kayıtlı; bu çalışmada doğrulanmadı | Kısmi |
@@ -228,7 +228,7 @@ Bağımsızlık: kodu yazan düzeltmeyi yapar, tester doğrulama testini koşar 
 
 | ID | Risk | Olasılık | Etki | Azaltma | Durum |
 |----|------|----------|------|---------|-------|
-| R-01 | Bilimsel yanlış: sensör geçişinde sürekli değil, jüriye yanlış sonuç gösterilir | **Gerçekleşti** (seri yolunda) | Çok yüksek | BUG-9, BUG-10 düzeltmesi; TC-API-220..223; TC-VAL-020..024; `docs/API.md` serisi bölümünde uyarı | Açık (BUG-9, BUG-10) |
+| R-01 | Bilimsel yanlış: sensör geçişinde sürekli değil, jüriye yanlış sonuç gösterilir | **Gerçekleşti** (seri yolunda), sonra giderildi | Çok yüksek | BUG-9, BUG-10 düzeltmesi; TC-API-220..223; TC-VAL-020..024; `docs/API.md` serisi bölümünde uyarı | Giderildi (BUG-9, BUG-10); 138 bölgede yeniden ölçüm paket yenilenince |
 | R-02 | BUG-8: uzun çalışan sunucuda en yeni günler "kapsanmıyor" | Yüksek (demo günlerce açık kalırsa) | Yüksek | TTL ile yenileme; `#[ignore]` testi (`availability_reflects_newer_firms_data_on_a_later_call`) düzeltmeyle etkinleştirilir; enjekte edilebilir `today` | Açık |
 | R-03 | FIRMS yolunda test edilmemiş hata dalları (429, retry tükenmesi, ağ hatası) | Orta | Yüksek | TC-ST-036..039 (6400ff4 ile kapandı); dosya bazında kapsam yeniden ölçülecek | Büyük ölçüde azaldı |
 | R-04 | Arşiv uç noktalarında doğrulanmamış girdi (`month`, `limit` üst sınırı, `year`) | Orta | Orta | TC-API-200..213 | Açık |
@@ -290,20 +290,20 @@ Hata raporu alanları (Hafta 2 Tablo 7): kimlik, başlık, önem, öncelik, yeni
 | BUG-6 | Sayı tabanlı anomali 2021 megayangınlarını ulusal ölçekte göstermiyor | Orta | Açık (iyileştirme) | TC-VAL-001 |
 | BUG-7 | `/api/points` `limit` küçükken sonsuz döngü | Kritik | **Düzeltildi ve doğrulama testi geçti** | `points_rejects_zero_limit_and_handles_limit_one_with_merged_hotspot`, `sample_links_*` |
 | BUG-8 | Availability tablosu süreç başına bir kez (OnceCell) | Yüksek | **Açık** | `OnceCell<Availability>` hâlâ var; `availability_reflects_newer_firms_data_on_a_later_call` (`#[ignore]`) `--ignored` ile koşulunca panik ediyor (doğrulandı) |
-| BUG-9 | `/api/series` anomalisi Ω ile normalize edilmiyor; 2012 geçişi z'yi +1,45σ kaydırıyor (138/138 bölge), Yunanistan 2007-08 z 0,52 (yalnız-MODIS 3,63) | Yüksek | **Açık** (geçerleme bulgusu) | `archive_api.rs::anomalies()` `effort_omega: None` kullanıyor. 600 yeşil test bunu yakalamadı (§2) |
-| BUG-10 | `/api/series` Terra-only aylara (2002-07 öncesi) anomali veriyor ve bunları baz çizgisine katıyor; `/api/calendar` kuralı uygulanmıyor (3818/3884 satır) | Orta | **Açık** (geçerleme bulgusu) | BUG-9 ile aynı işlev; birlikte ele alınmalı |
+| BUG-9 | `/api/series` anomalisi Ω ile normalize edilmiyor; 2012 geçişi z'yi +1,45σ kaydırıyor (138/138 bölge), Yunanistan 2007-08 z 0,52 (yalnız-MODIS 3,63) | Yüksek | **Düzeltildi** (`49381eb`) | `anomaly_harmonized` artık Ω ile normalize (`effort_anomalies`); `anomaly_raw` bilerek ham kaldı. Eski bulgu: o gün 600 yeşil test bunu yakalamamıştı (§2) |
+| BUG-10 | `/api/series` Terra-only aylara (2002-07 öncesi) anomali veriyor ve bunları baz çizgisine katıyor; `/api/calendar` kuralı uygulanmıyor (3818/3884 satır) | Orta | **Düzeltildi** (`c27c3bc`) | Testler: `series_anomalies_skip_terra_only_months_when_series_spans_terra_aqua`, `series_anomaly_baseline_ignores_terra_only_month` |
 
 ## 16. Raporlanacak metrikler (Hafta 2 Tablo 9)
 
 | Metrik | Formül | Mevcut | Hedef |
 |--------|--------|--------|-------|
-| Geçiş oranı | Geçen / Yürütülen × 100 | Rust 600/600 (2 yoksayılan hariç), web 32/32 = %100 | %100 (kararlı yapı) |
-| Test kapsama oranı (vaka) | Otomatik vakası olan / Tasarlanan × 100 | 217 / 276 = %78,6 (tam), + 11 kısmi | ≥ %90 kritik yollar için |
-| Satır kapsamı | `cargo llvm-cov` | %94,7 (bölge %95,3, fonksiyon %94,5) | ≥ %90 kapı (CI); dosya bazında ≥ %80 |
+| Geçiş oranı | Geçen / Yürütülen × 100 | Rust 728/728 (2 yoksayılan hariç), web 59/59 = %100 | %100 (kararlı yapı) |
+| Test kapsama oranı (vaka) | Otomatik vakası olan / Tasarlanan × 100 | 219 / 276 = %79,3 (tam), + 11 kısmi | ≥ %90 kritik yollar için |
+| Satır kapsamı | `cargo llvm-cov` | %95,5 (bölge %95,9, fonksiyon %95,3) | ≥ %90 kapı (CI); dosya bazında ≥ %80 |
 | Dal kapsamı | nightly `--branch` | Ölçülmüyor | Ölçüm başlat; ≥ %80 |
 | Hata yoğunluğu | Hata / KLOC | Hesaplanmadı (KLOC sayımı yok; 10 hata kaydı) | Rapor et |
 | Hata tespit verimliliği (DDE) | Testte bulunan / (Testte + sonra bulunan) × 100 | **Hesaplanamaz**: sürüm sonrası (saha) hata verisi yok, payda bilinmiyor | Sürüm sonrası hatalar toplanınca |
-| Açık hata (önem kırılımı) | Sayım | Yüksek 2 (BUG-8, BUG-9), Orta 3 (BUG-3, BUG-6, BUG-10), Düşük 1 (BUG-4); bayat paket (R-14) henüz BUG numarası almadı | Kritik 0 |
+| Açık hata (önem kırılımı) | Sayım | Yüksek 1 (BUG-8), Orta 2 (BUG-3, BUG-6), Düşük 1 (BUG-4); bayat paket (R-14) henüz BUG numarası almadı | Kritik 0 |
 | MTTR | Toplam düzeltme süresi / hata | Kayıt yok | Tarihleri kaydet |
 | `EKSİK` vaka sayısı (risk sırası) | IZLENEBILIRLIK | 48 otomatik vaka `EKSİK`; geçerlemede 8 vaka kaldı (TC-VAL-002, 005, 011, 013, 015, 020, 021, 024) | Azalan trend |
 
@@ -311,7 +311,7 @@ Hata raporu alanları (Hafta 2 Tablo 7): kimlik, başlık, önem, öncelik, yeni
 
 | Hafta | İş |
 |-------|----|
-| 1 | CI yeşil doğrulaması (depo özel; Actions sonucu görülmeli); BUG-9/10 ve bayat paket için gerileme testleri (TC-API-220..224); enjekte edilebilir `today` ve BUG-8 testinin etkinleştirilmesi |
+| 1 | CI yeşil doğrulaması (depo özel; Actions sonucu görülmeli); bayat paket için gerileme testleri (TC-API-222..224; BUG-9/10 için TC-API-220 ve 221 yazıldı); enjekte edilebilir `today` ve BUG-8 testinin etkinleştirilmesi |
 | 2 | Arşiv uç noktaları HTTP doğrulama vakaları (TC-API-200..213); eşik sınır vakaları (TC-CORE-004..026) |
 | 3 | `/api/calendar` üzerinde TC-VAL-022 ve 2018/2023 geçişleri (TC-VAL-023); `api.ts` sözleşme testi |
 | 4 | Dal kapsamı ölçümü (nightly); `cargo audit`/`npm audit`; test tamamlama raporu |

@@ -264,10 +264,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [X] |
-| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
+| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [X] |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [X] |
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [X] |
-| Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
+| Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [X] |
 | Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [ ] |
 | Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [ ] |
 | K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [X] |
@@ -290,7 +290,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
-- **Yusuf:** Y1, Y3, Y4, Y5, Y6, Y7 tamamlandı. Bağımlılıkları tamamlanan Y2 (sensör karşılaştırma grafikleri), Y8 ve Y9 doğrudan başlayabilir. (`Y10` G12'yi bekliyor.)
+- **Yusuf:** Y1–Y7 ve Y9 tamamlandı. Y8 (vaka çalışmaları, arşiv gerekir) doğrudan başlayabilir; Y10'un beklediği G12 tamamlandı.
 - **Sadık:** K1–K5 ve K7–K13 tamamlandı (K12'yi Serhat kapattı). Şu an başlanabilecekler: K6 (2023 ölçümü Serhat ve K7 tarafından yapıldı; yazılı ölçüt sağlanmıyor, MODIS-referanslı ölçütle geçiyor, ekip kararı bekliyor), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
@@ -1104,13 +1104,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kapanış notu (15 Kasım 2026):** `web/src/components/Charts/FrpTimeSeries.tsx` (elle SVG; Recharts eklenmedi, `web/CLAUDE.md` ve C7 ile uyumlu) + `web/src/lib/frpSeries.ts`. Metrik R9 ile uyumlu: Raw modda MODIS ve VIIRS için ayrı aylık **ham piksel ortalaması** (FRP toplamı / tespit), Harmonized modda `frp_per_detection_eq` (= `total_frp / count_normalized`, MODIS-eşdeğeri) ve `total_frp_lower/upper` ±1σ bandı; ikinci metrik olarak aylık toplam (`total_frp`). Aynı birim (MW/tespit) olduğu için cliff ile süreklilik aynı eksende kıyaslanır. C7 sensör kodlaması (MODIS noktalı + içi boş daire, VIIRS düz + dolu kare), boşluklar kesilir, zoom (ay seçimi + sıfırlama), klavyeyle gezilebilen tooltip, EN/TR. Backend: `/api/calendar` yanıtına `raw_monthly` (aylık ham MODIS/VIIRS sayı ve FRP toplamı, harmonizasyon girdisiyle aynı filtre; `*_covered=false` gözlenemedi demektir). Mock ile `web/mock.html` önizlemesinde çiziliyor; ayrıca isteğe bağlı "Live archive" ile gerçek Türkiye verisinde doğrulandı: ham MODIS ~28 MW, VIIRS ~8 MW (2012 cliff), harmonize yıllık 33.5 → 37.3 MW (2011→2012) — tamamen düz değil, grafik bunu olduğu gibi gösterir. Yalnız Terra dönemi (2002-07 öncesi) harmonize değeri `karşılaştırılamaz` olarak gösterilir. `frpSeries.test.ts` + server testleri, typecheck/build/clippy temiz; tarayıcıda 1366 px ve 375 px kontrol edildi. Açık kalanlar: ana ekran yerleşimi (Can/Serhat), S4'ün resmî teslimi, R9 bittiğinde Y1'in ayrı adaptörünün `api.ts` ile birleştirilmesi; `tokens.css`'e eklenen belirsizlik bandı token'ları K4 ile tekilleştirilmeli.
 - **Not (birleştirme sonrası, 15 Kasım 2026):** origin/main'deki R10 (VIIRS geçiş toplamı) ve C9 (statik kaynak maskesi + SAMA) harmonizasyonu değiştirdi; yukarıdaki harmonize sayılar birleştirmeden önceki koda aittir. Birleştirmeden sonra Türkiye 2021: 69.619 ham / 39.330 harmonize; `/api/density` ve `/api/points` yine birebir aynı.
 
-### [ ] Y2 — Sensör karşılaştırma grafikleri
+### [X] Y2 — Sensör karşılaştırma grafikleri
 - **Bekler:** R1, Y5, S4 · **Açar:** —
 - MODIS vs VIIRS ayrıntılı karşılaştırma:
   - Bar chart: aylık detection count by sensor
   - Scatter plot: MODIS FRP vs VIIRS FRP (eşleşen çiftlerde)
   - Pie/donut: sensor breakdown (MODIS-only, VIIRS-only, Matched)
 - **Bitti sayılır:** en az 2 farklı chart tipi çalışıyor; sensörler arası fark görsel olarak açık.
+- **Kapanış (Serhat, 2026-11-15):** Grafik paneline üçüncü sekme "Sensörler" eklendi (`web/src/components/Charts/SensorCharts.tsx`, veri şekillendirme `web/src/lib/sensorCharts.ts`). Gerçek uygulama verisiyle (arşiv serisi ve yüklü noktalar; demo modunda aynı hook'lar) üç grafik: (1) seçili yılın aylık ham MODIS / VIIRS çubukları (MODIS içi boş, VIIRS dolu; ayrım yalnız renge dayanmıyor), (2) eşleşen çiftlerde MODIS–VIIRS FRP log-log serpilme grafiği, 1:1 çizgisi, çift sayısı ve medyan oran (x: kaydın MODIS üyelerinin ortalama FRP'si, y: R10 sonrası kayıttaki VIIRS piksel toplamı), (3) kaynak halkası (yalnız MODIS / yalnız VIIRS / eşleşen). Serpilme ve halka harmonizasyon çıktısı olduğu için yalnız Harmonize modda görünüyor; Ham modda davet metni ve ham MODIS/VIIRS payı gösteriliyor. `npm run typecheck`, `npm test`, `npm run build` temiz; demo modunda headless Chrome'da 1366×768 ve 390 px'te kontrol edildi, konsol hatası yok. **Sınırlar:** serpilme noktalarında tek tek tooltip yok (sayılar metin ve gizli tabloda); yüklü noktalar örneklenmişse açıklamada belirtiliyor; `SensorComparison.tsx` yalnız mock önizlemede kullanılmaya devam ediyor.
 
 ### [X] Y3 — Aylık yangın yoğunluk heatmap'i
 - **Bekler:** R1, Y5 · **Açar:** —
@@ -1136,12 +1137,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kapanış notu (15 Kasım 2026):** `web/src/components/Stats/StatsCards.tsx` + `web/src/lib/stats.ts`: dört kart (tespit/harmonize kayıt, elenen kayıt oranı, katkı veren platform, ortalama FRP), hepsi seçili ayın aynı kapsamından; büyük sayı + trend oku (geçen yılın aynı ayı, aynı metrik ve mod; karşılaştırılabilir ay yoksa ok yok ve nedeni yazılır; oran kartında yüzde puan, diğerlerinde göreli %) + aynı seriden 12 aylık sparkline. Ortalama FRP: Raw = ham FRP toplamı / ham tespit, Harmonized = `frp_per_detection_eq` (Y1 ile tutarlı). Elenen oran Raw modda gizlidir (`revealAnswer`). "Son güncelleme" yerine "arşiv kapsamı … tarihine kadar" yazılır (arşivde üretim zamanı yok). Backend: `raw_monthly.platform_counts` (arşiv `satellite` sütunu Terra/Aqua'yı ayırır; SNPP/NOAA-20 kaynak dosyadan). Mock ve gerçek veride `web/mock.html` önizlemesinde doğrulandı; Türkiye Ağu 2021: 16.162 ham, 8.142 harmonize, %49.6 elenen, 4 platform (Terra, Aqua, S-NPP, NOAA-20). `stats.test.ts`, server testleri, typecheck/build/clippy temiz. Açık: ana ekran yerleşimi (Can/Serhat); `CountDelta`/`Receipt` ile ortak hesap yardımcısına geçiş R9 sonrası düşünülebilir.
 - **Not (birleştirme sonrası, 15 Kasım 2026):** origin/main'deki R10 (VIIRS geçiş toplamı) ve C9 (statik kaynak maskesi + SAMA) harmonizasyonu değiştirdi; yukarıdaki harmonize sayılar birleştirmeden önceki koda aittir. Birleştirmeden sonra Türkiye 2021: 69.619 ham / 39.330 harmonize; `/api/density` ve `/api/points` yine birebir aynı.
 
-### [ ] Y9 — Hücre tanı modalı ve yörünge sürüklenmesi şeridi
+### [X] Y9 — Hücre tanı modalı ve yörünge sürüklenmesi şeridi
 - **Bekler:** — · **Açar:** —
 - `BurnCalendar` hücresine tıklandığında açılan **Hücre Tanı Modalı** (`FireBridge`): o ayın sensör kırılımı, efor `Ω`, tamlık katsayısı `k_c`, belirsizlik aralığı (`total_frp_lower/upper`) ve kesinti/anomali bayrakları
 - Geçiş saati medyanlarından otomatik hesaplanan **"Orbital Drift" (Uydu Geçiş Saati & Yörünge Sürüklenmesi)** açıklama şeridi (`FireHarmonize`; Terra `10:39 → 09:15`, Aqua `13:33 → 15:24` kaymasının `2021+` kalibrasyona `-%2.8..-5.5` sapma etkisi uyarısı)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P4, P7, Yol Haritası #15 (+ `FireBridge`, `FireHarmonize`, `fire-harmony`)
 - **Bitti sayılır:** takvim hücresine tıklanınca tanı modalı tüm kırılımları gösteriyor ve arayüzde geçiş saati medyanlarından beslenen `Orbital Drift` bilgi şeridi görünüyor.
+- **Kapanış (Serhat, 2026-11-15):** **Tanı çekmecesi:** takvimde "Ayrıntılar" düğmesi veya odaklı ayda `D` tuşu `CellDiagnosticDrawer`'ı açıyor (tıklama eskisi gibi yalnız ay filtresini değiştiriyor). Çekmece ham MODIS/VIIRS, harmonize ve eşleşen / yalnız MODIS / yalnız VIIRS sayılarını, `Ω` ve efor-normalize sayımı, toplam FRP aralığını, S10 Mondrian (conformal) bandını, anomali z'yi ve beş kalite bayrağının EN/TR etiketlerini gösteriyor; 2002-07 öncesi Terra-only aylarda "kıyaslanamaz" açıklaması ve K12 kurtarım tahmini çıkıyor. Ham modda yalnız ham sayılar ve bayraklar görünüyor. **Orbital Drift şeridi:** `/api/points` yanıtına istek anında hesaplanan `overpass` alanı eklendi (platform × gündüz/gece yerel güneş saati medyanı, en az 30 tespit; `crates/core/src/overpass.rs`). Şerit, dönem hücreleri `modis_orbital_drift` taşıdığında veya Terra/Aqua medyanı nominalden en az 20 dk saptığında pipeline şeridinin altında görünüyor, oturum boyunca kapatılabiliyor; medyanın bölgesel bir gösterge olduğu, ekvator geçiş saati olmadığı açıkça yazılıyor. **R12 eki:** turun 4. adımı artık Mondrian bandını ve drift şeridini anlatıyor, Methods sayfasında ilgili blok vurgulanıyor. `PipelineConfig`, `DERIVED_SCHEMA_VERSION` ve `data/derived` etkilenmedi. `cargo test --workspace`, clippy, `npm run typecheck`, `npm test`, `npm run build` temiz; demo modunda ve sentetik bir canlı-mod sunucu taklidiyle headless Chrome'da kontrol edildi. **Sınırlar:** API aylık sayıları platform bazında vermediği için Terra/Aqua/S-NPP kırılımı yok; `k_c` değeri hücre başına sunulmadığı için çekmece yalnız uygulanıp uygulanmadığını söylüyor; demo modunda takvim hücresi olmadığından `Ω`, FRP ve bantlar "—", şerit sayısız (bayrak mesajı) görünüyor; gerçek arşivle tarayıcıda denenmedi.
 
 ### [ ] Y10 — Dış doğrulama pilotu (yanmış alan)
 - **Bekler:** G12 · **Açar:** —
@@ -1345,5 +1347,5 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 11 (`S1–S4, S6–S11, S13`) | 2 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
-| Yusuf | 10 (Y1–Y10) | 3 (`Y5–Y7`) | 7 (`Y1–Y4, Y8–Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
+| Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 12 (`K1, K2, K3, K4, K5, K7, K8, K9, K10, K11, K12, K13`) | 2 (`K14, K6`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
