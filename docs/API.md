@@ -2128,6 +2128,8 @@ Ay satırları, katkıda bulunan sensörlerden en az birinin gözlem yaptığı 
 
 Z-skoru, tüm yıllardaki aynı takvim ayı değerleri üzerinden hesaplanır (ortalama ve popülasyon standart sapması). En az 3 değer gerekir; standart sapma sıfırsa `null` döner. Ham ve harmonize seriler ayrı tabanlarla hesaplanır.
 
+Seri 2002-07 veya sonrasını da kapsıyorsa, 2002-07 öncesi (Terra'nın tek başına çalıştığı) aylarda `anomaly_raw` ve `anomaly_harmonized` `null` döner ve bu aylar diğer ayların tabanlarına girmez (`/api/calendar` ile aynı kural). Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
+
 `cliff` alanı VIIRS'in ilk yılını (`to_year`) ve bir önceki yılı (`from_year`) karşılaştırır. Değişim yüzdeleri önceki yıl sıfırsa `null` olur.
 
 ### Hatalar

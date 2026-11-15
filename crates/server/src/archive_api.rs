@@ -21,7 +21,9 @@ use tokio::task::JoinSet;
 use pyrosync_core::calendar::{compute_anomalies, mean_frp_with_uncertainty};
 use pyrosync_core::config::{MAX_MATCH_RADIUS_KM, PipelineConfig};
 use pyrosync_core::density::{ALLOWED_CELL_DEGREES, aggregate_density};
-use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap};
+use pyrosync_core::effort::{
+    FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap,
+};
 use pyrosync_core::events::{
     EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
 };
@@ -1090,13 +1092,17 @@ fn year_stats_with(
 }
 
 fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec<Option<f64>> {
+    // Same rule as /api/calendar: once the series reaches Terra+Aqua, Terra-only months are not
+    // comparable, so they get no anomaly and must not enter the baseline of the other months.
+    let spans_terra_aqua = months.iter().any(|m| (m.year, m.month) >= FIRST_TERRA_AQUA_MONTH);
+    let terra_only = |m: &MonthEntry| spans_terra_aqua && (m.year, m.month) < FIRST_TERRA_AQUA_MONTH;
     let mut cells: Vec<CalendarCell> = months
         .iter()
         .map(|m| CalendarCell {
             year: m.year,
             month: m.month,
             count: count(m) as u64,
-            count_normalized: Some(count(m) as f64),
+            count_normalized: (!terra_only(m)).then(|| count(m) as f64),
             effort_omega: None,
             mean_frp: 0.0,
             mean_frp_raw: 0.0,
@@ -2834,6 +2840,53 @@ mod tests {
         let nov_2010 = of_year(2010).into_iter().find(|m| m["month"] == 11).unwrap();
         assert!(nov_2010["anomaly_raw"].as_f64().unwrap() > 0.0);
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    fn month_entry(year: i32, month: u32, raw_total: usize) -> MonthEntry {
+        MonthEntry {
+            year,
+            month,
+            raw_modis: raw_total,
+            raw_viirs: 0,
+            raw_total,
+            harmonized: raw_total,
+            mean_frp: None,
+            mean_frp_lower: None,
+            mean_frp_upper: None,
+            anomaly_raw: None,
+            anomaly_harmonized: None,
+        }
+    }
+
+    #[test]
+    fn series_anomalies_skip_terra_only_months_when_series_spans_terra_aqua() {
+        let months = [
+            month_entry(2001, 7, 500),
+            month_entry(2001, 12, 400),
+            month_entry(2002, 6, 300),
+            month_entry(2002, 7, 10),
+            month_entry(2003, 7, 12),
+            month_entry(2004, 7, 14),
+        ];
+        let z = anomalies(&months, |m| m.raw_total);
+        assert!(z[..3].iter().all(Option::is_none));
+        assert!(z[3..].iter().all(Option::is_some));
+    }
+
+    #[test]
+    fn series_anomaly_baseline_ignores_terra_only_month() {
+        let months = [
+            month_entry(2001, 7, 100),
+            month_entry(2002, 7, 10),
+            month_entry(2003, 7, 12),
+            month_entry(2004, 7, 14),
+        ];
+        let z = anomalies(&months, |m| m.raw_total);
+        // July baseline is [10, 12, 14]: mean 12, population sd sqrt(8/3).
+        let sd = (8.0_f64 / 3.0).sqrt();
+        assert!(z[0].is_none());
+        assert!((z[1].unwrap() - (-2.0 / sd)).abs() < 1e-12);
+        assert!((z[3].unwrap() - (2.0 / sd)).abs() < 1e-12);
     }
 
     #[test]

@@ -22,7 +22,8 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 // v6: Matched FRP intervals combine summed VIIRS pixels in quadrature (monthly mean_frp_* change).
 // v7: VIIRS pass sums limited to the MODIS scan/track footprint.
 // v8: DEFAULT_VZA_ERROR_COEFF raised from 0.05 to 1.0 (off-nadir ModisOnly intervals and monthly mean_frp_* widen).
-pub const DERIVED_SCHEMA_VERSION: u32 = 8;
+// v9: Series anomalies skip Terra-only months before 2002-07 (they no longer get an anomaly nor enter the baseline).
+pub const DERIVED_SCHEMA_VERSION: u32 = 9;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;
