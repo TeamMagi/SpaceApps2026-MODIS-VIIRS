@@ -243,7 +243,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] kod bitti, merge + precompute Görkem'de |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
-| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] (G7, K1, R1 [X]) |
+| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [X] |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
 | R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [X] |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. Şu an başlanabilecek: R8 (`K1` bitti). (`R7` S7'yi bekliyor.)
+- **Serhat:** R1–R6, R8, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. (`R7` S7'yi bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
@@ -778,7 +778,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `web/` içinde `mean_frp_adjustment_pct`, `total_frp`, `frp_per_detection_eq` ve `*_lower/upper` alanları kullanılıyor; `mean_frp` manşette değil; `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 - **Kapanış (Serhat, 2026-11-15):** Yeni `web/src/hooks/useCalendarFrp.ts` hook'u seçili bölge için `/api/calendar`'ı çağırıyor. Bölge kimliği arşivdeki ülke adıyla aynı olduğu için `country` parametresine olduğu gibi gidiyor. Sonuç oturum boyunca bölge başına cache'leniyor. İstek yüklenirken veya hata verdiğinde takvim eskisi gibi `/api/series` verisiyle çiziliyor. Harmonize modda `CalendarTooltip` ve dilim aria-label'ı sırasıyla şunları gösteriyor: manşet olarak `frpPerDetectionEq`, ardından `totalFrp` ve olası aralığı (`totalFrpLower/Upper`), en son ikincil bilgi olarak native-pixel `meanFrp` ve aralığı. VZA düzeltmesi `CountDelta`'daki canlı karşılaştırma satırına eklendi (`meanFrpAdjustmentPct`, işaretli %). UI'da "azaltım" metni yoktu. `tsc`, `build` ve `npm test` temiz. **Sınır:** yerelde arşiv indirilmediği için `/api/calendar` ile canlı birleştirme denenmedi. C7'deki geniş bant tarama (hatch) deseni uygulanmadı.
 
-### [ ] R8 — Çoklu harmonizasyon model seçimi
+### [X] R8 — Çoklu harmonizasyon model seçimi
 - **Bekler:** G7, K1, R1 · **Açar:** —
 - Kullanıcının farklı harmonizasyon yaklaşımlarını karşılaştırabilmesi:
   - Dropdown/toggle: "Standard" (VIIRS-preferred) vs "Equal-weight" vs "MODIS-calibrated"
@@ -788,6 +788,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Fallback modunda (K1) da çalışmalı
 - **Kaynak:** Strateji 1.2 — "Çoklu harmonizasyon modeli seçimi — kullanıcı yöntemi seçip farkı görebilecek"
 - **Bitti sayılır:** en az 2 farklı model arasında geçiş yapılabiliyor; sonuçlar gözle görülür şekilde farklı; istatistik farkı gösteriliyor.
+- **Kapanış (Serhat, 2026-11-15):** Üç model var: Standart (VIIRS öncelikli; bugünkü davranış), Eşit ağırlık ve MODIS kalibreli. Backend: yeni `crates/core/src/fusion.rs` (`FusionModel`, `apply_fusion_model`) harmonizasyondan **sonra** uygulanıyor. Eşit ağırlık modelinde `Matched` kayıt, VZA düzeltmeli MODIS FRP ile VIIRS FRP'sinin ortalamasını alıyor ve konumu iki grubun orta noktasına taşınıyor. MODIS kalibreli modelde `Matched` kayıt MODIS değerini ve konumunu alıyor; MODIS'in nadir %50 tespit sınırının (`D_p`, K10 katsayıları, 1 km²) altında kalan `ViirsOnly` kayıtlar atılıyor. Bu yüzden bu modelde kayıt sayısı da değişiyor. `/api/points` yeni `fusion_model` parametresini alıyor (geçersiz değer HTTP 400). Yanıtta `fusion_model` ve `fusion_comparison` alanları var: Standart modele göre kayıt sayısı, toplam FRP ve atılan tespit sayısı. Ayrıntı `docs/API.md`'de. Model bilinçli olarak `PipelineConfig` dışında tutuldu, `harmonize.rs` ve `config.rs`'e dokunulmadı. Böylece config hash'i ve `data/derived` hazır sonuçları değişmiyor, R10 branch'i de çakışmasız birleşebiliyor. Frontend: model seçimi K2 Ayarlar çekmecesinin başında, radyo grubu olarak duruyor. Seçim URL hash'ine yazılıyor (`fm=eq|mc`, Standart'ta yazılmıyor), "Varsayılana dön" modeli de sıfırlıyor. Pipeline şeridinde ve fişte "Model: …" rozeti görünüyor. Harmonize modda çekmecede fark satırı gösteriliyor (ör. "115 kayıt / Standart'ta 118 (−%2,5), toplam FRP −%9,2; 3 VIIRS-only tespit atıldı"); Ham modda bu sayılar gizleniyor. Demo modunda (K1) `lib/demoData.ts` aynı modelleri sentetik veriye istemci tarafında yaklaşık olarak uyguluyor. `cargo test --workspace` (core 298, server 188), clippy `-D warnings`, `npm run typecheck`, `npm test` (42) ve `npm run build` temiz. Headless Chrome'da demo modunda üç model arasında geçiş, fark satırı, rozet, URL ve sıfırlama kontrol edildi; konsolda hata yok. **Sınırlar:** Model, K2 eşikleri gibi yalnız seçili ayın harita noktalarını ve aşama sayılarını değiştiriyor; yıllık seri, takvim ve istatistikler Standart modelde kalıyor (yıllık hesap için hazır sonuçların model başına üretilmesi gerekir). Görev metnindeki "harita + takvim + stats anlık güncellenir" maddesi bu yüzden kısmen karşılandı. Gerçek arşivle (backend açık) tarayıcıda deneme yapılmadı; backend davranışı birim ve sunucu testleriyle doğrulandı.
 
 ### [X] R6 — Methods/About sayfası implementasyonu
 - **Bekler:** C5, R1 · **Açar:** —
@@ -1263,7 +1264,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 |------|-------------|------------|------|---------|------|
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
-| Serhat | 12 (R1–R12) | 9 (`R1–R6, R9, R11, R12`) | 3 (`R10, R8, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
+| Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 8 (`K1, K2, K4, K5, K8, K9, K11, K13`) | 6 (`K3, K10, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
