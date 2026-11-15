@@ -126,7 +126,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ✅ |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | ✅ |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ✅ |
-| S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ⬜ |
+| S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ✅ |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⬜ |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⬜ |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | ⏸ |
@@ -470,14 +470,25 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Satır kapsamı: `firms-client/client.rs` %36,7 → %55,3, `server/main.rs` %80,6 → %87,8, workspace toplamı %82,2 → %84,3.
 - **Yan bulgu (Görkem için):** Eksik query parametresinde (ör. `south` yok) 400 yanıtı JSON değil düz metin dönüyor; diğer doğrulama hataları `{"error": ...}` döndürüyor. Test bu yüzden şimdilik yalnız status kodunu doğruluyor.
 
-### S3 — API dokümantasyonu ⏸
+### S3 — API dokümantasyonu ✅
 - **Bekler:** G4 · **Açar:** —
 - Tüm API endpoint'lerinin dökümanı:
-  - Her endpoint: URL, method, parametreler, örnek request/response
-  - Hata kodları ve anlamları
-  - Örnek curl komutları
-  - `docs/API.md` olarak depoya
+  - ✅ Her endpoint: URL, method, parametreler, örnek request/response
+  - ✅ Hata kodları ve anlamları
+  - ✅ Örnek curl komutları
+  - ✅ `docs/API.md` olarak depoya
 - **Bitti sayılır:** `docs/API.md` depoda; her endpoint için en az bir örnek var; takım bu dökümanla frontend geliştirme yapabilir.
+- **Kapsam:** 11 endpoint (`health`, `config`, `availability`, `harmonize`, `compare`, `stats`, `export`, `calendar`, `regions`, `series`, `points`). Her biri için parametre tablosu, örnek istek ve yanıt, alan açıklamaları ve hata kodları var. Ayrıca ortak kavramlar (bbox, zaman penceresi, enum'lar, ortak nesneler), genel hata kodu tablosu, API'yi etkileyen ortam değişkenleri ve bilinen sorunlar bölümleri bulunuyor.
+- **Örneklerin kaynağı:** Arşiv endpoint'lerinin örnekleri, yerel FIRMS arşiviyle çalışan sunucudan yakalanan gerçek Türkiye verisidir. FIRMS anahtarı gerektiren endpoint'lerin örnekleri ise S2'deki sahte FIRMS düzeneğinden alındı: yapı gerçek, sayılar sentetik ve doküman bunu belirtiyor.
+- **Doğrulama (2026-11-15, commit 8846819):**
+  - 36 JSON örneğinin hepsi geçerli JSON.
+  - 16 `curl` örneği canlı sunucuda çalıştırıldı. Anahtarsız endpoint'ler 200, anahtar gerektirenler dokümandaki gibi 503 döndü (sunucuda anahtar yoktu).
+  - Varsayılanlar, limitler, hata mesajları ve başlıklar koddan kontrol edildi.
+- **Kapsam dışı:** Makine tarafından okunabilir OpenAPI şeması (`openapi.yaml`) ve yanıtları bu şemaya karşı doğrulayan sözleşme testi bu teslimatta yok; ayrı bir iş olarak eklenebilir.
+- **Onay testi (Görkem'in düzeltmeleri):** Eksik parametrede artık JSON 400 dönüyor (33cc021). `/api/points` küçük `limit` ile artık takılmıyor: `limit=0` → 400, `limit=1` → 200 (a9cc3ed). Arşiv zaman aşımı 504'e eşitlendi.
+- **Açık kalan bulgular (Görkem için):**
+  - FIRMS availability tablosu süreç başına bir kez çekiliyor (`OnceCell`). Uzun çalışan sunucuda en yeni günler "kapsanmıyor" sayılabilir.
+  - `.env.example` dosyasındaki yorum anahtar yokken hâlâ "500" diyor; kod 503 dönüyor.
 
 ### S4 — Sample/demo veri pipeline'ı ⏸
 - **Bekler:** G1 · **Açar:** Y1, Y2
