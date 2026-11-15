@@ -28,9 +28,10 @@ jobs:
         with:
           toolchain: "1.100"
           components: clippy
+      # The cache key already includes the job id, so rust and coverage keep separate caches.
       - uses: Swatinem/rust-cache@v2
-      - name: cargo check
-        run: cargo check --workspace --all-targets --locked
+        with:
+          cache-on-failure: true
       - name: cargo clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: cargo test
@@ -47,6 +48,8 @@ jobs:
           toolchain: "1.100"
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - uses: taiki-e/install-action@cargo-llvm-cov
       # Quality gate: 90% line coverage (measured total is 92.7%). The gate sits a few
       # points under the measured value so real decay turns CI red. Branch coverage is
