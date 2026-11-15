@@ -278,7 +278,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [X] |
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
 | K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [X] |
-| K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
+| K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [X] |
 | K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [X] |
 | K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [X] |
 | K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [X] |
@@ -291,7 +291,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
 - **Yusuf:** Y1–Y7 ve Y9 tamamlandı. Y8 (vaka çalışmaları, arşiv gerekir) doğrudan başlayabilir; Y10'un beklediği G12 tamamlandı.
-- **Sadık:** K1–K5 ve K7–K13 tamamlandı (K12'yi Serhat kapattı). Şu an başlanabilecekler: K6 (2023 ölçümü Serhat ve K7 tarafından yapıldı; yazılı ölçüt sağlanmıyor, MODIS-referanslı ölçütle geçiyor, ekip kararı bekliyor), K14 (K13 bitti; arazi örtüsü verisi gerekir).
+- **Sadık:** K1–K13 tamamlandı (K6 ve K12'yi Serhat kapattı). K6, K7 ile aynı MODIS-referanslı karar ölçütüyle kapatıldı. Açık kalan: K14 (teslim kapsamı dışında; `k14-biome-completeness` branch'inde).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -411,6 +411,15 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   | \|log(fazlalık)\| | 0,220 | **0,025** | |
 
   Ω tam 2023-03'te 6,426'dan 7,813'e atlıyor (×1,216). NOAA-21'in eklediği efor 2018'deki NOAA-20 adımından (×1,44) küçük; NOAA-21, NOAA-20 ile yaklaşık 50 dakika arayla geçtiği için tespitlerinin çoğu 60 dakikalık filo penceresinde birleşiyor. Bu mevsimde gerçek yangın aktivitesi yaklaşık iki katına çıkmış: eforu değişmeyen MODIS kanalı da ×1,97 artıyor (`modis_observable` 3677 → 7258; MODIS giriş satırları ×2,05). Bbox, Ağustos 2023 Evros (Dadia) yangınını da içeriyor. Bu yüzden G3/K6'nın "normalize kayma, ham kaymanın yarısından küçük" ölçütü burada **geçmiyor** (0,705 < 0,450 değil). Bu ölçüt sıçramanın çoğunun yapay olduğunu varsayıyor; gerçek değişim yapay adımdan büyükse doğru bir normalizasyon da geçemez. Filodan bağımsız MODIS referansına göre ise sonuç net: ham serinin referans üstündeki fazlası ×1,246, filo değişiminin beklenen adımıyla (×1,216) uyumlu. Normalizasyondan sonra fazlalık ×1,025'e iniyor; log ölçeğinde yapay kısmın ~%89'u gideriliyor (MODIS giriş satırları referans alınınca da ham ×1,20 → normalize ×0,99).
+
+  **2023 geçişi, 10 ülke havuzu** — K7, 2026-11-15 (`fleet_trend --noaa21`, `docs/TAM_FILO_TREND.md`; MODIS + S-NPP + NOAA-20 arşivden, NOAA-21 area API'den). `|log(kayma)|` değerleri:
+
+  | Kıyas | Ham | Normalize | MODIS referans kayması | Referansa göre ham | Referansa göre normalize |
+  |---|---|---|---|---|---|
+  | Aynı mevsim (May–Ara 2022 → 2023) | 0,768 | 0,595 | ×1,826 | 0,166 | **0,007** |
+  | Blok (2020–22 → 2024–25) | 0,494 | 0,321 | ×1,447 | 0,125 | **0,049** |
+
+  Düzeltilmemiş ölçüt iki kıyasta da kalıyor, MODIS referansı ile düzeltilmiş ölçüt (karar ölçütü, bkz. K6 ve K7 kapanış notları) ikisinde de geçiyor.
 
 ### G3 doğrulamasının sınırları (açıkça kayda geçirildi)
 - **Monoton trend testinin serisi tam filo değil.** ρ +0,785 → +0,087 ölçümü 2000-2025 arşiv serisi üzerinde yapıldı ve bu seri yalnızca **MODIS + SNPP** içeriyor; ülke arşivi NOAA-20 ve NOAA-21 taşımıyor. Yani dört efor geçişinden ikisi (2018, 2023) trend testinde YOK. Trend, 2012 geçişini içeren uzun seride düz çıkıyor; 2018 geçişi ayrı ve kendi veri setinde doğrulandı; tam filo içeren 2000-present serisi FIRMS'ten makul transaction bütçesiyle kurulamıyor.
@@ -1273,7 +1282,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
   Aylık `k` 1,52 (Haziran) ile 2,92 (Ocak) arasında değişiyor. **Sınırlar:** alt/üst bant bir tahmin aralığı değil (aylık oranların 10–90. yüzdeliği); gerçek değer 20 ayın yalnız 9'unda bandın içinde, yani bant tek tek aylar için dar. Toplamda yanlılık iyi gideriliyor, tek tek aylarda (özellikle az yangınlı kış aylarında) hata büyük olabilir. Hold-out, kalibrasyonla aynı cihaz ve iklim dönemini paylaşıyor; Aqua öncesi dönem için bağımsız bir gerçek değer yok. Doğrulama yalnız Türkiye'de yapıldı. Makaledeki bulut-farkı elemesi uygulanmadı. Arayüz yeni alanları henüz göstermiyor. `cargo test --workspace` (core 346, server 202), `npm run typecheck`, `npm test` (53), `npm run build` temiz; clippy'de tek hata bu işten bağımsız (`density.rs` test yardımcısı, 9 argüman).
 
-### [ ] K6 — 2023 (NOAA-21) efor geçişini ölçme
+### [X] K6 — 2023 (NOAA-21) efor geçişini ölçme
 - **Bekler:** K5 · **Açar:** —
 - **Neden:** G3'ün Ω mekanizması 2012 (SNPP) ve 2018 (NOAA-20) geçişlerinde doğrulandı, ama **2023 (NOAA-21) geçişi ölçülmedi.** Mekanizma platform kümesinden bağımsız çalıştığı için aynı davranması bekleniyor, ancak bu bir beklenti; ölçüm değil.
 - Ülke arşivi NOAA-21'i taşımıyor (`viirs-jpss2` tüm yıllarda HTTP 404; NOAA-20 ise `viirs-jpss1` olarak arşivde var), bu yüzden bu geçiş yalnız area API ile ölçülebilir ve K5'in cache'ine ihtiyaç duyar.
@@ -1283,6 +1292,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `|log(normalize kayma)| < |log(ham kayma)| / 2` ölçütü 2023 geçişi için de sağlanıyor ve sonuç GOREVLER.md'deki G3 doğrulama tablosuna ekleniyor.
 - **Durum (Serhat, 2026-11-15):** Ölçüm yapıldı, sonuç G3 doğrulama tablosuna eklendi; yazılı ölçüt sağlanmadı, bu yüzden kutu açık. Araç `crates/firms-client/examples/noaa21_transition.rs`; Area API'den açık SP pencereleri için yeni `FirmsClient::fetch_source_windows` (`client.rs`) kullanılıyor. Araç dry-run'da maliyet tahmini veriyor, 4500 transaction üstünü reddediyor, herhangi bir kaynak hata verirse sonuç raporlamıyor. Türkiye bbox, 2022-07..2023-12: 1953 transaction, hata yok, pencerelerin hepsi K5 cache'inde (tekrar çalıştırmak 0 transaction). Ω 2023-03'te 6,426 → 7,813 (×1,216). Tem–Ara 2022 → 2023: ham ×2,460 (|log| 0,900), normalize ×2,023 (|log| 0,705), yani yazılı ölçüt **geçmiyor**. Ancak eforu değişmeyen MODIS kanalı da ×1,974 artıyor; artışın çoğu gerçek yangın aktivitesi. MODIS referansına göre fazlalık ham ×1,246 → normalize ×1,025 (|log| 0,220 → 0,025), yani yapay kısmın ~%89'u gideriliyor. Öneri: "Bitti sayılır" ölçütü referansa göre fazlalık olarak okunmalı: `|log(normalize/MODIS)| < |log(ham/MODIS)| / 2`. Bu ölçütle 2023 geçişi geçiyor. Ölçütün bu şekilde değiştirilmesi ekip kararı; karar verilince kutu işaretlenebilir. K7'nin 2023 kısmı da bu ölçümle karşılanabilir (aynı araç, farklı `--bbox` ile başka bölgelerde de çalıştırılabilir).
 - **Not (2026-11-15):** K7'nin ölçümü 2023 geçişini 10 ülkelik havuzda area API ile kapsadı (`docs/TAM_FILO_TREND.md`). Düzeltilmemiş ölçüt (K6'nın kendi ölçütü) KALIYOR: aynı mevsim `|log|` ham 0,7681 → norm 0,5951; blok ham 0,4941 → norm 0,3210. MODIS referansı ile düzeltilmiş ölçüt geçiyor: aynı mevsim 0,1660 → 0,0070; blok 0,1245 → 0,0485 (`ref_shift` 1,826 ve 1,447; 2023 bölgede aktif bir yıl). Sonuç, Serhat'ın yukarıdaki Türkiye bbox ölçümüyle ve önerdiği referansa göre fazlalık ölçütüyle tutarlı. K6'nın bitti şartı düzeltilmemiş ölçüttür ve G3 tablosuna ekleme ister; bu yüzden K6 açık kalıyor, düzeltilmiş ölçütün K6 için de geçerli sayılıp sayılmayacağı ekip kararını bekliyor.
+- **Kapanış (Serhat, 2026-11-15, kullanıcı kararı):** K6, K7 ile aynı karar ölçütüyle kapatıldı. K7'nin kapanışında kabul edilen gerekçe K6 için de geçerli: tek sezonluk (ve blok) kıyas gerçek yıllar arası yangın aktivitesini cihaz basamağıyla karıştırıyor, bu yüzden karar ölçütü MODIS referansı ile düzeltilmiş ölçüttür (`|ln(norm/ref)| < |ln(ham/ref)| / 2`). 2023 geçişi üç ayrı ölçümde bu ölçütü geçiyor: Türkiye bbox aynı mevsim `0,220 → 0,025` (`noaa21_transition`), 10 ülke havuzu aynı mevsim `0,166 → 0,007` ve 2020–22 / 2024–25 bloğu `0,125 → 0,049` (`fleet_trend --noaa21`, `docs/TAM_FILO_TREND.md`). Ω geçişi tam 2023-03'te yakalıyor (`6,43 → 7,81`). Görevin yazılı (düzeltilmemiş) ölçütü üç ölçümde de **sağlanmıyor** (`0,900 → 0,705`; `0,768 → 0,595`; `0,494 → 0,321`) ve sağlanması da beklenemez: 2023 bölgede gerçekten aktif bir yıldı, eforu değişmeyen MODIS referansı da `×1,45–1,97` artıyor; yapay filo adımı yalnız `×1,22`. Yazılı ölçüt sıçramanın çoğunun yapay olduğunu varsayıyordu. Sonuçlar G3 doğrulama tablosunda. Kalan sınırlar: 5 büyük ülke 2023 için ölçülmedi (transaction maliyeti); ülke düzeyinde sonuçlar zayıf (bkz. K7).
 
 ### [X] K7 — Tam filo 2000-present trend serisi
 - **Bekler:** K5 · **Açar:** —
@@ -1355,4 +1365,4 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 11 (`S1–S4, S6–S11, S13`) | 2 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 12 (`K1, K2, K3, K4, K5, K7, K8, K9, K10, K11, K12, K13`) | 2 (`K14, K6`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 13 (`K1–K13`) | 1 (`K14`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
