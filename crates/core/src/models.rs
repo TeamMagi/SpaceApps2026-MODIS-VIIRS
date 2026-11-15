@@ -153,13 +153,16 @@ pub struct CalendarCell {
     #[serde(default)]
     pub mean_frp_upper: Option<f64>,
     /// Monthly total harmonized FRP (MW); applies pre-VIIRS completeness factor `k_c(lat)`
-    /// in cells with no VIIRS detections when calibration is enabled.
+    /// in cells with no VIIRS detections when calibration is enabled, and divides by
+    /// `frp_viirs_scale` in MODIS + multi-VIIRS pools with a single-VIIRS reference.
     #[serde(default)]
     pub total_frp: f64,
     #[serde(default)]
     pub total_frp_lower: Option<f64>,
     #[serde(default)]
     pub total_frp_upper: Option<f64>,
+    #[serde(default)]
+    pub frp_viirs_scale: Option<f64>,
     /// MODIS-equivalent FRP per normalized detection (`total_frp / count_normalized`).
     #[serde(default)]
     pub frp_per_detection_eq: Option<f64>,

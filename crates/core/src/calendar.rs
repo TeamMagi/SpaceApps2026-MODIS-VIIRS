@@ -3,7 +3,7 @@ use crate::conformal::{ConformalEra, ConformalTable, conformal_interval};
 use crate::config::CalibrationConfig;
 use crate::effort::{
     FIRST_TERRA_AQUA_MONTH, SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
-    swath_gap_compensation,
+    estimate_effort, multi_viirs_frp_scale, swath_gap_compensation,
 };
 use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
 use crate::quality::month_quality_flags;
@@ -101,6 +101,7 @@ pub fn mean_frp_with_uncertainty(
 /// - mean_frp_lower / mean_frp_upper: combined analytical confidence bounds for `mean_frp`
 /// - total_frp: monthly total `frp_corrected`, scaled by `k_c(lat)` in VIIRS-less cells when enabled
 ///   (and, only if `tropical_swath_gap_compensation` is on, by the swath-gap factor for |lat| <= 30°)
+///   and divided by `frp_viirs_scale` in MODIS + multi-VIIRS pools with a single-VIIRS reference
 /// - total_frp_lower / total_frp_upper: combined analytical confidence bounds for `total_frp`
 /// - frp_per_detection_eq: MODIS-equivalent FRP per normalized detection (`total_frp / count_normalized`)
 /// - anomaly: deviation from multi-year normalized monthly mean (if enough data)
@@ -131,6 +132,7 @@ pub fn build_calendar_with_conformal(
     conformal: Option<&ConformalTable>,
 ) -> Vec<CalendarCell> {
     let omegas = monthly_omegas(hotspots);
+    let effort_factors = estimate_effort(hotspots);
     let mut buckets: HashMap<(i32, u32), MonthBucket> = HashMap::new();
 
     for h in hotspots {
@@ -231,6 +233,10 @@ pub fn build_calendar_with_conformal(
                 )
             };
 
+            let frp_viirs_scale = effort_omega
+                .and_then(|_| multi_viirs_frp_scale(&effort_factors, &bucket.platforms));
+            let frp_divisor = frp_viirs_scale.unwrap_or(1.0);
+            let total_frp = total_frp / frp_divisor;
             let frp_per_detection_eq = count_normalized
                 .filter(|&c| c > 0.0 && c.is_finite())
                 .map(|c| total_frp / c);
@@ -257,8 +263,9 @@ pub fn build_calendar_with_conformal(
                 mean_frp_lower: mean_bounds.map(|(_, lower, _)| lower),
                 mean_frp_upper: mean_bounds.map(|(_, _, upper)| upper),
                 total_frp,
-                total_frp_lower: total_estimate.map(|e| e.lower),
-                total_frp_upper: total_estimate.map(|e| e.upper),
+                total_frp_lower: total_estimate.map(|e| e.lower / frp_divisor),
+                total_frp_upper: total_estimate.map(|e| e.upper / frp_divisor),
+                frp_viirs_scale,
                 frp_per_detection_eq,
                 anomaly: None,
                 sfai: None,
@@ -470,6 +477,7 @@ mod tests {
             total_frp: 0.0,
             total_frp_lower: None,
             total_frp_upper: None,
+            frp_viirs_scale: None,
             frp_per_detection_eq: None,
             anomaly: None,
             sfai: None,
@@ -842,6 +850,169 @@ mod tests {
                     cell.month
                 );
             }
+        }
+    }
+
+    fn viirs_fleet_transition() -> Vec<HarmonizedHotspot> {
+        let mut hotspots = Vec::new();
+        for month in 1..=6 {
+            hotspots.push(make_with_platforms(2018, month, 1, vec![Sensor::ModisAqua]));
+            for day in 2..=4 {
+                hotspots.push(make_with_platforms(
+                    2018,
+                    month,
+                    day,
+                    vec![Sensor::ViirsSNPP],
+                ));
+                if month >= 4 {
+                    hotspots.push(make_with_platforms(
+                        2018,
+                        month,
+                        day,
+                        vec![Sensor::ViirsNOAA20],
+                    ));
+                }
+            }
+        }
+        hotspots
+    }
+
+    #[test]
+    fn single_viirs_energy_ruler_keeps_total_frp_and_f_continuous() {
+        let hotspots = viirs_fleet_transition();
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 6);
+        let reference = &cells[0];
+        for cell in &cells {
+            for (value, baseline) in [
+                (
+                    cell.count_normalized.unwrap(),
+                    reference.count_normalized.unwrap(),
+                ),
+                (cell.total_frp, reference.total_frp),
+                (
+                    cell.frp_per_detection_eq.unwrap(),
+                    reference.frp_per_detection_eq.unwrap(),
+                ),
+            ] {
+                assert!((value / baseline - 1.0).abs() < 0.05);
+            }
+            assert_eq!(cell.mean_frp, reference.mean_frp);
+            if cell.month < 4 {
+                assert_eq!(cell.frp_viirs_scale, None);
+            } else {
+                let m = cell.frp_viirs_scale.unwrap();
+                assert!(m > 1.0);
+                assert_eq!(
+                    m,
+                    cell.effort_omega.unwrap() / reference.effort_omega.unwrap()
+                );
+                let raw_total: f64 = hotspots
+                    .iter()
+                    .filter(|h| h.acquired.month() == cell.month)
+                    .map(|h| h.frp_corrected)
+                    .sum();
+                assert!(raw_total / reference.total_frp > 1.5);
+                assert!((cell.total_frp * m - raw_total).abs() < 1e-9);
+                assert!(
+                    (raw_total / cell.count_normalized.unwrap())
+                        / reference.frp_per_detection_eq.unwrap()
+                        > 1.5
+                );
+            }
+        }
+        let multi_only: Vec<_> = hotspots
+            .into_iter()
+            .filter(|h| h.acquired.month() >= 4)
+            .collect();
+        let unscaled = build_calendar(&multi_only);
+        for (scaled, raw) in cells[3..].iter().zip(&unscaled) {
+            let m = scaled.frp_viirs_scale.unwrap();
+            assert!(
+                (scaled.total_frp_lower.unwrap() * m - raw.total_frp_lower.unwrap()).abs() < 1e-9
+            );
+            assert!(
+                (scaled.total_frp_upper.unwrap() * m - raw.total_frp_upper.unwrap()).abs() < 1e-9
+            );
+        }
+    }
+
+    #[test]
+    fn multi_viirs_without_single_viirs_reference_leaves_frp_unscaled() {
+        let hotspots: Vec<_> = viirs_fleet_transition()
+            .into_iter()
+            .filter(|h| h.acquired.month() >= 4)
+            .collect();
+        let cells = build_calendar(&hotspots);
+        assert_eq!(cells.len(), 3);
+        for cell in cells {
+            let raw_total: f64 = hotspots
+                .iter()
+                .filter(|h| h.acquired.month() == cell.month)
+                .map(|h| h.frp_corrected)
+                .sum();
+            assert_eq!(cell.frp_viirs_scale, None);
+            assert_eq!(cell.effort_omega, Some(7.0));
+            assert_eq!(cell.total_frp, raw_total);
+            assert_eq!(
+                cell.frp_per_detection_eq,
+                Some(raw_total / cell.count_normalized.unwrap())
+            );
+        }
+    }
+
+    #[test]
+    fn frp_viirs_scale_is_none_for_modis_only_and_single_viirs_months() {
+        let mut hotspots = viirs_fleet_transition();
+        for month in 1..=3 {
+            hotspots.push(make_with_platforms(
+                2010,
+                month,
+                1,
+                vec![Sensor::ModisTerra],
+            ));
+        }
+        let cells = build_calendar(&hotspots);
+        for cell in cells.iter().filter(|c| c.year == 2010 || c.month < 4) {
+            assert_eq!(cell.frp_viirs_scale, None);
+        }
+        let modis_only: Vec<_> = hotspots
+            .iter()
+            .filter(|h| h.acquired.year() == 2010)
+            .cloned()
+            .collect();
+        let single_only: Vec<_> = hotspots
+            .iter()
+            .filter(|h| h.acquired.year() == 2018 && h.acquired.month() < 4)
+            .cloned()
+            .collect();
+        for subset in [modis_only, single_only] {
+            for alone in build_calendar(&subset) {
+                let together = cells
+                    .iter()
+                    .find(|c| (c.year, c.month) == (alone.year, alone.month))
+                    .unwrap();
+                assert_eq!(alone.total_frp, together.total_frp);
+                assert_eq!(alone.total_frp_lower, together.total_frp_lower);
+                assert_eq!(alone.total_frp_upper, together.total_frp_upper);
+            }
+        }
+    }
+
+    #[test]
+    fn frp_viirs_scale_json_round_trip_and_legacy_default() {
+        let cells = build_calendar(&viirs_fleet_transition());
+        for cell in [&cells[0], &cells[3]] {
+            let mut value = serde_json::to_value(cell).unwrap();
+            assert_eq!(
+                value["frp_viirs_scale"],
+                serde_json::to_value(cell.frp_viirs_scale).unwrap()
+            );
+            let back: CalendarCell = serde_json::from_value(value.clone()).unwrap();
+            assert_eq!(back.frp_viirs_scale, cell.frp_viirs_scale);
+            value.as_object_mut().unwrap().remove("frp_viirs_scale");
+            let legacy: CalendarCell = serde_json::from_value(value).unwrap();
+            assert_eq!(legacy.frp_viirs_scale, None);
         }
     }
 

@@ -220,6 +220,27 @@ pub fn estimate_effort(hotspots: &[HarmonizedHotspot]) -> Vec<EffortFactor> {
     factors_from_months(&months).0
 }
 
+/// Divisor for monthly FRP on a single-VIIRS energy ruler; `None` when unavailable or inapplicable.
+pub fn multi_viirs_frp_scale(factors: &[EffortFactor], platforms: &[Sensor]) -> Option<f64> {
+    let sensors = platforms.iter().copied().collect();
+    let (has_modis, viirs_platforms) = pooling_key(&sensors);
+    if !has_modis || viirs_platforms.len() < 2 {
+        return None;
+    }
+    let omega_for = |viirs: &[Sensor]| {
+        factors
+            .iter()
+            .find(|f| f.has_modis && f.viirs_platforms == viirs)
+            .and_then(|f| f.omega)
+    };
+    let omega_pool = omega_for(&viirs_platforms)?;
+    // S-NPP anchors the energy ruler to the first VIIRS era as the fleet grows.
+    let omega_ref =
+        omega_for(&[Sensor::ViirsSNPP]).or_else(|| omega_for(&[Sensor::ViirsNOAA20]))?;
+    (omega_pool.is_finite() && omega_pool > 0.0 && omega_ref.is_finite() && omega_ref > 0.0)
+        .then_some(omega_pool / omega_ref)
+}
+
 /// Ω for the configuration that the given year/month belongs to.
 pub fn omega_for_month(
     factors: &[EffortFactor],
@@ -425,6 +446,121 @@ mod tests {
 
     fn make_hotspot(year: i32, month: u32, platforms: Vec<Sensor>) -> HarmonizedHotspot {
         make_hotspot_with(year, month, platforms, 30.0, DayNight::Day)
+    }
+
+    fn ruler_factors() -> Vec<EffortFactor> {
+        let mut hotspots = Vec::new();
+        for month in 1..=3 {
+            for (year, viirs) in [
+                (2015, vec![Sensor::ViirsSNPP, Sensor::ViirsSNPP]),
+                (2018, vec![Sensor::ViirsNOAA20]),
+                (
+                    2020,
+                    vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20, Sensor::ViirsNOAA21],
+                ),
+            ] {
+                hotspots.push(make_hotspot(year, month, vec![Sensor::ModisAqua]));
+                for sensor in viirs {
+                    hotspots.push(make_hotspot(year, month, vec![sensor]));
+                }
+            }
+        }
+        estimate_effort(&hotspots)
+    }
+
+    #[test]
+    fn multi_viirs_frp_scale_prefers_snpp_and_falls_back_to_noaa20() {
+        let mut factors = ruler_factors();
+        let platforms = [
+            Sensor::ViirsNOAA21,
+            Sensor::ViirsNOAA20,
+            Sensor::ModisTerra,
+            Sensor::ViirsSNPP,
+        ];
+        assert_eq!(multi_viirs_frp_scale(&factors, &platforms), Some(4.0 / 3.0));
+        factors
+            .iter_mut()
+            .find(|f| f.viirs_platforms == [Sensor::ViirsSNPP])
+            .unwrap()
+            .omega = None;
+        assert_eq!(multi_viirs_frp_scale(&factors, &platforms), Some(2.0));
+        factors.retain(|f| f.viirs_platforms != [Sensor::ViirsSNPP]);
+        assert_eq!(multi_viirs_frp_scale(&factors, &platforms), Some(2.0));
+        factors.retain(|f| f.viirs_platforms != [Sensor::ViirsNOAA20]);
+        assert_eq!(multi_viirs_frp_scale(&factors, &platforms), None);
+    }
+
+    #[test]
+    fn multi_viirs_frp_scale_requires_modis_and_multiple_viirs() {
+        let factors = ruler_factors();
+        for platforms in [
+            vec![],
+            vec![Sensor::ModisTerra],
+            vec![Sensor::ModisAqua, Sensor::ViirsSNPP],
+            vec![Sensor::ViirsSNPP, Sensor::ViirsNOAA20, Sensor::ViirsNOAA21],
+            vec![Sensor::ModisAqua, Sensor::ViirsSNPP, Sensor::ViirsNOAA20],
+        ] {
+            assert_eq!(multi_viirs_frp_scale(&factors, &platforms), None);
+        }
+        let mut factors = factors;
+        factors
+            .iter_mut()
+            .find(|f| f.viirs_platforms == [Sensor::ViirsSNPP])
+            .unwrap()
+            .has_modis = false;
+        factors
+            .iter_mut()
+            .find(|f| f.viirs_platforms == [Sensor::ViirsNOAA20])
+            .unwrap()
+            .has_modis = false;
+        assert_eq!(
+            multi_viirs_frp_scale(
+                &factors,
+                &[
+                    Sensor::ModisAqua,
+                    Sensor::ViirsSNPP,
+                    Sensor::ViirsNOAA20,
+                    Sensor::ViirsNOAA21,
+                ]
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn multi_viirs_frp_scale_rejects_invalid_omegas_without_clamping() {
+        let platforms = [
+            Sensor::ModisAqua,
+            Sensor::ViirsSNPP,
+            Sensor::ViirsNOAA20,
+            Sensor::ViirsNOAA21,
+        ];
+        for invalid in [
+            None,
+            Some(0.0),
+            Some(-1.0),
+            Some(f64::NAN),
+            Some(f64::INFINITY),
+            Some(f64::NEG_INFINITY),
+        ] {
+            for reference in [false, true] {
+                let mut factors = ruler_factors();
+                factors.retain(|f| f.viirs_platforms != [Sensor::ViirsNOAA20]);
+                factors
+                    .iter_mut()
+                    .find(|f| (f.viirs_platforms.len() == 1) == reference)
+                    .unwrap()
+                    .omega = invalid;
+                assert_eq!(multi_viirs_frp_scale(&factors, &platforms), None);
+            }
+        }
+        let mut factors = ruler_factors();
+        factors
+            .iter_mut()
+            .find(|f| f.viirs_platforms.len() == 3)
+            .unwrap()
+            .omega = Some(1.5);
+        assert_eq!(multi_viirs_frp_scale(&factors, &platforms), Some(0.5));
     }
 
     #[test]
