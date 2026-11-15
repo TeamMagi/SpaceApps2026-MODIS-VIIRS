@@ -245,7 +245,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [X] |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
-| R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
+| R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [X] |
 | R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [X] |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | [X] |
 | S2 | Server + FIRMS client integration testleri | Samet | G4 | — | [X] |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R6, R8, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. (`R7` S7'yi bekliyor.)
+- **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** K1, K2, K4, K5, K8, K9, K10, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
@@ -804,7 +804,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `/methods` sayfası açılıyor; 7 pipeline aşaması görsel olarak anlaşılıyor; referanslar listelenmiş; disclaimer görünür.
 - **Kapanış (Serhat, 2026-11-15):** Sayfa `web/src/components/Methods/` altında, hash route ile açılıyor: `#/methods` ve `#/methods/{pipeline|vza|h3|references|limits}`. Path route yerine hash seçildi, çünkü backend SPA fallback'i çalışmıyor (K9) ve `/methods` linki yenilendiğinde 404 verirdi. Sayfa şunları içeriyor: 7 aşamalı pipeline şeması ve klavyeyle gezilebilen accordion (ne, neden, parametreler, girdi→çıktı); `/api/config`'ten canlı parametreler (backend yoksa koddaki varsayılanlar gösteriliyor); `R_rel(θ)` VZA eğrisi SVG'si, ±σ bandı ve açı slider'ı; H3 hexagon görseli; daraltılabilir disclaimer banner'ı; yazdırma görünümü. Sayfaya Methods çekmecesinden ve alt bardaki disclaimer linkinden giriliyor. Referanslar yalnızca repo dokümanlarındaki kaynaklardan `web/src/content/references.ts`'e alındı ve "tam künye bekleniyor" diye işaretlendi; içerik S8'de Samet tarafından güncellenecek. Metinler `copyMethods.ts`'te, EN ve TR. `tsc`, `build` ve `npm test` (15 test) temiz. **Sınır:** tarayıcıda görsel kontrol yapılmadı. Demo modu banner'ı K1 bekliyor. H/P kısayolları methods sayfasında da çalışıyor.
 
-### [ ] R7 — CSV/GeoJSON export + acil müdahale brifingi
+### [X] R7 — CSV/GeoJSON export + acil müdahale brifingi
 - **Bekler:** G10, C6, S7 · **Açar:** —
 - İki özelliğin frontend implementasyonu:
   - **Export:** indirme butonu → format seçimi → `/api/export` çağrısı → blob download
@@ -815,6 +815,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Print butonu (window.print ile)
   - Case study verileri (S7) ile demo senaryosu
 - **Bitti sayılır:** CSV indiriliyor ve Excel'de açılıyor; GeoJSON indiriliyor; brifingi paneli en az 5 metrik gösteriyor; Türkiye verisiyle demo çalışıyor.
+- **Kapanış (Serhat, 2026-11-15):** **Backend:** `/api/export`'a arşiv modu eklendi. Sorguda `region` varsa `year`, isteğe bağlı `month`, `format=csv|geojson` ve `view=harmonized|raw` ile çalışıyor; `/api/points` ile aynı filtreleri alıyor (K2 eşikleri, `min_confidence`, R8 `fusion_model`). Doğrulama ve hata mesajları `/api/points` ile ortak. Çıktı, `/api/points`'in örneklemeden önceki kayıtlarının tamamı. CSV UTF-8 BOM ile başlıyor (Excel), GeoJSON `[boylam, enlem]` sırasında Point içeren bir FeatureCollection. Dosya adı `pyrosync_{bölge}_{YYYY|YYYY-MM}[_raw].{csv|geojson}`, güvenlik sınırı 500.000 kayıt (aşılırsa 413). `region` yoksa eski canlı mod aynen çalışıyor. Ham CSV/GeoJSON yazıcıları `crates/core/src/export.rs`'te. Ayrıntı `docs/API.md`'de. **Frontend:** Alt barda ve brifingde ayrı CSV ve GeoJSON düğmeleri var; dosya `/api/export`'tan blob olarak indiriliyor, indirme sırasında "Hazırlanıyor…" gösteriliyor, hata olursa uyarı çıkıyor. Demo modunda (K1) dosya tarayıcıda üretiliyor ve `synthetic` etiketi taşıyor (`lib/geojson.ts`). Brifinge dört metrik eklendi (`lib/briefingMetrics.ts`): son 7 gün (tarih aralığıyla), tarihsel ortalamadan sapma, en aktif sensör (dönem ve platform adıyla), son 5 tam yılın eğilimi. Mevcut metriklerle birlikte Harmonize modda 12 metrik var; Ham modda yalnız ham sayılara dayananlar gösteriliyor. Bölge Türkiye seçiliyken brifingde "Vaka çalışması: 2021 Akdeniz yangınları" kartı çıkıyor. Kart, S7'nin `data/case-study/turkey/stats.json` dosyasını ayrı bir chunk olarak yüklüyor; sayılar elle yazılmadı. Antalya ve Muğla Ağustos 2021 tespit sayısı, z ve sıra ile Akdeniz Temmuz/Ağustos z değerlerini gösteriyor. Docker frontend aşaması ve `.dockerignore` bu dosyayı içerecek şekilde güncellendi, Vite `server.fs.allow` ayarı eklendi. Yazdır düğmesi yeni metrikleri ve kartı da basıyor. **Doğrulama:** `cargo test --workspace` (server 197), clippy `-D warnings`, `npm run typecheck`, `npm test` (43) ve `npm run build` temiz. Headless Chrome'da Türkiye / Ağustos 2021 demo modunda brifing metrikleri, vaka kartı, Ham moddaki gizleme, CSV (BOM ve başlık) ve GeoJSON (115 nokta, koordinat sırası) indirmesi kontrol edildi; konsolda hata yok. **Sınırlar:** Arşiv modu tarayıcıda gerçek arşivle denenmedi; sunucu testleriyle doğrulandı. CSV dosyası Excel'de fiilen açılmadı; BOM ve virgül ayracı kontrol edildi. Örneklenmiş (truncated) aylarda "son 7 gün" metriği gizleniyor, çünkü örnekten gün bazında sayım yapılamaz. S7 kapanış notundaki Muğla değerleri (1.503 tespit, z=3,95) ve Akdeniz z değerleri (3,72 / 3,98) güncel `stats.json` ile uyuşmuyor. Dosyada Muğla Ağustos 3.129 tespit, z=3,46; Akdeniz 3,60 / 3,60. Kart dosyadaki değerleri gösteriyor.
 
 ### [X] R12 — 60 saniyelik rehberli tur
 - **Bekler:** R9, C8 · **Açar:** G5
@@ -1295,7 +1296,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 |------|-------------|------------|------|---------|------|
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
-| Serhat | 12 (R1–R12) | 10 (`R1–R6, R8, R9, R11, R12`) | 2 (`R10, R7`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
+| Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 8 (`S1–S4, S6, S7, S9–S11, S13`) | 5 (`S5, S8, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
