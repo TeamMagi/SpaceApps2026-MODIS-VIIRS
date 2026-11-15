@@ -2,7 +2,7 @@
 
 export const briefingCopyEn = {
   exportGeojson: "Download this view (GeoJSON)",
-  exportGeojsonShort: "GeoJSON",
+  exportGeojsonShort: "Download GeoJSON",
   exportPreparing: "Preparing…",
   exportFailed: "Export failed. Try again.",
   briefingMetricLast7: "Last 7 days ({range})",
@@ -29,7 +29,7 @@ export const briefingCopyEn = {
 
 export const briefingCopyTr: Record<keyof typeof briefingCopyEn, string> = {
   exportGeojson: "Bu görünümü indir (GeoJSON)",
-  exportGeojsonShort: "GeoJSON",
+  exportGeojsonShort: "GeoJSON indir",
   exportPreparing: "Hazırlanıyor…",
   exportFailed: "Dışa aktarma başarısız oldu. Tekrar dene.",
   briefingMetricLast7: "Son 7 gün ({range})",

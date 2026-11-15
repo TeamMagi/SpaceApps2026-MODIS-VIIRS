@@ -15,6 +15,7 @@ import {
 import type { GlobePointLayer } from "./pointAttributes";
 import { PointLayers, type HighlightTarget, type PointStyle } from "./points";
 import { Orbits, type OrbitColors } from "./orbits";
+import { isWorldFrame, worldFitHalfAngle } from "./worldView";
 import { surfacePxPerDegree, visibleCapRadius, type TileId } from "./tileMath";
 
 const DEG = Math.PI / 180;
@@ -26,7 +27,20 @@ const MIN_FIT_DISTANCE = 1.08;
 const FIT_PADDING = 0.86;
 /** Altitude multiplier per zoom-button or key step. */
 export const ZOOM_STEP = 1.6;
-const ORBIT_FRAME_MS = 33;
+/** The rings are decoration, so a slow animation is enough and spares the GPU. */
+const ORBIT_FRAME_MS = 83;
+const ORBIT_FRAME_MS_BATTERY = 125;
+/** Without input for this long the orbit animation freezes and the render loop can sleep. */
+const ORBIT_IDLE_MS = 15000;
+/** Pixel-ratio steps the governor walks down from the device ratio; 24 ms is just past 40 fps. */
+const DPR_LADDER = [2, 1.5, 1.25, 1];
+const SLOW_FRAME_MS = 24;
+const FAST_FRAME_MS = 12;
+/** Frame-time averaging window, and the calm time needed before a step back up (hysteresis). */
+const GOVERNOR_WINDOW_MS = 1000;
+const GOVERNOR_CALM_MS = 3000;
+/** On battery the GPU is throttled or swapped for an integrated one. */
+const BATTERY_DPR_CAP = 1.25;
 const ROTATE_MS = 200;
 /** Time constant of the eased wheel/button zoom; ~95 % of a step lands within 3τ. */
 const ZOOM_TAU_MS = 70;
@@ -66,6 +80,15 @@ export interface GlobeSceneOptions {
   readonly onSettle: () => void;
 }
 
+function buildLadder(cap: number): number[] {
+  const max = Math.min(2, window.devicePixelRatio || 1, cap);
+  return [max, ...DPR_LADDER.filter((step) => step < max)];
+}
+
+interface BatteryLike extends EventTarget {
+  readonly charging: boolean;
+}
+
 function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
   return t * t * (3 - 2 * t);
@@ -99,9 +122,24 @@ export class GlobeScene {
   private lastMove = 0;
   private settlePending = false;
   private lastOrbit = 0;
+  private lastInteraction = performance.now();
+  private inView = true;
+  private docVisible = document.visibilityState !== "hidden";
+  private loopOn = false;
+  private onBattery = false;
+  private battery: BatteryLike | null = null;
+  private ladder = buildLadder(Infinity);
+  /** Index into `ladder` chosen by the governor; the camera-motion drop comes on top. */
+  private quality = 0;
+  private moving = false;
+  private lastSample = 0;
+  private windowMs = 0;
+  private windowFrames = 0;
+  private calmMs = 0;
   private readonly baseTexelsPerDegree: number;
-  private running = false;
   private disposed = false;
+  /** True while the running flight is a fit flight, so a resize can retarget its distance. */
+  private fitFlight = false;
 
   constructor(options: GlobeSceneOptions) {
     this.options = options;
@@ -127,7 +165,7 @@ export class GlobeScene {
     this.camera.position.set(...lonLatToVec(0, 20, 4));
     this.camera.lookAt(0, 0, 0);
     // The light rides with the camera so whichever side faces the viewer is lit.
-    const sun = new THREE.DirectionalLight("white", 2.0);
+    const sun = new THREE.DirectionalLight("white", 2.4);
     sun.position.set(-1.2, 1.4, 2);
     this.camera.add(sun);
     this.scene.add(this.camera);
@@ -174,26 +212,154 @@ export class GlobeScene {
             this.setRunning(visible);
           });
     this.intersection?.observe(options.host);
-    this.setRunning(true);
+    options.host.addEventListener("pointerdown", this.noteInteraction, { passive: true });
+    options.host.addEventListener("pointermove", this.noteInteraction, { passive: true });
+    document.addEventListener("visibilitychange", this.handleVisibility);
+    this.watchBattery();
+    this.wake();
   }
 
+  /** Firefox has no battery API; there the caps simply never apply. */
+  private watchBattery(): void {
+    const getBattery = (navigator as Navigator & { getBattery?: () => Promise<BatteryLike> }).getBattery;
+    if (typeof getBattery !== "function") return;
+    try {
+      getBattery.call(navigator).then(
+        (battery) => {
+          if (this.disposed) return;
+          this.battery = battery;
+          battery.addEventListener("chargingchange", this.handleCharging);
+          this.handleCharging();
+        },
+        () => {},
+      );
+    } catch {
+      // Blocked by a permissions policy; behave as if plugged in.
+    }
+  }
+
+  private handleCharging = (): void => {
+    if (!this.battery) return;
+    this.onBattery = !this.battery.charging;
+    this.ladder = buildLadder(this.onBattery ? BATTERY_DPR_CAP : Infinity);
+    this.quality = Math.min(this.quality, this.ladder.length - 1);
+    this.applyDpr();
+  };
+
+  private handleVisibility = (): void => {
+    this.docVisible = document.visibilityState !== "hidden";
+    if (this.docVisible) {
+      this.dirty = true;
+      this.wake();
+    } else {
+      this.sleep();
+    }
+  };
+
   private setRunning(running: boolean): void {
-    if (this.disposed || running === this.running) return;
-    this.running = running;
-    this.renderer.setAnimationLoop(running ? this.tick : null);
+    if (this.disposed || running === this.inView) return;
+    this.inView = running;
+    if (running) {
+      this.dirty = true;
+      this.wake();
+    } else {
+      this.sleep();
+    }
+  }
+
+  private wake(): void {
+    if (this.disposed || this.loopOn || !this.inView || !this.docVisible) return;
+    this.loopOn = true;
+    this.lastTick = 0;
+    this.lastSample = 0;
+    this.renderer.setAnimationLoop(this.tick);
+  }
+
+  private sleep(): void {
+    if (!this.loopOn) return;
+    this.loopOn = false;
+    this.renderer.setAnimationLoop(null);
+  }
+
+  /** Any user input; restarts the orbit animation once it had been frozen for lack of it. */
+  private noteInteraction = (): void => {
+    const now = performance.now();
+    const wasIdle = now - this.lastInteraction >= ORBIT_IDLE_MS;
+    this.lastInteraction = now;
+    if (wasIdle) {
+      this.lastOrbit = now;
+      this.wake();
+    }
+  };
+
+  private targetDpr(): number {
+    const index = Math.min(this.ladder.length - 1, this.quality + (this.moving ? 1 : 0));
+    return this.ladder[index];
+  }
+
+  private applyDpr(): void {
+    const next = this.targetDpr();
+    if (next === this.dpr) return;
+    this.dpr = next;
+    this.renderer.setPixelRatio(next);
+    this.renderer.setSize(this.width, this.height, false);
+    this.resetSamples();
+    this.cameraChanged();
+    this.dirty = true;
+    this.wake();
+  }
+
+  private resetSamples(): void {
+    this.lastSample = 0;
+    this.windowMs = 0;
+    this.windowFrames = 0;
+    this.calmMs = 0;
+  }
+
+  /** Called for frames that are drawn back to back, so the interval is the real frame time. */
+  private sampleFrame(now: number): void {
+    const interval = now - this.lastSample;
+    const valid = this.lastSample > 0 && interval < 250;
+    this.lastSample = now;
+    if (!valid) return;
+    this.windowMs += interval;
+    this.windowFrames += 1;
+    if (this.windowMs < GOVERNOR_WINDOW_MS) return;
+    const average = this.windowMs / this.windowFrames;
+    const elapsed = this.windowMs;
+    this.windowMs = 0;
+    this.windowFrames = 0;
+    if (average > SLOW_FRAME_MS && this.quality < this.ladder.length - 1) {
+      this.quality += 1;
+      this.calmMs = 0;
+      this.applyDpr();
+    } else if (average < FAST_FRAME_MS && this.quality > 0) {
+      this.calmMs += elapsed;
+      if (this.calmMs >= GOVERNOR_CALM_MS) {
+        this.quality -= 1;
+        this.calmMs = 0;
+        this.applyDpr();
+      }
+    } else {
+      this.calmMs = 0;
+    }
   }
 
   private handleControlStart = (): void => {
     this.flight.cancel();
+    this.noteInteraction();
+    this.wake();
   };
 
   private handleControlChange = (): void => {
     this.controlsChanged = true;
+    this.wake();
   };
 
   private handleWheel = (event: WheelEvent): void => {
     event.preventDefault();
     event.stopPropagation();
+    this.noteInteraction();
     const scale = event.deltaMode === 1 ? 33 : event.deltaMode === 2 ? 800 : 1;
     const delta = Math.max(-WHEEL_MAX_DELTA, Math.min(WHEEL_MAX_DELTA, event.deltaY * scale));
     if (delta === 0) return;
@@ -233,12 +399,21 @@ export class GlobeScene {
       this.controlsChanged = false;
       moved = true;
     }
-    if (moved) this.cameraChanged();
+    if (moved) {
+      this.lastInteraction = performance.now();
+      if (!this.moving) {
+        this.moving = true;
+        this.applyDpr();
+      }
+      this.cameraChanged();
+    }
 
+    const orbitActive =
+      !this.options.reducedMotion && this.orbits.group.visible && now - this.lastInteraction < ORBIT_IDLE_MS;
     let orbitStep = false;
-    if (!this.options.reducedMotion && this.orbits.group.visible) {
+    if (orbitActive) {
       const elapsed = now - this.lastOrbit;
-      if (elapsed >= ORBIT_FRAME_MS) {
+      if (elapsed >= (this.onBattery ? ORBIT_FRAME_MS_BATTERY : ORBIT_FRAME_MS)) {
         this.orbits.update(Math.min(elapsed, 100) / 1000);
         this.lastOrbit = now;
         orbitStep = true;
@@ -248,22 +423,34 @@ export class GlobeScene {
     const tilesBusy = this.earth.stepTiles(now, this.renderer);
     const pointsBusy = this.points.step(now);
 
-    if (moved || orbitStep || tilesBusy || pointsBusy || this.dirty) {
+    const continuous = moved || tilesBusy || pointsBusy;
+    if (continuous || orbitStep || this.dirty) {
       this.dirty = false;
       this.renderer.render(this.scene, this.camera);
     }
+    if (continuous) this.sampleFrame(now);
+    else this.lastSample = 0;
     if (moved) {
       this.lastMove = now;
       this.settlePending = true;
       this.options.onCameraMove();
     } else if (this.settlePending && now - this.lastMove >= SETTLE_MS) {
       this.settlePending = false;
+      this.moving = false;
+      // One full-quality redraw now that nothing moves.
+      this.applyDpr();
+      this.dirty = true;
       this.options.onSettle();
     }
+
+    const busy =
+      continuous || this.dirty || this.settlePending || this.zoomGoal !== null || this.flight.active || orbitActive;
+    if (!busy) this.sleep();
   };
 
   requestRender(): void {
     this.dirty = true;
+    this.wake();
   }
 
   private distance(): number {
@@ -272,8 +459,12 @@ export class GlobeScene {
 
   private fitTarget(): number {
     if (!this.frame) return this.distance();
-    const half = viewHalfAngle(FOV_DEG * DEG, this.width / this.height) * FIT_PADDING;
-    const d = fitDistance(this.frame.radius, half);
+    const narrow = viewHalfAngle(FOV_DEG * DEG, this.width / this.height);
+    if (isWorldFrame(this.frame)) {
+      const d = fitDistance(this.frame.radius, worldFitHalfAngle(narrow));
+      return Math.min(MAX_DISTANCE, Math.max(MIN_FIT_DISTANCE, d));
+    }
+    const d = fitDistance(this.frame.radius, narrow * FIT_PADDING);
     return Math.min(MAX_DISTANCE, Math.max(MIN_FIT_DISTANCE, d));
   }
 
@@ -331,8 +522,17 @@ export class GlobeScene {
     this.options.onViewState(next);
   }
 
-  private flyTo(direction: THREE.Vector3, distance: number, duration: number): void {
+  /** Drops the drag inertia OrbitControls still holds; it would otherwise fight the flight afterwards. */
+  private clearInertia(): void {
+    this.controls.enableDamping = false;
+    this.controls.update();
+    this.controls.enableDamping = true;
+  }
+
+  private flyTo(direction: THREE.Vector3, distance: number, duration: number, fit = false): void {
     this.zoomGoal = null;
+    this.fitFlight = fit;
+    this.clearInertia();
     const clamped = Math.min(MAX_DISTANCE, Math.max(MIN_DISTANCE, distance));
     this.flight.start(direction, clamped, this.options.reducedMotion ? 0 : duration);
     this.cameraChanged();
@@ -351,7 +551,7 @@ export class GlobeScene {
     const target = new THREE.Vector3(...this.frame.direction);
     const angle = this.camera.position.clone().normalize().angleTo(target);
     const duration = animate ? Math.min(1400, Math.max(600, 500 + angle * 450)) : 0;
-    this.flyTo(target, this.fitTarget(), duration);
+    this.flyTo(target, this.fitTarget(), duration, true);
   }
 
   /** Eased zoom by an altitude factor; repeated calls compound on the pending target. */
@@ -367,6 +567,7 @@ export class GlobeScene {
       return;
     }
     this.zoomGoal = goal;
+    this.wake();
   }
 
   /** Rotates by a fraction of the visible height; positive lon looks east, positive lat north. */
@@ -445,12 +646,18 @@ export class GlobeScene {
     const wasAtFit = this.viewState?.isAtFit ?? false;
     this.width = width;
     this.height = height;
-    this.dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.ladder = buildLadder(this.onBattery ? BATTERY_DPR_CAP : Infinity);
+    this.quality = Math.min(this.quality, this.ladder.length - 1);
+    this.dpr = this.targetDpr();
     this.renderer.setPixelRatio(this.dpr);
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    if (wasAtFit && this.frame && !this.flight.active) this.fit(false);
+    if (this.flight.active) {
+      if (this.fitFlight && this.frame) this.flight.retargetDistance(this.fitTarget());
+    } else if (wasAtFit && this.frame) {
+      this.fit(false);
+    }
     this.cameraChanged();
     this.requestRender();
   }
@@ -459,6 +666,10 @@ export class GlobeScene {
     this.disposed = true;
     this.renderer.setAnimationLoop(null);
     this.intersection?.disconnect();
+    this.options.host.removeEventListener("pointerdown", this.noteInteraction);
+    this.options.host.removeEventListener("pointermove", this.noteInteraction);
+    document.removeEventListener("visibilitychange", this.handleVisibility);
+    this.battery?.removeEventListener("chargingchange", this.handleCharging);
     this.controls.removeEventListener("start", this.handleControlStart);
     this.controls.removeEventListener("change", this.handleControlChange);
     this.options.host.removeEventListener("wheel", this.handleWheel, { capture: true });

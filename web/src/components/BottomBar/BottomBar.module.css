@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-2);
-  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
 }
 
 .disclaimer {
@@ -48,12 +48,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-half) var(--space-1);
-  min-height: 32px;
+  min-height: 28px;
   max-width: 100%;
-  padding: var(--space-half) var(--space-1);
+  padding: 0 var(--space-1);
   border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   line-height: var(--line-height-tight);
   text-align: center;
   transition:
@@ -100,6 +100,59 @@
   text-align: center;
 }
 
+.more {
+  position: relative;
+}
+
+.more > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.moreMenu {
+  position: absolute;
+  z-index: var(--z-popover, 20);
+  right: 0;
+  bottom: calc(100% + var(--space-1));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised, var(--color-surface));
+  box-shadow: var(--shadow-raised);
+}
+
+.menuAction {
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-align: left;
+  white-space: normal;
+}
+
+.menuAction:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.menuAction:disabled {
+  color: var(--color-text-disabled);
+}
+
+.menuAction[data-copied="true"] {
+  background: var(--color-active);
+  color: var(--color-text);
+}
+
 .primary {
   background: var(--color-active);
   color: var(--color-text);
@@ -109,16 +162,29 @@
 @media (min-width: 1024px) {
   .bar {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-1) var(--space-2);
-    min-height: var(--h-bottom);
-    padding: var(--space-half) var(--space-3);
+    height: var(--h-bottom);
+    padding: 0 var(--space-2);
   }
 
   .disclaimer {
-    flex: 1 1 260px;
+    flex: 1 1 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .actions {
+    flex-wrap: nowrap;
+    flex: none;
+  }
+
+  .moreMenu {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .actions {

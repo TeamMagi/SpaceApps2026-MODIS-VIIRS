@@ -32,7 +32,7 @@
   justify-self: center;
   position: relative;
   width: 1px;
-  height: 10px;
+  height: 8px;
   background: var(--color-border-subtle);
   overflow: hidden;
 }
@@ -93,6 +93,7 @@
 }
 
 .tech {
+  overflow-wrap: anywhere;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
   font-size: var(--font-size-2xs);
@@ -132,120 +133,6 @@
   color: var(--color-text-secondary);
 }
 
-@media (min-width: 1024px) {
-  .strip {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2);
-    min-width: 0;
-    font-size: var(--font-size-2xs);
-  }
-
-  .nodes {
-    flex-direction: row;
-    align-items: center;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .node {
-    display: flex;
-    align-items: center;
-    gap: var(--space-half);
-    flex: 0 0 auto;
-  }
-
-  .node + .node {
-    flex: 1 0 auto;
-  }
-
-  .connector {
-    flex: 1 1 var(--space-1);
-    min-width: var(--space-1);
-    width: auto;
-    height: 1px;
-    margin-left: var(--space-half);
-  }
-
-  .connectorFill {
-    transform-origin: left center;
-    transform: scaleX(0);
-  }
-
-  .node[data-lit="true"] .connectorFill {
-    transform: scaleX(1);
-  }
-
-  .labels {
-    position: relative;
-    flex: 0 0 auto;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
-    padding-bottom: 0;
-  }
-
-  .name {
-    line-height: 1.15;
-    white-space: nowrap;
-  }
-
-  .tech {
-    white-space: nowrap;
-  }
-
-  .nodeProgress {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    z-index: var(--z-map-overlay);
-    padding: 2px var(--space-1);
-    background: var(--color-surface-raised);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-raised);
-    color: var(--color-text);
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  .nodeProgress[data-align="end"] {
-    left: auto;
-    right: 0;
-  }
-
-  .meta {
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-    gap: var(--space-1);
-    margin-left: auto;
-  }
-
-  .summary {
-    white-space: nowrap;
-  }
-}
-
-@media (min-width: 1024px) and (max-width: 1120px) {
-  .nodes {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .nodes::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-@media (min-width: 1024px) and (max-width: 1519px) {
-  .tech {
-    display: none;
-  }
-}
-
 .nrtMeta {
   color: var(--color-text-secondary);
   font-size: var(--font-size-2xs);
@@ -269,4 +156,46 @@
 .customBadge:hover {
   background: var(--color-hover);
   color: var(--color-text);
+}
+
+/* Wide container (the detailed analysis panel): horizontal step strip. */
+@container (min-width: 520px) {
+  .nodes {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-gap: 12px;
+  }
+
+  .node {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+  }
+
+  .connector {
+    position: absolute;
+    top: 8px;
+    left: calc(-100% - 12px + 22px);
+    width: calc(100% - 14px);
+    height: 1px;
+  }
+
+  .connectorFill {
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+
+  .node[data-lit="true"] .connectorFill {
+    transform: scaleX(1);
+  }
+
+  .index {
+    grid-column: 1;
+  }
+
+  .labels {
+    grid-column: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    row-gap: 2px;
+  }
 }

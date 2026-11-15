@@ -7,6 +7,7 @@ import { useMapPoints, useRegionData, useRegions } from "../../hooks/useRegionDa
 import { formatYearSpan } from "../../lib/format";
 import { padBBox, type GeoBBox } from "../../lib/geo/projection";
 import { matchRegionsToFeatures, type RegionRef } from "../../lib/geo/regionMatch";
+import { filterPoints, usePointFilters } from "../../lib/pointFilters";
 import { computeQuantileBreaks } from "../../lib/scales";
 import { useAppStore } from "../../store/useAppStore";
 import type { HarmonizedPoint, MapState, RawPoint, RegionSummary } from "../../types";
@@ -50,7 +51,15 @@ export function useMapModel() {
   const { region } = useRegionData();
   const { regions } = useRegions();
   const setRegion = useAppStore((state) => state.setRegion);
-  const points = useMapPoints();
+  const unfilteredPoints = useMapPoints();
+  const pointFilters = usePointFilters();
+  const points = useMemo(() => {
+    const raw = filterPoints(unfilteredPoints.raw, pointFilters);
+    const harmonized = filterPoints(unfilteredPoints.harmonized, pointFilters);
+    return raw === unfilteredPoints.raw && harmonized === unfilteredPoints.harmonized
+      ? unfilteredPoints
+      : { ...unfilteredPoints, raw, harmonized };
+  }, [unfilteredPoints, pointFilters]);
   const geo = useGeoDataset();
   const { mode, targetMode, geometryHarmonized, showDuplicateRings, revealAnswer } =
     useHarmonizeTransition((v) => ({
@@ -139,7 +148,7 @@ export function useMapModel() {
     [points.raw, points.harmonized],
   );
 
-  const selectionScope = `${region.id}:${points.period.year ?? "none"}:${points.period.month ?? "all"}:${geometryHarmonized ? "h" : "r"}`;
+  const selectionScope = `${region.id}:${points.period.year ?? "none"}:${points.period.month ?? "all"}:${geometryHarmonized ? "h" : "r"}:${pointFilters.minFrp}:${pointFilters.dayNight}`;
 
   const [hoverState, setHoverState] = useState<{ scope: string; index: number | null }>({
     scope: selectionScope,

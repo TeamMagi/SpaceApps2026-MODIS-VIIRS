@@ -2,9 +2,17 @@ import { memo, useMemo, useState } from "react";
 import { useCopy, type CopyApi } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
+import {
+  activeFilterCount,
+  MIN_FRP_STEPS,
+  resetPointFilters,
+  setPointFilters,
+  usePointFilters,
+  type DayNightFilter,
+} from "../../lib/pointFilters";
 import { FRP_BREAKS } from "../../lib/scales";
 import { useAppStore } from "../../store/useAppStore";
-import type { Palette } from "../../types";
+import type { MinConfidence, Palette } from "../../types";
 import styles from "./MapLegend.module.css";
 
 export interface SensorFilter {
@@ -40,17 +48,22 @@ function formatBreakValue(value: number, fmt: CopyApi["fmt"]): string {
 
 const DEFAULT_SENSOR_FILTER: SensorFilter = { modis: true, viirs: true };
 const FRP_STEPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
-const DESKTOP_WIDTH_PX = 1024;
-const MIN_OPEN_HEIGHT_PX = 640;
+const STORAGE_KEY = "pyrosync.legendOpen";
 
-function shouldDefaultOpen(): boolean {
-  if (typeof window === "undefined") return false;
-  if (typeof window.matchMedia === "function") {
-    return window.matchMedia(
-      `(min-width: ${DESKTOP_WIDTH_PX}px) and (min-height: ${MIN_OPEN_HEIGHT_PX}px)`,
-    ).matches;
+function readStoredOpen(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "1";
+  } catch {
+    return false;
   }
-  return window.innerWidth >= DESKTOP_WIDTH_PX && window.innerHeight >= MIN_OPEN_HEIGHT_PX;
+}
+
+function writeStoredOpen(open: boolean): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, open ? "1" : "0");
+  } catch {
+    // storage unavailable (private mode): the preference just is not remembered
+  }
 }
 
 /** Never allow both sensors off: clicking the sole active sensor restores both. */
@@ -70,6 +83,9 @@ function MapLegend({
   const { t, fmt } = useCopy();
   const { coverage } = useRegionData();
   const palette = useAppStore((state) => state.palette);
+  const minConfidence = useAppStore((state) => state.minConfidence);
+  const setMinConfidence = useAppStore((state) => state.setMinConfidence);
+  const filters = usePointFilters();
   const { geometryHarmonized, showDuplicateRings } = useHarmonizeTransition((v) => ({
     geometryHarmonized: v.geometryHarmonized,
     showDuplicateRings: v.showDuplicateRings,
@@ -101,7 +117,7 @@ function MapLegend({
     [formattedTicks, fmt, t],
   );
 
-  const [isOpen, setIsOpen] = useState<boolean>(shouldDefaultOpen);
+  const [isOpen, setIsOpen] = useState<boolean>(readStoredOpen);
 
   const modisLabel = coverage.modis
     ? t("mapLegendModis", {
@@ -123,6 +139,21 @@ function MapLegend({
     onSensorFilterChange?.(nextSensorFilter(effectiveSensorFilter, target));
   };
 
+  const activeCount = activeFilterCount(filters) + (minConfidence !== "low" ? 1 : 0);
+
+  const timeOptions: readonly { value: DayNightFilter; label: string }[] = [
+    { value: "all", label: t("filterTimeAll") },
+    { value: "day", label: t("filterTimeDay") },
+    { value: "night", label: t("filterTimeNight") },
+  ];
+  const confidenceOptions: readonly { value: MinConfidence; label: string }[] = [
+    { value: "low", label: t("filterConfidenceAll") },
+    { value: "nominal", label: t("filterConfidenceNominal") },
+    { value: "high", label: t("filterConfidenceHigh") },
+  ];
+
+  const frpStepIndex = Math.max(0, MIN_FRP_STEPS.indexOf(filters.minFrp));
+
   return (
     <div
       className={styles.legend}
@@ -131,118 +162,177 @@ function MapLegend({
       data-open={isOpen}
       data-map-ui="true"
     >
-      <div className={styles.header}>
-        <button
-          type="button"
-          className={styles.toggleButton}
-          aria-expanded={isOpen}
-          onClick={() => setIsOpen((prev) => !prev)}
-        >
-          <span>{isOpen ? t("mapLegendToggleHide") : t("mapLegendToggleShow")}</span>
-          <span className={styles.chevron} aria-hidden="true">
-            {isOpen ? "▾" : "▸"}
-          </span>
-        </button>
-
-        {isOpen && (
-          <div className={styles.rawSection} aria-hidden={geometryHarmonized}>
-            <div className={styles.collapsibleInner}>
-              <p className={styles.filterHint}>{t("mapLegendFilterHint")}</p>
-            </div>
-          </div>
+      <button
+        type="button"
+        className={styles.toggleButton}
+        aria-expanded={isOpen}
+        onClick={() => {
+          const next = !isOpen;
+          setIsOpen(next);
+          writeStoredOpen(next);
+        }}
+      >
+        <span className={styles.toggleLabel}>{t("legendFiltersTitle")}</span>
+        {activeCount > 0 && (
+          <span className={styles.badge}>{t("filterActiveCount", { n: String(activeCount) })}</span>
         )}
-      </div>
+        {!isOpen && (
+          <span className={styles.preview} aria-hidden="true">
+            {FRP_STEPS.map((step) => (
+              <span key={step} className={styles.swatch} data-bucket={step} />
+            ))}
+          </span>
+        )}
+        <span className={styles.chevron} aria-hidden="true">
+          {isOpen ? "▾" : "▸"}
+        </span>
+      </button>
 
       {isOpen && (
         <div className={styles.body}>
-          <div className={styles.rawSection} aria-hidden={geometryHarmonized}>
-            <div className={styles.collapsibleInner}>
-              <div className={styles.sensorGroup}>
-                <button
-                  type="button"
-                  className={styles.sensorChip}
-                  aria-pressed={effectiveSensorFilter.modis}
-                  tabIndex={geometryHarmonized ? -1 : undefined}
-                  onClick={() => handleToggleSensor("modis")}
-                >
-                  <span className={styles.markWrap} aria-hidden="true">
-                    <span className={styles.modis} />
-                  </span>
-                  <span className={styles.sensorLabel}>{modisLabel}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.sensorChip}
-                  aria-pressed={effectiveSensorFilter.viirs}
-                  tabIndex={geometryHarmonized ? -1 : undefined}
-                  onClick={() => handleToggleSensor("viirs")}
-                >
-                  <span className={styles.markWrap} aria-hidden="true">
-                    <span className={styles.viirs} />
-                  </span>
-                  <span className={styles.sensorLabel}>{viirsLabel}</span>
-                </button>
-              </div>
+          <section className={styles.section}>
+            <div className={styles.sectionHead}>
+              <h3 className={styles.sectionTitle}>{t("legendSectionFrp")}</h3>
+              <span className={styles.meta}>
+                {paletteName} · {scaleModeText}
+              </span>
             </div>
-          </div>
-
-          <div className={styles.harmonizedSection} aria-hidden={!geometryHarmonized}>
-            <div className={styles.collapsibleInner}>
-              <div className={styles.harmonizedBlock}>
-                <div className={styles.row}>
-                  <span className={styles.markWrap} aria-hidden="true">
-                    <span className={styles.harmonizedDot} />
-                  </span>
-                  <span>{t("mapLegendHarmonized")}</span>
-                </div>
-
-                <div className={styles.frpSection}>
-                  <div className={styles.frpHeader}>
-                    <p className={styles.title}>{t("mapLegendFrp")}</p>
-                    <span className={styles.paletteMeta}>
-                      {paletteName} · {scaleModeText}
-                    </span>
-                  </div>
-                  <div className={styles.ramp} role="img" aria-label={`${paletteName} · ${scaleModeText}`}>
-                    {FRP_STEPS.map((step, index) => (
-                      <span
-                        key={step}
-                        className={styles.swatch}
-                        data-bucket={step}
-                        title={bucketRanges[index]}
-                      />
-                    ))}
-                  </div>
-                  <div className={styles.ticks}>
-                    {formattedTicks.map((label, index) => (
-                      <span key={`${index}-${label}`}>{label}</span>
-                    ))}
-                  </div>
-                  <div className={styles.rangeRow} aria-hidden="true">
-                    <span>{bucketRanges[0]}</span>
-                    <span>{bucketRanges[bucketRanges.length - 1]}</span>
-                  </div>
-                </div>
-              </div>
+            <div className={styles.ramp} role="img" aria-label={`${paletteName} · ${scaleModeText}`}>
+              {FRP_STEPS.map((step, index) => (
+                <span
+                  key={step}
+                  className={styles.swatch}
+                  data-bucket={step}
+                  title={bucketRanges[index]}
+                />
+              ))}
             </div>
-          </div>
+            <div className={styles.ticks}>
+              {formattedTicks.map((label, index) => (
+                <span key={`${index}-${label}`}>{label}</span>
+              ))}
+            </div>
+          </section>
 
-          <div
-            className={styles.ringsSection}
-            aria-hidden={!geometryHarmonized && !showDuplicateRings}
-          >
-            <div className={styles.collapsibleInner}>
-              <div className={styles.ringRow} data-active={showDuplicateRings}>
+          <section className={styles.section} aria-hidden={geometryHarmonized}>
+            <h3 className={styles.sectionTitle}>{t("legendSectionSensors")}</h3>
+            <div className={styles.chipRow}>
+              <button
+                type="button"
+                className={styles.chip}
+                aria-pressed={effectiveSensorFilter.modis}
+                disabled={geometryHarmonized}
+                tabIndex={geometryHarmonized ? -1 : undefined}
+                onClick={() => handleToggleSensor("modis")}
+              >
                 <span className={styles.markWrap} aria-hidden="true">
-                  <span className={styles.ring} />
+                  <span className={styles.modis} />
                 </span>
-                <span>{t("mapLegendDuplicate")}</span>
+                <span>{modisLabel}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.chip}
+                aria-pressed={effectiveSensorFilter.viirs}
+                disabled={geometryHarmonized}
+                tabIndex={geometryHarmonized ? -1 : undefined}
+                onClick={() => handleToggleSensor("viirs")}
+              >
+                <span className={styles.markWrap} aria-hidden="true">
+                  <span className={styles.viirs} />
+                </span>
+                <span>{viirsLabel}</span>
+              </button>
+            </div>
+            {!geometryHarmonized && <p className={styles.note}>{t("mapLegendFilterHint")}</p>}
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>{t("legendSectionFilters")}</h3>
+
+            <div className={styles.field}>
+              <label className={styles.fieldLabel} htmlFor="legend-min-frp">
+                {t("filterMinFrp")}
+              </label>
+              <div className={styles.rangeWrap}>
+                <input
+                  id="legend-min-frp"
+                  className={styles.slider}
+                  type="range"
+                  min={0}
+                  max={MIN_FRP_STEPS.length - 1}
+                  step={1}
+                  value={frpStepIndex}
+                  onChange={(event) =>
+                    setPointFilters({ minFrp: MIN_FRP_STEPS[Number(event.target.value)] ?? 0 })
+                  }
+                />
+                <output className={styles.value} htmlFor="legend-min-frp">
+                  {filters.minFrp > 0 ? `≥ ${fmt.number(filters.minFrp)} MW` : t("filterTimeAll")}
+                </output>
               </div>
             </div>
-          </div>
 
-          <p className={styles.dotNote}>{t("mapLegendDotNote")}</p>
+            <div className={styles.field} role="group" aria-label={t("filterTime")}>
+              <span className={styles.fieldLabel}>{t("filterTime")}</span>
+              <div className={styles.segment}>
+                {timeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={styles.segmentButton}
+                    aria-pressed={filters.dayNight === option.value}
+                    onClick={() => setPointFilters({ dayNight: option.value })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.field} role="group" aria-label={t("filterConfidence")}>
+              <span className={styles.fieldLabel}>{t("filterConfidence")}</span>
+              <div className={styles.segment}>
+                {confidenceOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={styles.segmentButton}
+                    aria-pressed={minConfidence === option.value}
+                    onClick={() => setMinConfidence(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className={styles.resetButton}
+              disabled={activeCount === 0}
+              onClick={() => {
+                resetPointFilters();
+                setMinConfidence("low");
+              }}
+            >
+              {t("filterReset")}
+            </button>
+          </section>
+
+          <section className={styles.section}>
+            <div
+              className={styles.ringRow}
+              data-active={showDuplicateRings}
+              hidden={!geometryHarmonized && !showDuplicateRings}
+            >
+              <span className={styles.markWrap} aria-hidden="true">
+                <span className={styles.ring} />
+              </span>
+              <span>{t("mapLegendDuplicate")}</span>
+            </div>
+            <p className={styles.note}>{t("mapLegendDotNote")}</p>
+          </section>
         </div>
       )}
     </div>

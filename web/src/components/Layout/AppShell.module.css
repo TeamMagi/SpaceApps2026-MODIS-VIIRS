@@ -1,21 +1,24 @@
-/* Mobile first: one column; the content wrapper dissolves so its children join the shell grid. */
+/*
+ * Mobile first. Header, command row, map and bottom bar are four rows of the shell. The command row
+ * and bottom bar collapse through a 1fr -> 0fr grid row, because `auto` heights cannot be transitioned.
+ */
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     "header"
-    "headline"
-    "count"
+    "command"
     "map"
-    "chart"
-    "calendar"
-    "pipeline"
-    "drift"
     "bottom";
   min-height: 100dvh;
   background: var(--color-bg);
-  /* Room for the docked toggle */
-  padding-bottom: calc(var(--toggle-h) + var(--space-3) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.shell[data-view="world"] {
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .content {
@@ -32,63 +35,123 @@
   border-bottom: var(--border-width) solid var(--color-border-subtle);
 }
 
-.headline {
-  grid-area: headline;
-  padding: var(--space-2) var(--space-2) var(--space-1);
+.command,
+.bottom {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  min-width: 0;
+  transition:
+    grid-template-rows 260ms var(--ease-standard),
+    opacity 260ms var(--ease-standard);
 }
 
-.toggle {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: var(--z-toggle-dock);
-  padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
-  background: var(--color-surface);
-  border-top: var(--border-width) solid var(--color-border);
-}
-
-.count {
-  grid-area: count;
-  padding: var(--space-1) var(--space-2);
-}
-
-.pipeline {
-  grid-area: pipeline;
-  padding: var(--space-1) var(--space-2);
-}
-
-.drift {
-  grid-area: drift;
-  padding: var(--space-1) var(--space-2);
-}
-
-.drift:empty {
-  display: none;
-}
-
-.map {
-  grid-area: map;
-  height: var(--h-map-mobile);
-  min-height: 360px;
-  position: relative;
-}
-
-.chart {
-  grid-area: chart;
-  height: var(--h-chart);
-  min-height: 0;
-  padding: var(--space-1) var(--space-2);
-}
-
-.calendar {
-  grid-area: calendar;
-  min-height: 0;
-  padding: var(--space-1) var(--space-2);
+.command {
+  grid-area: command;
 }
 
 .bottom {
   grid-area: bottom;
-  min-height: var(--h-bottom);
+}
+
+.shell[data-view="world"] .command,
+.shell[data-view="world"] .bottom {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .command,
+  .bottom {
+    transition: none;
+  }
+}
+
+@keyframes rowOpen {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Intro runs when data-view flips to "region" (or loads as region), never between countries. */
+@media (prefers-reduced-motion: no-preference) {
+  .shell[data-view="region"] .command {
+    animation: rowOpen 420ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  .shell[data-view="region"] .headline {
+    animation: riseIn 320ms var(--ease-standard) 120ms backwards;
+  }
+
+  .shell[data-view="region"] .toggle {
+    animation: riseIn 320ms var(--ease-standard) 200ms backwards;
+  }
+
+  .shell[data-view="region"] .count {
+    animation: fadeIn 200ms var(--ease-standard) 260ms backwards;
+  }
+}
+
+.collapseInner {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bottomInner {
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
   border-top: var(--border-width) solid var(--color-border-subtle);
+}
+
+.commandRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding: 8px 16px;
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+  min-width: 0;
+}
+
+.headline,
+.toggle,
+.count {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.toggle {
+  justify-content: center;
+}
+
+.map {
+  grid-area: map;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.shell[data-view="region"] .map {
+  min-height: 60dvh;
 }
 
 .errorBox {
@@ -133,129 +196,69 @@
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
-  .content {
+  .commandRow {
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
     grid-template-areas:
       "headline count"
-      "map map"
-      "chart chart"
-      "calendar calendar"
-      "pipeline pipeline"
-      "drift drift";
-  }
-
-  .headline,
-  .count {
-    display: flex;
+      "toggle toggle";
     align-items: center;
-    min-width: 0;
+  }
+
+  .headline {
+    grid-area: headline;
+  }
+
+  .toggle {
+    grid-area: toggle;
   }
 
   .count {
+    grid-area: count;
     justify-content: flex-end;
   }
 }
 
 @media (min-width: 1024px) {
   .shell {
-    grid-template-rows: minmax(var(--h-header), auto) minmax(0, 1fr) minmax(var(--h-bottom), auto);
-    grid-template-areas:
-      "header"
-      "content"
-      "bottom";
+    grid-template-rows: var(--h-header) auto minmax(0, 1fr) var(--h-bottom);
     height: 100dvh;
-    min-height: 600px;
+    min-height: 0;
     padding-bottom: 0;
     overflow: hidden;
   }
 
-  .header {
-    position: static;
-  }
-
-  .content {
-    grid-area: content;
-    display: grid;
-    grid-template-columns: 40fr 18fr 42fr;
-    grid-template-rows: minmax(var(--h-command), auto) minmax(var(--h-pipeline), auto) auto minmax(168px, 34%) minmax(0, 1fr);
-    grid-template-areas:
-      "headline toggle count"
-      "pipeline pipeline pipeline"
-      "drift drift drift"
-      "map map chart"
-      "map map calendar";
+  .shell[data-view="region"] .map {
     min-height: 0;
   }
 
-  .headline,
-  .count {
-    display: flex;
+  .header {
+    position: static;
+    min-height: 0;
+  }
+
+  .commandRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    padding: var(--space-1) var(--space-3);
-    min-width: 0;
+    gap: var(--space-4);
   }
 
   .count {
     justify-content: flex-end;
   }
-
-  .toggle {
-    grid-area: toggle;
-    position: static;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-1);
-    background: none;
-    border-top: 0;
-    min-width: var(--toggle-w);
-  }
-
-  .pipeline {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    padding: var(--space-half) var(--space-3);
-    border-top: var(--border-width) solid var(--color-border-subtle);
-    border-bottom: var(--border-width) solid var(--color-border-subtle);
-  }
-
-  .drift {
-    min-width: 0;
-    padding: var(--space-half) var(--space-3);
-  }
-
-  .map {
-    height: auto;
-    min-height: 0;
-    min-width: 0;
-    border-right: var(--border-width) solid var(--color-border-subtle);
-  }
-
-  .chart {
-    height: auto;
-    min-width: 0;
-    padding: var(--space-1) var(--space-2);
-    border-bottom: var(--border-width) solid var(--color-border-subtle);
-  }
-
-  .calendar {
-    min-width: 0;
-    padding: var(--space-1) var(--space-2);
-    overflow: hidden;
-  }
 }
 
 /*
  * Presentation mode (html[data-presentation], set by useDocumentSync): the 1366x768 demo frame
- * keeps only the story (headline, toggle, count, pipeline, map, chart, calendar). Header and
- * bottom bar go; P brings them back.
+ * keeps only the story (headline, toggle, count, map). Header and bottom bar go; P brings them back.
  */
 @media (min-width: 1024px) {
   :global(html[data-presentation]) .shell {
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: "content";
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "command"
+      "map";
   }
 
   :global(html[data-presentation]) .header,

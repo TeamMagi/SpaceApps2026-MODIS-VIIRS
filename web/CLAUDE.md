@@ -22,7 +22,7 @@ tests/
 src/
 ├── components/     → UI bileşenleri (her bileşen kendi klasöründe)
 │   ├── ErrorBoundary/ → Hata sınırı
-│   ├── Layout/     → Sayfa düzeni (AppShell)
+│   ├── Layout/     → Sayfa düzeni (AppShell): açılışta yalnız header + tam ekran küre (dünya görünümü); ülke seçilince ince komut satırı ve alt bar görünür
 │   ├── Header/     → Üst çubuk, bölge seçici, dil ve mod rozeti
 │   ├── Headline/   → Soru / cevap başlığı
 │   ├── Toggle/     → Raw ↔ Harmonized geçiş düğmesi
@@ -30,10 +30,15 @@ src/
 │   ├── Pipeline/   → 7 aşamalı harmonizasyon şeridi
 │   ├── Map/        → HotspotMap, FlatMap, GlobeMap, FootprintLens, PointDetail, MapLegend,
 │   │                 engine/ (2D canvas: renderer, viewport, LOD, point index, hit testing),
-│   │                 globe/ (three.js 3D küre: scene, tiles, textures, picking)
-│   ├── Charts/     → ChartPanel (Tespitler / Ortalama FRP / Sensörler sekmeleri), CliffChart, FrpBandChart, SensorCharts (Y2: aylık sensör çubukları, eşleşen çift FRP serpilmesi, kaynak halkası; veri şekillendirme `lib/sensorCharts.ts`) ve SensorComparison (yalnızca mock önizleme; elle yazılmış SVG)
-│   ├── Calendar/   → Radyal yanma takvimi (BurnCalendar) ve tooltip; "Ayrıntılar" düğmesi ve `D` tuşu hücre tanı çekmecesini açar (ay filtresi tıklamayla aynı kalır)
-│   ├── OrbitalDrift/ → OrbitalDriftStrip (Y9): `modis_orbital_drift` bayrağı veya Terra/Aqua geçiş saati medyanı nominalden sapınca görünen, oturum boyunca kapatılabilir bilgi şeridi (`role="note"`)
+│   │                 MapExploreOverlay (dünya görünümü ipucu, "‹ Dünya" düğmesi; ülke görünümünde MapStatusBar'ı taşır),
+│   │                 globe/ (three.js 3D küre: scene, tiles, textures, picking; worldView.ts: tüm Dünya çerçevesi)
+│   ├── Dock/       → Ülke seçilince haritanın sağında açılan istatistik yan menüsü
+│   │   ├── InsightDock → Basit: üç özet kart, tıklanınca sekmeli panele genişler; Detaylı/Basit anahtarı
+│   │   ├── DetailedDock → Detaylı: PipelineStrip + ChartPanel + BurnCalendar sütunu
+│   │   └── charts/     → DetectionsChart, FrpChart, CalendarBars
+│   ├── Charts/     → CliffChart, FrpBandChart, SensorCharts (Y2 sensör verileri), ChartPanel ve SensorComparison
+│   ├── Calendar/   → Radyal yanma takvimi (BurnCalendar), tooltip ve hücre tanı çekmecesi
+│   ├── OrbitalDrift/ → OrbitalDriftStrip (Y9): MODIS Terra/Aqua geçiş saati sapması hakkında bilgi şeridi
 │   ├── BottomBar/  → Alt şerit (model uyarısı, CSV, brifing)
 │   ├── Tour/       → 60 saniyelik rehberli tur kartı (GuidedTour; zamanlayıcılar hooks/useGuidedTour'da)
 │   ├── Drawers/    → Sağdan açılan çekmeceler (Methods, Briefing, CellDiagnosticDrawer: hücre tanı çekmecesi, Y9)
@@ -46,13 +51,18 @@ src/
 ├── lib/
 │   ├── geo/        → firmsCountries.json, loadGeo.ts, projection.ts, regionMatch.ts
 │   ├── route.ts    → Hash router (#/methods[/section], METHODS_SECTIONS)
+│   ├── dock.ts     → Kart özet yardımcıları (Dock)
+│   ├── dockPanel.ts → Genişleyen panel durumu, `#panel=` hash
+│   ├── dockMode.ts → Basit/Detaylı tercihi (localStorage `pyrosync.dock`)
+│   ├── dockCharts.ts → Dock grafik yardımcıları
+│   ├── dupDots.ts  → Tekrarlı tespit noktası yardımcıları
 │   └── ...         → Diğer yardımcılar (urlState, formatlama vb.)
 ├── mocks/          → Sentetik geliştirme fixture'ları (Y5): mock.html önizlemesi ve demo modu (K1, `lib/demoData.ts` üzerinden)
 ├── services/
 │   ├── api.ts            → Rust backend API katmanı (/api → localhost:3001; backend'e erişilemezse demo moduna düşer, K1)
 │   └── pipelineConfig.ts → Methods sayfası için GET /api/config tipleri ve fetch
 ├── store/
-│   └── useAppStore.ts → zustand uygulama durumu
+│   └── useAppStore.ts → zustand uygulama durumu; `regionPicked` / `pickRegion` / `showWorld` dünya ↔ ülke görünümünü yönetir
 ├── styles/         → tokens.css + global.css
 ├── types/
 │   └── index.ts    → Paylaşılan TypeScript tipleri (backend ile senkron)

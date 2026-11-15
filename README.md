@@ -29,7 +29,11 @@ PyroSync implements a seven-stage harmonization pipeline built in **Rust** for p
 
 As the satellite fleet expands (SNPP in 2012, NOAA-20 in 2018, NOAA-21 in 2023), raw detection counts increase artificially. Rather than hardcoding a constant, PyroSync measures **Ω** per time series relative to the MODIS reference channel (observed VIIRS/MODIS yield ratio ranges from **3.3 to 7.4** across regions). On the 2000–2025 country archive, effort normalization reduces the artificial upward trend from Spearman ρ **+0.788 to +0.080** and brings the 2012 sensor-cliff step jump from **×3.35 to ×0.85**.
 
+All three fleet transitions were measured. A single-season comparison mixes real year-to-year fire activity with the instrument step, so the decision criterion compares each series with the MODIS reference channel, whose effort does not change across a VIIRS transition: `|ln(normalized / reference)| < |ln(raw / reference)| / 2`. In the 10-country pooled series (MODIS + S-NPP + NOAA-20 from the archive, NOAA-21 from the area API) the excess over the reference falls from 1.406 to 0.003 at the 2012 S-NPP step, from 0.528 to 0.001 at the 2018 NOAA-20 step and from 0.166 to 0.007 at the 2023 NOAA-21 step (same-season, `|ln|` values). For the Türkiye bounding box alone the 2023 excess falls from ×1.246 to ×1.025. The unadjusted criterion is still reported and fails in 2023, because that year was genuinely fire-active in the region: the MODIS reference itself rises ×1.45–1.97, while the fleet step is only ×1.22. Country-level results are weaker than the pooled ones. Details: `docs/TAM_FILO_TREND.md` and the G3 validation table in `GOREVLER.md`.
+
 Ω cannot see an effort change inside the MODIS reference channel itself, so the Terra-only era (2000-11..2002-06, before Aqua) is flagged as not comparable (no normalized count or anomaly) rather than corrected; raw counts stay visible.
+
+For those Terra-only months the calendar also carries a separate, clearly labelled estimate: `count_recovered` with a lower and upper bound. It is an adaptation of Remy & Kaiser (2014) without their cloud-difference filter, which FIRMS data cannot support. A per-calendar-month factor `k = Σ(MODIS total) / Σ(Terra-visible)` is calibrated on 2002-07..2020-12 (after Aqua, before the orbital-drift years), needs at least 400 Terra records, and widens its pool to ±1 month, ±2 months, then all months when the sample is small. In a 20-month hold-out over Türkiye (2003-01..2004-08, Aqua hidden) the total bias fell from −43.9% to −2.2%; single months can be far off, and the band is not a prediction interval. The normalized count and anomaly stay empty for those months.
 
 ### Raw ↔ Harmonized Toggle
 
@@ -53,6 +57,14 @@ The bottom bar and the briefing drawer have separate **CSV** and **GeoJSON** but
 
 The **regional briefing** lists the detection totals and the removed duplicates, the sensor-cliff change, the peak month and the VZA adjustment. It also shows the last 7 days of the period, the deviation from the historical mean for the same month, the most active sensor and platform, and the trend over the last five complete years. Raw mode shows only the metrics based on raw counts. When Türkiye is selected, a **2021 Mediterranean fires case study** card shows the Antalya, Muğla and Mediterranean anomalies from the S7 data set (`data/case-study/turkey/stats.json`). The briefing can be printed.
 
+### Sensor Charts, Month Diagnostics and Orbital Drift
+
+The chart panel has a **Sensors** tab with three views: monthly raw MODIS and VIIRS detections as bars (hollow vs filled, so the sensors differ by more than colour), a log-log scatter of MODIS FRP against VIIRS FRP for matched records with a 1:1 line and the median ratio, and a donut of harmonized sources (MODIS-only, VIIRS-only, matched). The scatter and the donut come from harmonization, so Raw mode shows an invitation to harmonize and the raw MODIS/VIIRS split.
+
+The **month diagnostics** drawer opens from the calendar's "Details" button or with `D` on a focused month. It lists the raw sensor counts, the harmonized and matched counts, Ω and the effort-normalized count, total FRP with its range, the conformal ±1σ and 90% bands, the anomaly z-score and the quality flags (early Terra record, Terra outages, early S-NPP calibration and scan lines, MODIS orbital drift). For Terra-only months it shows the not-comparable note and the recovered estimate. Raw mode shows only raw counts and flags.
+
+The **Orbital Drift** strip appears under the pipeline strip when the period's calendar cells carry the `modis_orbital_drift` flag (2021 onward) or when the Terra or Aqua overpass median differs from the nominal crossing time by 20 minutes or more. It shows the median local solar time against the nominal time for each MODIS platform. The median is a regional indicator, not the equator-crossing time, and the strip says so. The medians come from the `overpass` field of `/api/points`, computed per request from the raw detections. Demo mode has no platform times, so the strip shows the flag message without numbers.
+
 ### 60-Second Guided Tour
 
 The "60-s tour" button in the bottom bar (or the `T` key) starts a four-step guided tour that follows the jury demo script. Each step lasts 15 seconds and highlights the related panels:
@@ -60,7 +72,7 @@ The "60-s tour" button in the bottom bar (or the `T` key) starts a four-step gui
 1. **Raw ↔ Harmonized**: the app opens in Raw, then switches to Harmonized after 5 seconds.
 2. **Footprint Lens**: explains how one MODIS pixel contains many VIIRS pixels, and how their detection thresholds differ.
 3. **Policy case**: switches to China in 2018 for the straw-burning ban case study (`docs/VAKA_CIN_ANIZ.md`).
-4. **Live validation**: opens `#/methods/limits` with the placebo and leave-one-year-out results (`docs/DOGRULAMA_PAKETI.md`).
+4. **Live validation**: opens `#/methods/limits` with the placebo and leave-one-year-out results (`docs/DOGRULAMA_PAKETI.md`), and points at the ±1σ conformal band and the Orbital Drift strip.
 
 The tour advances on its own and can be paused, stepped back or forward with the arrow keys, or closed with `Esc`.
 
@@ -112,8 +124,8 @@ tools/              Utility scripts (archive verification, data fetching)
 | `GET /api/harmonize` | Harmonized hotspots, calendar and effort factors (`west`, `south`, `east`, `north`, and either `days` or `start`+`end`; optional `include_raw=true`) |
 | `GET /api/compare` | Raw versus harmonized statistics for the same query; `vza.mean_frp_adjustment_pct` is the mean VZA change to MODIS FRP (positive = increase) |
 | `GET /api/stats` | Totals, sensor breakdown and pipeline metrics |
-| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox); cells carry `total_frp`, `frp_per_detection_eq`, `mean_frp` and their `_lower`/`_upper` bounds |
-| `GET /api/points` | Raw and harmonized points of one archive region and period (`region`, `year`, optional `month`, `limit`, `min_confidence`, threshold overrides, and `fusion_model=viirs_preferred\|equal_weight\|modis_calibrated`); non-default models add a `fusion_comparison` against Standard. Details in `docs/API.md` |
+| `GET /api/calendar` | Historical monthly calendar from the country archive (`country`, `from`, `to`, optional bbox); cells carry `total_frp`, `frp_per_detection_eq`, `mean_frp` and their `_lower`/`_upper` bounds, `quality_flags`, the conformal band and, for Terra-only months before 2002-07, `count_recovered` with its bounds |
+| `GET /api/points` | Raw and harmonized points of one archive region and period (`region`, `year`, optional `month`, `limit`, `min_confidence`, threshold overrides, and `fusion_model=viirs_preferred\|equal_weight\|modis_calibrated`); non-default models add a `fusion_comparison` against Standard. The response also carries `overpass`: the median local solar time per platform and day/night. Details in `docs/API.md` |
 | `GET /api/export` | Download hotspots as a CSV (UTF-8 BOM, opens in Excel) or GeoJSON file (`format=csv\|geojson`, default `csv`). Live mode takes the same query as `/api/harmonize`. Archive mode starts when `region` is given: `region`, `year`, optional `month`, `view=harmonized\|raw`, plus the same filters as `/api/points`. It needs no API key and returns every record of the period as `pyrosync_{region}_{period}[_raw].{csv\|geojson}` |
 
 - Responses include an `X-Cache: HIT|MISS` header.

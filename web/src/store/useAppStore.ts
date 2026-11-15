@@ -83,6 +83,8 @@ export interface ClockStep {
 
 export interface AppState {
   region: RegionId;
+  /** False until the viewer picks a country (globe click, header selector) or opens a shared link naming one; the map then shows the whole Earth. */
+  regionPicked: boolean;
   /** Committed mode: changes only when a transition finishes (or on a snap). */
   mode: ViewMode;
   /** Requested mode: flips synchronously on toggle so the switch responds within one frame. */
@@ -124,6 +126,11 @@ export interface AppState {
   tourRun: number;
 
   setRegion: (region: RegionId) => void;
+  /** User-facing region choice: selects the region and leaves the world view. */
+  pickRegion: (region: RegionId) => void;
+  /** Back to the whole-Earth view; the loaded region data stays. */
+  showWorld: () => void;
+  setRegionPicked: (value: boolean) => void;
   /** The single user-facing mode action (button click, H key). */
   toggleMode: () => void;
   setLang: (lang: Lang) => void;
@@ -225,6 +232,7 @@ const initialDataModeSource: DataModeSource = initialUrl.data === "demo" ? "manu
 
 export const useAppStore = create<AppState>()((set, get) => ({
   region: initialUrl.region ?? DEFAULT_REGION,
+  regionPicked: initialUrl.region !== undefined,
   mode: initialMode,
   targetMode: initialMode,
   phase: "idle",
@@ -258,7 +266,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const state = get();
     if (state.region === region) return;
     set({ region, selectedMonth: null, calendarYear: null, yearPlaying: false, ...snapped(state) });
+  },  pickRegion: (region) => {
+    get().setRegion(region);
+    if (!get().regionPicked) set({ regionPicked: true });
   },
+  showWorld: () => set({ regionPicked: false }),
+  setRegionPicked: (regionPicked) => set((s) => (s.regionPicked === regionPicked ? s : { regionPicked })),
+
   toggleMode: () => set((s) => ({ targetMode: s.targetMode === "raw" ? "harmonized" : "raw" })),
   setLang: (lang) => {
     const state = get();

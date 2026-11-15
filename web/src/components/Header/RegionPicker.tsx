@@ -62,7 +62,7 @@ export default function RegionPicker() {
   const { t, fmt, lang } = useCopy();
   const { status, regionsEmpty, regions, retry } = useRegions();
   const region = useAppStore((state) => state.region);
-  const setRegion = useAppStore((state) => state.setRegion);
+  const setRegion = useAppStore((state) => state.pickRegion);
 
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");

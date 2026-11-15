@@ -11,13 +11,13 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  min-height: 36px;
-  padding: var(--space-half) var(--space-2);
-  background: var(--color-surface);
+  min-height: 28px;
+  padding: 0 var(--space-1);
+  background: transparent;
   border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-tight);
   text-align: left;

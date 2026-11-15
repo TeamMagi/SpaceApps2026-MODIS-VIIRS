@@ -9,8 +9,15 @@ SMOKE_URL ?= http://localhost:3001
 
 # The legacy 32-bit MinGW in the machine PATH ships binutils 2.28, whose dlltool
 # cannot emit x86-64 import libraries, so every cargo link step fails before it starts.
-# Put MinGW-w64 ahead of it for all targets. Empty (and harmless) on Linux/Docker.
-MINGW64_BIN ?= $(firstword $(wildcard $(HOME)/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.*/mingw64/bin))
+# Put MinGW-w64 ahead of it for all targets. PowerShell exposes USERPROFILE but not
+# necessarily HOME, so accept either when locating a winget-installed WinLibs.
+# Empty (and harmless) on Linux/Docker.
+ifeq ($(strip $(HOME)),)
+WINDOWS_HOME := $(subst \,/,$(USERPROFILE))
+else
+WINDOWS_HOME := $(HOME)
+endif
+MINGW64_BIN ?= $(firstword $(wildcard $(WINDOWS_HOME)/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.*/mingw64/bin))
 ifneq ($(MINGW64_BIN),)
 export PATH := $(MINGW64_BIN):$(PATH)
 endif

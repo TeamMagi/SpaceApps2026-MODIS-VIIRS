@@ -1,14 +1,11 @@
 /**
  * AppShell — page layout only; owns no state and renders whatever is passed into its slots.
  *
- * Desktop (>= 1024 px, reference 1366x768, no page scroll):
- *   header 48 | command row 96 (headline 40% · toggle · count) | pipeline 36 |
- *   drift note (only while the Orbital Drift strip is shown; auto height) |
- *   main: map 58% left, right column = cliff chart 220 + burn calendar (rest, >= 260) | bottom bar 44.
- *   The 40/18/42 column split makes the toggle column end exactly where the 58% map ends.
- * Mobile (single column, in this order): headline, count, map (clamp 360px-640px / 60dvh),
- *   chart, calendar, pipeline (vertical), bottom bar. The toggle is docked full-width at the
- *   bottom (thumb zone).
+ * Desktop (>= 1024 px, no page scroll): header | compact command row (headline · toggle · count) |
+ * full-bleed map | slim bottom bar. The insight dock floats over the map.
+ * World view (`worldView`): the command row and bottom bar collapse to zero height and become inert,
+ * leaving header + map. Both stay mounted. Entering a country opens the command row with a CSS intro.
+ * Mobile (single column): header, stacked command row, map (>= 60dvh in region view), bottom bar.
  * `overlays` (drawers, toasts) render after the grid.
  */
 
@@ -84,14 +81,10 @@ export interface AppShellProps {
   headline: ReactNode;
   toggle: ReactNode;
   count: ReactNode;
-  pipeline: ReactNode;
-  /** Optional full-width note under the pipeline strip; renders nothing (and takes no space) when empty. */
-  drift?: ReactNode;
   map: ReactNode;
-  chart: ReactNode;
-  calendar: ReactNode;
   bottomBar: ReactNode;
   overlays?: ReactNode;
+  worldView: boolean;
 }
 
 export default function AppShell({
@@ -99,44 +92,37 @@ export default function AppShell({
   headline,
   toggle,
   count,
-  pipeline,
-  drift,
   map,
-  chart,
-  calendar,
   bottomBar,
   overlays,
+  worldView,
 }: AppShellProps) {
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-view={worldView ? "world" : "region"}>
       <header className={styles.header}>{header}</header>
       <main className={styles.content}>
-        <div className={styles.headline}>
-          <ErrorBoundary>{headline}</ErrorBoundary>
-        </div>
-        <div className={styles.toggle} data-tour="toggle">
-          <ErrorBoundary>{toggle}</ErrorBoundary>
-        </div>
-        <div className={styles.count}>
-          <ErrorBoundary>{count}</ErrorBoundary>
-        </div>
-        <div className={styles.pipeline}>
-          <ErrorBoundary>{pipeline}</ErrorBoundary>
-        </div>
-        <div className={styles.drift}>
-          <ErrorBoundary>{drift}</ErrorBoundary>
+        <div className={styles.command} inert={worldView} aria-hidden={worldView}>
+          <div className={styles.collapseInner}>
+            <div className={styles.commandRow}>
+              <div className={styles.headline}>
+                <ErrorBoundary>{headline}</ErrorBoundary>
+              </div>
+              <div className={styles.toggle} data-tour="toggle">
+                <ErrorBoundary>{toggle}</ErrorBoundary>
+              </div>
+              <div className={styles.count}>
+                <ErrorBoundary>{count}</ErrorBoundary>
+              </div>
+            </div>
+          </div>
         </div>
         <div className={styles.map} data-tour="map">
           <ErrorBoundary>{map}</ErrorBoundary>
         </div>
-        <div className={styles.chart} data-tour="chart">
-          <ErrorBoundary>{chart}</ErrorBoundary>
-        </div>
-        <div className={styles.calendar} data-tour="calendar">
-          <ErrorBoundary>{calendar}</ErrorBoundary>
-        </div>
       </main>
-      <footer className={styles.bottom}>{bottomBar}</footer>
+      <footer className={styles.bottom} inert={worldView} aria-hidden={worldView}>
+        <div className={`${styles.collapseInner} ${styles.bottomInner}`}>{bottomBar}</div>
+      </footer>
       <ErrorBoundary>{overlays}</ErrorBoundary>
     </div>
   );

@@ -1,21 +1,19 @@
 .switch {
   display: inline-flex;
   flex: none;
-  padding: 2px;
+  overflow: hidden;
   border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-radius: 8px;
 }
 
 .option {
   min-width: 32px;
-  min-height: 32px;
+  min-height: 28px;
   padding: 0 var(--space-1);
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-caps);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
   transition:
     background-color var(--dur-ui) var(--ease-standard),
     color var(--dur-ui) var(--ease-standard);

@@ -1,0 +1,123 @@
+.lead {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.grid {
+  stroke: var(--color-border-subtle);
+}
+
+.base {
+  stroke: var(--color-border);
+}
+
+.axis {
+  font-size: 11px;
+  fill: var(--color-text-muted);
+}
+
+.marker {
+  stroke: var(--color-accent);
+  stroke-dasharray: 3 3;
+}
+
+.markerLabel {
+  font-size: 11px;
+  fill: var(--color-accent);
+}
+
+.endLabel {
+  font-size: 12px;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: opacity 200ms ease;
+}
+
+.hit {
+  fill: transparent;
+}
+
+.monthLabel {
+  font-size: 11px;
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+}
+
+.monthLabelSelected {
+  fill: var(--color-text);
+  font-weight: 700;
+}
+
+.bar {
+  cursor: pointer;
+  outline: none;
+}
+
+.barFocus {
+  fill: transparent;
+  stroke: transparent;
+}
+
+.bar:focus-visible .barFocus {
+  stroke: var(--color-text);
+  stroke-width: 1.5;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+}
+
+.swatchHot {
+  background: #f37819;
+}
+
+.swatchNormal {
+  background: #6b7280;
+}
+
+.swatchTick {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: #d0d6e2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    transition: none;
+  }
+}

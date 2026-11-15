@@ -4,12 +4,9 @@
   flex-direction: column;
   justify-content: space-between;
   gap: var(--space-half);
-  height: 100%;
-  min-height: 420px;
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border-subtle);
-  border-radius: var(--radius-xl);
+  min-width: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .calendar[data-loading="true"] .wheelWrap {
@@ -89,7 +86,7 @@
 /* --- Layout Body: stacked on mobile, side-by-side on tablet & desktop ----- */
 
 .body {
-  flex: 1 1 0;
+  flex: none;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -108,13 +105,15 @@
 /* --- Radial Year Clock SVG ------------------------------------------------ */
 
 .wheelWrap {
-  flex: 1 1 0;
-  min-height: 150px;
+  flex: none;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 340px;
+  margin-inline: auto;
   min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
   transition: opacity var(--dur-ui) var(--ease-standard);
 }
 
@@ -122,8 +121,6 @@
   display: block;
   width: 100%;
   height: 100%;
-  max-width: 310px;
-  max-height: 290px;
   overflow: visible;
   user-select: none;
 }
@@ -449,48 +446,8 @@
 }
 
 @media (min-width: 640px) {
-  .calendar {
-    min-height: 300px;
-  }
-
-  .body {
-    display: grid;
-    grid-template-columns: minmax(190px, 46%) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .wheelWrap {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .wheelSvg {
-    max-width: 300px;
-    max-height: 100%;
-  }
-
   .side {
     justify-content: center;
     gap: var(--space-1);
-  }
-}
-
-@media (min-width: 1024px) {
-  .calendar {
-    min-height: 0;
-    gap: var(--space-half);
-    padding: var(--space-1) 12px;
-  }
-
-  .body {
-    grid-template-columns: minmax(175px, 46%) minmax(0, 1fr);
-    gap: var(--space-1);
-  }
-
-  .wheelSvg {
-    max-width: 310px;
-    max-height: 100%;
   }
 }

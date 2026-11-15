@@ -32,6 +32,8 @@ import { type DrawStats, type MapScene, type ViewportSize } from "./engine/types
 import { useMapViewport } from "./engine/useMapViewport";
 import { planeToScreen, screenToPlane } from "./engine/viewport";
 import MapControls from "./MapControls";
+import MapExploreOverlay from "./MapExploreOverlay";
+import { useAppStore } from "../../store/useAppStore";
 import MapCountryTooltip from "./MapCountryTooltip";
 import MapLabels from "./MapLabels";
 import MapLegend from "./MapLegend";
@@ -67,10 +69,11 @@ function isUiTarget(target: EventTarget | null): boolean {
 /** The 2D canvas map, kept as the fallback when WebGL is unavailable. */
 function FlatMap() {
   const model = useMapModel();
+  const regionPicked = useAppStore((state) => state.regionPicked);
+  const pickRegion = useAppStore((state) => state.pickRegion);
   const {
     t,
     region,
-    setRegion,
     points,
     rawFrpBreaks,
     harmonizedFrpBreaks,
@@ -169,11 +172,11 @@ function FlatMap() {
   );
   const scenePoints = useMemo(
     () =>
-      buildScenePoints(pointInput, projection, {
+      buildScenePoints(regionPicked ? pointInput : null, projection, {
         raw: rawFrpBreaks,
         harmonized: harmonizedFrpBreaks,
       }),
-    [pointInput, projection, rawFrpBreaks, harmonizedFrpBreaks],
+    [regionPicked, pointInput, projection, rawFrpBreaks, harmonizedFrpBreaks],
   );
   const scene = useMemo<MapScene>(
     () => composeScene(region.id, sceneGeometry, scenePoints),
@@ -182,16 +185,17 @@ function FlatMap() {
 
   const viewportBounds = useMemo<PlaneBounds | null>(() => {
     if (!projection) return null;
+    if (!regionPicked) return sceneGeometry.allBounds;
     if (hasRegionGeo) return scene.bounds;
     if (fallbackGeoBBox) return planeBounds(projection, fallbackGeoBBox);
     return null;
-  }, [projection, hasRegionGeo, scene.bounds, fallbackGeoBBox]);
+  }, [projection, regionPicked, sceneGeometry.allBounds, hasRegionGeo, scene.bounds, fallbackGeoBBox]);
 
   const viewport = useMapViewport({
     bounds: viewportBounds,
     extent: sceneGeometry.allBounds,
     size: canvasSize,
-    resetKey: region.id,
+    resetKey: `${region.id}:${regionPicked}`,
     padding: VIEWPORT_FIT_PADDING,
   });
 
@@ -206,9 +210,9 @@ function FlatMap() {
         scene.features,
         planeX,
         planeY,
-        (idx) => (regionMatch?.regionByFeature[idx] ?? null) !== region.id,
+        (idx) => !regionPicked || (regionMatch?.regionByFeature[idx] ?? null) !== region.id,
       ),
-    [scene.features, regionMatch, region.id],
+    [scene.features, regionMatch, region.id, regionPicked],
   );
 
   const [drawStats, setDrawStats] = useState<DrawStats>({
@@ -581,7 +585,11 @@ function FlatMap() {
 
       if (Math.hypot(x - down.x, y - down.y) >= COUNTRY_CLICK_MAX_MOVE_PX) return;
       const feature = countryAt(planeX, planeY);
-      const targetRegion = feature >= 0 ? selectableRegionFor(feature) : null;
+      const targetRegion =
+        feature >= 0
+          ? (selectableRegionFor(feature) ??
+            (!regionPicked && regionMatch?.regionByFeature[feature] === region.id ? region.id : null))
+          : null;
       if (targetRegion === null) return;
 
       // Wait out the double-tap/double-click window so a zoom gesture never switches region first;
@@ -589,7 +597,7 @@ function FlatMap() {
       pendingCountryTapRef.current = setTimeout(() => {
         pendingCountryTapRef.current = null;
         clearHoveredFeature();
-        setRegion(targetRegion);
+        pickRegion(targetRegion);
       }, DOUBLE_TAP_MS);
     },
     [
@@ -600,7 +608,10 @@ function FlatMap() {
       selectionScope,
       countryAt,
       selectableRegionFor,
-      setRegion,
+      regionPicked,
+      regionMatch,
+      region.id,
+      pickRegion,
       clearHoveredFeature,
       scheduleHover,
     ],
@@ -736,24 +747,6 @@ function FlatMap() {
         {liveAnnouncement}
       </div>
 
-      <MapStatusBar
-        regionName={region.displayName}
-        periodText={periodText}
-        revealAnswer={revealAnswer}
-        sensorFilter={effectiveSensorFilter}
-        status={overlayState}
-        error={points.error}
-        onRetry={points.retry}
-        rawTotal={rawTotal}
-        harmonizedTotal={harmonizedTotal}
-        rawLoaded={visibleRawLoaded}
-        harmonizedLoaded={visibleHarmonizedLoaded}
-        truncated={points.truncated}
-        drawStats={drawStats}
-        selectedMonth={selectedMonth}
-        onClearMonth={() => selectMonth(null)}
-      />
-
       <div
         ref={setViewportEl}
         className={styles.viewport}
@@ -787,6 +780,27 @@ function FlatMap() {
           />
         )}
 
+        <MapExploreOverlay regionName={region.displayName}>
+          <MapStatusBar
+          regionName={region.displayName}
+          periodText={periodText}
+          revealAnswer={revealAnswer}
+          sensorFilter={effectiveSensorFilter}
+          status={overlayState}
+          error={points.error}
+          onRetry={points.retry}
+          rawTotal={rawTotal}
+          harmonizedTotal={harmonizedTotal}
+          rawLoaded={visibleRawLoaded}
+          harmonizedLoaded={visibleHarmonizedLoaded}
+          truncated={points.truncated}
+          drawStats={drawStats}
+          selectedMonth={selectedMonth}
+          onClearMonth={() => selectMonth(null)}
+          />
+        </MapExploreOverlay>
+
+        {regionPicked && (
         <MapControls
           canZoomIn={viewport.canZoomIn}
           canZoomOut={viewport.canZoomOut}
@@ -795,6 +809,7 @@ function FlatMap() {
           onZoomOut={viewport.zoomOut}
           onReset={viewport.reset}
         />
+        )}
 
         {hoveredCountry && !activeDetail.rawPoint && !activeDetail.harmPoint && (
           <MapCountryTooltip
@@ -821,13 +836,13 @@ function FlatMap() {
           />
         )}
 
-        <div className={styles.legendDock} data-map-ui="true">
+        {regionPicked && <div className={styles.legendDock} data-map-ui="true">
           <MapLegend
             sensorFilter={effectiveSensorFilter}
             onSensorFilterChange={setSensorFilter}
             frpBreaks={frpBreaks}
           />
-        </div>
+        </div>}
 
         <MapStateOverlay
           state={overlayState}

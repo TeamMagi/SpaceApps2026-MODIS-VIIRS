@@ -6,6 +6,7 @@ const PATCH_MAX_PX = 2048;
 const PATCH_MIN_PX = 64;
 /** The mask only shades imagery, so a coarse raster with linear filtering is enough. */
 const MASK_MAX_PX = 512;
+const MASK_FEATHER_DEG = 2.5;
 
 function canvasTexture(
   width: number,
@@ -88,11 +89,11 @@ export function makeBordersTexture(
   return canvasTexture(width, height, anisotropy, (context) => {
     context.lineJoin = "round";
     context.lineCap = "round";
-    context.globalAlpha = 0.4;
+    context.globalAlpha = 0.16;
     context.strokeStyle = style.halo;
     context.lineWidth = 3 * scale;
     context.stroke(path);
-    context.globalAlpha = 0.95;
+    context.globalAlpha = 0.4;
     context.shadowColor = style.line;
     context.shadowBlur = 3 * scale;
     context.strokeStyle = style.line;
@@ -247,6 +248,8 @@ export function makeSelectionMask(features: readonly GeoFeature[]): SelectionMas
     context.fillStyle = "#000";
     context.fillRect(0, 0, width, height);
     context.fillStyle = "#fff";
+    // A few degrees of blur is the feather between the selected region and the dimmed rest.
+    context.filter = `blur(${((width / lonSpan) * MASK_FEATHER_DEG).toFixed(1)}px)`;
     context.fill(path, "evenodd");
   });
   texture.colorSpace = THREE.NoColorSpace;

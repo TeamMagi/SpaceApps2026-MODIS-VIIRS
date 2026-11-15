@@ -223,6 +223,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [X] |
 | G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1, G12, R12 [X]; Y8 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
+| G13 | CI süre bütçesi: Rust hattı (en çok 30 dk) | Görkem | — | — | [ ] |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
 | C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | [X] |
@@ -260,6 +261,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [X] |
+| S14 | CI süre bütçesi: web, tetikleyiciler ve doğrulama | Samet | — | — | [ ] |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
@@ -278,7 +280,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K13 | NOAA-20/SNPP köprü katsayısı ve Terra VZA kontrolü | Sadık | — | K14 | [X] |
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
 | K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [X] |
-| K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
+| K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [X] |
 | K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [X] |
 | K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [X] |
 | K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [X] |
@@ -291,7 +293,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
 - **Yusuf:** Y1–Y7 ve Y9 tamamlandı. Y8 (vaka çalışmaları, arşiv gerekir) doğrudan başlayabilir; Y10'un beklediği G12 tamamlandı.
-- **Sadık:** K1–K5 ve K7–K13 tamamlandı (K12'yi Serhat kapattı). Şu an başlanabilecekler: K6 (2023 ölçümü Serhat ve K7 tarafından yapıldı; yazılı ölçüt sağlanmıyor, MODIS-referanslı ölçütle geçiyor, ekip kararı bekliyor), K14 (K13 bitti; arazi örtüsü verisi gerekir).
+- **Sadık:** K1–K13 tamamlandı (K6 ve K12'yi Serhat kapattı). K6, K7 ile aynı MODIS-referanslı karar ölçütüyle kapatıldı. Açık kalan: K14 (teslim kapsamı dışında; `k14-biome-completeness` branch'inde).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -411,6 +413,15 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   | \|log(fazlalık)\| | 0,220 | **0,025** | |
 
   Ω tam 2023-03'te 6,426'dan 7,813'e atlıyor (×1,216). NOAA-21'in eklediği efor 2018'deki NOAA-20 adımından (×1,44) küçük; NOAA-21, NOAA-20 ile yaklaşık 50 dakika arayla geçtiği için tespitlerinin çoğu 60 dakikalık filo penceresinde birleşiyor. Bu mevsimde gerçek yangın aktivitesi yaklaşık iki katına çıkmış: eforu değişmeyen MODIS kanalı da ×1,97 artıyor (`modis_observable` 3677 → 7258; MODIS giriş satırları ×2,05). Bbox, Ağustos 2023 Evros (Dadia) yangınını da içeriyor. Bu yüzden G3/K6'nın "normalize kayma, ham kaymanın yarısından küçük" ölçütü burada **geçmiyor** (0,705 < 0,450 değil). Bu ölçüt sıçramanın çoğunun yapay olduğunu varsayıyor; gerçek değişim yapay adımdan büyükse doğru bir normalizasyon da geçemez. Filodan bağımsız MODIS referansına göre ise sonuç net: ham serinin referans üstündeki fazlası ×1,246, filo değişiminin beklenen adımıyla (×1,216) uyumlu. Normalizasyondan sonra fazlalık ×1,025'e iniyor; log ölçeğinde yapay kısmın ~%89'u gideriliyor (MODIS giriş satırları referans alınınca da ham ×1,20 → normalize ×0,99).
+
+  **2023 geçişi, 10 ülke havuzu** — K7, 2026-11-15 (`fleet_trend --noaa21`, `docs/TAM_FILO_TREND.md`; MODIS + S-NPP + NOAA-20 arşivden, NOAA-21 area API'den). `|log(kayma)|` değerleri:
+
+  | Kıyas | Ham | Normalize | MODIS referans kayması | Referansa göre ham | Referansa göre normalize |
+  |---|---|---|---|---|---|
+  | Aynı mevsim (May–Ara 2022 → 2023) | 0,768 | 0,595 | ×1,826 | 0,166 | **0,007** |
+  | Blok (2020–22 → 2024–25) | 0,494 | 0,321 | ×1,447 | 0,125 | **0,049** |
+
+  Düzeltilmemiş ölçüt iki kıyasta da kalıyor, MODIS referansı ile düzeltilmiş ölçüt (karar ölçütü, bkz. K6 ve K7 kapanış notları) ikisinde de geçiyor.
 
 ### G3 doğrulamasının sınırları (açıkça kayda geçirildi)
 - **Monoton trend testinin serisi tam filo değil.** ρ +0,785 → +0,087 ölçümü 2000-2025 arşiv serisi üzerinde yapıldı ve bu seri yalnızca **MODIS + SNPP** içeriyor; ülke arşivi NOAA-20 ve NOAA-21 taşımıyor. Yani dört efor geçişinden ikisi (2018, 2023) trend testinde YOK. Trend, 2012 geçişini içeren uzun seride düz çıkıyor; 2018 geçişi ayrı ve kendi veri setinde doğrulandı; tam filo içeren 2000-present serisi FIRMS'ten makul transaction bütçesiyle kurulamıyor.
@@ -544,6 +555,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Submission paketleme
 - **Bitti sayılır:** `cargo run -p pyrosync-server` ile backend + frontend tek process'te ayağa kalkıyor; jüri demo'yu sorunsuz görebilir.
 - **Not (2026-11-15, ekip kararı):** Hazır sonuçlar (`data/derived`) geliştirme boyunca yeniden üretilmiyor. G6'nın son adımı: tüm config/şema değişiklikleri `main`'e girdikten sonra Görkem (arşiv bu makinede) `make precompute` → `make bundle-derived` çalıştırır, `data/derived`'ı commit'ler ve `make smoke` ile 14 kontrolün tamamının PASS olduğunu doğrular.
+- **Not (Samet, 2026-11-15, final paket yenilemesi için):** (1) `/api/series` BUG-9 (anomali Ω ile normalize değildi) ve BUG-10 (2002-07 öncesi Terra-yalnız aylara anomali) düzeltildi; `DERIVED_SCHEMA_VERSION` 10. `data/derived` bu sürümle yeniden üretilmeli. Düzeltme 8 Akdeniz bölgesinde canlı hesapla ölçüldü (2012 sonrası ortalama z kayması ham +1,10σ, harmonize −0,13σ; Yunanistan Ağustos 2007 z 0,52 → 3,96); 138 bölgede yeniden ölçüm paket yenilenince yapılabilir. (2) `data/conformal.json` (S10) o anki varsayılan config'in parmak izine bağlıdır: freeze sonrası eşleştirme, VZA, kalibrasyon, maske ya da fleet ayarı değişirse tablo sessizce kapanır ve bant görünmez; değişmezse geçerli kalır. (3) Paket yokken `make smoke`'un 3., 4. ve 5. kontrolleri FAIL verir (238 hazır sonuç, Kıbrıs serisi zaman aşımı, Brezilya 413), yalnız 3. değil; paket yenilenince 14 kontrolün tamamı PASS olmalı. (4) Bilinen açık hata: BUG-8 (FIRMS availability tablosu süreç başına bir kez alınıyor; `client::availability_reflects_newer_firms_data_on_a_later_call` testi `#[ignore]` ile bunu gösterir).
+
+### [ ] G13 — CI süre bütçesi: Rust hattı (Paket A)
+- **Bekler:** — · **Açar:** —
+- Amaç: CI'ın en uzun job'ı en çok **30 dk**'da bitsin. İş iki kişiye eşit bölündü: Paket A = Görkem (bu görev), Paket B = Samet (S14). Ayrıntı ve ölçüm tablosu: `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5–§6.
+  - **A1** (5 dk): `cargo check` adımını kaldır; `clippy --all-targets` aynı hedefleri zaten derler
+  - **A2** (15 dk): `Swatinem/rust-cache@v2` için `rust` ve `coverage` job'larına ayrı `key` (`rust-test`, `rust-coverage`) ve `cache-on-failure: true`; `llvm-cov` farklı `RUSTFLAGS` ile derlediği için target dizini paylaşılamaz
+  - **A3** (20 dk): Çift test yürütmesi kararı. İlk iki gerçek koşuya göre `coverage` job'u 20 dk'dan uzunsa `rust` job'ından `cargo test` kaldırılır (testler kapsam altında zaten koşar), değilse ayrım korunur; karar rapora yazılır
+  - **A4** (15 dk): İlk 3 koşunun adım adım sürelerini rapor §6 tablosuna doldur (soğuk ve ısınmış ayrı)
+- **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `rust` ve `coverage` blokları. Samet `on:` ve `web` bloklarına dokunur; her değişiklikten önce `git pull --rebase`.
+- **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket A
+- **Bitti sayılır:** A1–A4 tamam; rapor §6 tablosunda Rust satırları dolu ve A3 kararı yazılı; üst üste 3 CI koşusunda `rust` ve `coverage` job'ları ≤ 30 dk.
 
 ---
 
@@ -953,6 +976,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > **Durum notu (Samet, 2026-11-15):** `.github/workflows/ci.yml` eklendi (7bfdb17). Üç iş paralel koşuyor: `rust` (check, clippy `-D warnings`, test), `coverage` (`cargo llvm-cov`, satır kapsamı %80'in altına düşerse kırmızı; yerelde %92) ve `web` (`npm ci`, typecheck, test, build). Actions'ta yeşil tik görülünce kutu işaretlenecek.
 >
 > **Güncelleme (Samet, 2026-11-15):** İnceleme sonrası `ci.yml` sertleştirildi: Rust araç zinciri 1.100'e sabitlendi (yeni stable'ın `clippy -D warnings`'i kod değişmeden kırmasını önler), job zaman aşımları eklendi, kapsam kapısı %80'den **%90**'a çıkarıldı (ölçülen satır kapsamı %94,7), kapı kırmızı olsa da kapsam özeti yazdırılıyor. GitHub'da yeşil tik henüz doğrulanmadı (repo özel); doğrulanınca kutu işaretlenecek.
+>
+> **Süre bütçesi (Samet, 2026-11-15):** CI'ın en çok 30 dk'da bitmesi için ölçülenler, ölçülmeyenler ve iki kişiye eşit bölünmüş iki iş paketi `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` içinde: Paket A (Rust hattı) = Görkem, görev **G13**; Paket B (web ve tetikleyiciler) = Samet, görev **S14**. `coverage` job'unun `timeout-minutes` değeri 40 olduğundan hedefin üstünde; S14'ün B2 işi bunu 30'a çeker.
 
 ### [X] S9 — Belirsizlik tabanının kaynakla güncellenmesi
 - **Bekler:** — · **Açar:** S10
@@ -985,7 +1010,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - **Takvim:** `CalendarCell.conformal: Option<ConformalBand>` (tek iç içe alan; `None` ise yanıtta yer almaz) ve `build_calendar_with_conformal(...)`. Terra-yalnız aylar (2002-07 öncesi) bant almaz.
 > - **Sunucu:** `CONFORMAL_TABLE` ortam değişkeni (varsayılan `data/conformal.json`). Dosya yoksa, bozuksa, şema sürümü yanlışsa ya da parmak izi uyuşmuyorsa özellik kapalı kalır ve yanıt baytları değişmez. Bant yalnız bbox'sız ve `min_confidence=low` olan `/api/calendar` isteklerine eklenir. `docs/API.md`'de belgelendi; bu bir "sensör tekrarlanabilirliği" bandıdır, yer gerçeği doğruluğu değildir.
 > - **Araç:** `crates/firms-client/examples/conformal_calibration.rs` (`extract` ve `fit` alt komutları; LOYO/LOCO ve yıl-blok bootstrap).
-> - **AÇIK KALAN:** `data/conformal.json` ve `docs/KONFORMAL_KAPSAMA.md` **üretilmedi.** Arşiv çıkarım koşusu 70 ülkeden yaklaşık 64'ünde süreç `Killed` ile sonlandı (büyük olasılıkla bellek) ve `fit` aşaması hiç çalıştırılmadı. Üstelik R10 `total_frp` merkezini değiştirdiğinden eski çiftler geçersiz; tablo son pipeline ile yeniden çıkarılıp uydurulmalı (ağır ülkeler için bellek sınırı gerekir). Tablo olmadığından bant şu an çalışan sistemde **kapalıdır**. Önceki not `conformal_p68`/`conformal_p90` alanlarını, `CONFORMAL_TABLE_PATH` değişkenini, `CalendarYear` değişikliğini ve kodda bulunmayan iki test adını anıyordu; bu not kodla karşılaştırılarak yazıldı.
+> - **Kalibrasyon tablosu üretildi (2026-11-15):** `data/conformal.json` (12 giriş, şema 1, parmak izi `fnv1a64:d44d0890689bef01`) ve `docs/KONFORMAL_KAPSAMA.md`. 61 ülke, 15.096 örnek (`pre_viirs` 9.515, `viirs` 5.581); son pipeline ile (R10 sonrası, `c1cd41b`) çıkarıldı. Sunucu tabloyu yükledi ve parmak izini doğruladı: Türkiye 2019'un 12 ayında bant döndü (örnek: Temmuz toplam FRP 39.218 MW, %68 aralığı 35.358–42.579, %90 aralığı 31.426–46.153), `min_confidence=high` sorgusunda dönmedi (tasarıma uygun). Önceki not tablonun üretildiğini söylemiyordu; bu not o eksiği kapatır.
+> - **Ölçülen kapsama (nominal %68 / %90):** `viirs` dönemi yıl-dışarıda 68,0 / 90,1, ülke-dışarıda 68,2 / 90,2, **8 ölçütün 8'i geçti**. `pre_viirs` yıl-dışarıda 67,5 / 89,8, ülke-dışarıda 67,5 / 89,5, **8 ölçütün 7'si geçti**; kaçıran tek ölçüt %90 bandın medyan göreli genişliği (3,14, eşik < 3): bant geniş, çünkü yalnız-MODIS + `k_c` toplamı tam pipeline'a göre sistematik düşük kalıyor (medyan y/μ = 1,84). Ölçüt sonuca göre ayarlanmadı. Mevcut analitik `total_frp` bantları aynı hücrelerde sensör uyuşmazlığını yalnızca %10,5 (`pre_viirs`) ve %3,0 (`viirs`) oranında kapsıyor; S10'un öncülü bu veride doğrulandı.
+> - **AÇIK KALAN (dürüst sınırlar):** (1) 10 ağır ülke (Brazil, Angola, Australia, Russian_Federation, Zambia, Mozambique, United_States, India, Indonesia, Nigeria) zaman bütçesi nedeniyle kalibrasyona girmedi; en büyük μ kutusu zayıf temsil ediliyor (kalibrasyon aralığı dışındaki μ için `extrapolated: true`). (2) Bant sensör tekrarlanabilirliğidir, yer gerçeği doğruluğu değildir; 2002-07–2011 ve 2012–2017 için ölçüm yok, aktarım varsayımdır. (3) Tablo o anki varsayılan config'in parmak izine bağlıdır: `total_frp` merkezini değiştiren her değişiklik (R10, K11, K14 gibi) tabloyu sessizce kapatır, yeniden çıkarım gerekir (`conformal_calibration extract` ve `fit`; hafif ülkeler için yaklaşık 40 dk, ağır ülkeler için ek süre ve 14 GB bellek). (4) Docker imajı `data/conformal.json` dosyasını kopyalamaz; `docker compose` `./data` klasörünü bağladığı için orada çalışır.
 
 ### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
@@ -1007,6 +1034,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Sonuçların hacim/bulut kısıtlarıyla birlikte `docs/` altında raporlanması
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6, Yol Haritası #8 (+ `[22, 23]`)
 - **Bitti sayılır:** 4 biyomda aylık ham ve harmonize serilerin `TROPOMI CO` ve `MERRA-2 OC AOD` korelasyon/RMSE pilot raporu depoda.
+
+> **Durum notu (Samet, 2026-11-15):** Başlanmadı; bağımlılığı olan G12 bitti, engel kalktı. Asıl engel **dış veri erişimi**: `TROPOMI CO` (Sentinel-5P) ve `MERRA-2 OC AOD` için NASA Earthdata (GES DISC) ya da Copernicus hesabı ve indirme yolu gerekiyor; bu makinede hazır erişim yok. Plan: 4 biyom (Türkiye, Brezilya, Kanada/Rusya, Hindistan) için aylık ham ve harmonize seriler `/api/series` ve `/api/calendar` (Ω ile normalize `count_normalized`, `total_frp`) çıktılarından alınır; atmosfer serileriyle korelasyon ve RMSE hesaplanır; sonuç hacim ve bulut kısıtlarıyla birlikte `docs/` altında raporlanır. Ham seri ile harmonize seri aynı atmosferik seriye karşı yan yana verilmelidir. BUG-9 düzeltmesinden sonra `/api/series` `anomaly_harmonized` artık Ω ile normalizedir, karşılaştırma bunu kullanabilir. Kutu bilerek açık bırakıldı: jüri sonrası iş.
 
 ### [X] S13 — Referans listesi güncellemesi
 - **Bekler:** — · **Açar:** S8
@@ -1058,6 +1087,17 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 >   - **Aşama ↔ Referans Eşleme Tablosu:** Her 7 aşama koddaki dosya/parametre dayanağı ve doğrulanmış APA 7 akademik kaynaklarıyla eşlendi (19 tam künye).
 >   - **32 Makalelik Envanter ve Doğrulanması Gereken İddialar:** Makale 04 bulguları dahil güncellendi.
 > - **Frontend entegrasyonu (`web/src/content/references.ts`):** Tüm referanslar doğrulanmış APA 7 künyeleri ve DOI bağlantılarıyla `complete: true` olarak frontend'e aktarıldı, typecheck ve 42 test suite'i başarıyla geçti.
+
+### [ ] S14 — CI süre bütçesi: web, tetikleyiciler ve doğrulama (Paket B)
+- **Bekler:** — · **Açar:** —
+- Amaç: G13 ile aynı hedef, iş bölüşümünün diğer yarısı (Paket B = Samet). Ayrıntı: `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5–§7.
+  - **B1** (10 dk): Web job'ını ölç; `npm` önbelleği isabeti, `npm ci`, `typecheck`, `test`, `build` süreleri (toplam 5 dk altı beklenir)
+  - **B2** (10 dk): Bütün job'larda `timeout-minutes` en çok 30 olsun (`coverage` şu an 40 → 30)
+  - **B3** (20 dk): Yalnız belge değişen push ve PR'larda CI'ı atla (`paths-ignore`: `docs/**`, `**/*.md`, `GOREVLER.md`); `data/**` ve `web/**` filtreye girmez, çünkü web `data/case-study/turkey/stats.json` dosyasını içe aktarır
+  - **B4** (15 dk): "Kırmızı CI" sorun giderme tablosunu (rapor §7) doğrula ve tamamla
+- **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `on:` ve `web` blokları. Görkem `rust` ve `coverage` bloklarına dokunur.
+- **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket B
+- **Bitti sayılır:** B1–B4 tamam; rapor §6 web satırı dolu; `ci.yml`'de en büyük `timeout-minutes` 30 ve `actionlint` temiz; yalnız `docs/` değişen commit'te CI çalışmıyor, `crates/` ya da `data/` değişince çalışıyor. S5 kutusu, GitHub'da yeşil bir koşu görüldüğünde ayrıca kapanır.
 
 ---
 
@@ -1266,7 +1306,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
   Aylık `k` 1,52 (Haziran) ile 2,92 (Ocak) arasında değişiyor. **Sınırlar:** alt/üst bant bir tahmin aralığı değil (aylık oranların 10–90. yüzdeliği); gerçek değer 20 ayın yalnız 9'unda bandın içinde, yani bant tek tek aylar için dar. Toplamda yanlılık iyi gideriliyor, tek tek aylarda (özellikle az yangınlı kış aylarında) hata büyük olabilir. Hold-out, kalibrasyonla aynı cihaz ve iklim dönemini paylaşıyor; Aqua öncesi dönem için bağımsız bir gerçek değer yok. Doğrulama yalnız Türkiye'de yapıldı. Makaledeki bulut-farkı elemesi uygulanmadı. Arayüz yeni alanları henüz göstermiyor. `cargo test --workspace` (core 346, server 202), `npm run typecheck`, `npm test` (53), `npm run build` temiz; clippy'de tek hata bu işten bağımsız (`density.rs` test yardımcısı, 9 argüman).
 
-### [ ] K6 — 2023 (NOAA-21) efor geçişini ölçme
+### [X] K6 — 2023 (NOAA-21) efor geçişini ölçme
 - **Bekler:** K5 · **Açar:** —
 - **Neden:** G3'ün Ω mekanizması 2012 (SNPP) ve 2018 (NOAA-20) geçişlerinde doğrulandı, ama **2023 (NOAA-21) geçişi ölçülmedi.** Mekanizma platform kümesinden bağımsız çalıştığı için aynı davranması bekleniyor, ancak bu bir beklenti; ölçüm değil.
 - Ülke arşivi NOAA-21'i taşımıyor (`viirs-jpss2` tüm yıllarda HTTP 404; NOAA-20 ise `viirs-jpss1` olarak arşivde var), bu yüzden bu geçiş yalnız area API ile ölçülebilir ve K5'in cache'ine ihtiyaç duyar.
@@ -1276,6 +1316,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** `|log(normalize kayma)| < |log(ham kayma)| / 2` ölçütü 2023 geçişi için de sağlanıyor ve sonuç GOREVLER.md'deki G3 doğrulama tablosuna ekleniyor.
 - **Durum (Serhat, 2026-11-15):** Ölçüm yapıldı, sonuç G3 doğrulama tablosuna eklendi; yazılı ölçüt sağlanmadı, bu yüzden kutu açık. Araç `crates/firms-client/examples/noaa21_transition.rs`; Area API'den açık SP pencereleri için yeni `FirmsClient::fetch_source_windows` (`client.rs`) kullanılıyor. Araç dry-run'da maliyet tahmini veriyor, 4500 transaction üstünü reddediyor, herhangi bir kaynak hata verirse sonuç raporlamıyor. Türkiye bbox, 2022-07..2023-12: 1953 transaction, hata yok, pencerelerin hepsi K5 cache'inde (tekrar çalıştırmak 0 transaction). Ω 2023-03'te 6,426 → 7,813 (×1,216). Tem–Ara 2022 → 2023: ham ×2,460 (|log| 0,900), normalize ×2,023 (|log| 0,705), yani yazılı ölçüt **geçmiyor**. Ancak eforu değişmeyen MODIS kanalı da ×1,974 artıyor; artışın çoğu gerçek yangın aktivitesi. MODIS referansına göre fazlalık ham ×1,246 → normalize ×1,025 (|log| 0,220 → 0,025), yani yapay kısmın ~%89'u gideriliyor. Öneri: "Bitti sayılır" ölçütü referansa göre fazlalık olarak okunmalı: `|log(normalize/MODIS)| < |log(ham/MODIS)| / 2`. Bu ölçütle 2023 geçişi geçiyor. Ölçütün bu şekilde değiştirilmesi ekip kararı; karar verilince kutu işaretlenebilir. K7'nin 2023 kısmı da bu ölçümle karşılanabilir (aynı araç, farklı `--bbox` ile başka bölgelerde de çalıştırılabilir).
 - **Not (2026-11-15):** K7'nin ölçümü 2023 geçişini 10 ülkelik havuzda area API ile kapsadı (`docs/TAM_FILO_TREND.md`). Düzeltilmemiş ölçüt (K6'nın kendi ölçütü) KALIYOR: aynı mevsim `|log|` ham 0,7681 → norm 0,5951; blok ham 0,4941 → norm 0,3210. MODIS referansı ile düzeltilmiş ölçüt geçiyor: aynı mevsim 0,1660 → 0,0070; blok 0,1245 → 0,0485 (`ref_shift` 1,826 ve 1,447; 2023 bölgede aktif bir yıl). Sonuç, Serhat'ın yukarıdaki Türkiye bbox ölçümüyle ve önerdiği referansa göre fazlalık ölçütüyle tutarlı. K6'nın bitti şartı düzeltilmemiş ölçüttür ve G3 tablosuna ekleme ister; bu yüzden K6 açık kalıyor, düzeltilmiş ölçütün K6 için de geçerli sayılıp sayılmayacağı ekip kararını bekliyor.
+- **Kapanış (Serhat, 2026-11-15, kullanıcı kararı):** K6, K7 ile aynı karar ölçütüyle kapatıldı. K7'nin kapanışında kabul edilen gerekçe K6 için de geçerli: tek sezonluk (ve blok) kıyas gerçek yıllar arası yangın aktivitesini cihaz basamağıyla karıştırıyor, bu yüzden karar ölçütü MODIS referansı ile düzeltilmiş ölçüttür (`|ln(norm/ref)| < |ln(ham/ref)| / 2`). 2023 geçişi üç ayrı ölçümde bu ölçütü geçiyor: Türkiye bbox aynı mevsim `0,220 → 0,025` (`noaa21_transition`), 10 ülke havuzu aynı mevsim `0,166 → 0,007` ve 2020–22 / 2024–25 bloğu `0,125 → 0,049` (`fleet_trend --noaa21`, `docs/TAM_FILO_TREND.md`). Ω geçişi tam 2023-03'te yakalıyor (`6,43 → 7,81`). Görevin yazılı (düzeltilmemiş) ölçütü üç ölçümde de **sağlanmıyor** (`0,900 → 0,705`; `0,768 → 0,595`; `0,494 → 0,321`) ve sağlanması da beklenemez: 2023 bölgede gerçekten aktif bir yıldı, eforu değişmeyen MODIS referansı da `×1,45–1,97` artıyor; yapay filo adımı yalnız `×1,22`. Yazılı ölçüt sıçramanın çoğunun yapay olduğunu varsayıyordu. Sonuçlar G3 doğrulama tablosunda. Kalan sınırlar: 5 büyük ülke 2023 için ölçülmedi (transaction maliyeti); ülke düzeyinde sonuçlar zayıf (bkz. K7).
 
 ### [X] K7 — Tam filo 2000-present trend serisi
 - **Bekler:** K5 · **Açar:** —
@@ -1343,9 +1384,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 | Kişi | Görev sayısı | Tamamlanan | Açık | Ağırlık | Odak |
 |------|-------------|------------|------|---------|------|
-| Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
+| Görkem | 13 (G1–G13) | 10 (`G1–G4, G7–G12`) | 3 (`G5, G6, G13`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon, CI Rust hattı süre bütçesi |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 11 (`S1–S4, S6–S11, S13`) | 2 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Samet | 14 (S1–S14) | 11 (`S1–S4, S6–S11, S13`) | 3 (`S5, S12, S14`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
 | Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 12 (`K1, K2, K3, K4, K5, K7, K8, K9, K10, K11, K12, K13`) | 2 (`K14, K6`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 13 (`K1–K13`) | 1 (`K14`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |

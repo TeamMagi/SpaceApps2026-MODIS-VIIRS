@@ -13,6 +13,8 @@ import {
   formatFrpInterval,
   relativeUncertaintyWidth,
 } from "../../lib/format";
+import { useDockMode, setDockMode } from "../../lib/dockMode";
+import { frpColorVar } from "../../lib/scales";
 import { uncertaintyTierFor } from "./engine/renderer";
 import {
   Confidence,
@@ -159,6 +161,8 @@ function PointDetail({
   const lensToggleRef = useRef<HTMLButtonElement | null>(null);
   const [lensOpen, setLensOpen] = useState(false);
   const lensId = useId();
+  const dockMode = useDockMode();
+  const detailed = dockMode === "detailed";
 
   const showHarmonized = revealAnswer && harmPoint !== null;
   const activePoint = showHarmonized ? harmPoint : rawPoint;
@@ -169,7 +173,7 @@ function PointDetail({
       harmPoint.source === HotspotSource.ModisOnly
     : rawPoint !== null && rawPoint.sensor === "MODIS";
 
-  const showFootprintLens = canShowFootprintLens && lensOpen;
+  const showFootprintLens = canShowFootprintLens && detailed && lensOpen;
 
   const handleCloseLens = useCallback(() => {
     setLensOpen(false);
@@ -209,17 +213,35 @@ function PointDetail({
       data-placement={placement}
       data-lens-open={showFootprintLens ? "true" : undefined}
       data-map-ui="true"
+      data-mode={dockMode}
       role="region"
       aria-label={showHarmonized ? t("mapDetailTitleHarmonized") : t("mapDetailTitleRaw")}
     >
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <span className={styles.title}>
-            {showHarmonized ? t("mapDetailTitleHarmonized") : t("mapDetailTitleRaw")}
+            {detailed
+              ? showHarmonized
+                ? t("mapDetailTitleHarmonized")
+                : t("mapDetailTitleRaw")
+              : timeLabel}
           </span>
           {!showHarmonized && isDuplicateInRaw && (
             <span className={styles.dupBadge}>{t("mapLegendDuplicate")}</span>
           )}
+        </div>
+        <div className={styles.modeSwitch} role="group" aria-label={t("dockModeLabel")}>
+          {(["simple", "detailed"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={styles.modeButton}
+              aria-pressed={dockMode === m}
+              onClick={() => setDockMode(m)}
+            >
+              {m === "simple" ? t("dockModeSimple") : t("dockModeDetailed")}
+            </button>
+          ))}
         </div>
         <button
           type="button"
@@ -232,7 +254,51 @@ function PointDetail({
         </button>
       </div>
 
-      {showHarmonized && harmPoint ? (
+      {!detailed && activePoint && (
+        <dl className={styles.grid}>
+          <div className={styles.row}>
+            <dt>{showHarmonized ? t("mapDetailSources") : t("mapDetailSensor")}</dt>
+            <dd>
+              {showHarmonized && harmPoint
+                ? `${t(sourceCopyKey(harmPoint.source))}${harmPoint.platforms.length ? ` · ${harmPoint.platforms.join(", ")}` : ""}`
+                : rawPoint?.sensor}
+            </dd>
+          </div>
+          <div className={styles.row}>
+            <dt>{t("mapDetailFrp")}</dt>
+            <dd>
+              <span
+                className={styles.frpDot}
+                style={{
+                  background: frpColorVar(
+                    showHarmonized && harmPoint ? harmPoint.frpCorrected : activePoint.frp,
+                  ),
+                }}
+                aria-hidden="true"
+              />
+              {showHarmonized && harmPoint
+                ? formatFrpInterval(harmPoint.frpCorrected, harmPoint.frpLower, harmPoint.frpUpper, lang)
+                : fmt.mw(activePoint.frp)}
+            </dd>
+          </div>
+          <div className={styles.row}>
+            <dt>{t("mapDetailConfidence")}</dt>
+            <dd>{confidenceLabel}</dd>
+          </div>
+          <div className={styles.row}>
+            <dt>{t("mapDetailPass")}</dt>
+            <dd>{passLabel}</dd>
+          </div>
+          <div className={styles.row}>
+            <dt>{t("mapDetailLocation")}</dt>
+            <dd>
+              {fmt.number(activePoint.lat, 2)}, {fmt.number(activePoint.lon, 2)}
+            </dd>
+          </div>
+        </dl>
+      )}
+
+      {!detailed ? null : showHarmonized && harmPoint ? (
         (() => {
           const hasInterval = harmPoint.frpLower !== null && harmPoint.frpUpper !== null;
           const relWidth = relativeUncertaintyWidth(
@@ -268,6 +334,22 @@ function PointDetail({
                 <div className={styles.row}>
                   <dt>{t("mapDetailSources")}</dt>
                   <dd>{t(sourceCopyKey(harmPoint.source))}</dd>
+                </div>
+                {harmPoint.platforms.length > 0 && (
+                  <div className={styles.row}>
+                    <dt>{t("analyticsPlatforms")}</dt>
+                    <dd>{harmPoint.platforms.join(", ")}</dd>
+                  </div>
+                )}
+                {harmPoint.vzaFactor !== null && (
+                  <div className={styles.row}>
+                    <dt>{t("mapDetailVza")}</dt>
+                    <dd>{`${fmt.number(harmPoint.vzaFactor, 3)}×`}</dd>
+                  </div>
+                )}
+                <div className={styles.row}>
+                  <dt>{t("mapDetailObs")}</dt>
+                  <dd>{fmt.number(harmPoint.nObs)}</dd>
                 </div>
                 <div className={styles.row}>
                   <dt>{t("mapDetailConfidence")}</dt>
@@ -334,7 +416,7 @@ function PointDetail({
         )
       )}
 
-      {canShowFootprintLens && (
+      {canShowFootprintLens && detailed && (
         <div className={styles.lensFooter} onKeyDown={handleLensKeyDown}>
           <button
             ref={lensToggleRef}

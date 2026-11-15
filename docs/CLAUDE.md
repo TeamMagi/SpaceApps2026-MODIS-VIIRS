@@ -25,11 +25,13 @@
 | `KOPRU_KATSAYILARI.md` | K13 S-NPP ↔ NOAA-20 sayım/FRP köprü katsayıları ve Terra `≤20 dk` VZA kontrolü: 6 ülkede arşiv ölçümü |
 | `TAM_FILO_TREND.md` | K7 tam filo (MODIS + S-NPP + NOAA-20 + NOAA-21 area API ile) 2000–2025 trend ve 2012/2018/2023 seviye kayması ölçümü: 15 ülke, havuzlanmış ve ülke bazında; MODIS referansı ile düzeltilmiş karar ölçütü |
 | `DOGRULAMA_PAKETI.md` | G12 iç doğrulama paketi referans ölçümü: 10 ülkede placebo adım testi, LOYO normalizasyon testi ve Model vs Baseline kapısı |
+| `KONFORMAL_KAPSAMA.md` | S10 conformal tablosunun (`data/conformal.json`) kalibrasyonu ve ölçülen kapsaması (LOYO, LOCO, bootstrap), dürüst sınırlar; `conformal_calibration fit` üretir, elle düzenlenmez |
 | `crates/firms-client/examples/event_recall.rs` | `DOGRULAMA_PAKETI.md` bölüm D: belgelenmiş yangın aylarının ham/harmonize z ve sıra ölçümü, 2012 sonrası alarm oranları |
 | `REFERENCES.md` | Bilimsel referans listesi taslağı: 32 makalelik envanter, referans projeler, doğrulanması gereken iddialar, pipeline aşaması → kaynak tablosu (S13, S8 içeriği için) |
 | `test/TEST_PLANI.md` | IEEE 829 ana test planı: kapsam, seviyeler, giriş/çıkış ölçütleri, riskler, hata yönetimi, metrikler, geçerleme planı |
 | `test/TEST_TASARIMI.md` | ID'li test vakaları: EP/BVA, karar tabloları, durum geçişi (0-switch), geçerleme vakaları (`TC-VAL`); otomatik testi olmayanlar `EKSİK` |
 | `test/IZLENEBILIRLIK.md` | Gereksinim → test vakası → otomatik test izlenebilirlik matrisi ve risk sırasına göre boşluk özeti |
+| `test/CI_SURE_VE_GOREV_BOLUSUMU.md` | CI'ın en çok 30 dk'da bitmesi için süre bütçesi, ölçülenler ve ölçülmeyenler, iki kişiye eşit bölünmüş iş paketleri (A: Rust hattı, B: web ve tetikleyiciler), ölçüm tablosu |
 
 ## Doküman Ekleme Kuralları
 

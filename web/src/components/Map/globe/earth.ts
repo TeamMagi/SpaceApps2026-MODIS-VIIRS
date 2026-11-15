@@ -28,13 +28,14 @@ void main() {
 }`;
 
 const ATMOSPHERE_FRAGMENT = /* glsl */ `
+precision highp float;
 uniform vec3 color;
 uniform float alpha;
 varying vec3 vN;
 void main() {
-  float i = pow(clamp(-vN.z, 0.0, 1.0), 1.6);
-  i *= smoothstep(0.0, 0.35, -vN.z + 0.02);
-  gl_FragColor = vec4(color, i * alpha);
+  float facing = clamp(-vN.z, 0.0, 1.0);
+  float i = pow(max(facing, 1e-4), 2.2) * smoothstep(0.0, 0.5, facing + 0.02);
+  gl_FragColor = vec4(clamp(color, 0.0, 1.0), clamp(i * alpha, 0.0, 1.0));
   #include <colorspace_fragment>
 }`;
 
@@ -92,6 +93,7 @@ export class Earth {
   private readonly selection: Overlay;
   private readonly hover: Overlay;
   private readonly hemi: THREE.HemisphereLight;
+  private readonly fill = new THREE.AmbientLight("white", 0.9);
   private readonly photo: THREE.Texture;
   private readonly tiles: TileLayer;
   private readonly focus = new DataFocus();
@@ -134,7 +136,7 @@ export class Earth {
         depthWrite: false,
         uniforms: {
           color: { value: new THREE.Color() },
-          alpha: { value: 0.5 },
+          alpha: { value: 0.3 },
         },
         vertexShader: ATMOSPHERE_VERTEX,
         fragmentShader: ATMOSPHERE_FRAGMENT,
@@ -144,7 +146,7 @@ export class Earth {
 
     this.tiles = new TileLayer(tileUrl, anisotropy, reducedMotion, onPhoto, this.focus.apply);
 
-    this.hemi = new THREE.HemisphereLight("white", "black", 1.0);
+    this.hemi = new THREE.HemisphereLight("white", "black", 1.2);
     this.group.add(
       this.surface,
       this.tiles.group,
@@ -153,6 +155,7 @@ export class Earth {
       this.selection.mesh,
       this.atmosphere,
       this.hemi,
+      this.fill,
     );
 
     this.photo = loadEarthPhoto(photoUrl, anisotropy, (texture) => {
@@ -186,10 +189,10 @@ export class Earth {
     }
     if (!prev || prev.selection !== colors.selection) this.selection.repaint(colors.selection);
     if (!prev || prev.hover !== colors.hover) this.hover.repaint(colors.hover);
-    this.hemi.intensity = colors.dark ? 1.0 : 1.3;
+    this.hemi.intensity = colors.dark ? 1.2 : 1.3;
     this.hemi.groundColor.set(colors.ground);
     this.atmosphere.material.uniforms.color.value.set(colors.atmosphere);
-    this.atmosphere.material.uniforms.alpha.value = colors.dark ? 0.6 : 0.4;
+    this.atmosphere.material.uniforms.alpha.value = colors.dark ? 0.35 : 0.3;
   }
 
   setBorders(features: readonly GeoFeature[]): void {
@@ -238,5 +241,6 @@ export class Earth {
     this.selection.dispose();
     this.hover.dispose();
     this.hemi.dispose();
+    this.fill.dispose();
   }
 }
