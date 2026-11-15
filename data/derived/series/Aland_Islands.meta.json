@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2006/modis_2006_Aland_Islands.csv",
@@ -55,5 +55,5 @@
       "bytes": 207
     }
   ],
-  "body_hash": "c4d80113bbcb46ed"
+  "body_hash": "eddf29eedc409dfa"
 }

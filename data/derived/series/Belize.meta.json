@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Belize.csv",
@@ -195,5 +195,5 @@
       "bytes": 371254
     }
   ],
-  "body_hash": "f16addf91a79210d"
+  "body_hash": "59ab7913cb3c2731"
 }

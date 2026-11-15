@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Tonga.csv",
@@ -187,5 +187,5 @@
       "bytes": 10055
     }
   ],
-  "body_hash": "b56cd6b0b7aafbcc"
+  "body_hash": "a8116974a1cad244"
 }

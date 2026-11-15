@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Northern_Mariana_Islands.csv",
@@ -183,5 +183,5 @@
       "bytes": 1001
     }
   ],
-  "body_hash": "2967d52a11539a95"
+  "body_hash": "67dcde68e8092500"
 }

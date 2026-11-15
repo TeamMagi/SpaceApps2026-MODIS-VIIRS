@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2007/modis_2007_San_Marino.csv",
@@ -23,5 +23,5 @@
       "bytes": 207
     }
   ],
-  "body_hash": "e58816cb693a1b29"
+  "body_hash": "35acdb0d5ec3e44e"
 }

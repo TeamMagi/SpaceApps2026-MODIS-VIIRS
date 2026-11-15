@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_United_States_Virgin_Islands.csv",
@@ -159,5 +159,5 @@
       "bytes": 367
     }
   ],
-  "body_hash": "cceeac374f8df702"
+  "body_hash": "b6b6ac8895846460"
 }

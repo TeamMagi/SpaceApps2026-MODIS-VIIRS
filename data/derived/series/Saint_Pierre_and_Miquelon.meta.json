@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "viirs-jpss1/2020/viirs-jpss1_2020_Saint_Pierre_and_Miquelon.csv",
@@ -59,5 +59,5 @@
       "bytes": 523
     }
   ],
-  "body_hash": "94c7e1ffda8c5226"
+  "body_hash": "d02ad40863018330"
 }

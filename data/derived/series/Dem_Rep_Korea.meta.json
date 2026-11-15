@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Dem_Rep_Korea.csv",
@@ -195,5 +195,5 @@
       "bytes": 99577
     }
   ],
-  "body_hash": "7d87f82fe803e1a0"
+  "body_hash": "50e721549c55551a"
 }

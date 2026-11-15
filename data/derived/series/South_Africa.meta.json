@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_South_Africa.csv",
@@ -195,5 +195,5 @@
       "bytes": 11545565
     }
   ],
-  "body_hash": "601a749bcdd3b653"
+  "body_hash": "f6aa5bc1e8663e3b"
 }

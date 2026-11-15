@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Guam.csv",
@@ -191,5 +191,5 @@
       "bytes": 3856
     }
   ],
-  "body_hash": "c0406c45eee18f78"
+  "body_hash": "206ef7ebc0c40446"
 }

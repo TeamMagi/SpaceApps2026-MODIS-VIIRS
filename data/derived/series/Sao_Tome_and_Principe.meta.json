@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Sao_Tome_and_Principe.csv",
@@ -187,5 +187,5 @@
       "bytes": 2713
     }
   ],
-  "body_hash": "159b62e35eec4a35"
+  "body_hash": "a8611e6e7aa721c9"
 }

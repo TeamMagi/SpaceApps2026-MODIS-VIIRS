@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Falkland_Islands.csv",
@@ -175,5 +175,5 @@
       "bytes": 207
     }
   ],
-  "body_hash": "b9e58a6db3bcc841"
+  "body_hash": "75f894a6e518a988"
 }

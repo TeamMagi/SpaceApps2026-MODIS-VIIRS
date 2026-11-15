@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Kyrgyzstan.csv",
@@ -195,5 +195,5 @@
       "bytes": 164207
     }
   ],
-  "body_hash": "af8b46041280b422"
+  "body_hash": "a7f78487cc74ebbc"
 }

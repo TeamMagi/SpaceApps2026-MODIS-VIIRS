@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Djibouti.csv",
@@ -191,5 +191,5 @@
       "bytes": 11707
     }
   ],
-  "body_hash": "d57e48f5d2773a4a"
+  "body_hash": "890dc6cffe1054f7"
 }

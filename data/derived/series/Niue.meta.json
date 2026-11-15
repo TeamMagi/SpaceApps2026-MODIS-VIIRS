@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2004/modis_2004_Niue.csv",
@@ -103,5 +103,5 @@
       "bytes": 208
     }
   ],
-  "body_hash": "994357ce027c9bcd"
+  "body_hash": "8da7024aa2195397"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Heard_I_and_McDonald_Islands.csv",
@@ -151,5 +151,5 @@
       "bytes": 16054
     }
   ],
-  "body_hash": "49bce44798ffa960"
+  "body_hash": "725feeffd353cdf9"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2002/modis_2002_South_Georgia_and_South_Sandwich_Islands.csv",
@@ -35,5 +35,5 @@
       "bytes": 1251
     }
   ],
-  "body_hash": "d1f57ae05f43461c"
+  "body_hash": "df4bfe870c2951b9"
 }

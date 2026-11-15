@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Pakistan.csv",
@@ -195,5 +195,5 @@
       "bytes": 5448650
     }
   ],
-  "body_hash": "ced2d2d15fbfeae1"
+  "body_hash": "7c98ba3f12833dda"
 }

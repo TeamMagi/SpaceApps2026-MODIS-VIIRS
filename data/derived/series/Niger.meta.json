@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Niger.csv",
@@ -195,5 +195,5 @@
       "bytes": 1455180
     }
   ],
-  "body_hash": "8c814fd6f64e9822"
+  "body_hash": "592925780d078aed"
 }

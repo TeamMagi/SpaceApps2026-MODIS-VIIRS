@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2002/modis_2002_Turks_and_Caicos_Islands.csv",
@@ -167,5 +167,5 @@
       "bytes": 1874
     }
   ],
-  "body_hash": "e3e33906e88a7636"
+  "body_hash": "697ca35d0052db52"
 }

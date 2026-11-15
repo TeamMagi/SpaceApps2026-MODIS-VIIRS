@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2011/modis_2011_Wallis_and_Futuna_Islands.csv",
@@ -43,5 +43,5 @@
       "bytes": 210
     }
   ],
-  "body_hash": "cbeca9cd0b74c7c1"
+  "body_hash": "7f6d9aefe9c4ad8b"
 }

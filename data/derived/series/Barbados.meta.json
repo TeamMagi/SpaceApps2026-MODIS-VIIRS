@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Barbados.csv",
@@ -191,5 +191,5 @@
       "bytes": 4317
     }
   ],
-  "body_hash": "162eaed32176f463"
+  "body_hash": "6c5b177652fc707b"
 }

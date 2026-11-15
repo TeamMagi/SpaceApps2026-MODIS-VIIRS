@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Vanuatu.csv",
@@ -195,5 +195,5 @@
       "bytes": 21272
     }
   ],
-  "body_hash": "509d29ad4b870959"
+  "body_hash": "fe45732015261c35"
 }

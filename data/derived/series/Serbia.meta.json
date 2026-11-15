@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Serbia.csv",
@@ -195,5 +195,5 @@
       "bytes": 291110
     }
   ],
-  "body_hash": "34c88d71fade98d7"
+  "body_hash": "2467c1cb6a7b2e54"
 }

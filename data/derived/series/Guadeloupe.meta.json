@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Guadeloupe.csv",
@@ -183,5 +183,5 @@
       "bytes": 1162
     }
   ],
-  "body_hash": "2a3a2e69e4ba4e51"
+  "body_hash": "10fdea3f9616ea4d"
 }

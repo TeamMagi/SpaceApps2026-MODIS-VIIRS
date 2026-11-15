@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2005/modis_2005_Iceland.csv",
@@ -159,5 +159,5 @@
       "bytes": 87092
     }
   ],
-  "body_hash": "3ca76c44b51c056b"
+  "body_hash": "8e8e3473404fa8cd"
 }

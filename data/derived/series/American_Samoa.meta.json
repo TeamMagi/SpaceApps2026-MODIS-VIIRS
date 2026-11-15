@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2004/modis_2004_American_Samoa.csv",
@@ -83,5 +83,5 @@
       "bytes": 210
     }
   ],
-  "body_hash": "76606dbffa21a6aa"
+  "body_hash": "3f235340c01f8774"
 }

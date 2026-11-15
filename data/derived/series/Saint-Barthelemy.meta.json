@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Saint-Barthelemy.csv",
@@ -19,5 +19,5 @@
       "bytes": 367
     }
   ],
-  "body_hash": "ac8b9ae4014fea3d"
+  "body_hash": "1268be41e11a0c23"
 }

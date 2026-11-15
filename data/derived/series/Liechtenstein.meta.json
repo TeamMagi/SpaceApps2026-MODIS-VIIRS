@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "viirs-jpss1/2020/viirs-jpss1_2020_Liechtenstein.csv",
@@ -23,5 +23,5 @@
       "bytes": 206
     }
   ],
-  "body_hash": "222a97bbec97c146"
+  "body_hash": "7294c45198624687"
 }

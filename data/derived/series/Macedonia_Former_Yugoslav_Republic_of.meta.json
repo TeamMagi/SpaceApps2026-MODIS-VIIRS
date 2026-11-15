@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Macedonia_Former_Yugoslav_Republic_of.csv",
@@ -195,5 +195,5 @@
       "bytes": 184251
     }
   ],
-  "body_hash": "5f8372eea78b6225"
+  "body_hash": "96c2eb4e7897ecca"
 }

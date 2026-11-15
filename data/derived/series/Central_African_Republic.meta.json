@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Central_African_Republic.csv",
@@ -195,5 +195,5 @@
       "bytes": 42838862
     }
   ],
-  "body_hash": "912e0dbd809f5bf3"
+  "body_hash": "981d43a7a794036a"
 }

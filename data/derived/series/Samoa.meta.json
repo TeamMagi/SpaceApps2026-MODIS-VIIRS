@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Samoa.csv",
@@ -187,5 +187,5 @@
       "bytes": 697
     }
   ],
-  "body_hash": "1233a2204e1e3d3d"
+  "body_hash": "877b0b927d828f2d"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Benin.csv",
@@ -195,5 +195,5 @@
       "bytes": 4143299
     }
   ],
-  "body_hash": "6c4f963b32f17c62"
+  "body_hash": "dc6c88faddc1a673"
 }

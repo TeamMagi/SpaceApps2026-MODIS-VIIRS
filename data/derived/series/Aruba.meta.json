@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2002/modis_2002_Aruba.csv",
@@ -107,5 +107,5 @@
       "bytes": 525
     }
   ],
-  "body_hash": "538d244bfc2369c7"
+  "body_hash": "e7f7914dd0664265"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Maldives.csv",
@@ -175,5 +175,5 @@
       "bytes": 202
     }
   ],
-  "body_hash": "9529b8321aa01d46"
+  "body_hash": "47324f4781221086"
 }

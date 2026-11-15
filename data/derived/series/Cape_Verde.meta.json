@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Cape_Verde.csv",
@@ -191,5 +191,5 @@
       "bytes": 7094
     }
   ],
-  "body_hash": "1a8c751617c0fa30"
+  "body_hash": "e0c45a5d833b46d6"
 }

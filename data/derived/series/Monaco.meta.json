@@ -1,11 +1,11 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "viirs-jpss1/2021/viirs-jpss1_2021_Monaco.csv",
       "bytes": 206
     }
   ],
-  "body_hash": "3a92d0b303855734"
+  "body_hash": "1daa430d4b9b8fff"
 }

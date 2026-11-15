@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Belarus.csv",
@@ -195,5 +195,5 @@
       "bytes": 316279
     }
   ],
-  "body_hash": "d96b29b6abc72b41"
+  "body_hash": "33a6659374f0f640"
 }

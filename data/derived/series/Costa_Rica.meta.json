@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Costa_Rica.csv",
@@ -195,5 +195,5 @@
       "bytes": 153804
     }
   ],
-  "body_hash": "12512c18b9e8ce33"
+  "body_hash": "c3dcd5ee83692e6a"
 }

@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Greenland.csv",
@@ -191,5 +191,5 @@
       "bytes": 762
     }
   ],
-  "body_hash": "b4a46455f24c0ccf"
+  "body_hash": "26ec2debb1444041"
 }

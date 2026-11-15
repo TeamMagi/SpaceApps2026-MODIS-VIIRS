@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2007/modis_2007_Saint-Martin.csv",
@@ -99,5 +99,5 @@
       "bytes": 287
     }
   ],
-  "body_hash": "9e9749ca6a020927"
+  "body_hash": "9fd9566b0552f561"
 }

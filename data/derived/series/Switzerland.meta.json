@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2001/modis_2001_Switzerland.csv",
@@ -191,5 +191,5 @@
       "bytes": 37034
     }
   ],
-  "body_hash": "e73477c4e3e174c7"
+  "body_hash": "fb2d6889d2c072fd"
 }

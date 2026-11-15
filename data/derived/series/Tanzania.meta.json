@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Tanzania.csv",
@@ -195,5 +195,5 @@
       "bytes": 37402495
     }
   ],
-  "body_hash": "2366e78db49dbf9b"
+  "body_hash": "5df7cf5eca1fe26b"
 }

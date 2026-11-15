@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "config_hash": "9799a1f3ad5a3976",
+  "schema_version": 10,
+  "config_hash": "dd7b6c98ca9b9963",
   "files": [
     {
       "path": "modis/2000/modis_2000_Mozambique.csv",
@@ -195,5 +195,5 @@
       "bytes": 60734816
     }
   ],
-  "body_hash": "736d5fcae07afdf4"
+  "body_hash": "9b9d9243945f81be"
 }
