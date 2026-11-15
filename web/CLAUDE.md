@@ -31,7 +31,7 @@ src/
 │   ├── Map/        → HotspotMap, FlatMap, GlobeMap, FootprintLens, PointDetail, MapLegend,
 │   │                 engine/ (2D canvas: renderer, viewport, LOD, point index, hit testing),
 │   │                 globe/ (three.js 3D küre: scene, tiles, textures, picking)
-│   ├── Charts/     → Uçurum grafiği ve SensorComparison (sensör karşılaştırma grafiği, elle yazılmış SVG)
+│   ├── Charts/     → ChartPanel (Tespitler / Ortalama FRP / Sensörler sekmeleri), CliffChart, FrpBandChart, SensorCharts (Y2: aylık sensör çubukları, eşleşen çift FRP serpilmesi, kaynak halkası; veri şekillendirme `lib/sensorCharts.ts`) ve SensorComparison (yalnızca mock önizleme; elle yazılmış SVG)
 │   ├── Calendar/   → Radyal yanma takvimi (BurnCalendar) ve tooltip
 │   ├── BottomBar/  → Alt şerit (model uyarısı, CSV, brifing)
 │   ├── Tour/       → 60 saniyelik rehberli tur kartı (GuidedTour; zamanlayıcılar hooks/useGuidedTour'da)

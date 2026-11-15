@@ -2,23 +2,25 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { useCopy } from "../../hooks/useCopy";
 import CliffChart from "./CliffChart";
 import FrpBandChart from "./FrpBandChart";
+import SensorCharts from "./SensorCharts";
 import styles from "./ChartPanel.module.css";
 
-type ChartView = "detections" | "frp";
+type ChartView = "detections" | "frp" | "sensors";
+
+const VIEW_ORDER: readonly ChartView[] = ["detections", "frp", "sensors"];
 
 export default function ChartPanel() {
   const { t } = useCopy();
   const [view, setView] = useState<ChartView>("detections");
-  const detectionsRef = useRef<HTMLButtonElement | null>(null);
-  const frpRef = useRef<HTMLButtonElement | null>(null);
+  const tabRefs = useRef<Record<ChartView, HTMLButtonElement | null>>({ detections: null, frp: null, sensors: null });
 
   const handleGroupKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      const next: ChartView = view === "detections" ? "frp" : "detections";
-      setView(next);
-      (next === "detections" ? detectionsRef.current : frpRef.current)?.focus();
-    }
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const step = e.key === "ArrowRight" ? 1 : VIEW_ORDER.length - 1;
+    const next = VIEW_ORDER[(VIEW_ORDER.indexOf(view) + step) % VIEW_ORDER.length];
+    setView(next);
+    tabRefs.current[next]?.focus();
   };
 
   return (
@@ -31,7 +33,9 @@ export default function ChartPanel() {
           onKeyDown={handleGroupKeyDown}
         >
           <button
-            ref={detectionsRef}
+            ref={(el) => {
+              tabRefs.current.detections = el;
+            }}
             type="button"
             className={styles.tab}
             aria-pressed={view === "detections"}
@@ -40,7 +44,9 @@ export default function ChartPanel() {
             {t("chartTabDetections")}
           </button>
           <button
-            ref={frpRef}
+            ref={(el) => {
+              tabRefs.current.frp = el;
+            }}
             type="button"
             className={styles.tab}
             aria-pressed={view === "frp"}
@@ -48,11 +54,24 @@ export default function ChartPanel() {
           >
             {t("chartTabMeanFrp")}
           </button>
+          <button
+            ref={(el) => {
+              tabRefs.current.sensors = el;
+            }}
+            type="button"
+            className={styles.tab}
+            aria-pressed={view === "sensors"}
+            onClick={() => setView("sensors")}
+          >
+            {t("chartTabSensors")}
+          </button>
         </div>
       </div>
 
       <div className={styles.body}>
-        {view === "detections" ? <CliffChart /> : <FrpBandChart />}
+        {view === "detections" && <CliffChart />}
+        {view === "frp" && <FrpBandChart />}
+        {view === "sensors" && <SensorCharts />}
       </div>
     </div>
   );
