@@ -242,7 +242,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
 | R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [ ] |
-| R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [ ] |
+| R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
 | R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [ ] bekliyor |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
@@ -752,13 +752,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P5, Yol Haritası #12 (+ `flare-chronos`)
 - **Bitti sayılır:** `fleet.rs` ve `harmonize.rs` zaman pencereleri `t_anchor` tabanlı çalışıyor; zincirleme önleme testleri dahil `cargo test -p pyrosync-core` geçiyor.
 
-### [ ] R9 — Frontend'i yeni API alanlarına geçirme
+### [X] R9 — Frontend'i yeni API alanlarına geçirme
 - **Bekler:** — · **Açar:** R12
 - `web/src/types/index.ts` ve `web/src/services/api.ts` içinde `/api/compare` yanıtındaki `vza.mean_frp_reduction_pct` yerine `vza.mean_frp_adjustment_pct` alanına geçilmesi; UI metinlerinin "azaltım" yerine "düzeltme/artış" olarak güncellenmesi (bölüm başındaki nota göre)
 - `BurnCalendar` ve ilgili serilerde `/api/calendar` hücrelerinden `total_frp`, `frp_per_detection_eq` ve `mean_frp_lower`/`mean_frp_upper`, `total_frp_lower`/`total_frp_upper` bantlarının bağlanması
 - `mean_frp`'nin 2012 VIIRS piksel boyutu geçişindeki süreksizliği nedeniyle manşet metrikten indirilip yalnızca native-pixel ikincil detay olarak gösterilmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P2 (+ `GOREVLER.md` Serhat bölüm başı notu)
 - **Bitti sayılır:** `web/` içinde `mean_frp_adjustment_pct`, `total_frp`, `frp_per_detection_eq` ve `*_lower/upper` alanları kullanılıyor; `mean_frp` manşette değil; `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
+- **Kapanış (Serhat, 2026-11-15):** Yeni `web/src/hooks/useCalendarFrp.ts` hook'u seçili bölge için `/api/calendar`'ı çağırıyor. Bölge kimliği arşivdeki ülke adıyla aynı olduğu için `country` parametresine olduğu gibi gidiyor. Sonuç oturum boyunca bölge başına cache'leniyor. İstek yüklenirken veya hata verdiğinde takvim eskisi gibi `/api/series` verisiyle çiziliyor. Harmonize modda `CalendarTooltip` ve dilim aria-label'ı sırasıyla şunları gösteriyor: manşet olarak `frpPerDetectionEq`, ardından `totalFrp` ve olası aralığı (`totalFrpLower/Upper`), en son ikincil bilgi olarak native-pixel `meanFrp` ve aralığı. VZA düzeltmesi `CountDelta`'daki canlı karşılaştırma satırına eklendi (`meanFrpAdjustmentPct`, işaretli %). UI'da "azaltım" metni yoktu. `tsc`, `build` ve `npm test` temiz. **Sınır:** yerelde arşiv indirilmediği için `/api/calendar` ile canlı birleştirme denenmedi. C7'deki geniş bant tarama (hatch) deseni uygulanmadı.
 
 ### [ ] R8 — Çoklu harmonizasyon model seçimi
 - **Bekler:** G7, K1, R1 · **Açar:** —

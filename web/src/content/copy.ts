@@ -189,6 +189,11 @@ const enBase = {
   calendarTooltip: "{date} · {count} detections · {anomaly} ({sigma})",
   calendarNoAnomalyCell: "{date} · {count} detections",
   calendarEmptyCell: "{month} · 0 detections",
+  calendarFrpEq: "{value} MW per detection (MODIS-equivalent)",
+  calendarFrpTotal: "total FRP {value} MW",
+  calendarFrpTotalBand: "total FRP {value} MW (likely {low}–{high})",
+  calendarFrpNative: "native-pixel mean {value} MW",
+  calendarFrpNativeBand: "native-pixel mean {value} MW (likely {low}–{high})",
   calendarNoRecord: "{month} · no satellite record",
   calendarSelectHint: "Select a month to filter the map",
   calendarLegendBelow: "Below normal",
@@ -278,6 +283,7 @@ const enBase = {
   briefingCopyLink: "Copy link to this view",
   briefingLinkCopied: "Link copied",
   nrtLiveSummary: "Live: {raw} → {harmonized}",
+  nrtVzaAdjustment: "view-angle correction: mean FRP {pct}",
   nrtTransactions: "{n} API calls",
 } as const;
 
@@ -425,6 +431,11 @@ const trBase = {
   calendarTooltip: "{date} · {count} tespit · {anomaly} ({sigma})",
   calendarNoAnomalyCell: "{date} · {count} tespit",
   calendarEmptyCell: "{month} · 0 tespit",
+  calendarFrpEq: "tespit başına {value} MW (MODIS eşdeğeri)",
+  calendarFrpTotal: "toplam FRP {value} MW",
+  calendarFrpTotalBand: "toplam FRP {value} MW (olası aralık {low}–{high})",
+  calendarFrpNative: "yerel piksel ortalaması {value} MW",
+  calendarFrpNativeBand: "yerel piksel ortalaması {value} MW (olası aralık {low}–{high})",
   calendarNoRecord: "{month} · uydu kaydı yok",
   calendarSelectHint: "Haritayı süzmek için bir ay seç",
   calendarLegendBelow: "Normalin altında",
@@ -509,6 +520,7 @@ const trBase = {
   briefingCopyLink: "Bu görünümün bağlantısını kopyala",
   briefingLinkCopied: "Bağlantı kopyalandı",
   nrtLiveSummary: "Canlı: {raw} → {harmonized}",
+  nrtVzaAdjustment: "bakış açısı düzeltmesi: ortalama FRP {pct}",
   nrtTransactions: "{n} API çağrısı",
 } as const;
 
