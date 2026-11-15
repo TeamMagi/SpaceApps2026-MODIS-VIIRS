@@ -406,7 +406,7 @@ curl -s "http://localhost:3001/api/config"
   "uncertainty": {
     "modis_sensor_sigma": 0.12,
     "viirs_sensor_sigma": 0.08,
-    "vza_error_coeff": 0.05,
+    "vza_error_coeff": 1.0,
     "modis_scale_sigma": 0.1,
     "z": 1
   },
@@ -440,7 +440,7 @@ curl -s "http://localhost:3001/api/config"
 | `calibration.enabled` | boolean | Pre-VIIRS tamlık katsayısı `k_c` uygulansın mı |
 | `calibration.bands[]` | array | Enlem bantları: `min_abs_lat`, `max_abs_lat` (|lat|, derece), `ratio` (`k_c`), `ratio_sigma` (`k_c` 1σ). 50-55° arası doğrusal geçiş, 70°'nin üstü son banda sabitlenir |
 | `uncertainty.modis_sensor_sigma`, `uncertainty.viirs_sensor_sigma` | number | Tek piksel sensör gürültüsü (göreli 1σ) |
-| `uncertainty.vza_error_coeff` | number | VZA düzeltmesi arttıkça eklenen göreli hata katsayısı |
+| `uncertainty.vza_error_coeff` | number | VZA düzeltmesi arttıkça eklenen göreli hata katsayısı (`vza_error_coeff × (factor - 1)`; varsayılan `1.0`) |
 | `uncertainty.modis_scale_sigma` | number | MODIS ölçek/Terra vekil belirsizliği (göreli 1σ) |
 | `uncertainty.z` | number | Güven aralığı z çarpanı (`> 0`) |
 | `uncertainty.tropical_swath_gap_compensation` | boolean | Opsiyonel tropikal swath-gap telafisi (bkz. "effort.tropical_swath_gap"). Varsayılan `false`; `false` iken JSON'a yazılmaz, böylece konfigürasyon özeti ve önceden hesaplanmış seri damgaları değişmez. TOML: `[uncertainty] tropical_swath_gap_compensation = true` |

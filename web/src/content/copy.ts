@@ -239,6 +239,20 @@ const enBase = {
   cliffTableYear: "Year",
   cliffPartialYear: "{year} (partial)",
 
+  // Chart panel & FRP band chart
+  chartViewSwitchLabel: "Chart metric",
+  chartTabDetections: "Detections",
+  chartTabMeanFrp: "Mean FRP",
+  frpChartTitle: "Mean FRP per year · {first}–{last}",
+  frpChartLabel: "Mean fire radiative power per year",
+  frpLegendMean: "Mean FRP",
+  frpRawCaption: "Interval shown in the Harmonized view",
+  frpTooltip: "{year} · Mean FRP {value}",
+  frpTooltipNoData: "{year} · no data",
+  frpTableMean: "Mean FRP (MW)",
+  frpTableLower: "Lower bound (MW)",
+  frpTableUpper: "Upper bound (MW)",
+
   // States
   loadingFirms: "Loading archive detections…",
   loadingRegions: "Loading regions…",
@@ -557,6 +571,19 @@ const trBase = {
   cliffLegendPartial: "Kısmi yıl",
   cliffTableYear: "Yıl",
   cliffPartialYear: "{year} (kısmi)",
+
+  chartViewSwitchLabel: "Grafik metriği",
+  chartTabDetections: "Tespitler",
+  chartTabMeanFrp: "Ortalama FRP",
+  frpChartTitle: "Yıllık ortalama FRP · {first}–{last}",
+  frpChartLabel: "Yıllık ortalama yangın ışınım gücü",
+  frpLegendMean: "Ortalama FRP",
+  frpRawCaption: "Aralık Harmonize görünümde gösterilir",
+  frpTooltip: "{year} · Ortalama FRP {value}",
+  frpTooltipNoData: "{year} · veri yok",
+  frpTableMean: "Ortalama FRP (MW)",
+  frpTableLower: "Alt sınır (MW)",
+  frpTableUpper: "Üst sınır (MW)",
 
   loadingFirms: "Arşiv tespitleri yükleniyor…",
   loadingRegions: "Bölgeler yükleniyor…",

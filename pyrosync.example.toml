@@ -68,10 +68,12 @@ ratio_sigma = 0.11
 
 [uncertainty]
 # Analytical FRP confidence bounds combining sensor noise, VZA correction error, and
-# MODIS scale/completeness uncertainty. Parameters below are model assumptions, not published values.
+# MODIS scale/completeness uncertainty. Except modis_sensor_sigma (Freeborn et al. 2014a),
+# defaults are model assumptions: vza_error_coeff = 1.0 assumes 1-sigma VZA error equals the
+# applied correction magnitude (factor - 1) because Aqua's R_rel(theta) proxies Terra.
 modis_sensor_sigma = 0.266
 viirs_sensor_sigma = 0.08
-vza_error_coeff = 0.05
+vza_error_coeff = 1.0
 modis_scale_sigma = 0.10
 # Gaussian z-multiplier (z = 1.0 gives ~68.27% two-sided confidence).
 z = 1.0

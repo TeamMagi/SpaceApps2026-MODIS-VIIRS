@@ -12,8 +12,8 @@ import { useCopy, type CopyApi } from "../../hooks/useCopy";
 import {
   formatFrpInterval,
   relativeUncertaintyWidth,
-  WIDE_UNCERTAINTY_THRESHOLD,
 } from "../../lib/format";
+import { uncertaintyTierFor } from "./engine/renderer";
 import {
   Confidence,
   DayNight,
@@ -240,7 +240,7 @@ function PointDetail({
             harmPoint.frpUpper,
             harmPoint.frpCorrected,
           );
-          const isWideInterval = relWidth !== null && relWidth > WIDE_UNCERTAINTY_THRESHOLD;
+          const isWideInterval = uncertaintyTierFor(relWidth) === 2;
           return (
             <>
               <p className={styles.srOnly}>

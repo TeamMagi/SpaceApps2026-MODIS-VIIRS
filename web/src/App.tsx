@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import AppShell from "./components/Layout/AppShell";
 import BottomBar from "./components/BottomBar/BottomBar";
 import BurnCalendar from "./components/Calendar/BurnCalendar";
-import CliffChart from "./components/Charts/CliffChart";
+import ChartPanel from "./components/Charts/ChartPanel";
 import BriefingDrawer from "./components/Drawers/BriefingDrawer";
 import MethodsDrawer from "./components/Drawers/MethodsDrawer";
 import SettingsDrawer from "./components/Drawers/SettingsDrawer";
@@ -59,7 +59,7 @@ export default function App() {
           <HotspotMap />
         </Suspense>
       }
-      chart={<CliffChart />}
+      chart={<ChartPanel />}
       calendar={<BurnCalendar />}
       bottomBar={<BottomBar />}
       overlays={

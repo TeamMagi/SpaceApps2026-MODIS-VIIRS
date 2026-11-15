@@ -287,16 +287,38 @@ ARCHIVE_CACHE_DIR="C:/Users/user/Desktop/SpaceApps2026-MODIS-VIIRS/.cache/firms-
 
 ### Sonuç tablosu
 
-Sonuçlar: final koşusundan sonra doldurulacak.
+Final koşusu (2026-11-15, `main` @ `a1e53b3`, R10 + ayak izi sınırı, çoklu VIIRS FRP cetveli YOK; 2003–2025, sıra 23 yıl içinde, 1 = en yüksek):
 
 | Olay | Ay | Sayım ham z | Sayım ham sıra | Sayım harmonize z | Sayım harmonize sıra | FRP ham z | FRP ham sıra | FRP harmonize z | FRP harmonize sıra | recalled_count | recalled_frp |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Black Summer (Australia) | 2019-12 | | | | | | | | | | |
-| Black Summer (Australia) | 2020-01 | | | | | | | | | | |
-| Amazon fires (Brazil) | 2019-08 | | | | | | | | | | |
-| record wildfire season (Canada) | 2023-06 | | | | | | | | | | |
-| Manavgat / Mediterranean fires (Turkey) | 2021-08 | | | | | | | | | | |
-| El Nino peat fires (Indonesia) | 2015-09 | | | | | | | | | | |
-| El Nino peat fires (Indonesia) | 2015-10 | | | | | | | | | | |
-| western US fire season (CA/OR) | 2020-09 | | | | | | | | | | |
-| Yakutia (Sakha) fires | 2021-07 | | | | | | | | | | |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| Black Summer (Australia) | 2019-12 | 7.77 | 1 | 5.28 | 1 | 9.12 | 1 | 7.01 | 1 | yes | yes |
+| Black Summer (Australia) | 2020-01 | 6.23 | 1 | 3.15 | 2 | 6.37 | 1 | 4.49 | 1 | yes | yes |
+| Amazon fires (Brazil) | 2019-08 | 1.62 | 3 | 0.10 | 10 | 1.38 | 3 | 0.62 | 7 | no | no |
+| record wildfire season (Canada) | 2023-06 | 9.05 | 1 | 7.17 | 1 | 9.38 | 1 | 7.55 | 1 | yes | yes |
+| Manavgat / Mediterranean fires (Turkey) | 2021-08 | 2.30 | 1 | -0.29 | 11 | 5.44 | 1 | 1.92 | 2 | no | yes |
+| El Nino peat fires (Indonesia) | 2015-09 | 3.15 | 2 | 3.99 | 1 | 3.17 | 2 | 3.77 | 1 | yes | yes |
+| El Nino peat fires (Indonesia) | 2015-10 | 6.22 | 1 | 5.15 | 1 | 6.37 | 1 | 6.34 | 1 | yes | yes |
+| western US fire season (CA/OR) | 2020-09 | 8.15 | 1 | 6.23 | 1 | 13.20 | 1 | 11.81 | 1 | yes | yes |
+| Yakutia (Sakha) fires | 2021-07 | 3.07 | 1 | 1.95 | 2 | 4.18 | 1 | 3.48 | 1 | yes | yes |
+
+**Yakalanan olay-ay:** sayım 7/9, FRP 8/9.
+
+**Yanlış alarm vekili** (2012–2025, z ≥ 2 olan aylar; gerçek yangın ayları da dahildir):
+
+| Ülke | Sayım ham | Sayım harmonize | FRP ham | FRP harmonize |
+|---|---:|---:|---:|---:|
+| Australia | 16/168 (%9,5) | 13/168 (%7,7) | 19/168 (%11,3) | 12/168 (%7,1) |
+| Brazil | 16/168 (%9,5) | 6/168 (%3,6) | 17/168 (%10,1) | 15/168 (%8,9) |
+| Canada | 18/168 (%10,7) | 9/168 (%5,4) | 19/168 (%11,3) | 17/168 (%10,1) |
+| Turkey | 14/168 (%8,3) | 10/168 (%6,0) | 17/168 (%10,1) | 14/168 (%8,3) |
+| Indonesia | 17/168 (%10,1) | 7/168 (%4,2) | 14/168 (%8,3) | 14/168 (%8,3) |
+| United_States | 15/168 (%8,9) | 7/168 (%4,2) | 19/168 (%11,3) | 15/168 (%8,9) |
+| Russian_Federation | 18/168 (%10,7) | 9/168 (%5,4) | 14/168 (%8,3) | 10/168 (%6,0) |
+| **Toplam** | **114/1176 (%9,7)** | **61/1176 (%5,2)** | **119/1176 (%10,1)** | **97/1176 (%8,2)** |
+
+**Yorum:**
+- Belgelenmiş dokuz aşırı olay-ayının sekizi harmonize FRP'de, yedisi harmonize sayımda ilk iki sıradadır. Endonezya 2015-09'da harmonize seri olayı hamdan daha net ayırır (sıra 2 → 1).
+- Manavgat 2021-08 sayımda yakalanmaz (z −0,29) ama FRP'de 2. sıradadır: Ağustos sayımlarına her yıl tarımsal yakmalar hâkimdir, Manavgat az sayıda ama çok şiddetli yangındı. Sıklık için sayım, şiddet için FRP okunmalıdır.
+- Amazon 2019-08 iki metrikte de yakalanmaz. Ham seri onu VIIRS dönemi şişmesiyle 3. sıraya taşır; harmonize seride 2005/2007/2010 kuraklık yıllarının gerisinde kalır. Bu, 2019'un 2010'dan beri en kötü yıl olduğu ama tarihsel rekor olmadığı yönündeki kamu kayıtlarıyla uyumludur (bu tabloda kaynak olarak ölçülmemiştir).
+- 2012 sonrası z ≥ 2 ay payı sayımda %9,7'den %5,2'ye iner; harmonizasyon VIIRS kaynaklı sahte anomalileri yaklaşık yarıya düşürür. Bu pay gerçek olay aylarını da içerdiği için yalnız bir vekildir.
+- Çoklu VIIRS FRP cetveli (W1) denendi ve geri alındı: Türkiye 2018 sonrası FRP'yi yarıya indirip Manavgat'ı 8. sıraya düşürüyordu (filo birleştirme aynı yangının S-NPP/NOAA-20 FRP'sinin zaten ortalamasını alır).

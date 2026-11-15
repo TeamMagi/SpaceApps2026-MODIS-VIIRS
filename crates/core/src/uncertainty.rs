@@ -20,10 +20,13 @@ pub const DEFAULT_MODIS_SENSOR_SIGMA: f64 = 0.266;
 /// A_p < 0.3 km²) yetersiz çift verdiği için değer değiştirilmedi.
 pub const DEFAULT_VIIRS_SENSOR_SIGMA: f64 = 0.08;
 
-/// Türetilmiş tahmin / varsayım: VZA düzeltmesi arttıkça (`factor - 1.0`) eklenen göreli 1σ hata
-/// eğimi. Tarama kenarında (`factor ≈ 1.32`, Zheng et al. 2026 normalize eğrisi; `01_ANALYSIS.md`
-/// gruplu polinomial fit RMSE ≤ %1.34) piksel ölçeği artık hatası daha büyüktür.
-pub const DEFAULT_VZA_ERROR_COEFF: f64 = 0.05;
+/// VARSAYIM (açık model varsayımı): VZA düzeltmesi `R_rel(θ)` Aqua'dan (`MYD14`, Zheng et al. 2026)
+/// alınıp Terra'ya vekil olarak uygulanır; kendi arşiv ölçümümüz (`K13`, `docs/KOPRU_KATSAYILARI.md`
+/// Bölüm 4.1, Avustralya) 40–70° VZA aralığında Terra VIIRS/MODIS FRP oranını Aqua'nın yaklaşık
+/// yarısı olarak bulmuştur. Bu nedenle uygulanan düzeltmenin belirsizliği düzeltmenin kendisiyle
+/// aynı mertebededir ve VZA teriminin 1σ değeri uygulanan düzeltme büyüklüğüne (`factor - 1.0`)
+/// eşit alınır (`vza_relative_sigma = vza_error_coeff * (factor - 1.0)`).
+pub const DEFAULT_VZA_ERROR_COEFF: f64 = 1.0;
 
 /// Varsayım: Zheng R(θ) eğrisinin ölçek/şekil belirsizliği ve Terra'ya geometrik vekil
 /// aktarımı; yayımlanmış değer değil.
@@ -512,8 +515,8 @@ mod tests {
             ..UncertaintyParams::default()
         };
 
-        let e1 = frp_uncertainty(100.0, Some(1.5), SensorFamily::Modis, Some((1.0, 0.03)), &p1);
-        let e2 = frp_uncertainty(100.0, Some(1.5), SensorFamily::Modis, Some((1.0, 0.03)), &p2);
+        let e1 = frp_uncertainty(100.0, Some(1.2), SensorFamily::Modis, Some((1.0, 0.03)), &p1);
+        let e2 = frp_uncertainty(100.0, Some(1.2), SensorFamily::Modis, Some((1.0, 0.03)), &p2);
 
         assert!(e1.lower > 0.0 && e2.lower > 0.0);
         let w1 = e1.upper - e1.lower;
@@ -597,10 +600,18 @@ mod tests {
                     for cal in cals {
                         for n in [0, 1, 2, 4, 16, u16::MAX] {
                             let e = frp_uncertainty_for_obs(frp, factor, family, cal, n, &params);
-                            assert!(
-                                0.0 < e.lower && e.lower < frp && frp < e.upper,
-                                "{e:?} frp={frp} {family:?} {factor:?} {cal:?} n={n}"
-                            );
+                            let rel = relative_uncertainty_for_obs(factor, family, cal, n, &params);
+                            if params.z * rel.total() < 1.0 {
+                                assert!(
+                                    0.0 < e.lower && e.lower < frp && frp < e.upper,
+                                    "{e:?} frp={frp} {family:?} {factor:?} {cal:?} n={n}"
+                                );
+                            } else {
+                                assert!(
+                                    e.lower == 0.0 && frp < e.upper,
+                                    "{e:?} frp={frp} {family:?} {factor:?} {cal:?} n={n}"
+                                );
+                            }
                         }
                     }
                 }
@@ -643,7 +654,7 @@ mod tests {
         assert_eq!(vza_relative_sigma(Some(0.999), &p), 0.0);
         assert_eq!(vza_relative_sigma(Some(1.0), &p), 0.0);
         let just_above = vza_relative_sigma(Some(1.001), &p);
-        assert!(just_above > 0.0 && just_above < 1e-4);
+        assert!(just_above > 0.0 && (just_above - p.vza_error_coeff * 0.001).abs() < 1e-12);
         assert!((vza_relative_sigma(Some(1.32), &p) - p.vza_error_coeff * 0.32).abs() < 1e-12);
         for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
             assert_eq!(vza_relative_sigma(Some(bad), &p), 0.0, "{bad}");
@@ -778,9 +789,51 @@ mod tests {
         let p = UncertaintyParams::default();
         assert_eq!(p.modis_sensor_sigma, 0.266);
         assert_eq!(p.viirs_sensor_sigma, 0.08);
-        assert_eq!(p.vza_error_coeff, 0.05);
+        assert_eq!(p.vza_error_coeff, 1.0);
         assert_eq!(p.modis_scale_sigma, 0.10);
         assert_eq!(p.z, 1.0);
+    }
+
+    #[test]
+    fn default_vza_coeff_widens_modis_at_scan_edge_by_at_least_1_4x_and_leaves_viirs_unaffected() {
+        use crate::harmonize::harmonize;
+        use crate::models::{Confidence, DayNight, FireType, Hotspot, HotspotSource};
+        use chrono::Utc;
+
+        let params = UncertaintyParams::default();
+        let frp = 100.0;
+        let nadir = frp_uncertainty(frp, Some(1.0), SensorFamily::Modis, None, &params);
+        let edge = frp_uncertainty(frp, Some(1.32), SensorFamily::Modis, None, &params);
+        let rel_nadir = (nadir.upper - nadir.lower) / frp;
+        let rel_edge = (edge.upper - edge.lower) / frp;
+        assert!(
+            rel_edge >= 1.4 * rel_nadir,
+            "expected factor=1.32 width ({rel_edge}) >= 1.4x factor=1.0 width ({rel_nadir})"
+        );
+
+        let make_viirs = |scan: f64, vza: Option<f64>| Hotspot {
+            lat: 39.0,
+            lon: 32.0,
+            brightness: 330.0,
+            frp: 40.0,
+            confidence: Confidence::Nominal,
+            sensor: Sensor::ViirsNOAA20,
+            acquired: Utc::now(),
+            scan,
+            track: 0.4,
+            satellite: String::new(),
+            daynight: DayNight::Day,
+            vza,
+            fire_type: FireType::VegetationFire,
+        };
+        let viirs_nadir = harmonize(vec![], vec![make_viirs(0.4, Some(0.0))]);
+        let viirs_edge = harmonize(vec![], vec![make_viirs(1.6, Some(50.0))]);
+        assert_eq!(viirs_nadir[0].source, HotspotSource::ViirsOnly);
+        assert_eq!(viirs_edge[0].source, HotspotSource::ViirsOnly);
+        assert_eq!(viirs_nadir[0].vza_factor, None);
+        assert_eq!(viirs_edge[0].vza_factor, None);
+        assert_eq!(viirs_nadir[0].frp_lower.to_bits(), viirs_edge[0].frp_lower.to_bits());
+        assert_eq!(viirs_nadir[0].frp_upper.to_bits(), viirs_edge[0].frp_upper.to_bits());
     }
 
     #[test]
