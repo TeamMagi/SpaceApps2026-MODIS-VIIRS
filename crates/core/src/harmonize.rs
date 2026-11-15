@@ -214,7 +214,7 @@ pub fn harmonize_with_links_masked(
         matched_pairs += 1;
         viirs_aggregated += pass.len() - 1;
         let members: Vec<&FleetObservation> = pass.iter().map(|&j| &viirs_fleet[j]).collect();
-        result.push(fuse_matched(m, &sum_viirs_pass(&members), &config.uncertainty));
+        result.push(fuse_matched(m, &members, &config.uncertainty));
     }
 
     // Unmatched VIIRS detections
@@ -316,7 +316,8 @@ fn viirs_pass_members(
 }
 
 /// Sums the FRP of VIIRS pixels of one pass into a single observation located at the seed.
-/// Pixels are independent, so `n_obs` adds up and the `1/sqrt(n)` random-error scaling stays valid.
+/// `n_obs` adds up for reporting, while [`fuse_matched`] combines member uncertainties in
+/// quadrature because unequal pixel FRPs do not shrink as `1/sqrt(n)`.
 fn sum_viirs_pass(members: &[&FleetObservation]) -> FleetObservation {
     let mut hotspot = members[0].hotspot.clone();
     hotspot.frp = members.iter().map(|v| v.hotspot.frp).sum();
@@ -358,9 +359,10 @@ fn retain_tracked(
 
 fn fuse_matched(
     m: &FleetObservation,
-    v: &FleetObservation,
+    viirs_members: &[&FleetObservation],
     uncertainty_params: &UncertaintyParams,
 ) -> HarmonizedHotspot {
+    let v = sum_viirs_pass(viirs_members);
     let mh = &m.hotspot;
     let vh = &v.hotspot;
     let mut platforms = Vec::with_capacity(m.platforms.len() + v.platforms.len());
@@ -370,15 +372,16 @@ fn fuse_matched(
     platforms.dedup();
 
     let n_obs = m.n_obs.saturating_add(v.n_obs);
-    // The FRP value comes only from the VIIRS members, so the confidence interval must scale its
-    // random term by the VIIRS member count alone; including MODIS members would narrow an
-    // interval that no MODIS observation informs. `n_obs` still reports the total member count.
-    let est = uncertainty::frp_uncertainty_for_obs(
-        v.frp_corrected_mean,
-        None,
+    // The FRP value comes only from the VIIRS members, so the confidence interval must combine
+    // only the VIIRS pass members; including MODIS members would narrow an interval that no
+    // MODIS observation informs. `n_obs` still reports the total member count.
+    let parts: Vec<(f64, u16)> = viirs_members
+        .iter()
+        .map(|member| (member.frp_corrected_mean, member.n_obs))
+        .collect();
+    let est = uncertainty::frp_uncertainty_for_sum(
+        &parts,
         SensorFamily::from(HotspotSource::Matched),
-        None,
-        v.n_obs,
         uncertainty_params,
     );
 
@@ -573,11 +576,7 @@ mod tests {
                         viirs_matched[j] = true;
                     }
                     let members: Vec<&FleetObservation> = pass.iter().map(|&j| &viirs[j]).collect();
-                    result.push(fuse_matched(
-                        m,
-                        &sum_viirs_pass(&members),
-                        &UncertaintyParams::default(),
-                    ));
+                    result.push(fuse_matched(m, &members, &UncertaintyParams::default()));
                 }
                 None => result.push(from_modis_only(m)),
             }
@@ -1519,7 +1518,7 @@ mod tests {
             matched_pairs += 1;
             viirs_aggregated += pass.len() - 1;
             let members: Vec<&FleetObservation> = pass.iter().map(|&j| &viirs_fleet[j]).collect();
-            result.push(fuse_matched(m, &sum_viirs_pass(&members), &config.uncertainty));
+            result.push(fuse_matched(m, &members, &config.uncertainty));
         }
 
         for (j, v) in viirs_fleet.iter().enumerate() {
@@ -2020,7 +2019,7 @@ mod tests {
             platforms: vec![Sensor::ModisTerra, Sensor::ModisAqua],
         };
 
-        let matched = fuse_matched(&m, &v, &params);
+        let matched = fuse_matched(&m, &[&v], &params);
         let viirs_only = from_viirs_only(&v, &params);
 
         assert_eq!(matched.n_obs, 5);
@@ -2365,4 +2364,48 @@ mod tests {
         assert_eq!(links.simultaneous_matched.len(), 2);
     }
 
+    #[test]
+    fn unequal_viirs_pixels_in_one_pass_have_wider_relative_interval_than_equal_pixels() {
+        let offsets = [0.002, 0.004, 0.006, -0.004];
+        let run = |frps: [f64; 4]| {
+            let modis = vec![make_hotspot(
+                Sensor::ModisTerra,
+                near(0.0),
+                32.0,
+                0,
+                50.0,
+                Confidence::Nominal,
+            )];
+            let viirs = offsets
+                .iter()
+                .zip(frps)
+                .map(|(&off, frp)| {
+                    make_hotspot(
+                        Sensor::ViirsSNPP,
+                        near(off),
+                        32.0,
+                        600,
+                        frp,
+                        Confidence::Nominal,
+                    )
+                })
+                .collect();
+            harmonize(modis, viirs)
+        };
+
+        let unequal = run([100.0, 2.0, 2.0, 2.0]);
+        let equal = run([26.5, 26.5, 26.5, 26.5]);
+
+        assert_eq!(unequal.len(), 1);
+        assert_eq!(equal.len(), 1);
+        assert_eq!(unequal[0].source, HotspotSource::Matched);
+        assert_eq!(equal[0].source, HotspotSource::Matched);
+        assert_eq!(unequal[0].frp_corrected, 106.0);
+        assert_eq!(equal[0].frp_corrected, 106.0);
+        assert_eq!(unequal[0].n_obs, 5);
+        assert_eq!(equal[0].n_obs, 5);
+
+        let rel = |h: &HarmonizedHotspot| (h.frp_upper - h.frp_lower) / h.frp_corrected;
+        assert!(rel(&unequal[0]) > rel(&equal[0]));
+    }
 }

@@ -19,7 +19,8 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 // v3: YearEntry adds static-mask and SAMA counts (static_masked, sama_removed).
 // v4: MonthEntry adds mean_frp, mean_frp_lower, and mean_frp_upper.
 // v5: YearEntry adds viirs_aggregated (1 MODIS = N VIIRS matching).
-pub const DERIVED_SCHEMA_VERSION: u32 = 5;
+// v6: Matched FRP intervals combine summed VIIRS pixels in quadrature (monthly mean_frp_* change).
+pub const DERIVED_SCHEMA_VERSION: u32 = 6;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;
