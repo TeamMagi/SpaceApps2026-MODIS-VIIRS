@@ -544,6 +544,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Submission paketleme
 - **Bitti sayılır:** `cargo run -p pyrosync-server` ile backend + frontend tek process'te ayağa kalkıyor; jüri demo'yu sorunsuz görebilir.
 - **Not (2026-11-15, ekip kararı):** Hazır sonuçlar (`data/derived`) geliştirme boyunca yeniden üretilmiyor. G6'nın son adımı: tüm config/şema değişiklikleri `main`'e girdikten sonra Görkem (arşiv bu makinede) `make precompute` → `make bundle-derived` çalıştırır, `data/derived`'ı commit'ler ve `make smoke` ile 14 kontrolün tamamının PASS olduğunu doğrular.
+- **Not (Samet, 2026-11-15, final paket yenilemesi için):** (1) `/api/series` BUG-9 (anomali Ω ile normalize değildi) ve BUG-10 (2002-07 öncesi Terra-yalnız aylara anomali) düzeltildi; `DERIVED_SCHEMA_VERSION` 10. `data/derived` bu sürümle yeniden üretilmeli. Düzeltme 8 Akdeniz bölgesinde canlı hesapla ölçüldü (2012 sonrası ortalama z kayması ham +1,10σ, harmonize −0,13σ; Yunanistan Ağustos 2007 z 0,52 → 3,96); 138 bölgede yeniden ölçüm paket yenilenince yapılabilir. (2) `data/conformal.json` (S10) o anki varsayılan config'in parmak izine bağlıdır: freeze sonrası eşleştirme, VZA, kalibrasyon, maske ya da fleet ayarı değişirse tablo sessizce kapanır ve bant görünmez; değişmezse geçerli kalır. (3) Paket yokken `make smoke`'un 3., 4. ve 5. kontrolleri FAIL verir (238 hazır sonuç, Kıbrıs serisi zaman aşımı, Brezilya 413), yalnız 3. değil; paket yenilenince 14 kontrolün tamamı PASS olmalı. (4) Bilinen açık hata: BUG-8 (FIRMS availability tablosu süreç başına bir kez alınıyor; `client::availability_reflects_newer_firms_data_on_a_later_call` testi `#[ignore]` ile bunu gösterir).
 
 ---
 
@@ -1009,6 +1010,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Sonuçların hacim/bulut kısıtlarıyla birlikte `docs/` altında raporlanması
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6, Yol Haritası #8 (+ `[22, 23]`)
 - **Bitti sayılır:** 4 biyomda aylık ham ve harmonize serilerin `TROPOMI CO` ve `MERRA-2 OC AOD` korelasyon/RMSE pilot raporu depoda.
+
+> **Durum notu (Samet, 2026-11-15):** Başlanmadı; bağımlılığı olan G12 bitti, engel kalktı. Asıl engel **dış veri erişimi**: `TROPOMI CO` (Sentinel-5P) ve `MERRA-2 OC AOD` için NASA Earthdata (GES DISC) ya da Copernicus hesabı ve indirme yolu gerekiyor; bu makinede hazır erişim yok. Plan: 4 biyom (Türkiye, Brezilya, Kanada/Rusya, Hindistan) için aylık ham ve harmonize seriler `/api/series` ve `/api/calendar` (Ω ile normalize `count_normalized`, `total_frp`) çıktılarından alınır; atmosfer serileriyle korelasyon ve RMSE hesaplanır; sonuç hacim ve bulut kısıtlarıyla birlikte `docs/` altında raporlanır. Ham seri ile harmonize seri aynı atmosferik seriye karşı yan yana verilmelidir. BUG-9 düzeltmesinden sonra `/api/series` `anomaly_harmonized` artık Ω ile normalizedir, karşılaştırma bunu kullanabilir. Kutu bilerek açık bırakıldı: jüri sonrası iş.
 
 ### [X] S13 — Referans listesi güncellemesi
 - **Bekler:** — · **Açar:** S8
