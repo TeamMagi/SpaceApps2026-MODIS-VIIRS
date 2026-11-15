@@ -846,4 +846,533 @@ mod tests {
             .is_empty()
         );
     }
+
+    use std::sync::Mutex;
+
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::time::Instant;
+
+    use crate::source::Processing;
+
+    const KEY: &str = "secret-map-key";
+    const BBOX: &str = "-10,10,10,20";
+    const HEADER: &str = "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight,type\n";
+    const ROW: &str = "38.9486,28.1108,308.5,1,1,2020-06-01,1113,Aqua,MODIS,67,6.2,283.8,10.3,D,0\n";
+    const AVAIL: &str = "data_id,min_date,max_date\nMODIS_SP,2020-01-01,2020-12-31\nVIIRS_SNPP_SP,2020-01-01,2020-12-31\n";
+
+    type Reply = (u16, Vec<(&'static str, &'static str)>, String);
+
+    fn ok(body: &str) -> Reply {
+        (200, Vec::new(), body.to_string())
+    }
+
+    fn status(code: u16, body: &str) -> Reply {
+        (code, Vec::new(), body.to_string())
+    }
+
+    /// Loopback HTTP stub: the handler sees (request index, path) and returns the reply.
+    struct Stub {
+        root: String,
+        paths: Arc<Mutex<Vec<String>>>,
+    }
+
+    impl Stub {
+        async fn start(handler: impl Fn(usize, &str) -> Reply + Send + Sync + 'static) -> Self {
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let root = format!("http://{}", listener.local_addr().unwrap());
+            let paths = Arc::new(Mutex::new(Vec::new()));
+            let handler = Arc::new(handler);
+            let seen = Arc::clone(&paths);
+            tokio::spawn(async move {
+                while let Ok((mut sock, _)) = listener.accept().await {
+                    let handler = Arc::clone(&handler);
+                    let seen = Arc::clone(&seen);
+                    tokio::spawn(async move {
+                        let mut buf = Vec::new();
+                        let mut chunk = [0u8; 1024];
+                        while !buf.windows(4).any(|w| w == b"\r\n\r\n") {
+                            match sock.read(&mut chunk).await {
+                                Ok(0) | Err(_) => return,
+                                Ok(n) => buf.extend_from_slice(&chunk[..n]),
+                            }
+                        }
+                        let request = String::from_utf8_lossy(&buf).into_owned();
+                        let path = request.split_whitespace().nth(1).unwrap_or("").to_string();
+                        let index = {
+                            let mut seen = seen.lock().unwrap();
+                            seen.push(path.clone());
+                            seen.len() - 1
+                        };
+                        let (code, headers, body) = handler(index, &path);
+                        let mut response = format!(
+                            "HTTP/1.1 {code} Stub\r\ncontent-length: {}\r\nconnection: close\r\n",
+                            body.len()
+                        );
+                        for (name, value) in headers {
+                            response.push_str(&format!("{name}: {value}\r\n"));
+                        }
+                        response.push_str("\r\n");
+                        response.push_str(&body);
+                        let _ = sock.write_all(response.as_bytes()).await;
+                        let _ = sock.shutdown().await;
+                    });
+                }
+            });
+            Self { root, paths }
+        }
+
+        fn hits(&self) -> usize {
+            self.paths.lock().unwrap().len()
+        }
+
+        fn client(&self) -> FirmsClient {
+            FirmsClient::new(KEY.to_string()).unwrap().with_api_root(self.root.clone())
+        }
+    }
+
+    fn is_availability(path: &str) -> bool {
+        path.contains("data_availability")
+    }
+
+    fn temp_cache(name: &str) -> (AreaCache, std::path::PathBuf) {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!(
+            "pyrosync-client-test-{name}-{}-{nanos}",
+            std::process::id()
+        ));
+        (AreaCache::new(dir.clone(), Duration::from_secs(600)), dir)
+    }
+
+    fn sp() -> FirmsSource {
+        FirmsSource::new(Sensor::ModisTerra, Processing::Sp)
+    }
+
+    fn bbox() -> BBox {
+        BBox { west: -10.0, south: 10.0, east: 10.0, north: 20.0 }
+    }
+
+    // ---- availability: Uninitialised -> Initialised, failure keeps it Uninitialised ----
+
+    #[tokio::test(start_paused = true)]
+    async fn availability_is_fetched_once_then_served_from_memory() {
+        let stub = Stub::start(|_, _| ok(AVAIL)).await;
+        let client = stub.client();
+
+        let first = client.availability().await.unwrap().range_for(sp());
+        let second = client.availability().await.unwrap().range_for(sp());
+
+        assert_eq!(first, second);
+        assert_eq!(stub.hits(), 1);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn failed_availability_fetch_is_not_cached_and_the_next_call_retries() {
+        let stub = Stub::start(|i, _| if i == 0 { status(500, "boom") } else { ok(AVAIL) }).await;
+        let client = stub.client();
+
+        let err = client.availability().await.unwrap_err().to_string();
+        assert!(err.contains("500"), "{err}");
+        assert!(client.availability().await.unwrap().range_for(sp()).is_some());
+        assert_eq!(stub.hits(), 2);
+    }
+
+    #[tokio::test(start_paused = true)]
+    #[ignore = "BUG-8: availability never refreshed"]
+    async fn availability_reflects_newer_firms_data_on_a_later_call() {
+        // client.rs `availability: OnceCell<Availability>` is filled once per process.
+        let stub = Stub::start(|i, _| {
+            if i == 0 {
+                ok("data_id,min_date,max_date\nMODIS_NRT,2026-01-01,2026-06-14\n")
+            } else {
+                ok("data_id,min_date,max_date\nMODIS_NRT,2026-01-01,2026-06-15\n")
+            }
+        })
+        .await;
+        let client = stub.client();
+        let nrt = FirmsSource::new(Sensor::ModisTerra, Processing::Nrt);
+
+        let before = client.availability().await.unwrap().range_for(nrt).unwrap().1;
+        let after = client.availability().await.unwrap().range_for(nrt).unwrap().1;
+
+        assert_ne!(before, after, "FIRMS advanced max_date but the client kept the stale table");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn availability_error_redacts_the_api_key() {
+        let stub = Stub::start(|_, _| ok(&format!("Invalid MAP_KEY {KEY}"))).await;
+        let err = stub.client().availability().await.unwrap_err().to_string();
+        assert!(err.contains("Invalid MAP_KEY") && err.contains("***"), "{err}");
+        assert!(!err.contains(KEY), "{err}");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn availability_success_is_persisted_and_failure_falls_back_to_that_file() {
+        let (cache, dir) = temp_cache("avail-fallback");
+        let online = Stub::start(|_, _| ok(AVAIL)).await;
+        online.client().with_area_cache(cache.clone()).availability().await.unwrap();
+        assert!(cache.load_availability().await.is_some());
+
+        let offline = Stub::start(|_, _| status(503, "down")).await;
+        let client = offline.client().with_area_cache(cache);
+        assert!(client.availability().await.unwrap().range_for(sp()).is_some());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn availability_failure_without_a_usable_cache_file_is_an_error() {
+        let (cache, dir) = temp_cache("avail-no-fallback");
+        cache.store_availability("<html>corrupt</html>").await;
+        let stub = Stub::start(|_, _| status(404, "nope")).await;
+        let result = stub.client().with_area_cache(cache).availability().await.map(|_| ());
+        assert!(result.is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // ---- retry state machine: Attempt(0) -> Attempt(1) -> Attempt(2) -> Done ----
+
+    #[tokio::test(start_paused = true)]
+    async fn transient_503_is_retried_once_and_both_attempts_are_billed() {
+        let stub = Stub::start(|i, _| if i == 0 { status(503, "busy") } else { ok(&format!("{HEADER}{ROW}")) }).await;
+        let ctx = stub.client().request_ctx();
+        let start = Instant::now();
+
+        let (res, spent) = ctx.fetch_window_counted(sp(), BBOX, d(2020, 6, 1), DayRange::clamped(2)).await;
+
+        assert_eq!(res.unwrap().len(), 1);
+        assert_eq!(stub.hits(), 2);
+        assert_eq!(spent, 4);
+        assert_eq!(start.elapsed(), Duration::from_secs(1));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn retry_after_header_is_added_to_the_backoff() {
+        let stub = Stub::start(|i, _| {
+            if i == 0 { (429, vec![("retry-after", "2")], String::new()) } else { ok("") }
+        })
+        .await;
+        let ctx = stub.client().request_ctx();
+        let start = Instant::now();
+
+        let (res, spent) = ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), DayRange::clamped(1)).await;
+
+        assert_eq!(res.unwrap(), "");
+        assert_eq!(spent, 2);
+        assert_eq!(start.elapsed(), Duration::from_secs(3));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn persistent_5xx_exhausts_retries_with_growing_backoff_then_fails() {
+        let stub = Stub::start(|_, _| status(502, "bad gateway")).await;
+        let ctx = stub.client().request_ctx();
+        let start = Instant::now();
+
+        let (res, spent) = ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), DayRange::clamped(3)).await;
+
+        let err = res.unwrap_err().to_string();
+        assert!(err.contains("502") && err.contains("bad gateway"), "{err}");
+        assert_eq!(stub.hits(), MAX_RETRIES + 1);
+        assert_eq!(spent, 9);
+        assert_eq!(start.elapsed(), Duration::from_secs(1 + 4));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn client_errors_are_not_retried() {
+        for code in [400u16, 401, 404] {
+            let stub = Stub::start(move |_, _| status(code, "denied")).await;
+            let ctx = stub.client().request_ctx();
+            let (res, spent) = ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), DayRange::clamped(1)).await;
+            assert!(res.unwrap_err().to_string().contains(&code.to_string()));
+            assert_eq!((stub.hits(), spent), (1, 1), "status {code}");
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn connection_failure_is_reported_with_redacted_url_and_billed_once() {
+        let closed = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let root = format!("http://{}", closed.local_addr().unwrap());
+        drop(closed);
+        let ctx = FirmsClient::new(KEY.to_string()).unwrap().with_api_root(root).request_ctx();
+
+        let (res, spent) = ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), DayRange::clamped(4)).await;
+
+        let err = res.unwrap_err().to_string();
+        assert!(err.contains("***") && !err.contains(KEY), "{err}");
+        assert_eq!(spent, 4);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn request_url_carries_key_source_bbox_days_and_start_date() {
+        let stub = Stub::start(|_, _| ok("")).await;
+        let csv = stub
+            .client()
+            .fetch_window_csv(sp(), &bbox(), d(2020, 6, 1), DayRange::clamped(5))
+            .await
+            .unwrap();
+        assert_eq!(csv, "");
+        assert_eq!(
+            stub.paths.lock().unwrap()[0],
+            format!("/api/area/csv/{KEY}/MODIS_SP/-10,10,10,20/5/2020-06-01")
+        );
+    }
+
+    // ---- response cache lifecycle through the client ----
+
+    #[tokio::test(start_paused = true)]
+    async fn window_walks_miss_stored_hit_without_a_second_request() {
+        let (cache, dir) = temp_cache("hit");
+        let stub = Stub::start(|_, _| ok(&format!("{HEADER}{ROW}"))).await;
+        let ctx = stub.client().with_area_cache(cache).request_ctx();
+        let days = DayRange::clamped(2);
+
+        let (first, spent1) = ctx.fetch_window_counted(sp(), BBOX, d(2020, 6, 1), days).await;
+        let (second, spent2) = ctx.fetch_window_counted(sp(), BBOX, d(2020, 6, 1), days).await;
+
+        assert_eq!((first.unwrap().len(), second.unwrap().len()), (1, 1));
+        assert_eq!((spent1, spent2), (2, 0));
+        assert_eq!(stub.hits(), 1);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn rejected_and_failed_bodies_are_never_cached() {
+        let (cache, dir) = temp_cache("no-poison");
+        let stub = Stub::start(|i, _| match i {
+            0 => ok("Invalid MAP_KEY"),
+            1 => status(404, "missing"),
+            _ => ok(&format!("{HEADER}{ROW}")),
+        })
+        .await;
+        let ctx = stub.client().with_area_cache(cache).request_ctx();
+        let days = DayRange::clamped(1);
+
+        assert!(ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), days).await.0.is_err());
+        assert!(ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), days).await.0.is_err());
+        let third = ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), days).await.0;
+        assert!(third.unwrap().contains("latitude"));
+        assert_eq!(stub.hits(), 3);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn empty_valid_response_is_cached_as_a_hit() {
+        let (cache, dir) = temp_cache("empty-hit");
+        let stub = Stub::start(|_, _| ok("")).await;
+        let ctx = stub.client().with_area_cache(cache).request_ctx();
+        let days = DayRange::clamped(1);
+
+        ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), days).await.0.unwrap();
+        let (again, spent) = ctx.fetch_window_csv_counted(sp(), BBOX, d(2020, 6, 1), days).await;
+
+        assert_eq!(again.unwrap(), "");
+        assert_eq!((spent, stub.hits()), (0, 1));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // ---- fetch_range / fetch_all_range ----
+
+    #[tokio::test(start_paused = true)]
+    async fn fetch_range_splits_into_windows_and_sums_transactions() {
+        let stub = Stub::start(|_, path| {
+            if is_availability(path) { ok(AVAIL) } else { ok(&format!("{HEADER}{ROW}")) }
+        })
+        .await;
+
+        let (hotspots, report) = stub
+            .client()
+            .fetch_range(Sensor::ModisTerra, &bbox(), d(2020, 6, 1), d(2020, 6, 7))
+            .await;
+
+        assert_eq!(hotspots.len(), 2);
+        assert_eq!(report.per_source, vec![("MODIS_SP".to_string(), 2)]);
+        assert_eq!(report.transactions_spent, 7);
+        assert!(report.failures.is_empty() && report.uncovered.is_empty());
+        assert_eq!(stub.hits(), 3);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn fetch_range_reports_dates_no_source_covers() {
+        let stub = Stub::start(|_, path| {
+            if is_availability(path) { ok(AVAIL) } else { ok("") }
+        })
+        .await;
+
+        let (_, report) = stub
+            .client()
+            .fetch_range(Sensor::ModisTerra, &bbox(), d(2019, 12, 30), d(2020, 1, 2))
+            .await;
+
+        assert_eq!(report.uncovered, vec![(d(2019, 12, 30), d(2019, 12, 31))]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn fetch_range_reversed_dates_do_no_work() {
+        let stub = Stub::start(|_, _| ok(AVAIL)).await;
+        let (hotspots, report) = stub
+            .client()
+            .fetch_range(Sensor::ModisTerra, &bbox(), d(2020, 6, 2), d(2020, 6, 1))
+            .await;
+        assert!(hotspots.is_empty() && report.uncovered.is_empty() && report.failures.is_empty());
+        assert_eq!(stub.hits(), 0);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn fetch_range_marks_everything_uncovered_when_availability_is_down() {
+        let stub = Stub::start(|_, _| status(500, &format!("oops {KEY}"))).await;
+        let (hotspots, report) = stub
+            .client()
+            .fetch_range(Sensor::ViirsSNPP, &bbox(), d(2020, 6, 1), d(2020, 6, 3))
+            .await;
+
+        assert!(hotspots.is_empty());
+        assert_eq!(report.uncovered, vec![(d(2020, 6, 1), d(2020, 6, 3))]);
+        assert_eq!(report.failures.len(), 1);
+        assert!(!report.failures[0].1.contains(KEY));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn one_failing_window_is_collected_without_losing_the_others() {
+        let stub = Stub::start(|_, path| {
+            if is_availability(path) {
+                ok(AVAIL)
+            } else if path.ends_with("/2020-06-06") {
+                status(400, &format!("bad {KEY}"))
+            } else {
+                ok(&format!("{HEADER}{ROW}"))
+            }
+        })
+        .await;
+
+        let (hotspots, report) = stub
+            .client()
+            .fetch_range(Sensor::ModisTerra, &bbox(), d(2020, 6, 1), d(2020, 6, 7))
+            .await;
+
+        assert_eq!(hotspots.len(), 1);
+        assert_eq!(report.failures.len(), 1);
+        let (source, message) = &report.failures[0];
+        assert_eq!(source, "MODIS_SP");
+        assert!(message.starts_with("2020-06-06 (2d)") && !message.contains(KEY), "{message}");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn fetch_all_range_routes_modis_and_viirs_and_tolerates_a_dead_sensor() {
+        let stub = Stub::start(|_, path| {
+            if is_availability(path) {
+                ok(AVAIL)
+            } else if path.contains("/MODIS_SP/") {
+                ok(&format!("{HEADER}{ROW}"))
+            } else {
+                ok("")
+            }
+        })
+        .await;
+
+        let (modis, viirs, report) = stub.client().fetch_all_range(&bbox(), d(2020, 6, 1), d(2020, 6, 2)).await;
+
+        assert_eq!(modis.len(), 1);
+        assert!(viirs.is_empty());
+        assert!(report.failures.is_empty() && report.uncovered.is_empty());
+        assert!(report.per_source.contains(&("MODIS_SP".to_string(), 1)));
+        assert!(report.per_source.contains(&("VIIRS_SNPP_SP".to_string(), 0)));
+        // NOAA-20 and NOAA-21 have no availability rows, so they cost nothing.
+        assert_eq!(report.transactions_spent, 4);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn fetch_all_range_reports_availability_failure_and_reversed_range() {
+        let stub = Stub::start(|_, _| status(500, "down")).await;
+        let client = stub.client();
+
+        let (m, v, report) = client.fetch_all_range(&bbox(), d(2020, 6, 5), d(2020, 6, 1)).await;
+        assert!(m.is_empty() && v.is_empty() && report.uncovered.is_empty());
+        assert_eq!(stub.hits(), 0);
+
+        let (_, _, report) = client.fetch_all_range(&bbox(), d(2020, 6, 1), d(2020, 6, 5)).await;
+        assert_eq!(report.failures[0].0, "availability");
+        assert_eq!(report.uncovered, vec![(d(2020, 6, 1), d(2020, 6, 5))]);
+    }
+
+    // ---- pure helpers ----
+
+    #[test]
+    fn retry_after_parses_seconds_and_ignores_everything_else() {
+        let header = |value: &str| {
+            let mut map = HeaderMap::new();
+            map.insert(RETRY_AFTER, value.parse().unwrap());
+            map
+        };
+        assert_eq!(parse_retry_after(&HeaderMap::new()), Duration::ZERO);
+        assert_eq!(parse_retry_after(&header("7")), Duration::from_secs(7));
+        assert_eq!(parse_retry_after(&header(" 12 ")), Duration::from_secs(12));
+        assert_eq!(parse_retry_after(&header("0")), Duration::ZERO);
+        assert_eq!(parse_retry_after(&header("-3")), Duration::ZERO);
+        assert_eq!(parse_retry_after(&header("Wed, 21 Oct 2026 07:28:00 GMT")), Duration::ZERO);
+    }
+
+    #[test]
+    fn redact_key_replaces_every_occurrence_and_tolerates_an_empty_key() {
+        assert_eq!(redact_key("a k b k", "k"), "a *** b ***");
+        assert_eq!(redact_key("nothing here", "k"), "nothing here");
+        assert_eq!(redact_key("unchanged", ""), "unchanged");
+        assert_eq!(truncate_chars("abcdef", 3), "abc");
+        assert_eq!(truncate_chars("ab", 5), "ab");
+    }
+
+    #[test]
+    fn compute_uncovered_handles_overlap_disorder_clipping_and_trivial_ranges() {
+        let (s, e) = (d(2020, 1, 1), d(2020, 1, 10));
+        assert!(compute_uncovered(e, s, &[]).is_empty());
+        assert_eq!(compute_uncovered(s, s, &[]), vec![(s, s)]);
+        assert!(compute_uncovered(s, s, &[(s, s)]).is_empty());
+        // Unsorted, overlapping, and extending past the requested range on both sides.
+        let covered = [(d(2020, 1, 6), d(2020, 1, 20)), (d(2019, 12, 1), d(2020, 1, 4)), (d(2020, 1, 3), d(2020, 1, 5))];
+        assert!(compute_uncovered(s, e, &covered).is_empty());
+        // Intervals entirely outside the range are ignored.
+        assert_eq!(compute_uncovered(s, e, &[(d(2021, 1, 1), d(2021, 1, 2))]), vec![(s, e)]);
+        // One-day hole between two covered blocks.
+        assert_eq!(
+            compute_uncovered(s, e, &[(s, d(2020, 1, 4)), (d(2020, 1, 6), e)]),
+            vec![(d(2020, 1, 5), d(2020, 1, 5))]
+        );
+    }
+
+    #[test]
+    fn validate_firms_csv_error_path_and_blank_body_edge_cases() {
+        let url = "https://x/***";
+        let err = validate_firms_csv(StatusCode::INTERNAL_SERVER_ERROR, format!("fail {KEY}"), url, KEY)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("500") && !err.contains(KEY), "{err}");
+        assert_eq!(validate_firms_csv(StatusCode::OK, "  \n\t".into(), url, KEY).unwrap(), "");
+        let err = validate_firms_csv(StatusCode::OK, "lat,lon\n1,2\n".into(), url, KEY).unwrap_err();
+        assert!(err.to_string().contains("non-CSV response"));
+    }
+
+    #[test]
+    fn parse_validated_csv_treats_header_plus_blank_lines_as_empty_and_redacts_parse_errors() {
+        let url = "https://x/***";
+        let blank_tail = format!("{HEADER}\n   \n\n");
+        assert!(parse_validated_csv(&blank_tail, "MODIS_SP", url, KEY).unwrap().is_empty());
+        assert!(parse_validated_csv("  ", "MODIS_SP", url, KEY).unwrap().is_empty());
+
+        let broken = format!("{HEADER}not,a,valid,row,{KEY}\n");
+        let err = parse_validated_csv(&broken, "MODIS_SP", url, KEY).unwrap_err().to_string();
+        assert!(err.starts_with("failed parsing FIRMS CSV"), "{err}");
+        assert!(!err.contains(KEY));
+    }
+
+    #[test]
+    fn builder_normalises_root_zero_concurrency_and_hides_the_key_in_debug() {
+        let client = FirmsClient::with_concurrency(KEY.to_string(), 0)
+            .unwrap()
+            .with_api_root("http://localhost:1234///");
+        assert_eq!(client.api_root, "http://localhost:1234");
+        assert_eq!(client.concurrency, 1);
+        let debug = format!("{client:?}");
+        assert!(debug.contains("***") && !debug.contains(KEY));
+        assert!(FetchReport::default().failures.is_empty());
+    }
 }
