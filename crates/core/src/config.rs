@@ -5,6 +5,8 @@ use crate::calibration::default_bands;
 use crate::dedup::{MAX_TIME_DIFF_SECS, MIN_OVERLAP_RATIO};
 use crate::fleet::{FLEET_RADIUS_KM, MODIS_FLEET_WINDOW_SECS, VIIRS_FLEET_WINDOW_SECS};
 use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS};
+use crate::sama::{SAMA_EAST, SAMA_NORTH, SAMA_SOUTH, SAMA_WEST};
+use crate::static_mask::MIN_ACTIVE_MONTHS;
 use crate::uncertainty::UncertaintyParams;
 use crate::vza::{CORRECTION_A, CORRECTION_B, CORRECTION_C};
 
@@ -22,6 +24,8 @@ pub struct PipelineConfig {
     pub calibration: CalibrationConfig,
     #[serde(default)]
     pub uncertainty: UncertaintyParams,
+    pub static_mask: StaticMaskConfig,
+    pub sama: SamaConfig,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -59,6 +63,26 @@ pub struct VzaConfig {
 pub struct CalibrationConfig {
     pub enabled: bool,
     pub bands: Vec<CalibrationBand>,
+}
+
+/// Persistent hot-cell (gas flare / industry) mask, see [`crate::static_mask`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct StaticMaskConfig {
+    pub enabled: bool,
+    /// Distinct months with a detection that mask a cell for that calendar year.
+    pub min_active_months: u8,
+}
+
+/// South Atlantic Magnetic Anomaly nighttime VIIRS filter, see [`crate::sama`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct SamaConfig {
+    pub enabled: bool,
+    pub west: f64,
+    pub east: f64,
+    pub south: f64,
+    pub north: f64,
 }
 
 impl Default for DedupConfig {
@@ -108,6 +132,32 @@ impl Default for CalibrationConfig {
     }
 }
 
+impl Default for StaticMaskConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            min_active_months: MIN_ACTIVE_MONTHS,
+        }
+    }
+}
+
+impl Default for SamaConfig {
+    fn default() -> Self {
+        Self {
+            // Off by default: Collection 2 already strips the SAMA low-confidence pixels
+            // (VIIRS C2 375 m User Guide v1.2, Sec. 3.1), and in the archive nighttime VIIRS rows
+            // inside the box are 22-36% of all VIIRS rows (Brazil, Bolivia, Paraguay, Argentina,
+            // 2018-2020) yet no more isolated than daytime or out-of-box nighttime rows
+            // (1.0-2.6% vs 3.9-7.2% by day and 3.7% in Mexico), so dropping them removes fires.
+            enabled: false,
+            west: SAMA_WEST,
+            east: SAMA_EAST,
+            south: SAMA_SOUTH,
+            north: SAMA_NORTH,
+        }
+    }
+}
+
 impl PipelineConfig {
     /// Checks every field and names the offending one in the error.
     pub fn validate(&self) -> Result<(), String> {
@@ -140,8 +190,46 @@ impl PipelineConfig {
         }
         validate_calibration(&self.calibration)?;
         self.uncertainty.validate()?;
+        validate_static_mask(&self.static_mask)?;
+        validate_sama(&self.sama)?;
         Ok(())
     }
+}
+
+fn validate_static_mask(mask: &StaticMaskConfig) -> Result<(), String> {
+    if !(1..=12).contains(&mask.min_active_months) {
+        return Err(format!(
+            "static_mask.min_active_months must be within 1..=12, got {}",
+            mask.min_active_months
+        ));
+    }
+    Ok(())
+}
+
+fn validate_sama(sama: &SamaConfig) -> Result<(), String> {
+    for (name, value, limit) in [
+        ("sama.west", sama.west, 180.0),
+        ("sama.east", sama.east, 180.0),
+        ("sama.south", sama.south, 90.0),
+        ("sama.north", sama.north, 90.0),
+    ] {
+        if !value.is_finite() || !(-limit..=limit).contains(&value) {
+            return Err(format!("{name} must be within -{limit}..={limit}, got {value}"));
+        }
+    }
+    if sama.west > sama.east {
+        return Err(format!(
+            "sama.east ({}) must be >= sama.west ({})",
+            sama.east, sama.west
+        ));
+    }
+    if sama.south > sama.north {
+        return Err(format!(
+            "sama.north ({}) must be >= sama.south ({})",
+            sama.north, sama.south
+        ));
+    }
+    Ok(())
 }
 
 fn validate_calibration(cal: &CalibrationConfig) -> Result<(), String> {
@@ -231,6 +319,10 @@ mod tests {
         assert_eq!(c.calibration.bands[1].ratio, 1.18);
         assert_eq!(c.calibration.bands[2].ratio, 1.28);
         assert_eq!(c.uncertainty, UncertaintyParams::default());
+        assert!(c.static_mask.enabled);
+        assert_eq!(c.static_mask.min_active_months, 10);
+        assert!(!c.sama.enabled);
+        assert_eq!((c.sama.west, c.sama.east, c.sama.south, c.sama.north), (-110.0, 11.0, -55.0, 7.0));
         assert_eq!(c.validate(), Ok(()));
     }
 
@@ -293,6 +385,39 @@ mod tests {
             |c| c.uncertainty.modis_scale_sigma = -0.1,
             "uncertainty.modis_scale_sigma",
         );
+        rejected(|c| c.static_mask.min_active_months = 0, "static_mask.min_active_months");
+        rejected(|c| c.static_mask.min_active_months = 13, "static_mask.min_active_months");
+        rejected(|c| c.sama.west = f64::NAN, "sama.west");
+        rejected(|c| c.sama.north = 91.0, "sama.north");
+        rejected(|c| c.sama.east = -120.0, "sama.east");
+        rejected(|c| c.sama.south = 10.0, "sama.north");
+    }
+
+    #[test]
+    fn static_mask_month_bounds_are_inclusive_one_to_twelve() {
+        accepted(|c| c.static_mask.min_active_months = 1);
+        accepted(|c| c.static_mask.min_active_months = 12);
+        // A disabled mask is still validated so switching it on later cannot expose a bad value.
+        rejected(
+            |c| {
+                c.static_mask.enabled = false;
+                c.static_mask.min_active_months = 0;
+            },
+            "static_mask.min_active_months",
+        );
+    }
+
+    #[test]
+    fn prefilters_switch_independently_from_json() {
+        let c: PipelineConfig = serde_json::from_str(r#"{"sama":{"enabled":true}}"#).unwrap();
+        assert!(c.sama.enabled);
+        assert_eq!(c.sama.west, SamaConfig::default().west);
+        assert_eq!(c.static_mask, StaticMaskConfig::default());
+        let c: PipelineConfig = serde_json::from_str(r#"{"static_mask":{"enabled":false}}"#).unwrap();
+        assert!(!c.static_mask.enabled);
+        assert_eq!(c.sama, SamaConfig::default());
+        assert!(serde_json::from_str::<PipelineConfig>(r#"{"sama":{"bogus":1}}"#).is_err());
+        assert!(serde_json::from_str::<PipelineConfig>(r#"{"static_mask":{"min_years":3}}"#).is_err());
     }
 
     #[test]
@@ -393,7 +518,7 @@ mod tests {
 
     #[test]
     fn vza_coefficients_each_independently_must_be_finite() {
-        // MC/DC: each coefficient alone flips the outcome; negatives and zero are allowed.
+        // Equivalence partitioning and boundary values of each independent check; negatives and zero are allowed.
         rejected(|c| c.vza.c = f64::NEG_INFINITY, "vza.c");
         rejected(|c| c.vza.a = f64::NAN, "vza.a");
         rejected(|c| c.vza.b = f64::INFINITY, "vza.b");
@@ -470,6 +595,8 @@ mod tests {
         let mut c = PipelineConfig::default();
         c.matching.window_secs = 600;
         c.calibration.enabled = false;
+        c.static_mask.min_active_months = 10;
+        c.sama.enabled = true;
         let back: PipelineConfig = serde_json::from_str(&serde_json::to_string(&c).unwrap()).unwrap();
         assert_eq!(back, c);
         assert_eq!(back.validate(), Ok(()));

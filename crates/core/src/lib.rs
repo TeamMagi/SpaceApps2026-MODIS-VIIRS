@@ -10,5 +10,7 @@ pub mod calibration;
 pub mod effort;
 pub mod export;
 pub mod uncertainty;
+pub mod static_mask;
+pub mod sama;
 pub mod events;
 pub mod quality;

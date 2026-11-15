@@ -12,6 +12,7 @@ import type {
   DataModeSource,
   DrawerId,
   Lang,
+  MinConfidence,
   MonthCell,
   MonthRef,
   Palette,
@@ -107,6 +108,8 @@ export interface AppState {
   nrtDays: number;
   serverConfig: PipelineConfig | null;
   pipelineOverrides: PipelineOverrides;
+  /** Lowest FIRMS confidence class sent as `min_confidence`; `low` keeps every detection. */
+  minConfidence: MinConfidence;
 
   setRegion: (region: RegionId) => void;
   /** The single user-facing mode action (button click, H key). */
@@ -130,6 +133,7 @@ export interface AppState {
   setServerConfig: (config: PipelineConfig) => void;
   setPipelineOverride: (key: PipelineOverrideKey, value: number | undefined) => void;
   resetPipelineOverrides: () => void;
+  setMinConfidence: (minConfidence: MinConfidence) => void;
   /** Applies a parsed URL hash; mode changes snap without animation. */
   applyUrlState: (url: Partial<UrlState>) => void;
   /** Jumps to the final state of the current target, cancelling any run. */
@@ -221,6 +225,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   nrtDays: 2,
   serverConfig: null,
   pipelineOverrides: initialUrl.overrides ? { ...initialUrl.overrides } : {},
+  minConfidence: initialUrl.minConfidence ?? "low",
 
   setRegion: (region) => {
     const state = get();
@@ -284,6 +289,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     }),
   resetPipelineOverrides: () =>
     set((s) => (Object.keys(s.pipelineOverrides).length === 0 ? s : { pipelineOverrides: {} })),
+  setMinConfidence: (minConfidence) => {
+    if (get().minConfidence !== minConfidence) set({ minConfidence });
+  },
   applyUrlState: (url) => {
     const state = get();
     const nextRegion = url.region ?? state.region;
@@ -326,6 +334,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       palette: url.palette ?? state.palette,
       dataMode: nextDataMode,
       dataModeSource: nextDataModeSource,
+      minConfidence: url.minConfidence ?? state.minConfidence,
       selectedMonth: nextSelectedMonth,
       calendarYear: nextCalendarYear,
       yearPlaying: regionChanged ? false : state.yearPlaying,

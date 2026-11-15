@@ -60,9 +60,31 @@ ratio_sigma = 0.11
 [uncertainty]
 # Analytical FRP confidence bounds combining sensor noise, VZA correction error, and
 # MODIS scale/completeness uncertainty. Parameters below are model assumptions, not published values.
-modis_sensor_sigma = 0.12
+modis_sensor_sigma = 0.266
 viirs_sensor_sigma = 0.08
 vza_error_coeff = 0.05
 modis_scale_sigma = 0.10
 # Gaussian z-multiplier (z = 1.0 gives ~68.27% two-sided confidence).
 z = 1.0
+# 30°G–30°K tropikal MODIS swath boşluğu telafisi (varsayılan kapalı).
+tropical_swath_gap_compensation = false
+
+[static_mask]
+# Drops type-0 detections in H3 resolution-7 cells (~5 km2) that hold a detection in at least
+# min_active_months distinct months of the same calendar year (gas flares, industry). Each year
+# is judged on its own, so windows shorter than min_active_months months are never masked.
+# 10 is the smallest value at which >= 80% of dropped rows lie in cells FIRMS itself flags as
+# static (type 1/2) in every country sampled (static_mask_check example, 2013-2024).
+enabled = true
+min_active_months = 10
+
+[sama]
+# Drops nighttime VIIRS detections inside the South Atlantic Magnetic Anomaly box (VFIRE375
+# SPA User's Guide v1.9: 110W-11E, 55S-7N). Off by default: Collection 2 already removes the
+# SAMA low-confidence pixels and the archive shows no excess isolated night detections there,
+# so the box would mostly remove real South American night fires (22-36% of VIIRS rows).
+enabled = false
+west = -110.0
+east = 11.0
+south = -55.0
+north = 7.0

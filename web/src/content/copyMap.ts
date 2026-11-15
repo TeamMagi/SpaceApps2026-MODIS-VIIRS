@@ -68,6 +68,45 @@ export const mapCopyEn = {
   mapGlobeOrbitsLabel: "Satellite orbits",
   mapGlobeOrbitsNote: "Illustration, not a measurement",
   mapGlobeCredit: "Earth imagery: NASA Blue Marble · Fire data: NASA FIRMS",
+  mapFootprintOpen: "Footprint lens",
+  mapFootprintHide: "Hide footprint lens",
+  mapFootprintTitle: "MODIS pixel vs 375 m VIIRS",
+  mapFootprintBadgeMeasured: "From FIRMS scan × track",
+  mapFootprintBadgeVza: "From this point's view angle",
+  mapFootprintBadgeModel: "Swath model · estimated",
+  mapFootprintPresetGroupLabel: "MODIS swath position",
+  mapFootprintPresetPoint: "This point ({vza}°)",
+  mapFootprintPresetNadir: "Nadir 0°",
+  mapFootprintPresetMid: "Mid 35°",
+  mapFootprintPresetEdge: "Edge 55°",
+  mapFootprintSvgAria:
+    "To scale: a {scan} by {track} km MODIS pixel covered by about {n} 375 m VIIRS pixels, with {inside} VIIRS detections inside it",
+  mapFootprintSvgRatio: "1 MODIS ≈ {ratio}× VIIRS area",
+  mapFootprintScaleKm: "1 km",
+  mapFootprintLegendModis: "MODIS pixel",
+  mapFootprintLegendGrid: "375 m VIIRS grid",
+  mapFootprintLegendViirs: "VIIRS detection",
+  mapFootprintLegendNadir: "1 km nadir pixel",
+  mapFootprintLegendLinked: "Fused into this event",
+  mapFootprintModisLabel: "MODIS pixel",
+  mapFootprintModisDims: "{scan} × {track} km = {area} km² · VZA {vza}°",
+  mapFootprintTilingLabel: "375 m VIIRS pixels in it",
+  mapFootprintTilingValue: "≈ {n}",
+  mapFootprintInsideLabel: "VIIRS detections inside (±{window} min)",
+  mapFootprintLinkedLabel: "VIIRS fused into this event",
+  mapFootprintThresholdTitle: "Smallest fire each sensor can detect",
+  mapFootprintThresholdModis: "MODIS {here} MW (nadir {nadir} → edge {edge})",
+  mapFootprintThresholdViirs: "VIIRS {min}–{max} MW",
+  mapFootprintThresholdRatio: "Here MODIS needs {modis} MW, VIIRS {viirs} MW: about {ratio}× more.",
+  mapFootprintExplainMatched:
+    "1 MODIS = {n} VIIRS: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels, so VIIRS detections of the same fire inside it ({linked} here) count once, as one MODIS + VIIRS event.",
+  mapFootprintExplainModisOnly:
+    "1 MODIS = {n} VIIRS: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels, but no VIIRS detection matched it within ±{window} min, so it counts once, as one MODIS only event.",
+  mapFootprintExplainRaw:
+    "Raw data: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels. {inside} VIIRS detections fall inside it within ±{window} min, and Raw counts each of them as well.",
+  mapFootprintExplainRawNone:
+    "Raw data: this {area} km² MODIS pixel covers about {n} VIIRS 375 m pixels. No VIIRS detection falls inside it within ±{window} min at this swath position.",
+  mapFootprintRefs: "Pixel sizes [01, 09, 16] · thresholds [16, Tables 1–2] · flare-chronos sample ratio: {flare}×",
 } as const;
 
 export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
@@ -138,6 +177,45 @@ export const mapCopyTr: { readonly [K in keyof typeof mapCopyEn]: string } = {
   mapGlobeOrbitsLabel: "Uydu yörüngeleri",
   mapGlobeOrbitsNote: "Temsilî çizim, ölçüm değildir",
   mapGlobeCredit: "Dünya görüntüsü: NASA Blue Marble · Yangın verisi: NASA FIRMS",
+  mapFootprintOpen: "Ayak izi merceği",
+  mapFootprintHide: "Ayak izi merceğini gizle",
+  mapFootprintTitle: "MODIS pikseli ve 375 m VIIRS",
+  mapFootprintBadgeMeasured: "FIRMS scan × track değerinden",
+  mapFootprintBadgeVza: "Bu noktanın bakış açısından",
+  mapFootprintBadgeModel: "Tarama modeli · tahmini",
+  mapFootprintPresetGroupLabel: "MODIS tarama konumu",
+  mapFootprintPresetPoint: "Bu nokta ({vza}°)",
+  mapFootprintPresetNadir: "Nadir 0°",
+  mapFootprintPresetMid: "Orta 35°",
+  mapFootprintPresetEdge: "Kenar 55°",
+  mapFootprintSvgAria:
+    "Ölçekli çizim: {scan} × {track} km MODIS pikselini yaklaşık {n} adet 375 m VIIRS pikseli kaplar; içinde {inside} VIIRS tespiti var",
+  mapFootprintSvgRatio: "1 MODIS ≈ {ratio}× VIIRS alanı",
+  mapFootprintScaleKm: "1 km",
+  mapFootprintLegendModis: "MODIS pikseli",
+  mapFootprintLegendGrid: "375 m VIIRS ızgarası",
+  mapFootprintLegendViirs: "VIIRS tespiti",
+  mapFootprintLegendNadir: "1 km nadir pikseli",
+  mapFootprintLegendLinked: "Bu olaya birleşen",
+  mapFootprintModisLabel: "MODIS pikseli",
+  mapFootprintModisDims: "{scan} × {track} km = {area} km² · VZA {vza}°",
+  mapFootprintTilingLabel: "İçine sığan 375 m VIIRS pikseli",
+  mapFootprintTilingValue: "≈ {n}",
+  mapFootprintInsideLabel: "İçindeki VIIRS tespitleri (±{window} dk)",
+  mapFootprintLinkedLabel: "Bu olaya birleşen VIIRS",
+  mapFootprintThresholdTitle: "Her sensörün görebildiği en küçük yangın",
+  mapFootprintThresholdModis: "MODIS {here} MW (nadir {nadir} → kenar {edge})",
+  mapFootprintThresholdViirs: "VIIRS {min}–{max} MW",
+  mapFootprintThresholdRatio: "Burada MODIS {modis} MW, VIIRS {viirs} MW ister: yaklaşık {ratio} kat fazla.",
+  mapFootprintExplainMatched:
+    "1 MODIS = {n} VIIRS: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar; içindeki aynı yangına ait VIIRS tespitleri (burada {linked}) tek bir MODIS + VIIRS olayı olarak bir kez sayılır.",
+  mapFootprintExplainModisOnly:
+    "1 MODIS = {n} VIIRS: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar, ancak ±{window} dk içinde hiçbir VIIRS tespiti eşleşmedi; bu yüzden tek bir Yalnız MODIS olayı olarak bir kez sayılır.",
+  mapFootprintExplainRaw:
+    "Ham veri: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar. İçine ±{window} dk içinde {inside} VIIRS tespiti düşer ve Ham görünüm her birini ayrıca sayar.",
+  mapFootprintExplainRawNone:
+    "Ham veri: bu {area} km² MODIS pikseli yaklaşık {n} adet 375 m VIIRS pikselini kaplar. Bu tarama konumunda ±{window} dk içinde içine hiçbir VIIRS tespiti düşmüyor.",
+  mapFootprintRefs: "Piksel boyutları [01, 09, 16] · eşikler [16, Tablo 1–2] · flare-chronos örnek oranı: {flare}×",
 };
 
 export const MAP_CONTEXT_NAMES_TR: Readonly<Record<string, string>> = {

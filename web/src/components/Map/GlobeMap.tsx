@@ -763,6 +763,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
 
         {(activeDetail.rawPoint || activeDetail.harmPoint) && (
           <PointDetail
+            key={`${activeDetail.rawPoint?.id ?? ""}:${activeDetail.harmPoint?.id ?? ""}`}
             rawPoint={activeDetail.rawPoint}
             harmPoint={activeDetail.harmPoint}
             isDuplicateInRaw={activeDetail.isDuplicateInRaw}
@@ -771,6 +772,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
             screenY={activeDetail.screenY}
             viewportSize={size}
             onClose={handleCloseDetail}
+            rawPoints={points.raw}
             cardRef={detailCardRef}
           />
         )}

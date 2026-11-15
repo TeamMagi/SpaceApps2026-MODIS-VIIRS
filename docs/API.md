@@ -16,7 +16,7 @@ Son doğrulama: 2026-11-15 · commit 8846819 · örnekler bu sürümden yakaland
 - `X-Cache: HIT|MISS` başlığı `harmonize`, `compare`, `stats`, `export` ve `calendar` yanıtlarında bulunur.
   - `days` ile yapılan istekler 600 sn önbellekte kalır.
   - `start`/`end` ile yapılan istekler ve `calendar` 21600 sn (6 saat) önbellekte kalır.
-  - Önbellek anahtarı rota, bbox, zaman penceresi ve `include_raw` değerini kapsar. `export` için rota `export-csv` veya `export-geojson` olarak ayrılır.
+  - Önbellek anahtarı rota, bbox, zaman penceresi, `include_raw` ve `min_confidence` değerini kapsar (`calendar` için ülke, yıllar, bbox ve `min_confidence`). `min_confidence` verilmemesi ile `min_confidence=low` aynı girdiyi kullanır. `export` için rota `export-csv` veya `export-geojson` olarak ayrılır.
   - Hatalar önbelleğe alınmaz.
   - `CACHE_BUDGET_MB` varsayılanı 128'dir. `0` önbelleği kapatır. Bütçe dolduğunda en eski girdiler önce çıkarılır.
 - `/api/` altındaki bilinmeyen yollar JSON 404 döner: `Unknown API endpoint: /api/...`. `/api` dışındaki yollar `STATIC_DIR` (varsayılan `web/dist`) üzerinden servis edilir. Dosya yoksa ve `index.html` varsa SPA için `index.html` döner.
@@ -30,6 +30,7 @@ Son doğrulama: 2026-11-15 · commit 8846819 · örnekler bu sürümden yakaland
 | `GET /api/availability` | FIRMS kaynaklarının tarih aralıkları | FIRMS canlı API | Gerekir | Yok |
 | `GET /api/harmonize` | Harmonize kayıtlar, takvim, effort, belirsizlik, rapor | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/compare` | Ham ve harmonize sayıların karşılaştırması | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
+| `GET /api/sensitivity` | Eşleştirme yarıçapı ve zaman penceresi duyarlılık önizlemesi | FIRMS canlı API (NRT ve SP) | Gerekir | Yok |
 | `GET /api/stats` | Toplamlar, sensör kırılımı, pipeline metrikleri | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/export` | Harmonize hotspot'lar, CSV veya GeoJSON dosyası | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/calendar` | Ülke bazında tarihsel aylık yanma takvimi | Yerel FIRMS ülke arşivi (yalnızca okuma) | Gerekmez | Var |
@@ -97,7 +98,7 @@ Sunucu pencereyi kaynak başına en fazla 5 günlük FIRMS isteklerine böler. H
 
 ### Harmonizasyon hattı
 
-Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kaynak, deniz üstü) çıkarılır. Ardından aynı sensörün tarama (interscan) çakışmaları kaldırılır. Aynı uydu ailesine ait kardeş uydular (fleet) birleştirilir: MODIS için 180 dakika, VIIRS için 60 dakika penceresi kullanılır. Son olarak MODIS ve VIIRS kayıtları 2 km ve 180 dakika içinde eşleştirilir ve tek kayda birleştirilir (`Matched`). Eşleşmeyen kayıtlar her iki sensörden korunur. MODIS FRP değerleri görüş açısına (VZA) göre düzeltilir ve kalibrasyon bantlarıyla (`/api/config` altındaki `calibration`) işlenir. Tüm eşikler `GET /api/config` ile okunabilir.
+Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kaynak, deniz üstü) çıkarılır. FIRMS C2 aylık dosyalarında `type` alanı sürüm 1-2'de hatalı olduğundan statik kaynakların bir kısmı `type 0` olarak gelir; bunlar kalıcı sıcak hücre maskesiyle (`static_mask`) elenir. İsteğe bağlı SAMA gece filtresi (`sama`, varsayılan kapalı) bundan önce uygulanır. Ardından aynı sensörün tarama (interscan) çakışmaları kaldırılır. Aynı uydu ailesine ait kardeş uydular (fleet) birleştirilir: MODIS için 180 dakika, VIIRS için 60 dakika penceresi kullanılır. Son olarak MODIS ve VIIRS kayıtları 2 km ve 180 dakika içinde eşleştirilir ve tek kayda birleştirilir (`Matched`). Eşleşmeyen kayıtlar her iki sensörden korunur. MODIS FRP değerleri görüş açısına (VZA) göre düzeltilir ve kalibrasyon bantlarıyla (`/api/config` altındaki `calibration`) işlenir. Tüm eşikler `GET /api/config` ile okunabilir.
 
 ### CalendarCell
 
@@ -126,6 +127,35 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 
 Terra'nın tek başına çalıştığı dönem (2002-07'den önce) için: seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır. Bu aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` olur; `count` ve FRP alanları ham değerleriyle kalır. Bu durumda `warnings` içinde bir uyarı bulunur. Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
 
+### Güven filtresi (`min_confidence`)
+
+`harmonize`, `compare`, `stats`, `export`, `calendar` ve `points` opsiyonel `min_confidence` parametresi alır. Filtre tip filtresinden sonra, harmonizasyondan (dedup, filo birleştirme, eşleştirme) **önce** uygulanır; çıkarılan tespitler hiçbir sayıma ve eşleşmeye girmez.
+
+| Değer | Etki |
+|-------|------|
+| `low` (varsayılan) | Hiçbir tespit çıkarılmaz; davranış parametre yokkenki ile aynıdır |
+| `nominal` | `Confidence::Low` tespitleri çıkarılır |
+| `high` | Yalnızca `Confidence::High` tespitleri kalır |
+
+Değer büyük/küçük harf duyarsızdır. Başka bir değer (boş dahil) FIRMS'e veya önbelleğe gidilmeden 400 döner: `Invalid 'min_confidence' value 'medium': expected 'low', 'nominal' or 'high'`. MODIS sayısal güveni `< 30` için `Low`, `30..79` için `Nominal`, `>= 80` için `High` sayılır; VIIRS `l`/`n`/`h` doğrudan eşlenir.
+
+Gerekçe: VIIRS `low` sınıfı Doğu Çin'de parlak çatılarda `~%40` komisyon hatası `[09, Bölüm 4.2]`, Güney Afrika'da bir termik santralde `%10.1` ICE `[10, Tablo 5]` üretir; Suudi Arabistan'da `low` medyan FRP'si (`4.42 MW`) `nominal`'ınkinden (`1.89 MW`) yüksektir `[24, Tablo 3]`.
+
+Filtre uygulanan her yanıt üst düzey bir `filters` nesnesi taşır:
+
+```json
+"filters": { "min_confidence": "nominal", "excluded_detections": 1 }
+```
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `filters.min_confidence` | string | Uygulanan eşik: `low`, `nominal` veya `high` |
+| `filters.excluded_detections` | integer | Filtrenin çıkardığı ham tespit sayısı (tip ve bbox filtresinden sonra, harmonizasyondan önce). `low` için her zaman `0` |
+
+`raw.modis_count`, `raw.viirs_count`, `counts.*`, `totals.*`, `stages.*` gibi tüm sayılar filtrelenmiş girdiye göredir. `export` dosya döndürdüğü için `filters` taşımaz; içerik yine filtrelenmiştir.
+
+`/api/series` bu parametreyi desteklemez: seri bölge başına önceden hesaplanır ve disk/paketli türetilmiş önbellekte (`X-Series-Source: disk|bundled`) tek bir filtresiz sürüm olarak tutulur. Filtreli bir seri tüm arşiv yıllarının yeniden okunmasını ve ayrı bir türetilmiş önbellek damgasını gerektirir; paketli dağıtımda ham arşiv bulunmayabilir. Seri yanıtındaki `filters.confidence: "all"` bunu belirtir.
+
 ### Belirsizlik
 
 Yanıtlarda üst düzey bir `uncertainty` nesnesi bulunur (`harmonize` ve `calendar`):
@@ -134,6 +164,32 @@ Yanıtlarda üst düzey bir `uncertainty` nesnesi bulunur (`harmonize` ve `calen
 |------|-----|----------|
 | `confidence` | number | `z` çarpanına karşılık gelen iki kuyruklu güven düzeyi (`z = 1.0` için ~0.6827) |
 | `note` | string | Model varsayımlarını ve sınırlılıklarını açıklayan sabit metin |
+| `atmospheric_bias` | object | Tek yönlü (aşağı) atmosferik/bulut sapma notu; aşağıya bakın |
+
+`atmospheric_bias` FIRMS verisinde 4 µm duman optik derinliği (`τ_4`) ve bulut kesri (`β`) bulunmadığı için FRP'nin kabaca `%7–22` düşük tahmin edilebileceğini bildirir. Bu bir nottur: `frp_lower`/`frp_upper` ve diğer bantlar bu terimi **içermez** ve hiçbir sayı düzeltilmez (`applied: false`).
+
+```json
+"atmospheric_bias": {
+  "direction": "downward",
+  "low_pct": 7,
+  "high_pct": 22,
+  "applied": false,
+  "note": "One-sided downward bias, not applied to the numbers: ...",
+  "refs": [
+    "[16] Observation operator for MODIS and VIIRS FRP (GMD, 2026), Sec. 4.1: cloud loss MODIS 22% / VIIRS 12%",
+    "[16] Observation operator for MODIS and VIIRS FRP (GMD, 2026), Eq. 12: thin-smoke attenuation exp(-tau_4)",
+    "[23] 3D biomass burning emission inventory for SE/E Asia (2025), Eq. 2: regional cloud-fraction loss ~7%"
+  ]
+}
+```
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `direction` | string | Her zaman `"downward"`: duman ve bulut FRP'yi yalnızca azaltabilir |
+| `low_pct`, `high_pct` | integer | Olası düşük tahmin aralığı (%): `7` (bölgesel bulut kesri `[23, Eq. 2]`) – `22` (küresel MODIS bulut kaybı `[16, Bölüm 4.1]`; VIIRS için `%12`) |
+| `applied` | boolean | Her zaman `false`; sayılara veya bantlara uygulanmaz |
+| `note` | string | İnsan tarafından okunacak açıklama (ince duman zayıflatması `exp(-τ_4)` `[16, Denklem 12]` dahil) |
+| `refs` | array of string | Kaynaklar (`docs/REFERANS_ANALIZI.md` numaralandırmasıyla) |
 
 Güven aralıkları (`frp_lower`, `frp_upper`, `mean_frp_*`, `total_frp_*`) rastgele bileşeni (sensör gürültüsü ve VZA hatası, `1/√n` ölçeğiyle) ve sistematik bileşeni (MODIS ölçek belirsizliği ve `k_c` belirsizliği) birleştirerek hesaplanır. Varsayılan parametreler `uncertainty` altında `/api/config` ile okunabilir. Bu değerler model varsayımlarıdır, yayımlanmış ölçümler değildir.
 
@@ -167,6 +223,7 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 | `reliable` | boolean | Yukarıdaki koşul geçerliyse `false` |
 | `reason` | string \| null | Güvenilmezlik nedeni. Yoksa `null` |
 | `factors` | array | Uydu yapılandırmasına göre Ω faktörleri (aşağıda) |
+| `tropical_swath_gap` | object \| null | Ekvatoral swath boşluğu bayrağı; aşağıya bakın (`effort.tropical_swath_gap`) |
 
 `factors[]` öğeleri:
 
@@ -183,6 +240,38 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 | `modis_observable_high_intensity` | integer | `frp >= 40.0` MW (sonlu) MODIS ile gözlemlenebilen kayıt sayısı |
 | `omega_high_intensity` | number \| null | Yüksek şiddet (≥ 40 MW) rejimi için Ω; 3+ ay ve `modis_observable_high_intensity >= 30` gerekir |
 | `snpp_aqua_high_intensity_ratio` | number \| null | Gündüz ≥ 40 MW S-NPP / Aqua oranı (diurnal/swath tanı metriği, ayrı raporlanır ve sayımlara uygulanmaz; S-NPP yoksa veya Aqua < 30 ise `null`) |
+
+### effort.tropical_swath_gap (C10)
+
+`30°G–30°K` (`30°S–30°N`) kuşağında komşu MODIS yörüngeleri arasındaki ekvatoral swath boşlukları (`388.1 km`) aylık VIIRS FRP'sinin `%10.7–12.5`'ini kaçırır `[14, Bölüm 4.4]`. Bölgenin kuşak içinde alanı varsa bu bayrak dolu, yoksa `null` döner (alan her zaman bulunur). Taşıyan yanıtlar: `/api/calendar` ve `/api/harmonize` (`effort` içinde), `/api/points` (üst düzeyde). `/api/series` gövdesi önceden hesaplanıp coğrafya içermediği için bayrak türetilmiş veriye yazılmaz; arayüz bunu seçili bölgenin `/api/points` yanıtından okur.
+
+```json
+"tropical_swath_gap": {
+  "belt_abs_lat": 30.0,
+  "belt_share": 0.93,
+  "basis": "bbox",
+  "swath_gap_km": 388.1,
+  "missed_frp_low_pct": 10.7,
+  "missed_frp_high_pct": 12.5,
+  "compensation": null,
+  "note": "Between 30S and 30N adjacent MODIS orbits leave equatorial swath gaps ...",
+  "reference": "[14] Biomass burning in Africa: FRP missed by MODIS (2020), Sec. 4.4: ..."
+}
+```
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `belt_abs_lat` | number | Kuşak yarı genişliği (`30`) |
+| `belt_share` | number | Bölgenin kuşak içindeki **alan ağırlıklı** payı, `0 < pay ≤ 1`: `(sin(min(K,30°)) − sin(max(G,−30°))) / (sin K − sin G)`. Küre üzerinde iki paralel arası alan `sin` farkıyla orantılı olduğundan kısmi örtüşmede derece değil alan sayılır. Kuşak kenarına dışarıdan değen bölge (`G = 30°`) `null` alır; tek enlemli kapsam `|lat| ≤ 30°` ise `1` |
+| `basis` | string | `bbox`: sorgu bbox'ı (`calendar` bbox'lı, `harmonize`); `detections`: tespitlerin enlem kapsamı (`calendar` bbox'sız; `points` için istenen ayın değil **tüm yılın** kapsamı, böylece ay değiştikçe bayrak oynamaz) |
+| `swath_gap_km` | number | `388.1` |
+| `missed_frp_low_pct`, `missed_frp_high_pct` | number | `10.7` (yıllık) – `12.5` (aylık) |
+| `compensation` | object \| null | Telafi kapalıyken (varsayılan) `null`. Açıkken `{ "factor", "factor_sigma" }`: `factor = 1/(1 − 0.116) ≈ 1.1312`, `factor_sigma = ([1/(1−0.125)] − [1/(1−0.107)]) / 2 ≈ 0.0115` |
+| `note`, `reference` | string | Açıklama ve kaynak |
+
+**Telafi (`uncertainty.tropical_swath_gap_compensation`, varsayılan `false`):** Kapalıyken hiçbir sayı değişmez; yalnızca bayrak döner. Açıkken yalnızca VIIRS tespiti olmayan ayların (`k_c` ile aynı koşul) `total_frp` toplamında, `|lat| ≤ 30°` olan her tespitin katkısı `k_c × factor` ile **bir kez** çarpılır ve `factor_sigma / factor` göreli 1σ, `k_c` belirsizliğiyle karesel toplanarak sistematik bileşene eklenir (`total_frp_lower`/`total_frp_upper` genişler). `count`, `effort_omega`, `count_normalized`, `anomaly` ve `mean_frp*` hiçbir zaman değişmez.
+
+**Çift sayım yok:** `k_c` (`calibration.rs`) yalnızca Aqua MODIS ve S-NPP'nin `≤ 20 dk` içinde **birlikte** gözlediği `1°×1°` hücre-günlerinden ölçülür; MODIS swath boşluğundaki hücre-günlerinde MODIS kaydı olmadığından orana hiç girmez, yani `k_c` swath içi küçük yangın tamlığıdır ve boşluk kaybı ondan ayrıdır. Ω (`effort.rs`) VIIRS dönemindeki boşluk tespitlerini zaten `total` içinde sayar ve sayıları MODIS-gözlemlenebilir birime indirger; iki dönem de bu ortak referansta boşluğu aynı biçimde içerdiğinden sayılar telafi edilmez. VIIRS içeren aylarda `ViirsOnly` tespitler boşluğu doldurduğundan telafi uygulanmaz.
 
 ## GET /api/health
 
@@ -287,6 +376,17 @@ curl -s "http://localhost:3001/api/config"
     "vza_error_coeff": 0.05,
     "modis_scale_sigma": 0.1,
     "z": 1
+  },
+  "static_mask": {
+    "enabled": true,
+    "min_active_months": 10
+  },
+  "sama": {
+    "enabled": false,
+    "west": -110,
+    "east": 11,
+    "south": -55,
+    "north": 7
   }
 }
 ```
@@ -309,6 +409,11 @@ curl -s "http://localhost:3001/api/config"
 | `uncertainty.vza_error_coeff` | number | VZA düzeltmesi arttıkça eklenen göreli hata katsayısı |
 | `uncertainty.modis_scale_sigma` | number | MODIS ölçek/Terra vekil belirsizliği (göreli 1σ) |
 | `uncertainty.z` | number | Güven aralığı z çarpanı (`> 0`) |
+| `uncertainty.tropical_swath_gap_compensation` | boolean | Opsiyonel tropikal swath-gap telafisi (bkz. "effort.tropical_swath_gap"). Varsayılan `false`; `false` iken JSON'a yazılmaz, böylece konfigürasyon özeti ve önceden hesaplanmış seri damgaları değişmez. TOML: `[uncertainty] tropical_swath_gap_compensation = true` |
+| `static_mask.enabled` | boolean | Kalıcı sıcak hücre (gaz meşalesi, endüstri) maskesi açık mı |
+| `static_mask.min_active_months` | integer | H3 r7 hücresinin aynı takvim yılında maskelenmesi için gereken farklı ay sayısı (1-12). Yıl yıl değerlendirilir; bundan kısa pencereler maskelenmez |
+| `sama.enabled` | boolean | SAMA kutusundaki gece VIIRS tespitleri elensin mi |
+| `sama.west`, `sama.east`, `sama.south`, `sama.north` | number | SAMA kutusu (derece; VFIRE375 SPA v1.9) |
 
 ### Hatalar
 
@@ -412,6 +517,7 @@ Verilen bbox ve zaman penceresi için FIRMS kayıtlarını çeker, harmonize ede
 | `start` | string (`YYYY-MM-DD`) | Hayır | — | `end` ile birlikte verilmeli; `end >= start` |
 | `end` | string (`YYYY-MM-DD`) | Hayır | — | `start` ile birlikte verilmeli |
 | `include_raw` | boolean | Hayır | `false` | `true` ise `raw.hotspots` dizisi eklenir |
+| `min_confidence` | string | Hayır | `low` | `low`, `nominal` veya `high`. Bkz. "Güven filtresi" |
 
 ### Örnek istek
 
@@ -471,6 +577,8 @@ Not: `$.raw.hotspots` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
   },
   "harmonized": {
     "count": 3,
+    "static_masked": 0,
+    "sama_removed": 0,
     "hotspots": [
       {
         "acquired": "2026-11-15T10:30:00Z",
@@ -590,7 +698,19 @@ Not: `$.raw.hotspots` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
   },
   "uncertainty": {
     "confidence": 0.6826894723352727,
-    "note": "Harmonized values are model estimates, not ground truth. For MODIS detections, VZA scales raw FRP to MODIS footprint equivalents; VIIRS-era calendar total_frp adds empirically measured pre-VIIRS completeness (k_c) when no VIIRS detections are present in a cell. mean_frp remains native-pixel and is discontinuous at sensor transitions. Default sensor-noise, VZA error, and MODIS scale uncertainty parameters are assumptions, not published values."
+    "note": "Harmonized values are model estimates, not ground truth. For MODIS detections, VZA scales raw FRP to MODIS footprint equivalents; VIIRS-era calendar total_frp adds empirically measured pre-VIIRS completeness (k_c) when no VIIRS detections are present in a cell. mean_frp remains native-pixel and is discontinuous at sensor transitions. Default sensor-noise, VZA error, and MODIS scale uncertainty parameters are assumptions, not published values.",
+    "atmospheric_bias": {
+      "direction": "downward",
+      "low_pct": 7,
+      "high_pct": 22,
+      "applied": false,
+      "note": "One-sided downward bias, not applied to the numbers: FIRMS carries no smoke optical depth (tau_4) or cloud fraction (beta), so FRP may be underestimated by roughly 7-22%. Thin smoke attenuates FRP by exp(-tau_4); cloud cover hides ~22% (MODIS) and ~12% (VIIRS) of fire energy globally and ~7% in regional inventories. The frp_lower/frp_upper bands do not include this term.",
+      "refs": ["[16] ... Sec. 4.1 ...", "[16] ... Eq. 12 ...", "[23] ... Eq. 2 ..."]
+    }
+  },
+  "filters": {
+    "min_confidence": "low",
+    "excluded_detections": 0
   },
   "warnings": []
 }
@@ -693,10 +813,13 @@ Not: Bu yanıt bir excerpt'tir; yalnızca `effort.reliable`, `effort.reason`, `w
 | `raw.total_raw` | integer | `modis_count + viirs_count` |
 | `raw.hotspots` | array | Yalnızca `include_raw=true` ile döner. Öğeler: `lat`, `lon`, `frp`, `sensor` (Sensor), `acquired`, `daynight` |
 | `harmonized.count` | integer | `hotspots` dizisinin uzunluğu |
+| `harmonized.static_masked` | integer | Kalıcı sıcak hücre (statik maske) nedeniyle elenen tespit sayısı (maske güven filtresinden önce kurulur) |
+| `harmonized.sama_removed` | integer | Güney Atlantik Anomalisi (SAMA) gece filtresiyle elenen VIIRS tespit sayısı |
 | `harmonized.hotspots` | array | Bkz. "Harmonize edilmiş kayıt" |
 | `calendar` | array of CalendarCell | Aylık takvim. Bkz. "CalendarCell" |
 | `effort` | object | Bkz. "effort ve effort.reliable" |
-| `uncertainty` | object | Bkz. "Belirsizlik" |
+| `uncertainty` | object | Bkz. "Belirsizlik" (`atmospheric_bias` dahil) |
+| `filters` | object | Bkz. "Güven filtresi" |
 | `warnings` | array of string | Bkz. "warnings" |
 | `report` | object | Bkz. "report" |
 
@@ -706,7 +829,7 @@ Not: Bu yanıt bir excerpt'tir; yalnızca `effort.reliable`, `effort.reason`, `w
 
 | Durum | Ne zaman | Gövde |
 |-------|----------|-------|
-| 400 | Bbox geçersiz, `days` 1..=5 dışında, `start`/`end` eksik veya tarih biçimi yanlış, `days` ile `start`/`end` birlikte | JSON |
+| 400 | Bbox geçersiz, `days` 1..=5 dışında, `start`/`end` eksik veya tarih biçimi yanlış, `days` ile `start`/`end` birlikte, `min_confidence` geçersiz | JSON |
 | 400 | Zorunlu parametre yok veya tip hatalı (ör. `south` yok, `days=abc`) | JSON: `Failed to deserialize query string: ...` |
 | 503 | `FIRMS_API_KEY` tanımlı değilse | JSON |
 | 502 | Tüm FIRMS istekleri başarısız olduysa (veya availability tablosu alınamadıysa) | JSON |
@@ -796,6 +919,8 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
     "harmonized_total": 3,
     "removed_total": 2,
     "removed_pct": 40,
+    "static_masked": 0,
+    "sama_removed": 0,
     "by_source": {
       "modis_only": 1,
       "viirs_only": 1,
@@ -872,10 +997,13 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
 
 | Alan | Tip | Açıklama |
 |------|-----|----------|
-| `counts.raw_total`, `raw_modis`, `raw_viirs` | integer | Ham kayıt sayıları (tip filtresinden sonra) |
+| `filters` | object | Bkz. "Güven filtresi" |
+| `counts.raw_total`, `raw_modis`, `raw_viirs` | integer | Ham kayıt sayıları (tip ve güven filtresinden sonra) |
 | `counts.harmonized_total` | integer | Harmonize kayıt sayısı |
 | `counts.removed_total` | integer | `raw_total - harmonized_total` (sıfırın altına düşmez) |
 | `counts.removed_pct` | number | Kaldırılan kayıtların ham toplama oranı (%) |
+| `counts.static_masked` | integer | Kalıcı sıcak hücre (statik maske) nedeniyle elenen tespit sayısı |
+| `counts.sama_removed` | integer | Güney Atlantik Anomalisi (SAMA) gece filtresiyle elenen VIIRS tespit sayısı |
 | `counts.by_source` | object | `modis_only`, `viirs_only`, `matched` harmonize kaynaklarına göre sayımlar |
 | `frp.raw_sum` | number | Ham FRP toplamı |
 | `frp.harmonized_raw_sum` | number | Harmonize kayıtların `frp` toplamı |
@@ -900,6 +1028,57 @@ Bu örnek test düzeneğindeki sahte FIRMS verisinden alındı; sayılar senteti
 
 - Önbellek ve zaman aşımı davranışı `harmonize` ile aynıdır.
 - VZA istatistikleri harmonize kayıtlardan hesaplanır. VZA katsayıları yer tutucu değerler olabilir; düzeltme büyüklüğü göstergesel okunmalıdır.
+
+## GET /api/sensitivity
+
+FireHarmonize tarzı duyarlılık önizlemesi. Aynı bbox ve zaman penceresi için FIRMS verisi bir kez çekilir, sonra her `radius_km` x `window_min` hücresinde MODIS ve VIIRS eşleştirmesi yeniden çalıştırılır. Yanıt, eşleşen, yalnızca MODIS ve yalnızca VIIRS kayıt sayılarının yarıçap ve pencere ile nasıl değiştiğini gösterir. Diğer yapılandırma değerleri (`dedup`, `fleet`, `vza`) sunucunun etkin `PipelineConfig` değerleridir. Yanıt önbelleğe alınmaz ve `X-Cache` başlığı yoktur.
+
+### Parametreler
+
+| Ad | Tip | Zorunlu | Açıklama |
+|---|---|---|---|
+| `west`, `south`, `east`, `north` | sayı | Evet | `harmonize` ile aynı bbox kuralları |
+| `days` veya `start` + `end` | sayı / tarih | Evet | `harmonize` ile aynı zaman penceresi kuralları |
+| `radius_km` | virgülle ayrılmış sayılar | Evet | Eşleştirme yarıçapları. Her değer `0 < r <= 10` olmalıdır. En çok 5 farklı değer |
+| `window_min` | virgülle ayrılmış tam sayılar | Evet | Eşleştirme pencereleri, dakika. Her değer `0..=1440` olmalıdır. En çok 5 farklı değer |
+
+Değerler sıralanır ve tekrarlar atılır, böylece ızgara en çok 5x5 hücredir.
+
+### Örnek istek
+
+```bash
+curl -s "http://localhost:3001/api/sensitivity?west=26&south=36&east=45&north=42&days=1&radius_km=0.5,2&window_min=30,60"
+```
+
+### Örnek yanıt
+
+Sayılar test düzeneğindeki sentetik FIRMS verisinden alındı; yapı gerçektir. Tek aday çift 0,14 km ve 60 dk arayla ayrıdır.
+
+```json
+{
+  "raw_modis": 2,
+  "raw_viirs": 3,
+  "radius_km": [0.5, 2.0],
+  "window_min": [30, 60],
+  "cells": [
+    {"radius_km": 0.5, "window_min": 30, "matched": 0, "modis_only": 2, "viirs_only": 2, "harmonized_total": 4},
+    {"radius_km": 0.5, "window_min": 60, "matched": 1, "modis_only": 1, "viirs_only": 1, "harmonized_total": 3},
+    {"radius_km": 2.0, "window_min": 30, "matched": 0, "modis_only": 2, "viirs_only": 2, "harmonized_total": 4},
+    {"radius_km": 2.0, "window_min": 60, "matched": 1, "modis_only": 1, "viirs_only": 1, "harmonized_total": 3}
+  ]
+}
+```
+
+`cells` önce yarıçapa, sonra pencereye göre artan sırada gelir. Yarıçap veya pencere büyüdükçe `matched` azalmaz.
+
+### Hatalar
+
+| Durum | Neden | Gövde |
+|---|---|---|
+| 400 | `radius_km` veya `window_min` yok, bbox parçası eksik | JSON: `Failed to deserialize query string: ...` |
+| 400 | Değer sayı değil, `radius_km` 0 veya negatif ya da 10'dan büyük, `window_min` negatif ya da 1440'tan büyük, bir eksende 5'ten fazla farklı değer, geçersiz bbox veya zaman penceresi | JSON `{"error": "..."}` |
+| 503 | `FIRMS_API_KEY` tanımlı değil | JSON `{"error": "..."}` |
+| 502, 504 | FIRMS hatası veya `REQUEST_TIMEOUT_SECS` aşıldı | JSON `{"error": "..."}` |
 
 ## GET /api/stats
 
@@ -926,6 +1105,8 @@ Not: `$.sensor_breakdown` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
   "totals": {
     "raw_detections": 5,
     "harmonized_records": 3,
+    "static_masked": 0,
+    "sama_removed": 0,
     "calendar_months": 1,
     "distinct_platforms": 3
   },
@@ -1011,8 +1192,11 @@ Not: `$.sensor_breakdown` dizisindeki 5 öğeden ilk 4 tanesi gösteriliyor.
 
 | Alan | Tip | Açıklama |
 |------|-----|----------|
-| `totals.raw_detections` | integer | Ham kayıt sayısı (tip filtresinden sonra) |
+| `filters` | object | Bkz. "Güven filtresi" |
+| `totals.raw_detections` | integer | Ham kayıt sayısı (tip ve güven filtresinden sonra) |
 | `totals.harmonized_records` | integer | Harmonize kayıt sayısı |
+| `totals.static_masked` | integer | Kalıcı sıcak hücre (statik maske) nedeniyle elenen tespit sayısı |
+| `totals.sama_removed` | integer | Güney Atlantik Anomalisi (SAMA) gece filtresiyle elenen VIIRS tespit sayısı |
 | `totals.calendar_months` | integer | Takvimdeki ay hücresi sayısı (en az bir tespiti olan aylar) |
 | `totals.distinct_platforms` | integer | Harmonize kayıtlarda geçen farklı uydu sayısı |
 | `sensor_breakdown[]` | array | Beş sensörün her biri için bir öğe (her zaman beş öğe). Alanlar: `sensor`, `firms_source`, `raw_detections`, `share_pct` |
@@ -1051,6 +1235,8 @@ Aynı bbox ve zaman penceresi için harmonize edilmiş hotspot'ları dosya olara
 | Ad | Tip | Zorunlu | Varsayılan | Kural |
 |----|-----|---------|------------|-------|
 | `format` | string | Hayır | `csv` | `csv` veya `geojson` (büyük/küçük harf duyarsız). Başka değer 400 |
+
+`min_confidence` `harmonize` ile aynı şekilde uygulanır (bkz. "Güven filtresi"); dosyada yalnızca filtreden geçen tespitlerden üretilen harmonize kayıtlar bulunur.
 
 `format` doğrulaması bbox ve zaman penceresi doğrulamasından önce yapılır.
 
@@ -1234,6 +1420,7 @@ Arşivde MODIS (Terra ve Aqua birlikte tek dosyada, 2000-2025), VIIRS S-NPP (201
 | `from` | integer (yıl) | Hayır | `2000` (arşiv alt sınırı) | `from <= to`. Arşiv dışındaki değerler kırpılır |
 | `to` | integer (yıl) | Hayır | `2025` (arşiv üst sınırı) | `from <= to`. Arşiv dışındaki değerler kırpılır |
 | `west`, `south`, `east`, `north` | number | Hayır | — | Dört parçanın hepsi ya da hiçbiri verilmeli. Kurallar bbox bölümündeki gibidir |
+| `min_confidence` | string | Hayır | `low` | `low`, `nominal` veya `high`. Ülke-yıl dosyası başına bbox filtresinden sonra uygulanır. Bkz. "Güven filtresi" |
 
 Varsayılan yıl aralığı arşiv kapsamından türetilir: en erken 2000, en geç 2025.
 
@@ -1555,8 +1742,9 @@ Not: `$.calendar` dizisindeki 12 öğeden ilk 4 tanesi gösteriliyor; ilgili yı
 | `calendar[]` | array of CalendarCell | Bkz. "CalendarCell" |
 | `seasonality` | object | Mevsimsellik: `{ metric: "count", calendar_year: [...], fire_year: [...] }`. Aşağıdaki "seasonality" notuna bakın |
 | `effort` | object | Bkz. "effort ve effort.reliable". Bir ülke-yıl dosyası başarısızsa `reliable` `false` olur |
-| `uncertainty` | object | Bkz. "Belirsizlik" |
-| `fetch.per_sensor_year[]` | array | `sensor`, `year`, `detections` (tip ve bbox filtresinden sonraki sayı). `ModisTerra` tüm MODIS dosyasını (Terra ve Aqua birlikte) temsil eder |
+| `uncertainty` | object | Bkz. "Belirsizlik" (`atmospheric_bias` dahil) |
+| `filters` | object | Bkz. "Güven filtresi" |
+| `fetch.per_sensor_year[]` | array | `sensor`, `year`, `detections` (tip, bbox ve güven filtresinden sonraki sayı). `ModisTerra` tüm MODIS dosyasını (Terra ve Aqua birlikte) temsil eder |
 | `fetch.failures[]` | array | `sensor`, `year`, `error` (hata metni) |
 | `warnings` | array of string | Bkz. "warnings" |
 
@@ -1783,6 +1971,8 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
       "matched": 4363,
       "modis_only": 3477,
       "viirs_only": 35498,
+      "static_masked": 0,
+      "sama_removed": 0,
       "interscan_removed": 9787,
       "fleet_merged": 12131,
       "first_date": "2021-01-01",
@@ -1852,6 +2042,8 @@ Not: ilgili yıl/ay satırlarına süzüldü (tam yanıt: 59525 bayt).
 | `raw_modis`, `raw_viirs`, `raw_total` | integer | Ham sayımlar (tip 0). `raw_viirs` S-NPP ve NOAA-20 toplamıdır |
 | `harmonized` | integer | Yıl boyunca harmonize edilmiş kayıt sayısı |
 | `matched`, `modis_only`, `viirs_only` | integer | Harmonize kaynak dağılımı |
+| `static_masked` | integer | Kalıcı sıcak hücre maskesiyle elenen ham kayıt sayısı |
+| `sama_removed` | integer | SAMA gece filtresiyle elenen ham VIIRS kayıt sayısı |
 | `interscan_removed` | integer | Tarama çakışması nedeniyle çıkarılan ham kayıt sayısı |
 | `fleet_merged` | integer | Kardeş uydu birleştirmesiyle kaldırılan kayıt sayısı |
 | `first_date`, `last_date` | `YYYY-MM-DD` \| null | Yılın ilk ve son gözlem tarihi |
@@ -1940,6 +2132,7 @@ Bir bölgenin tek bir yılına (opsiyonel olarak tek bir ayına) ait ham ve harm
 | `match_radius_km` | number | Hayır | Sunucu yapılandırması (`2.0`) | `> 0.0` ve `<= 10.0`, sonlu (`matching.radius_km` değerini bu istek için ezer) |
 | `match_window_secs` | integer | Hayır | Sunucu yapılandırması (`10800`) | `>= 0` (`matching.window_secs` değerini bu istek için ezer) |
 | `fleet_radius_km` | number | Hayır | Sunucu yapılandırması (`2.0`) | `> 0.0`, sonlu (`fleet.radius_km` değerini bu istek için ezer) |
+| `min_confidence` | string | Hayır | `low` | `low`, `nominal` veya `high`. Seçilen yıl/ayda harmonizasyondan ve örneklemeden önce uygulanır; `stages` filtrelenmiş girdiye göredir. Bkz. "Güven filtresi" |
 
 ### Örnek istek
 
@@ -2065,6 +2258,8 @@ curl -s "http://localhost:3001/api/points?region=Turkey&year=2021&month=8&limit=
   "stages": {
     "raw_modis": 2067,
     "raw_viirs": 14095,
+    "static_masked": 0,
+    "sama_removed": 0,
     "interscan_removed": 2638,
     "fleet_merged": 3889,
     "matched_pairs": 1245,
@@ -2127,6 +2322,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
   "stages": {
     "raw_modis": 2067,
     "raw_viirs": 14095,
+    "static_masked": 0,
+    "sama_removed": 0,
     "interscan_removed": 2638,
     "fleet_merged": 3889,
     "matched_pairs": 1245,
@@ -2154,6 +2351,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `harmonized[]` | array | Harmonize kayıtlar (aşağıda) |
 | `stages` | object | Aşamaların sayıları (aşağıda) |
 | `bbox` | object \| null | Yıl (veya ay) içindeki **tüm** ham satırların kapsadığı alan. Ham satır yoksa `null`. Örnekleme sonrası döndürülen noktaların alanı değildir |
+| `filters` | object | Bkz. "Güven filtresi". `excluded_detections` örneklemeden önceki tüm yıl/ay içindir |
+| `tropical_swath_gap` | object \| null | Bkz. "effort.tropical_swath_gap". `basis: "detections"`; `month` verilse bile istenen yılın tüm ham satırlarının enlem kapsamından, güven filtresinden önce hesaplanır |
 | `events` | object | Yangın olayı kümeleri (aşağıda). **Tüm** harmonize kayıtlar üzerinden hesaplanır; `limit` örneklemesinden etkilenmez |
 | `no_detection_days` | array | Bir sensör ailesinin hiç tespit döndürmediği günler (aşağıda) |
 | `config` | object | Bu yanıt üretilirken kullanılan etkin `PipelineConfig` (varsayılan sunucu yapılandırması + istek geçersiz kılmaları; şema `/api/config` ile aynıdır) |
@@ -2169,7 +2368,7 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `confidence` | Confidence | Güven |
 | `acquired` | RFC 3339 zaman | Gözlem zamanı |
 | `daynight` | DayNight | Gündüz/gece |
-| `harmonized_id` | string \| null | Bağlı harmonize kaydın kimliği (`h<n>`). Satır interscan çakışması olarak çıkarıldıysa `null` |
+| `harmonized_id` | string \| null | Bağlı harmonize kaydın kimliği (`h<n>`). Satır interscan çakışması, statik maske veya SAMA filtresiyle çıkarıldıysa `null` |
 
 `harmonized[]` öğeleri: `id` (`h<n>`) ve harmonize kaydın tüm alanları (bkz. "Harmonize edilmiş kayıt"). Ek olarak `event_id` (integer \| null) kaydın ait olduğu olayın `events.items[].id` değeridir; "watch" noktalarında `null`. Olay listesi 1000'e kırpıldıysa (`items_truncated`) `event_id` listede bulunmayan bir olaya işaret edebilir. `n`, yıl (veya ay) boyunca üretilen harmonize listesindeki sıradır; örnekleme öncesi numaralandırılır.
 
@@ -2178,6 +2377,8 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | Alan | Açıklama |
 |------|----------|
 | `raw_modis`, `raw_viirs` | Ham satır sayıları |
+| `static_masked` | Kalıcı sıcak hücre maskesiyle elenen satırlar |
+| `sama_removed` | SAMA gece filtresiyle elenen VIIRS satırları |
 | `interscan_removed` | Tarama çakışması ile çıkarılan satırlar |
 | `fleet_merged` | Kardeş uydu birleştirmesiyle kaldırılan kayıtlar |
 | `matched_pairs` | MODIS-VIIRS eşleşme çifti sayısı |
@@ -2324,6 +2525,8 @@ Hata gövdesi her zaman `{"error": "..."}` biçimindedir.
 | `PYROSYNC_MATCH_RADIUS_KM` | `2.0` | MODIS/VIIRS eşleştirme yarıçapı (km, en fazla 10) |
 | `PYROSYNC_MATCH_WINDOW_SECS` | `10800` | MODIS/VIIRS eşleştirme zaman penceresi (sn) |
 | `PYROSYNC_VZA_A`, `PYROSYNC_VZA_B`, `PYROSYNC_VZA_C` | `0.2017`, `0.0168`, `1.0` | MODIS VZA düzeltme polinomu katsayıları |
+| `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre maskesi ve ay eşiği |
+| `PYROSYNC_SAMA_ENABLED` | `false` | SAMA gece VIIRS filtresi |
 | `PORT` | `3001` | Sunucu portu. Sunucu `0.0.0.0:PORT` üzerinde dinler |
 | `STATIC_DIR` | `web/dist` | SPA build dizini. Docker'da `/app/static` |
 | `RUST_LOG` | `pyrosync=info` | Log seviyesi |
@@ -2346,3 +2549,5 @@ Pipeline yapılandırması şu sırayla oluşturulur: kodda tanımlı varsayıla
 `web/src/services/api.ts` bu dokümandaki wire formatını uygulamanın camelCase tiplerine dönüştürür. Ayrıca aşağıdaki fonksiyonlar bu endpoint'leri çağırır: `fetchRegions`, `fetchSeries`, `fetchPoints`, `fetchHarmonize`, `fetchCompare`, `fetchStats`, `fetchCalendar`. Bu doküman sunucunun gönderdiği wire formatını tanımlar.
 
 `/api/health`, `/api/config`, `/api/availability` ve `/api/export` şu anda frontend tarafından kullanılmaz.
+
+Alt çubuktaki "Exclude low-confidence" anahtarı açıkken frontend `/api/points`, `/api/harmonize`, `/api/compare` ve `/api/stats` isteklerine `min_confidence=nominal` ekler (kapalıyken parametre hiç gönderilmez) ve durumu URL hash'inde `conf=nominal` olarak saklar. `/api/series` filtresiz kalır; arayüz bunu anahtarın açıklamasında belirtir.

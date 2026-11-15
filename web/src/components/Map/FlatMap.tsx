@@ -808,6 +808,7 @@ function FlatMap() {
 
         {(activeDetail.rawPoint || activeDetail.harmPoint) && (
           <PointDetail
+            key={`${activeDetail.rawPoint?.id ?? ""}:${activeDetail.harmPoint?.id ?? ""}`}
             rawPoint={activeDetail.rawPoint}
             harmPoint={activeDetail.harmPoint}
             isDuplicateInRaw={activeDetail.isDuplicateInRaw}
@@ -816,6 +817,7 @@ function FlatMap() {
             screenY={activeDetail.screenY}
             viewportSize={canvasSize}
             onClose={handleCloseDetail}
+            rawPoints={points.raw}
           />
         )}
 

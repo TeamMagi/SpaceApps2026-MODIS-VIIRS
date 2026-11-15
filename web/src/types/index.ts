@@ -25,6 +25,31 @@ export enum Sensor {
 
 export type ViewMode = "raw" | "harmonized";
 
+/** Lowest FIRMS confidence class kept before harmonizing (`min_confidence`); `low` keeps everything. */
+export type MinConfidence = "low" | "nominal" | "high";
+
+/** Echo of the server-side confidence filter, so a filtered response can label itself. */
+export interface ConfidenceFilterInfo {
+  minConfidence: MinConfidence;
+  excludedDetections: number;
+}
+
+/** One-sided atmospheric (smoke / cloud) FRP bias note; informational, not applied to the numbers. */
+export interface AtmosphericBias {
+  direction: "downward";
+  lowPct: number;
+  highPct: number;
+  applied: boolean;
+  note: string;
+  refs: string[];
+}
+
+export interface UncertaintyInfo {
+  confidence: number;
+  note: string;
+  atmosphericBias: AtmosphericBias | null;
+}
+
 /** Display input for summary cards; every value must describe the same scope. */
 export interface AnalyticsSnapshot {
   scope: { region: string; year: number; month: number | null };
@@ -184,6 +209,8 @@ export interface HarmonizedPoint {
 export interface PointStages {
   rawModis: number;
   rawViirs: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   matchedPairs: number;
@@ -205,6 +232,9 @@ export interface MapPointSet {
   truncated: boolean;
   limit: number;
   frpAngleCorrectionPct: number | null;
+  filters: ConfidenceFilterInfo;
+  /** From `/api/points`, measured on the period's whole year; null outside the tropical belt. */
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 export interface MonthCell {
@@ -233,6 +263,8 @@ export interface YearlyPoint {
   matched: number;
   modisOnly: number;
   viirsOnly: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   firstDate: string | null;
@@ -262,6 +294,8 @@ export interface RegionTotals {
   viirs: number;
   raw: number;
   harmonized: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   matched: number;
@@ -356,10 +390,27 @@ export interface EffortFactor {
   snppAquaHighIntensityRatio?: number | null;
 }
 
+/**
+ * MODIS equatorial swath-gap flag (effort metadata): the region has area inside 30°S–30°N, where
+ * gaps between MODIS orbits miss ~10.7–12.5% of monthly VIIRS FRP. Informational unless
+ * `compensation` is set, in which case VIIRS-less tropical totals were scaled by `factor` once.
+ */
+export interface TropicalSwathGapInfo {
+  beltAbsLat: number;
+  /** Area-weighted share of the region inside the belt, 0 < share <= 1. */
+  beltShare: number;
+  basis: "bbox" | "detections";
+  swathGapKm: number;
+  missedFrpLowPct: number;
+  missedFrpHighPct: number;
+  compensation: { factor: number; factorSigma: number } | null;
+}
+
 export interface EffortInfo {
   reliable: boolean;
   reason: string | null;
   factors: EffortFactor[];
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 export interface ReportInfo {
@@ -407,6 +458,8 @@ export interface HarmonizeResponse {
   };
   calendar: CalendarCell[];
   effort: EffortInfo;
+  uncertainty: UncertaintyInfo | null;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -458,6 +511,7 @@ export interface CompareResponse {
   frp: CompareFrp;
   merging: CompareMerging;
   vza: CompareVza;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -514,6 +568,7 @@ export interface StatsResponse {
   frp: StatsFrp;
   temporal: StatsTemporal;
   pipeline: StatsPipeline;
+  filters: ConfidenceFilterInfo;
   warnings: string[];
   report: ReportInfo;
 }
@@ -561,6 +616,8 @@ export interface CalendarApiResponse {
   counts: CalendarCounts;
   calendar: CalendarCell[];
   effort: EffortInfo;
+  uncertainty: UncertaintyInfo | null;
+  filters: ConfidenceFilterInfo;
   fetch: ArchiveFetchSummary;
   warnings: string[];
 }

@@ -9,12 +9,33 @@ import { formatApiError, PIPELINE_COPY } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
 import { DEFAULT_PIPELINE_CONFIG, hasPipelineOverrides } from "../../lib/pipelineOverrides";
+import { summarizePointStages } from "../../lib/receiptCounts";
 import { useAppStore } from "../../store/useAppStore";
 import styles from "./Receipt.module.css";
 
 export interface ReceiptProps {
   /** Referenced by the opener's aria-controls. */
   id: string;
+}
+
+function MaskRows({ staticMasked, samaRemoved }: { staticMasked: number; samaRemoved: number }) {
+  const { t, fmt } = useCopy();
+  return (
+    <>
+      {staticMasked > 0 && (
+        <div className={styles.row}>
+          <dt>{t("receiptStaticMasked")}</dt>
+          <dd>{fmt.signed(-staticMasked)}</dd>
+        </div>
+      )}
+      {samaRemoved > 0 && (
+        <div className={styles.row}>
+          <dt>{t("receiptSamaRemoved")}</dt>
+          <dd>{fmt.signed(-samaRemoved)}</dd>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function Receipt({ id }: ReceiptProps) {
@@ -37,7 +58,7 @@ export default function Receipt({ id }: ReceiptProps) {
       : points.period.month === null
         ? String(points.period.year)
         : fmt.monthYear({ year: points.period.year, month: points.period.month }, "long");
-  const periodRawTotal = points.stages.rawModis + points.stages.rawViirs;
+  const periodCounts = summarizePointStages(points.stages);
 
   return (
     <motion.section
@@ -77,6 +98,7 @@ export default function Receipt({ id }: ReceiptProps) {
               <dt>{t("receiptRaw")}</dt>
               <dd>{fmt.number(totals.raw)}</dd>
             </div>
+            <MaskRows staticMasked={totals.staticMasked} samaRemoved={totals.samaRemoved} />
             <div className={styles.row}>
               <dt>{t("receiptDedup")}</dt>
               <dd>{fmt.signed(-totals.doubleCounts)}</dd>
@@ -88,6 +110,7 @@ export default function Receipt({ id }: ReceiptProps) {
           </dl>
           <h3 className={styles.subtitle}>{t("receiptStagesTitle")}</h3>
           <dl className={styles.lines}>
+            <MaskRows staticMasked={totals.staticMasked} samaRemoved={totals.samaRemoved} />
             {stages
               .filter((stage) => stage.removed !== undefined)
               .map((stage) => (
@@ -108,23 +131,27 @@ export default function Receipt({ id }: ReceiptProps) {
               <dl className={styles.lines}>
                 <div className={styles.row}>
                   <dt>{t("receiptRaw")}</dt>
-                  <dd>{fmt.number(periodRawTotal)}</dd>
+                  <dd>{fmt.number(periodCounts.raw)}</dd>
                 </div>
+                <MaskRows
+                  staticMasked={periodCounts.staticMasked}
+                  samaRemoved={periodCounts.samaRemoved}
+                />
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.dedup.name)}</dt>
-                  <dd>{fmt.signed(-points.stages.interscanRemoved)}</dd>
+                  <dd>{fmt.signed(-periodCounts.interscanRemoved)}</dd>
                 </div>
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.fleet.name)}</dt>
-                  <dd>{fmt.signed(-points.stages.fleetMerged)}</dd>
+                  <dd>{fmt.signed(-periodCounts.fleetMerged)}</dd>
                 </div>
                 <div className={styles.row}>
                   <dt>{t(PIPELINE_COPY.match.name)}</dt>
-                  <dd>{fmt.signed(-points.stages.matchedPairs)}</dd>
+                  <dd>{fmt.signed(-periodCounts.matchedPairs)}</dd>
                 </div>
                 <div className={styles.totalRow}>
                   <dt>{t("receiptUnique")}</dt>
-                  <dd>{fmt.number(points.stages.harmonized)}</dd>
+                  <dd>{fmt.number(periodCounts.harmonized)}</dd>
                 </div>
                 {points.frpAngleCorrectionPct !== null && (
                   <div className={styles.row}>

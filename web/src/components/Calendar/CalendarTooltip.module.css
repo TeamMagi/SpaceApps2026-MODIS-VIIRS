@@ -64,3 +64,12 @@
     animation: none;
   }
 }
+
+.frpLine,
+.nativeLine {
+  display: block;
+}
+
+.nativeLine {
+  color: var(--color-text-muted);
+}

@@ -45,7 +45,8 @@ SpaceApps2026-MODIS-VIIRS/
 ## 7 Aşamalı Harmonizasyon Pipeline
 
 ```
-1. Ingest        → FIRMS API'den ham veri çekme (MODIS + VIIRS)
+1. Ingest        → FIRMS API'den ham veri çekme (MODIS + VIIRS); type != 0 atılır
+   Ön filtre     → (ops.) SAMA gece VIIRS filtresi, kalıcı sıcak hücre maskesi
 2. Dedup         → İnterscan duplikatları temizleme (|Δt|<8s, overlap>30%)
 3. VZA Correction → MODIS FRP'yi görüş açısına göre düzeltme
 4. Spatial Harm. → H3 grid üzerinde mekansal birleştirme
@@ -53,6 +54,20 @@ SpaceApps2026-MODIS-VIIRS/
 6. Quality Fusion → Kalite-öncelikli birleştirme (VIIRS tercihli)
 7. Calendar      → Aylık yanma takvimi çıktısı
 ```
+
+**Tropikal swath boşluğu (C10):** `effort.rs` bölgenin `30°G–30°K` kuşağındaki alan ağırlıklı payını hesaplayıp `tropical_swath_gap` bayrağı üretir (MODIS yörünge arası `388.1 km` boşluk, aylık VIIRS FRP'sinin `%10.7–12.5`'i `[14]`). Varsayılan olarak yalnızca bilgi notudur. Opsiyonel telafi (`uncertainty.tropical_swath_gap_compensation`) açılırsa `calendar.rs` yalnızca VIIRS'siz ayların kuşak içi `total_frp` katkısını `k_c × g` ile bir kez çarpar ve `g` yayılımını sistematik belirsizliğe ekler. `k_c` yalnızca iki sensörün birlikte gözlediği hücre-günlerinden ölçüldüğü ve Ω sayıları MODIS-gözlemlenebilir birimde tuttuğu için kayıp çift sayılmaz (ayrıntı: `docs/API.md`, "effort.tropical_swath_gap").
+
+### Ön filtre: kalıcı sıcak hücre maskesi ve SAMA
+
+FIRMS C2 aylık dosyalarında `type` alanı sürüm 1-2'de tutarsızdır (VIIRS C2 375 m User Guide v1.2, Bölüm 6.1); belirgin statik kaynaklar sıkça `type 0` olarak gelir. `static_mask.rs`, bir H3 r7 hücresini (~5 km²) aynı takvim yılında ≥ `min_active_months` farklı ayda tespit içeriyorsa o yıl için eler. Eşik, `crates/firms-client/examples/static_mask_check.rs` (`tools/static-mask-check.sh`) ile 2013-2024 arşivinden ölçüldü: FIRMS'in kendi `type 1/2` hücreleri doğruluk için alt sınır kabul edildi.
+
+| Eşik (ay) | Nijerya | Irak | Cezayir | Rusya | ABD | Endonezya | Avustralya | Portekiz |
+|---|---|---|---|---|---|---|---|---|
+| Elenenlerin FIRMS statik hücrede olma payı, 8 ay | %86 | %89 | %95 | %91 | %79 | %69 | %62 | %100 |
+| aynı, 10 ay (varsayılan) | %89 | %96 | %96 | %93 | %89 | %89 | %84 | %100 |
+| Elenen `type 0` payı, 10 ay | %0.21 | %13.4 | %19.7 | %0.98 | %1.17 | %0.80 | %0.06 | %0.05 |
+
+SAMA gece filtresi (`sama.rs`, kutu 110°B–11°D, 55°G–7°K; VFIRE375 SPA v1.9) varsayılan kapalıdır: C2 algoritması SAMA düşük güven piksellerini zaten çıkarır ve arşivde kutu içi gece VIIRS tespitleri (Brezilya, Bolivya, Paraguay, Arjantin 2018-2020, tüm VIIRS'in %22-36'sı) gündüz ve kutu dışı geceye göre daha az yalıtıktır (%1.0-2.6, gündüz %3.9-7.2, Meksika gece %3.7). MODIS'e uygulanmaz (anomali yalnız VIIRS I4 için belgelenmiştir; MODIS gece yalıtık oranı %0.4-1.1).
 
 ## Teknoloji Stack
 

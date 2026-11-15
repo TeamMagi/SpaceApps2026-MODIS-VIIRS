@@ -10,6 +10,7 @@ import {
   type ApiErrorKind,
   type BBox,
   type CalendarApiResponse,
+  type ConfidenceFilterInfo,
   type CalendarCell,
   type CliffSummary,
   type CompareResponse,
@@ -19,6 +20,7 @@ import {
   type HarmonizeResponse,
   type PipelineConfig,
   type PipelineOverrides,
+  type MinConfidence,
   type PointStages,
   type RawHotspot,
   type RawPoint,
@@ -27,6 +29,8 @@ import {
   type SensorFamily,
   type SeriesCoverage,
   type StatsResponse,
+  type TropicalSwathGapInfo,
+  type UncertaintyInfo,
   type YearlyPoint,
   type YearSpan,
 } from "../types";
@@ -68,6 +72,26 @@ interface WireErrorBody {
   error?: unknown;
 }
 
+interface WireConfidenceFilter {
+  min_confidence: string;
+  excluded_detections: number;
+}
+
+interface WireAtmosphericBias {
+  direction: string;
+  low_pct: number;
+  high_pct: number;
+  applied: boolean;
+  note: string;
+  refs: string[];
+}
+
+interface WireUncertainty {
+  confidence: number;
+  note: string;
+  atmospheric_bias?: WireAtmosphericBias | null;
+}
+
 interface WireRegionSummary {
   id: string;
   name: string;
@@ -98,6 +122,8 @@ interface WireSeriesYear {
   matched: number;
   modis_only: number;
   viirs_only: number;
+  static_masked?: number;
+  sama_removed?: number;
   interscan_removed: number;
   fleet_merged?: number;
   first_date: string | null;
@@ -185,6 +211,8 @@ interface WireHarmonizedPoint {
 interface WirePointStages {
   raw_modis: number;
   raw_viirs: number;
+  static_masked?: number;
+  sama_removed?: number;
   interscan_removed: number;
   fleet_merged?: number;
   matched_pairs: number;
@@ -224,6 +252,8 @@ interface WirePointsResponse {
   bbox: BBox | null;
   config?: WirePipelineConfig;
   config_overridden?: boolean;
+  filters?: WireConfidenceFilter | null;
+  tropical_swath_gap?: unknown;
 }
 
 // --- NRT wire types ---
@@ -264,6 +294,7 @@ interface WireEffortInfo {
   reliable: boolean;
   reason: string | null;
   factors: WireEffortFactor[];
+  tropical_swath_gap?: unknown;
 }
 
 interface WireReportInfo {
@@ -309,6 +340,8 @@ interface WireHarmonizeResponse {
   };
   calendar: WireCalendarCell[];
   effort: WireEffortInfo;
+  uncertainty?: WireUncertainty | null;
+  filters?: WireConfidenceFilter | null;
   warnings: string[];
   report: WireReportInfo;
 }
@@ -349,6 +382,7 @@ interface WireCompareResponse {
     mean_frp_reduction_pct: number | null;
     mean_frp_adjustment_pct: number | null;
   };
+  filters?: WireConfidenceFilter | null;
   warnings: string[];
   report: WireReportInfo;
 }
@@ -391,6 +425,7 @@ interface WireStatsResponse {
     sources_queried: number;
     sources_failed: number;
   };
+  filters?: WireConfidenceFilter | null;
   warnings: string[];
   report: WireReportInfo;
 }
@@ -420,6 +455,8 @@ interface WireCalendarApiResponse {
   };
   calendar: WireCalendarCell[];
   effort: WireEffortInfo;
+  uncertainty?: WireUncertainty | null;
+  filters?: WireConfidenceFilter | null;
   fetch: {
     per_sensor_year: {
       sensor: string;
@@ -484,6 +521,8 @@ export interface PointsResponse {
   bbox: BBox | null;
   config?: PipelineConfig;
   configOverridden?: boolean;
+  filters: ConfidenceFilterInfo;
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 // --- Core HTTP helper --------------------------------------------------------
@@ -697,7 +736,82 @@ function adaptEffortInfo(w: WireEffortInfo): EffortInfo {
       omegaHighIntensity: f.omega_high_intensity,
       snppAquaHighIntensityRatio: f.snpp_aqua_high_intensity_ratio,
     })),
+    tropicalSwathGap: adaptTropicalSwathGap(w.tropical_swath_gap),
   };
+}
+
+function finiteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+/** Older servers send no flag, and a malformed one is dropped rather than shown half-read. */
+export function adaptTropicalSwathGap(w: unknown): TropicalSwathGapInfo | null {
+  if (!isRecord(w)) return null;
+  const { belt_abs_lat, belt_share, basis, swath_gap_km, missed_frp_low_pct, missed_frp_high_pct } = w;
+  if (
+    !finiteNumber(belt_abs_lat) ||
+    !finiteNumber(belt_share) ||
+    belt_share <= 0 ||
+    belt_share > 1 ||
+    (basis !== "bbox" && basis !== "detections") ||
+    !finiteNumber(swath_gap_km) ||
+    !finiteNumber(missed_frp_low_pct) ||
+    !finiteNumber(missed_frp_high_pct)
+  ) {
+    return null;
+  }
+  const comp = w.compensation;
+  return {
+    beltAbsLat: belt_abs_lat,
+    beltShare: belt_share,
+    basis,
+    swathGapKm: swath_gap_km,
+    missedFrpLowPct: missed_frp_low_pct,
+    missedFrpHighPct: missed_frp_high_pct,
+    compensation:
+      isRecord(comp) && finiteNumber(comp.factor) && finiteNumber(comp.factor_sigma)
+        ? { factor: comp.factor, factorSigma: comp.factor_sigma }
+        : null,
+  };
+}
+
+export function adaptMinConfidence(value: string | null | undefined): MinConfidence {
+  return value === "nominal" || value === "high" ? value : "low";
+}
+
+/** Older servers send no `filters`; they never filtered, so that reads as `low` with nothing excluded. */
+function adaptFilters(w: WireConfidenceFilter | null | undefined): ConfidenceFilterInfo {
+  return {
+    minConfidence: adaptMinConfidence(w?.min_confidence),
+    excludedDetections: typeof w?.excluded_detections === "number" ? w.excluded_detections : 0,
+  };
+}
+
+function adaptUncertainty(w: WireUncertainty | null | undefined): UncertaintyInfo | null {
+  if (!isRecord(w)) return null;
+  const bias = w.atmospheric_bias;
+  return {
+    confidence: w.confidence,
+    note: w.note,
+    atmosphericBias:
+      isRecord(bias) && bias.direction === "downward"
+        ? {
+            direction: "downward",
+            lowPct: bias.low_pct,
+            highPct: bias.high_pct,
+            applied: bias.applied,
+            note: bias.note,
+            refs: Array.isArray(bias.refs) ? bias.refs : [],
+          }
+        : null,
+  };
+}
+
+/** `low` is the server default; omitting it keeps unfiltered URLs (and their caches) unchanged. */
+function setMinConfidenceParam(query: Record<string, string>, minConfidence: MinConfidence | undefined): void {
+  if (minConfidence && minConfidence !== "low") {
+    query.min_confidence = minConfidence;
+  }
 }
 
 function adaptReportInfo(w: WireReportInfo): ReportInfo {
@@ -839,6 +953,8 @@ export async function fetchSeries(region: string, signal?: AbortSignal): Promise
         matched: y.matched,
         modisOnly: y.modis_only,
         viirsOnly: y.viirs_only,
+        staticMasked: y.static_masked ?? 0,
+        samaRemoved: y.sama_removed ?? 0,
         interscanRemoved: y.interscan_removed,
         fleetMerged: y.fleet_merged ?? 0,
         firstDate: y.first_date ?? null,
@@ -899,6 +1015,7 @@ export interface FetchPointsParams {
   month?: number | null;
   overrides?: PipelineOverrides;
   defaults?: PipelineConfig;
+  minConfidence?: MinConfidence;
 }
 
 export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
@@ -914,6 +1031,7 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
   if (params.month !== undefined && params.month !== null) {
     query.month = String(params.month);
   }
+  setMinConfidenceParam(query, params.minConfidence);
   try {
     const wire = await requestJson<WirePointsResponse>("/points", query, signal);
     if (
@@ -969,6 +1087,8 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       stages: {
         rawModis: wire.stages.raw_modis,
         rawViirs: wire.stages.raw_viirs,
+        staticMasked: wire.stages.static_masked ?? 0,
+        samaRemoved: wire.stages.sama_removed ?? 0,
         interscanRemoved: wire.stages.interscan_removed,
         fleetMerged: wire.stages.fleet_merged ?? 0,
         matchedPairs: wire.stages.matched_pairs,
@@ -977,6 +1097,8 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       bbox: wire.bbox ?? null,
       config: adaptedConfig,
       configOverridden: Boolean(wire.config_overridden),
+      filters: adaptFilters(wire.filters),
+      tropicalSwathGap: adaptTropicalSwathGap(wire.tropical_swath_gap),
     };
   } catch (err: unknown) {
     if (handleLiveFetchError(err, signal)) {
@@ -997,6 +1119,7 @@ export interface HarmonizeParams {
   start?: string;
   end?: string;
   includeRaw?: boolean;
+  minConfidence?: MinConfidence;
 }
 
 function harmonizeQuery(params: HarmonizeParams): Record<string, string> {
@@ -1010,6 +1133,7 @@ function harmonizeQuery(params: HarmonizeParams): Record<string, string> {
   if (params.start != null) q.start = params.start;
   if (params.end != null) q.end = params.end;
   if (params.includeRaw != null) q.include_raw = String(params.includeRaw);
+  setMinConfidenceParam(q, params.minConfidence);
   return q;
 }
 
@@ -1074,6 +1198,8 @@ export async function fetchHarmonize(
     },
     calendar: wire.calendar.map(adaptCalendarCell),
     effort: adaptEffortInfo(wire.effort),
+    uncertainty: adaptUncertainty(wire.uncertainty),
+    filters: adaptFilters(wire.filters),
     warnings: wire.warnings,
     report: adaptReportInfo(wire.report),
   };
@@ -1119,6 +1245,7 @@ export async function fetchCompare(
       maxFactor: wire.vza.max_factor,
       meanFrpAdjustmentPct: wire.vza.mean_frp_adjustment_pct,
     },
+    filters: adaptFilters(wire.filters),
     warnings: wire.warnings,
     report: adaptReportInfo(wire.report),
   };
@@ -1160,6 +1287,7 @@ export async function fetchStats(
       sourcesQueried: wire.pipeline.sources_queried,
       sourcesFailed: wire.pipeline.sources_failed,
     },
+    filters: adaptFilters(wire.filters),
     warnings: wire.warnings,
     report: adaptReportInfo(wire.report),
   };
@@ -1173,6 +1301,7 @@ export interface CalendarParams {
   south?: number;
   east?: number;
   north?: number;
+  minConfidence?: MinConfidence;
 }
 
 export async function fetchCalendar(
@@ -1186,6 +1315,7 @@ export async function fetchCalendar(
   if (params.south != null) q.south = String(params.south);
   if (params.east != null) q.east = String(params.east);
   if (params.north != null) q.north = String(params.north);
+  setMinConfidenceParam(q, params.minConfidence);
   const wire = await requestLiveJson<WireCalendarApiResponse>("/calendar", q, signal);
   return {
     country: wire.country,
@@ -1207,6 +1337,8 @@ export async function fetchCalendar(
     },
     calendar: wire.calendar.map(adaptCalendarCell),
     effort: adaptEffortInfo(wire.effort),
+    uncertainty: adaptUncertainty(wire.uncertainty),
+    filters: adaptFilters(wire.filters),
     fetch: {
       perSensorYear: wire.fetch.per_sensor_year.map((s) => ({
         sensor: adaptSensor(s.sensor),

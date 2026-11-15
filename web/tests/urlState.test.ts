@@ -13,6 +13,7 @@ const BASE_STATE: UrlState = {
   mode: "harmonized",
   month: { year: 2021, month: 8 },
   lang: "en",
+  minConfidence: "low",
 };
 
 check("urlState omits default palette from serialized hash", () => {

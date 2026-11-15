@@ -3,6 +3,7 @@ mod derived_cache;
 #[cfg(test)]
 mod integration_tests;
 mod pipeline_config;
+mod sensitivity;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
@@ -24,7 +25,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::EnvFilter;
 
 use pyrosync_core::config::PipelineConfig;
-use pyrosync_core::effort::EffortFactor;
+use pyrosync_core::effort::{EffortFactor, TropicalSwathGap};
 use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, SeasonYear,
     SeasonalityYear, Sensor,
@@ -183,6 +184,7 @@ struct HarmonizeParams {
     end: Option<String>,
     include_raw: Option<bool>,
     format: Option<String>,
+    min_confidence: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -194,6 +196,7 @@ struct CalendarParams {
     south: Option<f64>,
     east: Option<f64>,
     north: Option<f64>,
+    min_confidence: Option<String>,
 }
 
 #[derive(Clone, Serialize)]
@@ -237,16 +240,105 @@ struct ArchiveFetchSummary {
     failures: Vec<SensorYearFailure>,
 }
 
+/// Lowest FIRMS confidence class a request keeps. `Low` keeps everything (the default).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum MinConfidence {
+    #[default]
+    Low,
+    Nominal,
+    High,
+}
+
+impl MinConfidence {
+    pub(crate) fn parse(value: Option<&str>) -> Result<Self, String> {
+        match value.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
+            None | Some("low") => Ok(Self::Low),
+            Some("nominal") => Ok(Self::Nominal),
+            Some("high") => Ok(Self::High),
+            Some(other) => Err(format!(
+                "Invalid 'min_confidence' value '{other}': expected 'low', 'nominal' or 'high'"
+            )),
+        }
+    }
+
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Low => "low",
+            Self::Nominal => "nominal",
+            Self::High => "high",
+        }
+    }
+
+    fn floor(self) -> Confidence {
+        match self {
+            Self::Low => Confidence::Low,
+            Self::Nominal => Confidence::Nominal,
+            Self::High => Confidence::High,
+        }
+    }
+
+    /// Drops detections below the floor and returns how many were dropped.
+    pub(crate) fn retain(self, rows: &mut Vec<Hotspot>) -> usize {
+        let before = rows.len();
+        let floor = self.floor();
+        rows.retain(|h| h.confidence >= floor);
+        before - rows.len()
+    }
+}
+
+/// Echo of the confidence filter applied before harmonization, so a filtered response labels itself.
+#[derive(Clone, Copy, Debug, Default, Serialize)]
+pub(crate) struct ConfidenceFilter {
+    pub(crate) min_confidence: MinConfidence,
+    pub(crate) excluded_detections: usize,
+}
+
+// FIRMS ships neither the 4 µm optical depth (τ_4) nor the cloud fraction (β), so FRP can only be
+// biased low by smoke and cloud: thin smoke attenuates by exp(-τ_4) [16, Eq. 12], cloud hides
+// ~22% (MODIS) / ~12% (VIIRS) of fire energy globally [16, Sec. 4.1] and ~7% regionally [23, Eq. 2].
+const ATMOSPHERIC_BIAS_LOW_PCT: u8 = 7;
+const ATMOSPHERIC_BIAS_HIGH_PCT: u8 = 22;
+const ATMOSPHERIC_BIAS_NOTE: &str = "One-sided downward bias, not applied to the numbers: FIRMS carries no smoke optical depth (tau_4) or cloud fraction (beta), so FRP may be underestimated by roughly 7-22%. Thin smoke attenuates FRP by exp(-tau_4); cloud cover hides ~22% (MODIS) and ~12% (VIIRS) of fire energy globally and ~7% in regional inventories. The frp_lower/frp_upper bands do not include this term.";
+const ATMOSPHERIC_BIAS_REFS: [&str; 3] = [
+    "[16] Observation operator for MODIS and VIIRS FRP (GMD, 2026), Sec. 4.1: cloud loss MODIS 22% / VIIRS 12%",
+    "[16] Observation operator for MODIS and VIIRS FRP (GMD, 2026), Eq. 12: thin-smoke attenuation exp(-tau_4)",
+    "[23] 3D biomass burning emission inventory for SE/E Asia (2025), Eq. 2: regional cloud-fraction loss ~7%",
+];
+
+#[derive(Serialize)]
+struct AtmosphericBias {
+    direction: &'static str,
+    low_pct: u8,
+    high_pct: u8,
+    applied: bool,
+    note: &'static str,
+    refs: [&'static str; 3],
+}
+
+fn atmospheric_bias() -> AtmosphericBias {
+    AtmosphericBias {
+        direction: "downward",
+        low_pct: ATMOSPHERIC_BIAS_LOW_PCT,
+        high_pct: ATMOSPHERIC_BIAS_HIGH_PCT,
+        applied: false,
+        note: ATMOSPHERIC_BIAS_NOTE,
+        refs: ATMOSPHERIC_BIAS_REFS,
+    }
+}
+
 #[derive(Serialize)]
 struct UncertaintyMetadata {
     confidence: f64,
     note: String,
+    atmospheric_bias: AtmosphericBias,
 }
 
 fn uncertainty_metadata(params: &pyrosync_core::uncertainty::UncertaintyParams) -> UncertaintyMetadata {
     UncertaintyMetadata {
         confidence: pyrosync_core::uncertainty::confidence_from_z(params.z),
         note: UNCERTAINTY_NOTE.to_string(),
+        atmospheric_bias: atmospheric_bias(),
     }
 }
 
@@ -281,6 +373,7 @@ struct CalendarResponse {
     seasonality: SeasonalityResponse,
     effort: EffortResponse,
     uncertainty: UncertaintyMetadata,
+    filters: ConfidenceFilter,
     fetch: ArchiveFetchSummary,
     warnings: Vec<String>,
 }
@@ -293,6 +386,7 @@ struct ValidatedCalendarQuery {
     archive_min_year: i32,
     archive_max_year: i32,
     bbox: Option<BBox>,
+    min_confidence: MinConfidence,
 }
 
 #[derive(Serialize)]
@@ -354,6 +448,8 @@ struct EffortResponse {
     reliable: bool,
     reason: Option<String>,
     factors: Vec<EffortFactor>,
+    /// `null` outside 30°S-30°N; see `pyrosync_core::effort::TropicalSwathGap`.
+    tropical_swath_gap: Option<TropicalSwathGap>,
 }
 
 #[derive(Serialize)]
@@ -371,6 +467,8 @@ struct CompareCounts {
     harmonized_total: usize,
     removed_total: usize,
     removed_pct: f64,
+    static_masked: usize,
+    sama_removed: usize,
     by_source: SourceBreakdown,
 }
 
@@ -411,6 +509,7 @@ struct CompareResponse {
     frp: CompareFrp,
     merging: CompareMerging,
     vza: CompareVza,
+    filters: ConfidenceFilter,
     warnings: Vec<String>,
     report: ReportResponse,
 }
@@ -419,6 +518,8 @@ struct CompareResponse {
 struct StatsTotals {
     raw_detections: usize,
     harmonized_records: usize,
+    static_masked: usize,
+    sama_removed: usize,
     calendar_months: usize,
     distinct_platforms: usize,
 }
@@ -475,20 +576,23 @@ struct StatsResponse {
     frp: StatsFrp,
     temporal: StatsTemporal,
     pipeline: StatsPipeline,
+    filters: ConfidenceFilter,
     warnings: Vec<String>,
     report: ReportResponse,
 }
 
 struct PipelineRun {
-    #[allow(dead_code)] // Retained for upcoming /api/compare and /api/stats endpoints.
     bbox: BBox,
     modis_count: usize,
     viirs_count: usize,
+    static_masked: usize,
+    sama_removed: usize,
     // Keep filtered raw detections even when include_raw=false so /api/compare and /api/stats can reuse this helper.
     raw: Vec<Hotspot>,
     harmonized: Vec<HarmonizedHotspot>,
     calendar: Vec<CalendarCell>,
     report: ReportResponse,
+    filters: ConfidenceFilter,
 }
 
 #[derive(Debug)]
@@ -693,6 +797,7 @@ fn build_router(
         .route("/harmonize", get(harmonize))
         .route("/availability", get(availability))
         .route("/compare", get(compare))
+        .route("/sensitivity", get(sensitivity::sensitivity))
         .route("/stats", get(stats))
         .route("/calendar", get(calendar))
         .route("/export", get(export))
@@ -1023,9 +1128,20 @@ async fn availability(
     Ok(Json(entries))
 }
 
+fn mask_from_builder(
+    config: &PipelineConfig,
+    builder: pyrosync_core::static_mask::StaticMaskBuilder,
+) -> Option<pyrosync_core::static_mask::StaticMask> {
+    config
+        .static_mask
+        .enabled
+        .then(|| builder.build(&config.static_mask))
+}
+
 async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<PipelineRun, ApiError> {
     let bbox = parse_bbox(params)?;
     let window = parse_time_window(params)?;
+    let min_confidence = parse_min_confidence(params.min_confidence.as_deref())?;
     let client = require_firms_client(state)?;
 
     let (mut modis, mut viirs, report) = match window {
@@ -1048,6 +1164,17 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
     pyrosync_firms::parse::retain_wildfires(&mut modis);
     pyrosync_firms::parse::retain_wildfires(&mut viirs);
 
+    // Build static-mask persistence before confidence filtering so chronic low-confidence
+    // flare cells still accumulate active months, matching /api/calendar, /api/series, and /api/points.
+    let mut mask_builder = pyrosync_core::static_mask::StaticMaskBuilder::new();
+    if state.config.static_mask.enabled {
+        mask_builder.add_detections(&modis);
+        mask_builder.add_detections(&viirs);
+    }
+    let static_mask = mask_from_builder(&state.config, mask_builder);
+
+    let excluded_detections = min_confidence.retain(&mut modis) + min_confidence.retain(&mut viirs);
+
     let modis_count = modis.len();
     let viirs_count = viirs.len();
 
@@ -1055,7 +1182,13 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
     raw.extend(modis.iter().cloned());
     raw.extend(viirs.iter().cloned());
 
-    let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &state.config);
+    let links = pyrosync_core::harmonize::harmonize_with_links_masked(
+        modis,
+        viirs,
+        &state.config,
+        static_mask.as_ref(),
+    );
+    let harmonized = links.hotspots;
     let calendar = pyrosync_core::calendar::build_calendar_with(
         &harmonized,
         &state.config.uncertainty,
@@ -1082,10 +1215,16 @@ async fn run_pipeline(state: &AppState, params: &HarmonizeParams) -> Result<Pipe
         bbox,
         modis_count,
         viirs_count,
+        static_masked: links.static_masked,
+        sama_removed: links.sama_removed,
         raw,
         harmonized,
         calendar,
         report: report_json,
+        filters: ConfidenceFilter {
+            min_confidence,
+            excluded_detections,
+        },
     })
 }
 
@@ -1194,6 +1333,7 @@ fn build_effort_and_warnings_from_counts(
     singular: &str,
     plural: &str,
     uncovered: &[(String, String)],
+    tropical_swath_gap: Option<TropicalSwathGap>,
 ) -> (EffortResponse, Vec<String>) {
     let (reason, mut warnings) =
         build_warnings_from_counts(failure_count, singular, plural, uncovered);
@@ -1204,6 +1344,7 @@ fn build_effort_and_warnings_from_counts(
         reliable: reason.is_none(),
         reason,
         factors: pyrosync_core::effort::estimate_effort(harmonized),
+        tropical_swath_gap,
     };
 
     (effort, warnings)
@@ -1213,6 +1354,7 @@ fn build_effort_and_warnings(
     harmonized: &[HarmonizedHotspot],
     calendar: &[CalendarCell],
     report: &ReportResponse,
+    tropical_swath_gap: Option<TropicalSwathGap>,
 ) -> (EffortResponse, Vec<String>) {
     build_effort_and_warnings_from_counts(
         harmonized,
@@ -1221,6 +1363,7 @@ fn build_effort_and_warnings(
         "FIRMS request",
         "FIRMS requests",
         &report.uncovered,
+        tropical_swath_gap,
     )
 }
 
@@ -1228,17 +1371,24 @@ fn normalize_zero(v: f64) -> f64 {
     if v == 0.0 { 0.0 } else { v }
 }
 
-fn build_cache_key(route: &str, bbox: &BBox, window: &TimeWindow, include_raw: bool) -> String {
+fn build_cache_key(
+    route: &str,
+    bbox: &BBox,
+    window: &TimeWindow,
+    include_raw: bool,
+    min_confidence: MinConfidence,
+) -> String {
     let window_part = match window {
         TimeWindow::Days(days) => format!("days={}", days.get()),
         TimeWindow::Range { start, end } => format!("start={start}&end={end}"),
     };
     format!(
-        "{route}|{},{},{},{}|{window_part}|raw={include_raw}",
+        "{route}|{},{},{},{}|{window_part}|raw={include_raw}|conf={}",
         normalize_zero(bbox.west),
         normalize_zero(bbox.south),
         normalize_zero(bbox.east),
         normalize_zero(bbox.north),
+        min_confidence.as_str(),
     )
 }
 
@@ -1247,6 +1397,7 @@ fn build_calendar_cache_key(
     from: i32,
     to: i32,
     bbox: Option<&BBox>,
+    min_confidence: MinConfidence,
 ) -> String {
     let bbox_part = match bbox {
         Some(b) => format!(
@@ -1258,7 +1409,10 @@ fn build_calendar_cache_key(
         ),
         None => "none".to_string(),
     };
-    format!("calendar|{country}|from={from}&to={to}|{bbox_part}")
+    format!(
+        "calendar|{country}|from={from}&to={to}|{bbox_part}|conf={}",
+        min_confidence.as_str()
+    )
 }
 
 fn cache_ttl_for_window(window: &TimeWindow) -> Duration {
@@ -1339,7 +1493,8 @@ where
     let bbox = parse_bbox(params)?;
     let window = parse_time_window(params)?;
     let include_raw = params.include_raw.unwrap_or(false);
-    let key = build_cache_key(route, &bbox, &window, include_raw);
+    let min_confidence = parse_min_confidence(params.min_confidence.as_deref())?;
+    let key = build_cache_key(route, &bbox, &window, include_raw, min_confidence);
 
     if let Some(cached_body) = get_cached(&state.cache, &key).await {
         return Ok(json_bytes_response(cached_body, "HIT"));
@@ -1359,9 +1514,19 @@ async fn harmonize(
     ApiQuery(params): ApiQuery<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
     let uncertainty = uncertainty_metadata(&state.config.uncertainty);
+    let uncertainty_params = state.config.uncertainty.clone();
     execute_cached_pipeline(&state, "harmonize", &params, |run, include_raw| {
-        let (effort, warnings) =
-            build_effort_and_warnings(&run.harmonized, &run.calendar, &run.report);
+        let swath_gap = pyrosync_core::calendar::calendar_swath_gap(
+            Some(&run.bbox),
+            &run.harmonized,
+            &uncertainty_params,
+        );
+        let (effort, warnings) = build_effort_and_warnings(
+            &run.harmonized,
+            &run.calendar,
+            &run.report,
+            swath_gap,
+        );
         let raw = RawResponse {
             modis_count: run.modis_count,
             viirs_count: run.viirs_count,
@@ -1373,11 +1538,14 @@ async fn harmonize(
             "raw": raw,
             "harmonized": {
                 "count": run.harmonized.len(),
+                "static_masked": run.static_masked,
+                "sama_removed": run.sama_removed,
                 "hotspots": run.harmonized,
             },
             "calendar": run.calendar,
             "effort": effort,
             "uncertainty": uncertainty,
+            "filters": run.filters,
             "warnings": warnings,
             "report": run.report,
         })
@@ -1461,7 +1629,8 @@ async fn export(
     let format = ExportFormat::parse(params.format.as_deref())?;
     let bbox = parse_bbox(&params)?;
     let window = parse_time_window(&params)?;
-    let key = build_cache_key(format.route(), &bbox, &window, false);
+    let min_confidence = parse_min_confidence(params.min_confidence.as_deref())?;
+    let key = build_cache_key(format.route(), &bbox, &window, false, min_confidence);
 
     if let Some(cached_body) = get_cached(&state.cache, &key).await {
         return export_response(cached_body, format, &bbox, "HIT");
@@ -1589,6 +1758,8 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
             harmonized_total,
             removed_total,
             removed_pct,
+            static_masked: run.static_masked,
+            sama_removed: run.sama_removed,
             by_source,
         },
         frp: CompareFrp {
@@ -1604,6 +1775,7 @@ fn build_compare_response(run: PipelineRun) -> CompareResponse {
             platform_combinations,
         },
         vza,
+        filters: run.filters,
         warnings,
         report: run.report,
     }
@@ -1725,6 +1897,8 @@ fn build_stats_response(run: PipelineRun) -> StatsResponse {
         totals: StatsTotals {
             raw_detections,
             harmonized_records: run.harmonized.len(),
+            static_masked: run.static_masked,
+            sama_removed: run.sama_removed,
             calendar_months,
             distinct_platforms: distinct_platforms.len(),
         },
@@ -1742,6 +1916,7 @@ fn build_stats_response(run: PipelineRun) -> StatsResponse {
             sources_queried: queried_sources.len(),
             sources_failed: run.report.failures.len(),
         },
+        filters: run.filters,
         warnings,
         report: run.report,
     }
@@ -1812,6 +1987,7 @@ fn parse_calendar_params(params: &CalendarParams) -> Result<ValidatedCalendarQue
     let effective_to = requested_to.min(archive_max_year);
     let clamped = effective_from != requested_from || effective_to != requested_to;
     let bbox = parse_optional_bbox(params)?;
+    let min_confidence = parse_min_confidence(params.min_confidence.as_deref())?;
 
     Ok(ValidatedCalendarQuery {
         country: params.country.clone(),
@@ -1825,6 +2001,7 @@ fn parse_calendar_params(params: &CalendarParams) -> Result<ValidatedCalendarQue
         archive_min_year,
         archive_max_year,
         bbox,
+        min_confidence,
     })
 }
 
@@ -1837,6 +2014,11 @@ fn build_calendar_response(
     failures: Vec<SensorYearFailure>,
     uncertainty_params: &pyrosync_core::uncertainty::UncertaintyParams,
 ) -> CalendarResponse {
+    let swath_gap = pyrosync_core::calendar::calendar_swath_gap(
+        query.bbox.as_ref(),
+        harmonized,
+        uncertainty_params,
+    );
     let (effort, mut warnings) = build_effort_and_warnings_from_counts(
         harmonized,
         &calendar,
@@ -1844,6 +2026,7 @@ fn build_calendar_response(
         "FIRMS archive download",
         "FIRMS archive downloads",
         &[],
+        swath_gap,
     );
 
     if query.clamped {
@@ -1898,6 +2081,11 @@ fn build_calendar_response(
         calendar,
         effort,
         uncertainty: uncertainty_metadata(uncertainty_params),
+        // The caller fills in `excluded_detections`, which is only known after the archive reads.
+        filters: ConfidenceFilter {
+            min_confidence: query.min_confidence,
+            excluded_detections: 0,
+        },
         fetch: ArchiveFetchSummary {
             per_sensor_year,
             failures,
@@ -1917,7 +2105,13 @@ fn format_archive_error(err: ArchiveError) -> String {
 }
 
 enum CountryYearOutcome {
-    Found(Vec<Hotspot>),
+    /// Detections kept, the number dropped by the confidence filter, and pre-filter
+    /// static-mask month bitmasks so persistent low-confidence cells stay masked.
+    Found(
+        Vec<Hotspot>,
+        usize,
+        pyrosync_core::static_mask::StaticMaskBuilder,
+    ),
     CompleteNoFile,
 }
 
@@ -1932,6 +2126,9 @@ async fn run_calendar_pipeline(
     let mut failures = Vec::new();
     let mut attempted_any = false;
     let mut found_any_file = false;
+    let mut excluded_detections = 0usize;
+    let mut mask_builder = pyrosync_core::static_mask::StaticMaskBuilder::new();
+    let static_mask_enabled = config.static_mask.enabled;
 
     if query.years.effective_from <= query.years.effective_to {
         let semaphore = Arc::new(Semaphore::new(ARCHIVE_FETCH_CONCURRENCY));
@@ -1950,6 +2147,7 @@ async fn run_calendar_pipeline(
                 let archive = Arc::clone(archive);
                 let country = query.country.clone();
                 let bbox = query.bbox.clone();
+                let min_confidence = query.min_confidence;
 
                 let handle = tokio::spawn(async move {
                     let _permit = permit;
@@ -1968,7 +2166,18 @@ async fn run_calendar_pipeline(
                     if let Some(ref bbox) = bbox {
                         hotspots = filter_bbox(hotspots, bbox);
                     }
-                    Ok::<CountryYearOutcome, String>(CountryYearOutcome::Found(hotspots))
+                    // Build static-mask persistence from detections before confidence filtering,
+                    // matching /api/series and /api/points.
+                    let mut year_mask = pyrosync_core::static_mask::StaticMaskBuilder::new();
+                    if static_mask_enabled {
+                        year_mask.add_detections(&hotspots);
+                    }
+                    let excluded = min_confidence.retain(&mut hotspots);
+                    Ok::<CountryYearOutcome, String>(CountryYearOutcome::Found(
+                        hotspots,
+                        excluded,
+                        year_mask,
+                    ))
                 });
                 handles.push((sensor, year, handle));
             }
@@ -1976,8 +2185,10 @@ async fn run_calendar_pipeline(
 
         for (sensor, year, handle) in handles {
             match handle.await {
-                Ok(Ok(CountryYearOutcome::Found(mut hotspots))) => {
+                Ok(Ok(CountryYearOutcome::Found(mut hotspots, excluded, year_mask))) => {
                     found_any_file = true;
+                    excluded_detections += excluded;
+                    mask_builder.merge(year_mask);
                     per_sensor_year.push(SensorYearFetch {
                         sensor,
                         year,
@@ -2025,14 +2236,21 @@ async fn run_calendar_pipeline(
     let query = query.clone();
     tokio::task::spawn_blocking(move || {
         let raw_detections = modis.len() + viirs.len();
-        let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &config);
+        let mask = mask_from_builder(&config, mask_builder);
+        let harmonized = pyrosync_core::harmonize::harmonize_with_links_masked(
+            modis,
+            viirs,
+            &config,
+            mask.as_ref(),
+        )
+        .hotspots;
         let calendar_cells = pyrosync_core::calendar::build_calendar_with(
             &harmonized,
             &config.uncertainty,
             &config.calibration,
         );
 
-        build_calendar_response(
+        let mut response = build_calendar_response(
             &query,
             raw_detections,
             &harmonized,
@@ -2040,7 +2258,9 @@ async fn run_calendar_pipeline(
             per_sensor_year,
             failures,
             &config.uncertainty,
-        )
+        );
+        response.filters.excluded_detections = excluded_detections;
+        response
     })
     .await
     .map_err(|e| ApiError::internal(format!("Calendar worker failed: {e}")))
@@ -2075,6 +2295,7 @@ async fn calendar(
         query.years.requested_from,
         query.years.requested_to,
         query.bbox.as_ref(),
+        query.min_confidence,
     );
 
     if let Some(cached_body) = get_cached(&state.cache, &key).await {
@@ -2138,6 +2359,10 @@ fn validate_bbox(west: f64, south: f64, east: f64, north: f64) -> Result<BBox, A
         east,
         north,
     })
+}
+
+fn parse_min_confidence(value: Option<&str>) -> Result<MinConfidence, ApiError> {
+    MinConfidence::parse(value).map_err(ApiError::bad_request)
 }
 
 fn parse_bbox(params: &HarmonizeParams) -> Result<BBox, ApiError> {
@@ -2319,10 +2544,13 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 0,
             viirs_count: 0,
+            static_masked: 0,
+            sama_removed: 0,
             raw: Vec::new(),
             harmonized: Vec::new(),
             calendar: Vec::new(),
             report: empty_report(),
+            filters: ConfidenceFilter::default(),
         };
 
         let resp = build_compare_response(run);
@@ -2413,10 +2641,13 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 2,
             viirs_count: 3,
+            static_masked: 0,
+            sama_removed: 0,
             raw,
             harmonized,
             calendar: Vec::new(),
             report,
+            filters: ConfidenceFilter::default(),
         };
 
         let resp = build_compare_response(run);
@@ -2466,10 +2697,13 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 0,
             viirs_count: 0,
+            static_masked: 0,
+            sama_removed: 0,
             raw: Vec::new(),
             harmonized: Vec::new(),
             calendar: Vec::new(),
             report: empty_report(),
+            filters: ConfidenceFilter::default(),
         };
 
         let resp = build_stats_response(run);
@@ -2566,10 +2800,13 @@ mod tests {
             bbox: sample_bbox(),
             modis_count: 1,
             viirs_count: 3,
+            static_masked: 0,
+            sama_removed: 0,
             raw,
             harmonized,
             calendar,
             report,
+            filters: ConfidenceFilter::default(),
         };
 
         let resp = build_stats_response(run);
@@ -2663,6 +2900,7 @@ mod tests {
             end: None,
             include_raw: Some(true),
             format: None,
+            min_confidence: None,
         };
         let err = compare(State(state.clone()), ApiQuery(bad_bbox))
             .await
@@ -2679,6 +2917,7 @@ mod tests {
             end: None,
             include_raw: Some(true),
             format: None,
+            min_confidence: None,
         };
         let err = stats(State(state), ApiQuery(missing_key))
             .await
@@ -2691,10 +2930,32 @@ mod tests {
         let bbox = sample_bbox();
         let window = TimeWindow::Days(DayRange::new(2).unwrap());
 
-        let key_false = build_cache_key("harmonize", &bbox, &window, false);
-        let key_true = build_cache_key("harmonize", &bbox, &window, true);
+        let key_false = build_cache_key("harmonize", &bbox, &window, false, MinConfidence::Low);
+        let key_true = build_cache_key("harmonize", &bbox, &window, true, MinConfidence::Low);
 
         assert_ne!(key_false, key_true);
+    }
+
+    #[test]
+    fn cache_key_distinguishes_min_confidence() {
+        let bbox = sample_bbox();
+        let window = TimeWindow::Days(DayRange::new(2).unwrap());
+        let keys: BTreeSet<String> = [MinConfidence::Low, MinConfidence::Nominal, MinConfidence::High]
+            .into_iter()
+            .map(|level| build_cache_key("harmonize", &bbox, &window, false, level))
+            .collect();
+        assert_eq!(keys.len(), 3);
+    }
+
+    #[test]
+    fn min_confidence_parser_defaults_to_low_and_rejects_unknown_values() {
+        assert_eq!(MinConfidence::parse(None), Ok(MinConfidence::Low));
+        assert_eq!(MinConfidence::parse(Some("low")), Ok(MinConfidence::Low));
+        assert_eq!(MinConfidence::parse(Some("Nominal")), Ok(MinConfidence::Nominal));
+        assert_eq!(MinConfidence::parse(Some("high")), Ok(MinConfidence::High));
+        for bad in ["", "medium", "l", "n"] {
+            assert!(MinConfidence::parse(Some(bad)).is_err(), "{bad:?} should be rejected");
+        }
     }
 
     #[test]
@@ -2706,8 +2967,8 @@ mod tests {
             end: NaiveDate::from_ymd_opt(2026, 7, 3).unwrap(),
         };
 
-        let key_days = build_cache_key("harmonize", &bbox, &days_window, false);
-        let key_range = build_cache_key("harmonize", &bbox, &range_window, false);
+        let key_days = build_cache_key("harmonize", &bbox, &days_window, false, MinConfidence::Low);
+        let key_range = build_cache_key("harmonize", &bbox, &range_window, false, MinConfidence::Low);
 
         assert_ne!(key_days, key_range);
         assert!(key_days.contains("days=3"));
@@ -2812,6 +3073,7 @@ mod tests {
             end: None,
             include_raw: Some(false),
             format: None,
+            min_confidence: None,
         };
 
         // First call fails because FIRMS_API_KEY is missing; errors must never be cached.
@@ -2828,7 +3090,7 @@ mod tests {
             north: 42.0,
         };
         let window = TimeWindow::Days(DayRange::new(2).unwrap());
-        let key = build_cache_key("harmonize", &bbox, &window, false);
+        let key = build_cache_key("harmonize", &bbox, &window, false, MinConfidence::Low);
         put_cached(
             &state.cache,
             key,
@@ -2847,6 +3109,7 @@ mod tests {
             end: None,
             include_raw: Some(false),
             format: None,
+            min_confidence: None,
         };
         let resp = harmonize(State(state), ApiQuery(params))
             .await
@@ -2877,6 +3140,7 @@ mod tests {
             end: None,
             include_raw: None,
             format: format.map(str::to_string),
+            min_confidence: None,
         }
     }
 
@@ -2909,7 +3173,7 @@ mod tests {
         let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
         let bbox = sample_bbox();
         let window = TimeWindow::Days(DayRange::new(2).unwrap());
-        let key = build_cache_key("export-csv", &bbox, &window, false);
+        let key = build_cache_key("export-csv", &bbox, &window, false, MinConfidence::Low);
         let cached = b"lat,lon\r\n1,2\r\n";
         put_cached(&state.cache, key, cached, Duration::from_secs(600)).await;
 
@@ -3171,6 +3435,7 @@ mod tests {
             south,
             east,
             north,
+            min_confidence: None,
         }
     }
 
@@ -3398,11 +3663,12 @@ mod tests {
             north: 42.0,
         };
 
-        let k_tr_full = build_calendar_cache_key("Turkey", 2000, 2025, None);
-        let k_gr_full = build_calendar_cache_key("Greece", 2000, 2025, None);
-        let k_tr_sub = build_calendar_cache_key("Turkey", 2015, 2020, None);
-        let k_tr_bbox_a = build_calendar_cache_key("Turkey", 2000, 2025, Some(&bbox_a));
-        let k_tr_bbox_b = build_calendar_cache_key("Turkey", 2000, 2025, Some(&bbox_b));
+        let k_tr_full = build_calendar_cache_key("Turkey", 2000, 2025, None, MinConfidence::Low);
+        let k_gr_full = build_calendar_cache_key("Greece", 2000, 2025, None, MinConfidence::Low);
+        let k_tr_sub = build_calendar_cache_key("Turkey", 2015, 2020, None, MinConfidence::Low);
+        let k_tr_bbox_a = build_calendar_cache_key("Turkey", 2000, 2025, Some(&bbox_a), MinConfidence::Low);
+        let k_tr_bbox_b = build_calendar_cache_key("Turkey", 2000, 2025, Some(&bbox_b), MinConfidence::Low);
+        let k_tr_nominal = build_calendar_cache_key("Turkey", 2000, 2025, None, MinConfidence::Nominal);
 
         let keys = [
             &k_tr_full,
@@ -3410,9 +3676,10 @@ mod tests {
             &k_tr_sub,
             &k_tr_bbox_a,
             &k_tr_bbox_b,
+            &k_tr_nominal,
         ];
         let unique: BTreeSet<&String> = keys.into_iter().collect();
-        assert_eq!(unique.len(), 5);
+        assert_eq!(unique.len(), 6);
     }
 
     #[tokio::test]
@@ -3420,7 +3687,7 @@ mod tests {
         let state = test_state(1024 * 1024, Some(Duration::from_secs(300)));
         assert!(state.firms.is_none());
 
-        let key = build_calendar_cache_key("Turkey", 2000, 2025, None);
+        let key = build_calendar_cache_key("Turkey", 2000, 2025, None, MinConfidence::Low);
         put_cached(
             &state.cache,
             key,
@@ -3780,6 +4047,8 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
             bbox: sample_bbox(),
             modis_count: 2,
             viirs_count: 0,
+            static_masked: 0,
+            sama_removed: 0,
             raw: vec![
                 make_raw(Sensor::ModisTerra, 100.0, 10, DayNight::Day),
                 make_raw(Sensor::ModisAqua, 100.0, 11, DayNight::Day),
@@ -3812,6 +4081,7 @@ latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,
             ],
             calendar: Vec::new(),
             report: empty_report(),
+            filters: ConfidenceFilter::default(),
         };
 
         let resp = build_compare_response(run);

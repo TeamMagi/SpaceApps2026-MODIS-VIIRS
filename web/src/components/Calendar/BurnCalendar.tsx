@@ -4,7 +4,8 @@
  *
  * Visual geometry (slice radii, dashed normal arcs, colours) follows
  * `geometryHarmonized`; numerical text and ARIA labels only flip when `revealAnswer` is true
- * so Raw mode never leaks the harmonized answer.
+ * so Raw mode never leaks the harmonized answer. In tropical regions a short swath-gap note
+ * (sensor limitation only, from `/api/points` effort metadata) sits under the detail line.
  */
 
 import {
@@ -21,8 +22,9 @@ import {
 } from "react";
 import { formatApiError } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
+import { calendarFrpKey, useCalendarFrp } from "../../hooks/useCalendarFrp";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
-import { useRegionData, useSelectedMonthCell } from "../../hooks/useRegionData";
+import { useMapPoints, useRegionData, useSelectedMonthCell } from "../../hooks/useRegionData";
 import { useYearPlayback } from "../../hooks/useYearPlayback";
 import { relativeUncertaintyWidth, WIDE_UNCERTAINTY_THRESHOLD } from "../../lib/format";
 import {
@@ -50,6 +52,7 @@ import { useAppStore } from "../../store/useAppStore";
 import type { MonthCell } from "../../types";
 import styles from "./BurnCalendar.module.css";
 import CalendarTooltip, { formatCalendarCellText } from "./CalendarTooltip";
+import { formatSwathGapNote } from "./swathGapNote";
 
 interface SliceCssVars extends CSSProperties {
   "--slice-raw": string;
@@ -78,8 +81,11 @@ function BurnCalendar() {
   }));
   const { status, error, retry, yearly, months, firstYear, lastYear, defaultMapMonth } =
     useRegionData();
+  const { tropicalSwathGap } = useMapPoints();
+  const swathGapNote = useMemo(() => formatSwathGapNote(tropicalSwathGap, t), [tropicalSwathGap, t]);
   const selected = useSelectedMonthCell();
   const region = useAppStore((state) => state.region);
+  const calendarFrp = useCalendarFrp(region);
   const toggleMonth = useAppStore((state) => state.toggleMonth);
   const calendarYear = useAppStore((state) => state.calendarYear);
   const setCalendarYear = useAppStore((state) => state.setCalendarYear);
@@ -566,7 +572,7 @@ function BurnCalendar() {
                   data-wide-uncert={isWideUncert ? "true" : undefined}
                   aria-pressed={isSelectedFilter}
                   aria-disabled={!cell.hasData ? true : undefined}
-                  aria-label={formatCalendarCellText(cell, revealAnswer, copy)}
+                  aria-label={formatCalendarCellText(cell, revealAnswer, copy, calendarFrp.get(calendarFrpKey(cell.year, cell.month)))}
                   aria-describedby={isTooltipCell ? tooltipId : undefined}
                   className={styles.sliceGroup}
                   style={sliceStyle}
@@ -682,6 +688,7 @@ function BurnCalendar() {
           <p className={styles.detailLine} role="status" aria-live="polite">
             {detailLineText}
           </p>
+          {swathGapNote && <p className={styles.swathGapNote}>{swathGapNote}</p>}
         </div>
       </div>
 
@@ -707,6 +714,7 @@ function BurnCalendar() {
           id={tooltipId}
           cell={tooltipCell}
           harmonized={revealAnswer}
+          frp={calendarFrp.get(calendarFrpKey(tooltipCell.year, tooltipCell.month))}
           position={tooltipAnchor.position}
           bounds={tooltipAnchor.bounds}
         />

@@ -1,4 +1,4 @@
-import type { PipelineConfig, PipelineOverrideKey, PipelineOverrides } from "../types";
+import type { MinConfidence, PipelineConfig, PipelineOverrideKey, PipelineOverrides } from "../types";
 
 export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   dedup: {
@@ -254,15 +254,16 @@ export function uiOverridesToQueryParams(
   return overridesToQueryParams(uiOverridesToOverrides(ui), defaults);
 }
 
-/** Builds a canonical cache key for `/api/points` that includes normalized overrides. */
+/** Builds a canonical cache key for `/api/points` that includes confidence filter and normalized overrides. */
 export function makePointsKey(
   region: string,
   year: number,
   month: number | null,
   overrides?: PipelineOverrides,
   defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+  minConfidence: MinConfidence = "low",
 ): string {
-  const base = `${region}:${year}:${month ?? "all"}`;
+  const base = `${region}:${year}:${month ?? "all"}:${minConfidence}`;
   const normalized = normalizeOverrides(overrides, defaults);
   const parts: string[] = [];
   for (const spec of PIPELINE_PARAM_SPECS) {

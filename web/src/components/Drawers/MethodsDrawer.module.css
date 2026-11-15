@@ -3,6 +3,16 @@
   font-size: var(--font-size-sm);
 }
 
+.fullPage {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
+}
+
+.fullPageLink {
+  color: var(--color-text);
+  text-underline-offset: 2px;
+}
+
 .heading {
   margin: var(--space-3) 0 var(--space-1);
   font-size: var(--font-size-xs);

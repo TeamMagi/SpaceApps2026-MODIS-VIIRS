@@ -4,7 +4,8 @@
  * Built on Drawer (id "methods"). Sections in order:
  *   1. methodsCliffDef — the ONLY place "sensor cliff" is defined; methodsSensors.
  *   2. methodsStepsTitle — the 6 applied steps + 1 planned step (H3 grid).
- *   3. methodsLimitsTitle — disclaimer (the honest limit, said once) + archive source citation.
+ *   3. methodsLimitsTitle — disclaimer (the honest limit, said once), the one-sided smoke/cloud
+ *      FRP bias, why low-confidence detections can be excluded, and the archive source citation.
  *   4. methodsSettingsTitle — theme (themeDark/themeLight → store.setTheme) and presentationMode
  *      (store.setPresentation).
  */
@@ -17,6 +18,7 @@ import { isPlannedStage, PIPELINE_ORDER } from "../../hooks/useHarmonizeTransiti
 import { useRegionData } from "../../hooks/useRegionData";
 import { useAppStore } from "../../store/useAppStore";
 import type { Palette, PipelineStageKey, Theme } from "../../types";
+import MethodsLink from "../Methods/MethodsLink";
 import Drawer from "./Drawer";
 import styles from "./MethodsDrawer.module.css";
 
@@ -70,6 +72,9 @@ export default function MethodsDrawer() {
   return (
     <Drawer id="methods" title={t("methodsTitle")} description={t("methodsCliffDef")}>
       <p className={styles.lead}>{t("methodsSensors")}</p>
+      <p className={styles.fullPage}>
+        <MethodsLink className={styles.fullPageLink}>{t("methodsFullPageLink")}</MethodsLink>
+      </p>
 
       <h3 className={styles.heading}>{t("methodsStepsTitle")}</h3>
       <ol className={styles.steps} role="list">
@@ -176,6 +181,8 @@ export default function MethodsDrawer() {
         {t("uncertaintyConfidenceLabel")}. {t("uncertaintyWideBody")}
       </p>
       <p className={styles.bodyText}>{t("uncertaintyModelCaveat")}</p>
+      <p className={styles.bodyText}>{t("methodsAtmosphereNote")}</p>
+      <p className={styles.bodyText}>{t("methodsLowConfidenceNote")}</p>
 
       <div className={styles.references} aria-label={t("methodsSensors")}>
         <p className={styles.refSource}>{sourceCitation}</p>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { formatRegionName, t } from "../content/copy";
+import { aggregateRegionTotals } from "../lib/receiptCounts";
 import {
   areOverridesEqual,
   DEFAULT_PIPELINE_CONFIG,
@@ -31,7 +32,9 @@ import type {
   AsyncStatus,
   BriefingMetrics,
   DataMode,
+  ConfidenceFilterInfo,
   Lang,
+  MinConfidence,
   MapPointSet,
   MonthCell,
   MonthRef,
@@ -131,8 +134,14 @@ let activePointsKey: string | null = null;
 let pointsToken = 0;
 const pointsSubscribers = new Map<string, number>();
 
-function makeLastGoodKey(region: string, year: number, month: number | null, dataMode: DataMode): string {
-  return `${region}:${year}:${month ?? "all"}:${dataMode}`;
+function makeLastGoodKey(
+  region: string,
+  year: number,
+  month: number | null,
+  dataMode: DataMode,
+  minConfidence: MinConfidence,
+): string {
+  return `${region}:${year}:${month ?? "all"}:${dataMode}:${minConfidence}`;
 }
 
 function invalidateRegionCaches(): void {
@@ -290,6 +299,7 @@ function reconcileRegionWithList(regions: readonly RegionSummary[]): void {
         palette: s.palette,
         data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
         overrides: s.pipelineOverrides,
+        minConfidence: s.minConfidence,
       },
       s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
     );
@@ -504,9 +514,10 @@ function startPointsFetch(
   month: number | null,
   overrides: PipelineOverrides,
   defaults: PipelineConfig,
+  minConfidence: MinConfidence,
   force: boolean,
 ): void {
-  const key = makePointsKey(region, year, month, overrides, defaults);
+  const key = makePointsKey(region, year, month, overrides, defaults, minConfidence);
   if (activePointsKey && activePointsKey !== key) {
     const prev = pointsCache.get(activePointsKey);
     if (prev?.controller) {
@@ -537,7 +548,7 @@ function startPointsFetch(
   });
   emitChange();
 
-  fetchPoints({ region, year, month, overrides, defaults }, controller.signal)
+  fetchPoints({ region, year, month, overrides, defaults, minConfidence }, controller.signal)
     .then((res) => {
       if (controller.signal.aborted || token !== pointsToken || activePointsKey !== key) return;
       const isEmpty = (res.raw.length === 0 && res.harmonized.length === 0) || res.bbox === null;
@@ -548,7 +559,7 @@ function startPointsFetch(
         controller: null,
       });
       if (!isEmpty) {
-        lastGoodPoints.set(makeLastGoodKey(region, year, month, dataMode), res);
+        lastGoodPoints.set(makeLastGoodKey(region, year, month, dataMode, minConfidence), res);
       }
       evictCacheLru(pointsCache, pointsSubscribers, MAX_POINTS_CACHE);
       emitChange();
@@ -573,10 +584,11 @@ function acquirePoints(
   month: number | null,
   overrides: PipelineOverrides,
   defaults: PipelineConfig,
+  minConfidence: MinConfidence,
 ): string {
-  const key = makePointsKey(region, year, month, overrides, defaults);
+  const key = makePointsKey(region, year, month, overrides, defaults, minConfidence);
   pointsSubscribers.set(key, (pointsSubscribers.get(key) ?? 0) + 1);
-  startPointsFetch(region, year, month, overrides, defaults, false);
+  startPointsFetch(region, year, month, overrides, defaults, minConfidence, false);
   return key;
 }
 
@@ -602,16 +614,21 @@ function releasePoints(key: string): void {
 const EMPTY_STAGES: PointStages = {
   rawModis: 0,
   rawViirs: 0,
+  staticMasked: 0,
+  samaRemoved: 0,
   interscanRemoved: 0,
   fleetMerged: 0,
   matchedPairs: 0,
   harmonized: 0,
 };
+const UNFILTERED: ConfidenceFilterInfo = { minConfidence: "low", excludedDetections: 0 };
 const EMPTY_TOTALS: RegionTotals = {
   modis: 0,
   viirs: 0,
   raw: 0,
   harmonized: 0,
+  staticMasked: 0,
+  samaRemoved: 0,
   interscanRemoved: 0,
   fleetMerged: 0,
   matched: 0,
@@ -868,6 +885,7 @@ export function useRegionData(): UseRegionDataResult {
   const dataMode = useAppStore((state) => state.dataMode);
   const serverConfig = useAppStore((state) => state.serverConfig);
   const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
+  const minConfidence = useAppStore((state) => state.minConfidence);
   const regionsEmpty = regionsEntry.status === "empty";
 
   useEffect(() => {
@@ -947,12 +965,12 @@ export function useRegionData(): UseRegionDataResult {
   const defaultMapMonth = useMemo(() => findDefaultMapMonth(activeSeries), [activeSeries]);
   const targetMonth = selectedMonth ?? defaultMapMonth;
   const pointsKey = targetMonth
-    ? makePointsKey(regionId, targetMonth.year, targetMonth.month, committedOverrides, defaults)
+    ? makePointsKey(regionId, targetMonth.year, targetMonth.month, committedOverrides, defaults, minConfidence)
     : null;
   const pointsEntry = pointsKey ? pointsCache.get(pointsKey) : undefined;
   const fallbackPoints =
     targetMonth && pointsEntry?.status === "error" && pointsEntry.error?.status === 400
-      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetMonth.year, targetMonth.month, dataMode))
+      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetMonth.year, targetMonth.month, dataMode, minConfidence))
       : undefined;
   const candidatePoints =
     pointsEntry?.status === "ready" && pointsEntry.data
@@ -1002,39 +1020,8 @@ export function useRegionData(): UseRegionDataResult {
     }
 
     const years = activeSeries.years;
-
-    let modis = 0;
-    let viirs = 0;
-    let raw = 0;
-    let harmonized = 0;
-    let interscanRemoved = 0;
-    let fleetMerged = 0;
-    let matched = 0;
-
-    for (const y of years) {
-      modis += y.rawModis;
-      viirs += y.rawViirs;
-      raw += y.raw;
-      harmonized += y.harmonized;
-      interscanRemoved += y.interscanRemoved;
-      fleetMerged += y.fleetMerged;
-      matched += y.matched;
-    }
-
-    const doubleCounts = Math.max(0, raw - harmonized);
-    const doubleCountShare = raw > 0 ? doubleCounts / raw : 0;
-
-    const totals: RegionTotals = {
-      modis,
-      viirs,
-      raw,
-      harmonized,
-      interscanRemoved,
-      fleetMerged,
-      matched,
-      doubleCounts,
-      doubleCountShare,
-    };
+    const totals = aggregateRegionTotals(years);
+    const { interscanRemoved, fleetMerged, matched, doubleCountShare } = totals;
 
     const months = buildCalendarMonths(activeSeries, firstYear, lastYear);
 
@@ -1131,6 +1118,7 @@ export function useMapPoints(): UseMapPointsResult {
   const dataMode = useAppStore((state) => state.dataMode);
   const serverConfig = useAppStore((state) => state.serverConfig);
   const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
+  const minConfidence = useAppStore((state) => state.minConfidence);
   const {
     defaultMapMonth,
     status: seriesStatus,
@@ -1144,16 +1132,16 @@ export function useMapPoints(): UseMapPointsResult {
   const targetMonthNum = targetMonth?.month ?? null;
   const pointsKey =
     targetYear !== null
-      ? makePointsKey(regionId, targetYear, targetMonthNum, committedOverrides, defaults)
+      ? makePointsKey(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence)
       : null;
 
   useEffect(() => {
     if (targetYear === null || seriesStatus === "error" || seriesStatus === "empty") return;
-    const key = acquirePoints(regionId, targetYear, targetMonthNum, committedOverrides, defaults);
+    const key = acquirePoints(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence);
     return () => {
       releasePoints(key);
     };
-  }, [regionId, targetYear, targetMonthNum, seriesStatus, dataMode, pointsKey, defaults]);
+  }, [regionId, targetYear, targetMonthNum, minConfidence, seriesStatus, dataMode, pointsKey, defaults]);
 
   const retry = useCallback(() => {
     if (regionsEntry.status === "error" || regionsEntry.status === "empty" || !regionsEntry.data) {
@@ -1164,9 +1152,9 @@ export function useMapPoints(): UseMapPointsResult {
       return;
     }
     if (targetYear !== null) {
-      startPointsFetch(regionId, targetYear, targetMonthNum, committedOverrides, defaults, true);
+      startPointsFetch(regionId, targetYear, targetMonthNum, committedOverrides, defaults, minConfidence, true);
     }
-  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, regionId, defaults]);
+  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, minConfidence, regionId, defaults]);
 
   const entry = pointsKey ? pointsCache.get(pointsKey) : undefined;
   const rawPointsError = entry?.error ?? null;
@@ -1177,7 +1165,7 @@ export function useMapPoints(): UseMapPointsResult {
       : null;
   const fallbackData =
     targetYear !== null && entry?.status === "error" && rawPointsError?.status === 400
-      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetYear, targetMonthNum, dataMode)) ?? null
+      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetYear, targetMonthNum, dataMode, minConfidence)) ?? null
       : null;
 
   let status: AsyncStatus;
@@ -1224,6 +1212,8 @@ export function useMapPoints(): UseMapPointsResult {
         truncated: false,
         limit: 4000,
         frpAngleCorrectionPct: null,
+        filters: UNFILTERED,
+        tropicalSwathGap: null,
       };
     }
 
@@ -1242,6 +1232,8 @@ export function useMapPoints(): UseMapPointsResult {
       truncated: activeData.truncated,
       limit: activeData.limit,
       frpAngleCorrectionPct,
+      filters: activeData.filters,
+      tropicalSwathGap: activeData.tropicalSwathGap,
     };
   }, [
     activeData,

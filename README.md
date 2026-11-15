@@ -35,6 +35,12 @@ As the satellite fleet expands (SNPP in 2012, NOAA-20 in 2018, NOAA-21 in 2023),
 
 The key demo feature: users can switch between raw multi-sensor data (showing the sensor cliff and biases) and the harmonized view (showing a consistent timeline) — making the problem and solution visible in a single action.
 
+In harmonized mode, the burning calendar tooltip leads with `frp_per_detection_eq` (MODIS-equivalent FRP per detection) and shows total FRP with its likely range. The native-pixel `mean_frp` is shown only as a secondary detail, because it drops at the 2012 VIIRS transition.
+
+### Methods Page
+
+`#/methods` explains the pipeline inside the app. It shows the seven stages as a keyboard-navigable accordion (what, why, parameters, input → output) with live values from `GET /api/config`. When the backend is unreachable it falls back to the documented defaults. The page also has the `R_rel(θ)` VZA curve with its uncertainty band, an H3 grid figure, the reference list and the model-estimate disclaimer. Sections can be linked directly as `#/methods/{pipeline|vza|h3|references|limits}`. The page uses hash routing so links still work when the server has no SPA fallback.
+
 ## Architecture
 
 ```text

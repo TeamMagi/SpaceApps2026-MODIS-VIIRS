@@ -1,11 +1,14 @@
 use crate::calibration::calibration_for;
 use crate::config::CalibrationConfig;
-use crate::effort::monthly_omegas;
-use crate::models::{CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
+use crate::effort::{
+    SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap, in_tropical_belt, monthly_omegas,
+    swath_gap_compensation,
+};
+use crate::models::{BBox, CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear, Sensor};
 use crate::quality::month_quality_flags;
 use crate::uncertainty::{
-    SensorFamily, UncertaintyParams, mean_frp_uncertainty, relative_uncertainty_for_obs,
-    total_frp_uncertainty,
+    SensorFamily, UncertaintyParams, combine_factors, mean_frp_uncertainty,
+    relative_uncertainty_for_obs, total_frp_uncertainty,
 };
 use chrono::Datelike;
 use std::collections::HashMap;
@@ -96,6 +99,7 @@ pub fn mean_frp_with_uncertainty(
 /// - mean_frp_raw: average raw fire radiative power (`frp`)
 /// - mean_frp_lower / mean_frp_upper: combined analytical confidence bounds for `mean_frp`
 /// - total_frp: monthly total `frp_corrected`, scaled by `k_c(lat)` in VIIRS-less cells when enabled
+///   (and, only if `tropical_swath_gap_compensation` is on, by the swath-gap factor for |lat| <= 30°)
 /// - total_frp_lower / total_frp_upper: combined analytical confidence bounds for `total_frp`
 /// - frp_per_detection_eq: MODIS-equivalent FRP per normalized detection (`total_frp / count_normalized`)
 /// - anomaly: deviation from multi-year normalized monthly mean (if enough data)
@@ -174,17 +178,33 @@ pub fn build_calendar_with(
             // suppresses k_c for the whole cell, and k_c is a zonal mean ratio rather than a
             // per-fire sub-pixel reconstruction.
             let apply_completeness = calibration.enabled && !bucket.has_viirs;
-            let (total_frp, total_estimate) = if apply_completeness {
+            // Optional tropical swath-gap compensation, gated exactly like k_c. It never double
+            // counts with k_c: `calibration_grid_check` measures k_c only on 1°×1° cell-days that
+            // BOTH Aqua MODIS and S-NPP observed within 20 min, so a cell-day inside a MODIS
+            // inter-orbit gap (no MODIS rows) never enters the ratio; k_c is within-swath
+            // small-fire completeness and the gap loss [14, Sec. 4.4] is disjoint from it, so the
+            // product k_c × g applies each loss once. Cells with VIIRS get neither factor because
+            // their ViirsOnly detections already fill the gaps, and Ω/counts are never touched
+            // (see `effort::flag_tropical_swath_gap`).
+            let apply_swath_gap = uncertainty.tropical_swath_gap_compensation && !bucket.has_viirs;
+            let (total_frp, total_estimate) = if apply_completeness || apply_swath_gap {
+                let gap = swath_gap_compensation();
                 let mut sum = 0.0_f64;
                 let mut total_items = Vec::with_capacity(bucket.records.len());
                 for rec in &bucket.records {
                     let cal = calibration_for(rec.lat, calibration);
-                    let contrib = rec.frp_corrected * cal.ratio;
+                    let completeness = (cal.ratio, cal.ratio_sigma);
+                    let factor = if apply_swath_gap && in_tropical_belt(rec.lat) {
+                        combine_factors(completeness, (gap.factor, gap.factor_sigma))
+                    } else {
+                        completeness
+                    };
+                    let contrib = rec.frp_corrected * factor.0;
                     sum += contrib;
                     let rel = relative_uncertainty_for_obs(
                         rec.vza_factor,
                         rec.sensor_family,
-                        Some((cal.ratio, cal.ratio_sigma)),
+                        Some(factor),
                         rec.n_obs,
                         uncertainty,
                     );
@@ -226,6 +246,29 @@ pub fn build_calendar_with(
     compute_anomalies(&mut cells);
     cells.sort_by_key(|a| (a.year, a.month));
     cells
+}
+
+/// Calendar `tropical_swath_gap` metadata: the belt share is taken from the query `bbox` when
+/// given, otherwise from the latitude extent of `hotspots`; `None` when the region has no area
+/// in 30°S-30°N. The compensation it reports matches what [`build_calendar_with`] applied with
+/// the same `uncertainty` params.
+pub fn calendar_swath_gap(
+    bbox: Option<&BBox>,
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+) -> Option<TropicalSwathGap> {
+    let compensate = uncertainty.tropical_swath_gap_compensation;
+    if let Some(b) = bbox {
+        return flag_tropical_swath_gap(b.south, b.north, SwathGapBasis::Bbox, compensate);
+    }
+    let (south, north) = hotspots
+        .iter()
+        .map(|h| h.lat)
+        .filter(|lat| lat.is_finite())
+        .fold(None, |acc: Option<(f64, f64)>, lat| {
+            Some(acc.map_or((lat, lat), |(s, n)| (s.min(lat), n.max(lat))))
+        })?;
+    flag_tropical_swath_gap(south, north, SwathGapBasis::Detections, compensate)
 }
 
 /// Fill `anomaly` with the z-score of each cell's `count_normalized` against the same
@@ -1118,5 +1161,162 @@ mod tests {
             ]
         );
         assert_eq!(cells[3].quality_flags, vec![QualityFlag::ModisOrbitalDrift]);
+    }
+
+    /// Three VIIRS-less months (tropics, belt edge, mid-latitude) plus one tropical VIIRS month.
+    fn swath_gap_series() -> Vec<HarmonizedHotspot> {
+        let at = |year, month, lat: f64| {
+            let mut h = make_harmonized(year, month, 1, 100.0, 100.0);
+            h.lat = lat;
+            h
+        };
+        let mut viirs = at(2014, 7, 10.0);
+        viirs.platforms = vec![Sensor::ViirsSNPP];
+        viirs.source = HotspotSource::ViirsOnly;
+        vec![
+            at(2010, 7, 10.0),
+            at(2010, 8, -30.0),
+            at(2010, 9, 40.0),
+            at(2014, 7, 10.0),
+            viirs,
+        ]
+    }
+
+    fn compensation_on() -> UncertaintyParams {
+        UncertaintyParams {
+            tropical_swath_gap_compensation: true,
+            ..UncertaintyParams::default()
+        }
+    }
+
+    #[test]
+    fn swath_gap_compensation_off_keeps_totals_and_bands_identical_to_k_c_only() {
+        let hotspots = swath_gap_series();
+        let default_cells = build_calendar(&hotspots);
+        let explicit_off = build_calendar_with(
+            &hotspots,
+            &UncertaintyParams {
+                tropical_swath_gap_compensation: false,
+                ..UncertaintyParams::default()
+            },
+            &CalibrationConfig::default(),
+        );
+        assert_eq!(
+            serde_json::to_string(&default_cells).unwrap(),
+            serde_json::to_string(&explicit_off).unwrap()
+        );
+
+        // Pin the k_c-only arithmetic exactly (bitwise): 100 × 1.11 with the k_c sigma alone.
+        let p = UncertaintyParams::default();
+        let rel = relative_uncertainty_for_obs(None, SensorFamily::Modis, Some((1.11, 0.08)), 1, &p);
+        let expected = total_frp_uncertainty(&[(100.0 * 1.11, rel.random, rel.systematic)], &p).unwrap();
+        let trop = &default_cells[0];
+        assert_eq!(trop.total_frp, 100.0 * 1.11);
+        assert_eq!(trop.total_frp_lower, Some(expected.lower));
+        assert_eq!(trop.total_frp_upper, Some(expected.upper));
+        // VIIRS month: plain sum, no factor at all.
+        assert_eq!(default_cells[3].total_frp, 200.0);
+    }
+
+    #[test]
+    fn swath_gap_compensation_on_applies_factor_once_in_belt_and_widens_band() {
+        let hotspots = swath_gap_series();
+        let off = build_calendar(&hotspots);
+        let on = build_calendar_with(&hotspots, &compensation_on(), &CalibrationConfig::default());
+        let g = swath_gap_compensation();
+        assert_eq!(on.len(), off.len());
+
+        // Tropics and the inclusive -30° edge: k_c × g, applied exactly once.
+        for i in [0, 1] {
+            let expected = off[i].total_frp * g.factor;
+            assert!((on[i].total_frp - expected).abs() < 1e-9, "{i}: {}", on[i].total_frp);
+            let rel_w = |c: &CalendarCell| {
+                (c.total_frp_upper.unwrap() - c.total_frp_lower.unwrap()) / c.total_frp
+            };
+            assert!(rel_w(&on[i]) > rel_w(&off[i]), "band must widen at {i}");
+            assert!(on[i].total_frp_lower.unwrap() < on[i].total_frp);
+            assert!(on[i].total_frp_upper.unwrap() > on[i].total_frp);
+        }
+        assert!((on[0].total_frp - 100.0 * 1.11 * g.factor).abs() < 1e-9);
+
+        // Outside the belt and in the VIIRS month nothing changes, bit for bit.
+        for i in [2, 3] {
+            assert_eq!(on[i].total_frp, off[i].total_frp);
+            assert_eq!(on[i].total_frp_lower, off[i].total_frp_lower);
+            assert_eq!(on[i].total_frp_upper, off[i].total_frp_upper);
+        }
+
+        // Counts, Ω, native-pixel means and anomalies are never compensated.
+        for (a, b) in on.iter().zip(&off) {
+            assert_eq!(a.count, b.count);
+            assert_eq!(a.effort_omega, b.effort_omega);
+            assert_eq!(a.count_normalized, b.count_normalized);
+            assert_eq!(a.mean_frp, b.mean_frp);
+            assert_eq!(a.mean_frp_lower, b.mean_frp_lower);
+            assert_eq!(a.anomaly, b.anomaly);
+        }
+
+        // With k_c disabled the gap factor alone applies, still once.
+        let no_kc = CalibrationConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let gap_only = build_calendar_with(&hotspots, &compensation_on(), &no_kc);
+        assert!((gap_only[0].total_frp - 100.0 * g.factor).abs() < 1e-9);
+        assert_eq!(gap_only[2].total_frp, 100.0);
+    }
+
+    #[test]
+    fn belt_edge_detection_is_inclusive_at_30_degrees_only() {
+        let at = |month, lat: f64| {
+            let mut h = make_harmonized(2010, month, 1, 100.0, 100.0);
+            h.lat = lat;
+            h
+        };
+        let hotspots = [at(6, 30.0), at(7, 30.0001), at(8, 29.9999)];
+        let cal_off = CalibrationConfig {
+            enabled: false,
+            ..Default::default()
+        };
+        let cells = build_calendar_with(&hotspots, &compensation_on(), &cal_off);
+        let g = swath_gap_compensation().factor;
+        assert!((cells[0].total_frp - 100.0 * g).abs() < 1e-9);
+        assert_eq!(cells[1].total_frp, 100.0);
+        assert!((cells[2].total_frp - 100.0 * g).abs() < 1e-9);
+    }
+
+    #[test]
+    fn calendar_swath_gap_uses_bbox_then_detection_extent() {
+        let off = UncertaintyParams::default();
+        let bbox = |south, north| BBox {
+            west: -60.0,
+            south,
+            east: -40.0,
+            north,
+        };
+
+        let brazil = calendar_swath_gap(Some(&bbox(-34.0, 6.0)), &[], &off).unwrap();
+        assert_eq!(brazil.basis, SwathGapBasis::Bbox);
+        assert!(brazil.belt_share > 0.9 && brazil.belt_share < 1.0);
+        assert_eq!(brazil.compensation, None);
+        assert_eq!((brazil.missed_frp_low_pct, brazil.missed_frp_high_pct), (10.7, 12.5));
+
+        // The bbox wins over detections that would say otherwise.
+        let tropical_rows = swath_gap_series();
+        assert!(calendar_swath_gap(Some(&bbox(36.0, 42.0)), &tropical_rows, &off).is_none());
+
+        // Without a bbox the detections' latitude span is used.
+        let from_rows = calendar_swath_gap(None, &tropical_rows, &off).unwrap();
+        assert_eq!(from_rows.basis, SwathGapBasis::Detections);
+        let expected = crate::effort::tropical_belt_share(-30.0, 40.0);
+        assert!((from_rows.belt_share - expected).abs() < 1e-12);
+
+        let turkey = make_harmonized(2010, 7, 1, 10.0, 10.0);
+        assert!(calendar_swath_gap(None, &[turkey], &off).is_none());
+        assert!(calendar_swath_gap(None, &[], &off).is_none());
+
+        let on = calendar_swath_gap(Some(&bbox(-10.0, 5.0)), &[], &compensation_on()).unwrap();
+        assert_eq!(on.belt_share, 1.0);
+        assert_eq!(on.compensation, Some(swath_gap_compensation()));
     }
 }

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { DEFAULT_PIPELINE_CONFIG } from "../lib/pipelineOverrides";
+import { isRouteHash } from "../lib/route";
 import { parseHash, serializeHash, syncUrlHash, type UrlState } from "../lib/urlState";
 import { useAppStore, type AppState } from "../store/useAppStore";
 
@@ -12,14 +13,15 @@ function urlStateOf(state: AppState): UrlState {
     palette: state.palette,
     data: state.dataMode === "demo" && state.dataModeSource === "manual" ? "demo" : undefined,
     overrides: state.pipelineOverrides,
+    minConfidence: state.minConfidence,
   };
 }
 
 /**
- * Keeps region, committed mode, selected month, language, palette, pipeline overrides and manual
- * demo flag in `location.hash` so any view is a shareable link. The store reads the hash once at
- * load; this hook writes on change (replaceState, so toggling does not flood the back button) and
- * applies manual hash edits. Mount once (App does).
+ * Keeps region, committed mode, selected month, language, palette, pipeline overrides, manual
+ * demo flag and the confidence filter in `location.hash` so any view is a shareable link. The
+ * store reads the hash once at load; this hook writes on change (replaceState, so toggling does
+ * not flood the back button) and applies manual hash edits. Mount once (App does).
  */
 export function useUrlSync(): void {
   useEffect(() => {
@@ -38,7 +40,8 @@ export function useUrlSync(): void {
         state.dataMode !== prev.dataMode ||
         state.dataModeSource !== prev.dataModeSource ||
         state.pipelineOverrides !== prev.pipelineOverrides ||
-        state.serverConfig !== prev.serverConfig
+        state.serverConfig !== prev.serverConfig ||
+        state.minConfidence !== prev.minConfidence
       ) {
         // Read fresh state: the transition clock sets state from inside listeners, so `state`
         // may already be stale by the time this listener runs.
@@ -47,6 +50,7 @@ export function useUrlSync(): void {
     });
 
     const onHashChange = () => {
+      if (isRouteHash(window.location.hash)) return;
       const state = useAppStore.getState();
       const defaults = state.serverConfig ?? DEFAULT_PIPELINE_CONFIG;
       if (window.location.hash === serializeHash(urlStateOf(state), defaults)) return;

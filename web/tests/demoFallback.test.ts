@@ -14,6 +14,7 @@ const BASE_STATE: UrlState = {
   mode: "harmonized",
   month: { year: 2021, month: 8 },
   lang: "en",
+  minConfidence: "low",
 };
 
 check("buildDemoRegions returns one region consistent with mockSeries and synthetic source", () => {
@@ -74,6 +75,8 @@ check("buildDemoPoints covers fixture year/month and returns well-formed empty r
   assert.deepEqual(uncoveredYear.stages, {
     rawModis: 0,
     rawViirs: 0,
+    staticMasked: 0,
+    samaRemoved: 0,
     interscanRemoved: 0,
     fleetMerged: 0,
     matchedPairs: 0,

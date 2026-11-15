@@ -1,4 +1,13 @@
-import { memo, useLayoutEffect, useRef, type RefObject } from "react";
+import {
+  memo,
+  useCallback,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
+} from "react";
 import { useCopy, type CopyApi } from "../../hooks/useCopy";
 import {
   formatFrpInterval,
@@ -13,6 +22,7 @@ import {
   type RawPoint,
 } from "../../types";
 import type { ViewportSize } from "./engine/types";
+import FootprintLens from "./FootprintLens";
 import styles from "./PointDetail.module.css";
 
 export interface PointDetailProps {
@@ -24,6 +34,8 @@ export interface PointDetailProps {
   readonly screenY: number;
   readonly viewportSize: ViewportSize;
   readonly onClose: () => void;
+  /** Loaded raw detections, so the footprint lens can find the VIIRS pixels inside a MODIS pixel. */
+  readonly rawPoints: readonly RawPoint[];
   /** Lets a caller re-anchor the card every frame (see `applyPointCardAnchor`) without re-rendering it. */
   readonly cardRef?: RefObject<HTMLDivElement | null>;
 }
@@ -137,15 +149,43 @@ function PointDetail({
   screenY,
   viewportSize,
   onClose,
+  rawPoints,
   cardRef: externalCardRef,
 }: PointDetailProps) {
   const copy = useCopy();
   const { lang, t, fmt } = copy;
   const localCardRef = useRef<HTMLDivElement | null>(null);
   const cardRef = externalCardRef ?? localCardRef;
+  const lensToggleRef = useRef<HTMLButtonElement | null>(null);
+  const [lensOpen, setLensOpen] = useState(false);
+  const lensId = useId();
 
   const showHarmonized = revealAnswer && harmPoint !== null;
   const activePoint = showHarmonized ? harmPoint : rawPoint;
+
+  // Raw mode decides from the raw detection alone, so the button itself cannot hint at the harmonized source.
+  const canShowFootprintLens = showHarmonized
+    ? harmPoint.source === HotspotSource.Matched ||
+      harmPoint.source === HotspotSource.ModisOnly
+    : rawPoint !== null && rawPoint.sensor === "MODIS";
+
+  const showFootprintLens = canShowFootprintLens && lensOpen;
+
+  const handleCloseLens = useCallback(() => {
+    setLensOpen(false);
+    lensToggleRef.current?.focus();
+  }, []);
+
+  // Esc closes the lens first and stops there, so the map does not also drop the selection.
+  const handleLensKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== "Escape" || !lensOpen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      handleCloseLens();
+    },
+    [lensOpen, handleCloseLens],
+  );
 
   const anchor = pointCardAnchor(screenX, screenY, viewportSize);
   const { placement } = anchor;
@@ -167,6 +207,7 @@ function PointDetail({
       ref={cardRef}
       className={styles.card}
       data-placement={placement}
+      data-lens-open={showFootprintLens ? "true" : undefined}
       data-map-ui="true"
       role="region"
       aria-label={showHarmonized ? t("mapDetailTitleHarmonized") : t("mapDetailTitleRaw")}
@@ -291,6 +332,33 @@ function PointDetail({
             <p className={styles.uncertCaption}>{t("uncertaintyRawNote")}</p>
           </>
         )
+      )}
+
+      {canShowFootprintLens && (
+        <div className={styles.lensFooter} onKeyDown={handleLensKeyDown}>
+          <button
+            ref={lensToggleRef}
+            type="button"
+            className={styles.lensToggle}
+            aria-expanded={showFootprintLens}
+            aria-controls={showFootprintLens ? lensId : undefined}
+            onClick={() => setLensOpen((prev) => !prev)}
+          >
+            <span>{showFootprintLens ? t("mapFootprintHide") : t("mapFootprintOpen")}</span>
+            <span className={styles.lensChevron} aria-hidden="true">
+              {showFootprintLens ? "▴" : "▾"}
+            </span>
+          </button>
+          {showFootprintLens && (
+            <FootprintLens
+              id={lensId}
+              rawPoint={rawPoint}
+              harmPoint={harmPoint}
+              revealAnswer={revealAnswer}
+              rawPoints={rawPoints}
+            />
+          )}
+        </div>
       )}
     </div>
   );

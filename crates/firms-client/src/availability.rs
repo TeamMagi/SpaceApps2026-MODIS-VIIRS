@@ -386,4 +386,127 @@ VIIRS_SNPP_NRT,2026-01-01,2026-06-14
         assert!(msg.contains("<html>"));
         assert!(!msg.contains(&"x".repeat(250)));
     }
+
+    fn src(sensor: Sensor, processing: Processing) -> FirmsSource {
+        FirmsSource::new(sensor, processing)
+    }
+
+    #[test]
+    fn covers_is_inclusive_at_both_ends_and_false_outside() {
+        // 3-value BVA on min and max of MODIS_SP (2000-11-01 ..= 2026-03-31).
+        let avail = Availability::from_csv(fixture_csv()).unwrap();
+        let sp = src(Sensor::ModisTerra, Processing::Sp);
+        assert!(!avail.covers(sp, d(2000, 10, 31)));
+        assert!(avail.covers(sp, d(2000, 11, 1)));
+        assert!(avail.covers(sp, d(2000, 11, 2)));
+        assert!(avail.covers(sp, d(2026, 3, 30)));
+        assert!(avail.covers(sp, d(2026, 3, 31)));
+        assert!(!avail.covers(sp, d(2026, 4, 1)));
+        assert!(!avail.covers(src(Sensor::ViirsNOAA21, Processing::Sp), d(2020, 1, 1)));
+    }
+
+    #[test]
+    fn pick_switches_from_sp_to_nrt_exactly_after_the_sp_end_date() {
+        let avail = Availability::from_csv(fixture_csv()).unwrap();
+        let processing_on = |day| avail.pick(Sensor::ModisAqua, day).map(|s| s.processing);
+        assert_eq!(processing_on(d(2026, 3, 31)), Some(Processing::Sp));
+        assert_eq!(processing_on(d(2026, 4, 1)), Some(Processing::Nrt));
+        assert_eq!(processing_on(d(2026, 6, 14)), Some(Processing::Nrt));
+        assert_eq!(processing_on(d(2026, 6, 15)), None);
+    }
+
+    #[test]
+    fn plan_wraps_an_sp_span_with_nrt_on_both_sides() {
+        let csv = "data_id,min_date,max_date\n\
+                   MODIS_SP,2020-01-10,2020-01-20\n\
+                   MODIS_NRT,2020-01-01,2020-01-31\n";
+        let avail = Availability::from_csv(csv).unwrap();
+        let nrt = src(Sensor::ModisTerra, Processing::Nrt);
+        let sp = src(Sensor::ModisTerra, Processing::Sp);
+
+        assert_eq!(
+            avail.plan(Sensor::ModisTerra, d(2020, 1, 5), d(2020, 1, 25)),
+            vec![
+                (nrt, d(2020, 1, 5), d(2020, 1, 9)),
+                (sp, d(2020, 1, 10), d(2020, 1, 20)),
+                (nrt, d(2020, 1, 21), d(2020, 1, 25)),
+            ]
+        );
+    }
+
+    #[test]
+    fn plan_edge_cases_reversed_disjoint_partial_and_single_day() {
+        let avail = Availability::from_csv(fixture_csv()).unwrap();
+        let sensor = Sensor::ModisTerra;
+        let nrt = src(sensor, Processing::Nrt);
+        let sp = src(sensor, Processing::Sp);
+
+        assert!(avail.plan(sensor, d(2026, 4, 2), d(2026, 4, 1)).is_empty());
+        assert!(avail.plan(sensor, d(1990, 1, 1), d(1990, 1, 5)).is_empty());
+        assert!(avail.plan(sensor, d(2030, 1, 1), d(2030, 1, 5)).is_empty());
+        assert!(avail.plan(Sensor::ViirsNOAA21, d(2026, 4, 1), d(2026, 4, 5)).is_empty());
+        // Only the covered tail of the request is planned; the rest is for `uncovered`.
+        assert_eq!(
+            avail.plan(sensor, d(2026, 6, 10), d(2026, 6, 20)),
+            vec![(nrt, d(2026, 6, 10), d(2026, 6, 14))]
+        );
+        assert_eq!(
+            avail.plan(sensor, d(2026, 3, 31), d(2026, 3, 31)),
+            vec![(sp, d(2026, 3, 31), d(2026, 3, 31))]
+        );
+        assert_eq!(
+            avail.plan(sensor, d(2026, 4, 1), d(2026, 4, 1)),
+            vec![(nrt, d(2026, 4, 1), d(2026, 4, 1))]
+        );
+    }
+
+    #[test]
+    fn duplicate_rows_for_one_source_merge_into_their_union() {
+        let csv = "data_id,min_date,max_date\n\
+                   MODIS_SP,2005-01-01,2010-01-01\n\
+                   MODIS_SP,2008-01-01,2015-01-01\n";
+        let avail = Availability::from_csv(csv).unwrap();
+        assert_eq!(
+            avail.range_for(src(Sensor::ModisTerra, Processing::Sp)),
+            Some((d(2005, 1, 1), d(2015, 1, 1)))
+        );
+    }
+
+    #[test]
+    fn header_matching_is_case_insensitive_and_extra_columns_are_ignored() {
+        let csv = "\u{feff}  ID , Begin_Date,END_DATE,note\r\n\
+                   VIIRS_NOAA20_SP,2018-01-01,2020-12-31,hello\r\n\
+                   MODIS_SP,2020/01/01,2020-12-31,bad-format\r\n\
+                   VIIRS_SNPP_SP,2020-05-05,2020-05-05,single-day\r\n";
+        let avail = Availability::from_csv(csv).unwrap();
+        assert_eq!(
+            avail.range_for(src(Sensor::ViirsNOAA20, Processing::Sp)),
+            Some((d(2018, 1, 1), d(2020, 12, 31)))
+        );
+        assert_eq!(avail.range_for(src(Sensor::ModisTerra, Processing::Sp)), None);
+        assert_eq!(
+            avail.range_for(src(Sensor::ViirsSNPP, Processing::Sp)),
+            Some((d(2020, 5, 5), d(2020, 5, 5)))
+        );
+    }
+
+    #[test]
+    fn empty_and_whitespace_bodies_are_errors_but_header_only_is_an_empty_table() {
+        for blank in ["", "   \n\t ", "\u{feff}"] {
+            let err = Availability::from_csv(blank).unwrap_err().to_string();
+            assert!(err.contains("empty"), "{err}");
+        }
+        let avail = Availability::from_csv("data_id,min_date,max_date\n").unwrap();
+        assert_eq!(avail.range_for(src(Sensor::ModisTerra, Processing::Sp)), None);
+        assert_eq!(avail.pick(Sensor::ModisTerra, d(2020, 1, 1)), None);
+    }
+
+    #[test]
+    fn each_missing_required_column_is_rejected() {
+        for header in ["min_date,max_date", "data_id,max_date", "data_id,min_date"] {
+            let csv = format!("{header}\nx,2020-01-01\n");
+            let err = Availability::from_csv(&csv).unwrap_err().to_string();
+            assert!(err.contains("unexpected FIRMS data_availability response"), "{header}: {err}");
+        }
+    }
 }

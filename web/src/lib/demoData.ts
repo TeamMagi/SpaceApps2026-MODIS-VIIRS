@@ -7,6 +7,8 @@ export const DEMO_SOURCE_LABEL = "Synthetic demo data (not NASA FIRMS)";
 const EMPTY_STAGES: PointStages = {
   rawModis: 0,
   rawViirs: 0,
+  staticMasked: 0,
+  samaRemoved: 0,
   interscanRemoved: 0,
   fleetMerged: 0,
   matchedPairs: 0,
@@ -24,6 +26,8 @@ function emptyPointsResponse(params: FetchPointsParams): PointsResponse {
     harmonized: [],
     stages: EMPTY_STAGES,
     bbox: null,
+    filters: { minConfidence: "low", excludedDetections: 0 },
+    tropicalSwathGap: null,
   };
 }
 
@@ -116,11 +120,15 @@ export function buildDemoPoints(params: FetchPointsParams): PointsResponse {
     stages: {
       rawModis,
       rawViirs,
+      staticMasked: 0,
+      samaRemoved: 0,
       interscanRemoved,
       fleetMerged,
       matchedPairs,
       harmonized: harmonized.length,
     },
     bbox: mockPoints.bbox,
+    filters: { minConfidence: "low", excludedDetections: 0 },
+    tropicalSwathGap: null,
   };
 }

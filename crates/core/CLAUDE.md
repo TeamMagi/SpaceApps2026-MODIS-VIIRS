@@ -21,6 +21,8 @@
 | `effort.rs` | Gözlem eforu (EffortFactor) tahmini, ≥ 40 MW şiddet rejimli Ω (`omega_high_intensity`) ve ayrı raporlanan S-NPP/Aqua gündüz oranı |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
+| `static_mask.rs` | Kalıcı sıcak hücre (gaz meşalesi/endüstri) maskesi: H3 r7 hücre-yılı, yıl içinde ≥ `min_active_months` (varsayılan 10) farklı ayda tespit |
+| `sama.rs` | Güney Atlantik Manyetik Anomalisi kutusu (110°B–11°D, 55°G–7°K) içindeki gece VIIRS tespiti testi |
 | `events.rs` | Yangın olayı kümeleme (ST-DBSCAN + ardışık gün kuralı) ve `no_detection_days` (bilinen Terra kesintileri dahil) |
 | `quality.rs` | Tarihsel sensör anomalisi ve kesinti dönemleri için ay bazında `QualityFlag` etiketleri ve uyarı açıklamaları |
 
@@ -34,7 +36,8 @@
 - Fusion: VIIRS tercih edilir (yüksek çözünürlük), eşleşmeyenler her iki sensörden alınır.
 - VZA düzeltmesi ve ayak izi ölçeklemesi (`vza.rs`): Zheng et al. (2026) Şekil 4 nadirde 1'e normalize edilen oran (`R_rel(θ) = 0.2017θ² + 0.0168θ + 1.0`, θ radyan) MODIS ham FRP'si ile çarpılır (`raw_frp * ratio`). `ModisOnly` tespit başına enlem kalibrasyonu uygulanmaz.
 - VIIRS öncesi tamlık katsayısı `k_c` (`calibration.rs` + `calendar.rs`): `0–30°: 1.11 (σ 0.08)`, `30–50°: 1.18 (σ 0.15)`, `55–70°: 1.28 (σ 0.11)` (50–55° lineer geçiş, >70° sabit) yalnız VIIRS tespiti içermeyen aylık `CalendarCell.total_frp` toplamına uygulanır; `frp_per_detection_eq = total_frp / count_normalized`. `mean_frp` ham piksel ortalamasıdır ve sensör geçişinde süreksizdir.
-- FRP belirsizlik modeli (`uncertainty.rs`): `frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*` sınırları rastgele hataları karesel (`1/√n` ölçeklenen sensör + VZA), sistematik bileşeni ise doğrusal (`modis_scale_sigma = 0.10` ve `total_frp`'de `k_c` uygulanınca `ratio_sigma/ratio`) birleştirir; varsayılan sigma ve VZA hata katsayıları model varsayımlarıdır.
+- FRP belirsizlik modeli (`uncertainty.rs`): `frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*` sınırları rastgele hataları karesel (`1/√n` ölçeklenen sensör + VZA), sistematik bileşeni ise doğrusal (`modis_scale_sigma = 0.10` ve `total_frp`'de `k_c` uygulanınca `ratio_sigma/ratio`) birleştirir; `modis_sensor_sigma = 0.266` yayımlanmış değerdir (Freeborn et al. 2014a alt-piksel yerleşim belirsizliği, `[12, Bölüm 5.1]`); `viirs_sensor_sigma = 0.08` geçici varsayımdır (literatürde yok; üst sınır `[05, Bölüm 3.4]` MIR ±%30, arşiv çift ölçümü `tools/viirs_sigma.py`); VZA hata katsayısı ve `modis_scale_sigma` model varsayımlarıdır.
+- Ön filtre (aşama 0, `harmonize_with_links_masked`): önce SAMA (varsayılan kapalı), sonra statik maske (varsayılan açık); elenen satırlar `HarmonizeLinks.sama_removed` / `static_masked` ile sayılır ve link'leri `None` olur. Maske verilmezse partiden kurulur; yıl yıl karar verildiği için tam yıllardan oluşan her bölümleme aynı sonucu verir, NRT pencereleri (< 10 ay) maskelenmez.
 - FRP birimi: MW (megawatt). Negatif FRP olamaz.
 
 ## Bağımlılıklar
