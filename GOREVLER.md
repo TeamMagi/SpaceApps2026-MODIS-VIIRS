@@ -196,7 +196,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [ ] |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
-| S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [ ] bekliyor |
+| S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [ ] bekliyor |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
@@ -719,7 +719,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Dosya:** `.github/workflows/ci.yml`
 - **Bitti sayılır:** main branch'e push yapınca Actions yeşil tik gösteriyor; başarısız build'de hata mesajı görünüyor.
 
-### [ ] S6 — Config + calibration + export testleri
+> **Durum notu (Samet, 2026-11-15):** `.github/workflows/ci.yml` eklendi (7bfdb17). Üç iş paralel koşuyor: `rust` (check, clippy `-D warnings`, test), `coverage` (`cargo llvm-cov`, satır kapsamı %80'in altına düşerse kırmızı; yerelde %92) ve `web` (`npm ci`, typecheck, test, build). Actions'ta yeşil tik görülünce kutu işaretlenecek.
+
+### [X] S6 — Config + calibration + export testleri
 - **Bekler:** G7, G9, G10 · **Açar:** —
 - Yeni modüller için kapsamlı testler:
   - **config:** TOML parse testi, varsayılan değerlerin doğruluğu, env var override, hatalı config'de anlamlı hata
@@ -728,6 +730,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - **export:** CSV çıktısı doğru sütun sayısı ve header; GeoJSON valid FeatureCollection; boş veri → boş dosya (hata değil)
   - Edge case: sıfır detection, tek sensör, tüm güvenlik düşük
 - **Bitti sayılır:** `cargo test` ile en az 15 yeni test geçiyor; her modül (config, calibration, uncertainty, export) için en az 3 test.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - 34 yeni test eklendi, hepsi geçiyor: config 9, calibration 7, uncertainty 11, export 7. `cargo test --workspace`: 409 geçti, 1 ignore. `clippy -D warnings` temiz.
+> - Testler ders tekniklerine göre tasarlandı: sınır değer analizi (k_c bant kenarları 30/50/55/70°, `validate()` eşikleri), denklik sınıfları, `validate()` koşulları için MC/DC, girdi ızgarası üzerinde değişmezler (`0 < lower < frp < upper`), boş girdi, tek sensör ve tamamı düşük güvenli girdi.
+> - Hata bulunmadı. Görev metni ile kod arasındaki fark: "bilinmeyen bölge → default" kuralı NaN, sonsuz ve |enlem| > 90 için geçerli. İlk bandın altındaki enlem ise ilk banda sabitleniyor. Varsayılan bantlar 0°'dan başladığı için pratikte etkisi yok; davranış `latitude_below_first_band_clamps_to_first_band` testiyle belgelendi.
+> - TOML parse ve env var override testleri sunucu tarafında zaten vardı (`crates/server/src/pipeline_config.rs`, 8 test); tekrarlanmadı.
 
 ### [ ] S7 — Türkiye/Akdeniz case study veri seti
 - **Bekler:** G1 · **Açar:** R7
