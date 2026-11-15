@@ -63,7 +63,7 @@ Kaynak: GitHub Actions REST API `actions/runs/{id}/jobs` ve aynı koşuların in
 
 **A3 kararı: çift test yürütmesi korunur.** İlk iki gerçek koşuda coverage toplamı 91 ve 88 saniye; görevin 20 dakika eşiğinin çok altında. Clippy/test ile coverage ayrı kalınca hata kaynağı açık kalır. En uzun job 120 saniye; 30 dakika sınırına 1680 saniye pay var.
 
-A1 (`cargo check` kaldırıldı), A2 (ayrı ve geri yüklenen önbellekler), A3 (gerçek ölçüme dayalı karar) ve A4 (üç koşunun adım süreleri aşağıda) tamam. S14'ün belge filtresi doğrulaması ayrı görevdir.
+A1 (`cargo check` kaldırıldı), A2 (ayrı ve geri yüklenen önbellekler), A3 (gerçek ölçüme dayalı karar) ve A4 (üç koşunun adım süreleri aşağıda) tamam. Samet'in `4767f2a` commit'i S14'ün belge filtresi doğrulamasını da kapattı: yalnız belge değiştiren `d7a9903` push'u yeni koşu açmadı; aynı commit üzerindeki #67 bu oturumda elle başlatıldı.
 
 ### Adım süreleri (saniye)
 
@@ -102,6 +102,7 @@ A1 (`cargo check` kaldırıldı), A2 (ayrı ve geri yüklenen önbellekler), A3 
 
 Adımların toplamı job süresinden farklı olabilir; runner hazırlığı ve adımlar arası süreler job toplamına dahildir. API zaman damgaları saniye çözünürlüğündedir.
 
+Önceki liste ölçümü (`a8776c5`, tarihsel kayıt): #63 (`85d40df`) toplam 2 dk 15 sn, #64 (`a1e37ff`) toplam 1 dk 37 sn ve ikisi kırmızıydı. O aşamada job logları okunmadığından toplam süre her job için yalnız bir üst sınırdı; önbellek bilinmiyordu. #65 ve #66 için aynı yaklaşımın verdiği üst sınırlar artık yukarıdaki doğrudan API ölçümleriyle güncellendi. Böylece önceki ölçümün yöntemi korunurken kapanışta kesin job süreleri kullanıldı.
 
 ## 7. Kırmızı CI'da ilk bakılacak yerler
 
@@ -115,6 +116,8 @@ Adımların toplamı job süresinden farklı olabilir; runner hazırlığı ve a
 | `npm ci` hata veriyor | `package.json` ile `package-lock.json` uyuşmuyor | Kilit dosyasını güncelle ve commit'le |
 | Koşu 30 dk'da kesiliyor | Önbellek yok ya da takılan adım | §6 tablosuna bak |
 | Beklenen CI hiç çalışmadı | `paths-ignore`: yalnız belge değişmiş | Beklenen davranış; `workflow_dispatch` ile elle başlat |
+| Bir `main` commit'i için hiç yeşil/kırmızı sonuç yok | Eskiden `cancel-in-progress: true` `main`'de de geçerliydi: sonraki push önceki koşuyu iptal ediyordu (GitHub concurrency davranışı) | `main`'de iptal artık kapalı (`ddd4ba6`); PR ve diğer dallarda eski koşu iptal edilmeye devam eder |
+| Koşu bir önceki gün çalışırken bugün Actions'ta farklı davranıyor | `ubuntu-latest` yeni bir Ubuntu sürümüne geçebilir | Runner'lar `ubuntu-24.04`'e sabit (`ddd4ba6`); ilk yeşil koşulardan sonra serbest bırakılabilir |
 
 ## 8. Bu kapsama girmeyenler (bilerek)
 
