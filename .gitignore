@@ -52,3 +52,4 @@ nasa.pdf
 
 # Local pipeline configuration (see pyrosync.example.toml)
 pyrosync.toml
+academic-papers.zip
