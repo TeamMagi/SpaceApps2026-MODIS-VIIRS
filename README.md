@@ -2,7 +2,21 @@
 
 **NASA Space Apps Challenge 2026** · *Harmonization of MODIS and VIIRS Hot Spots*
 
-PyroSync transforms fragmented satellite fire data into a single, scientifically consistent burning activity calendar. By harmonizing detections from NASA's MODIS (Terra/Aqua, 2000–present, 1 km) and VIIRS (SNPP/NOAA-20/21, 2012–present, 375 m) instruments, it eliminates the artificial discontinuities that make multi-decadal fire analysis unreliable.
+PyroSync transforms fragmented satellite fire data into a more comparable burning activity calendar. It harmonizes detections from NASA's MODIS (Terra/Aqua, nominal 1 km) and VIIRS (SNPP/NOAA-20/21, nominal 375 m) instruments to reduce artificial discontinuities caused by differences in resolution, observation timing and satellite fleet size. The historical country archive covers 2000–2025; live NASA FIRMS endpoints provide recent observations, including NOAA-21.
+
+## Project Documentation
+
+- [Project summary](PROJECT_SUMMARY.md) — concise English overview for the competition submission.
+- [Detailed project description](docs/DETAILED_PROJECT_DESCRIPTION_EN.md) — what PyroSync does, how it works, its benefits and goals, validation limits, programming languages, software and hardware requirements.
+- [AI assistance disclosure](AI_USAGE.md) — how AI assistance was used and how related artifacts should be labelled.
+- [Setup guide](SETUP.md) — first-time installation and local development instructions in Turkish.
+- [Delivery and verification notes](docs/G6_TESLIM.md) — deployment checks, validation results and submission package details in Turkish.
+
+## Who It Helps
+
+Researchers can inspect long-term fire patterns across sensor transitions; environmental agencies and land managers can compare seasonal activity and regional anomalies; educators can demonstrate how satellite measurement differences affect apparent trends. The interactive map, monthly calendar, regional briefing and CSV/GeoJSON exports connect these tasks in one workflow.
+
+PyroSync reports satellite hotspots and model estimates. Results retain uncertainty from cloud cover, overpass timing, sensor sensitivity and regional fire regimes; quality flags and diagnostics help users assess those limits. Hotspots do not represent fire perimeters or forecasts.
 
 ## The Problem
 
@@ -112,7 +126,12 @@ tools/              Utility scripts (archive verification, data fetching)
 | Spatial Index | **H3** (`h3o`, resolution 8) | Uniform hexagonal indexing with k-ring 3 neighbor search |
 | Data Source | **NASA FIRMS API & Archive** | Official active fire NRT/SP endpoints and country CSVs |
 | Frontend | **React + TypeScript** | Interactive visualization |
+| Geographic rendering | **Three.js** | Browser-based geographic visualization |
+| UI state and animation | **Zustand + Motion** | Shared interface state and transitions |
 | TS Compiler | **SWC** (Rust-based) | Consistent Rust toolchain throughout |
+| Build and deployment | **Vite, Docker Compose, GitHub Actions** | Frontend builds, container deployment and automated checks |
+
+No custom field hardware is required. The application runs on a standard computer or server with a modern browser; its observations come from existing MODIS and VIIRS satellite instruments through NASA FIRMS. Full historical archive storage requirements are listed below.
 
 ## API
 
@@ -201,7 +220,7 @@ Open `http://localhost:5173` — the frontend proxies API calls to the Rust back
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `FIRMS_API_KEY` | — | NASA FIRMS key. Without it the server still boots, but live FIRMS endpoints return 500 |
+| `FIRMS_API_KEY` | — | NASA FIRMS key. Without it the server still boots, but live FIRMS endpoints return 503 |
 | `PORT` | `3001` | Server port |
 | `STATIC_DIR` | `web/dist` | Frontend build directory (`/app/static` in Docker) |
 | `RUST_LOG` | `pyrosync=info` | Log level |
