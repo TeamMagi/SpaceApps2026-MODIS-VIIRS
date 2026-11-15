@@ -253,9 +253,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [X] |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [ ] |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
-| S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [ ] |
+| S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [X] |
 | S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [ ] |
-| S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [ ] |
+| S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [X] |
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
@@ -921,14 +921,23 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** main branch'e push yapınca Actions yeşil tik gösteriyor; başarısız build'de hata mesajı görünüyor.
 
 > **Durum notu (Samet, 2026-11-15):** `.github/workflows/ci.yml` eklendi (7bfdb17). Üç iş paralel koşuyor: `rust` (check, clippy `-D warnings`, test), `coverage` (`cargo llvm-cov`, satır kapsamı %80'in altına düşerse kırmızı; yerelde %92) ve `web` (`npm ci`, typecheck, test, build). Actions'ta yeşil tik görülünce kutu işaretlenecek.
+>
+> **Güncelleme (Samet, 2026-11-15):** İnceleme sonrası `ci.yml` sertleştirildi: Rust araç zinciri 1.100'e sabitlendi (yeni stable'ın `clippy -D warnings`'i kod değişmeden kırmasını önler), job zaman aşımları eklendi, kapsam kapısı %80'den **%90**'a çıkarıldı (ölçülen satır kapsamı %94,7), kapı kırmızı olsa da kapsam özeti yazdırılıyor. GitHub'da yeşil tik henüz doğrulanmadı (repo özel); doğrulanınca kutu işaretlenecek.
 
-### [ ] S9 — Belirsizlik tabanının kaynakla güncellenmesi
+### [X] S9 — Belirsizlik tabanının kaynakla güncellenmesi
 - **Bekler:** — · **Açar:** S10
 - `crates/core/src/uncertainty.rs` içindeki kaynaksız `DEFAULT_MODIS_SENSOR_SIGMA = 0.12` değerini `[12, Bölüm 5.1]` (Freeborn et al. 2014a alt-piksel yerleşim belirsizliği) gereği **`0.266`** olarak güncelleme
 - Literatürde 375 m VIIRS tek-piksel `σ` değeri tablo olarak bulunmadığından (`metinde yok`), `DEFAULT_VIIRS_SENSOR_SIGMA` değerini arşivimizdeki eşzamanlı (`|Δt| ≤ 5 dk`, `FRP > 40 MW`, `A_p < 0.3 km²`) çiftlerin kalıntı yayılımından ölçme ve belgeleme (ölçüm öncesi geçici üst sınır notu: `[05, Bölüm 3.4]` MIR `±%30`)
 - `crates/core/src/uncertainty.rs` ve `crates/core/CLAUDE.md` içindeki varsayım yorumlarını yeni kaynaklarla güncelleme
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #6 (+ `[05, 12]`)
 - **Bitti sayılır:** `DEFAULT_MODIS_SENSOR_SIGMA = 0.266` güncellendi, VIIRS tek-piksel `σ` kalıntı ölçümü (ve `[05]` geçici üst sınır notu) belgelendi, `cargo test -p pyrosync-core` geçiyor.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - `DEFAULT_MODIS_SENSOR_SIGMA` 0,12 → **0,266** (`[12, Bölüm 5.1]`, Freeborn et al. 2014a alt-piksel yerleşim belirsizliği). `uncertainty.rs` yorumları, `crates/core/CLAUDE.md` ve `pyrosync.example.toml` güncellendi; varsayılan değerleri sabitleyen test yeni değere göre düzeltildi.
+> - **VIIRS tek-piksel σ ölçümü sonuç vermedi:** `tools/viirs_sigma.py` (SNPP × NOAA-20, 2018–2024, 7 büyük yangın ülkesi, `|Δt| ≤ 5 dk`, ≤ 375 m, `FRP > 40 MW`, `A_p < 0.3 km²`) **0 çift** buldu. SNPP ve NOAA-20 yaklaşık 50 dk arayla geçtiği için eşzamanlı çift pratikte yok; NOAA-21 arşivde yok. `DEFAULT_VIIRS_SENSOR_SIGMA = 0.08` geçici varsayım olarak kaldı ve `[05, Bölüm 3.4]` MIR `±%30` geçici üst sınırıyla belgelendi. Pencereyi ~50 dk'ya açmak FRP değişkenliği düzeltmesi gerektirdiğinden temiz bir σ vermez; ayrı karar.
+> - **Yan etki (Görkem için):** `config_digest` tüm `PipelineConfig`'i hash'lediğinden varsayılan değişince `data/derived` paketi bayatlar. Ayrıca `main`'de önceki pipeline değişikliği (statik maske, SAMA) önbellek şemasını 2 → 3 yaptığından paket ve coverage dosyası şu an zaten geçersiz: sunucu `computed` döner, bazı bölgelerde istek zaman aşımına (504) düşer. Paket birleşik kodla yeniden üretilmeli (238 bölge, bu makinede ~100 dk).
+> - `docs/API.md`'deki MODIS `*_lower`/`*_upper` örnekleri ve `docs/TASARIM_METHODS.md` içindeki iki `0.12` ifadesi (Can) güncellenmeli.
 
 ### [ ] S10 — Mondrian split conformal aralıkları
 - **Bekler:** S9 · **Açar:** G12
@@ -938,12 +947,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #10 (+ `fire-harmony`)
 - **Bitti sayılır:** `uncertainty.rs` ve `calendar.rs` ülke/ay toplamlarında büyüklük bölmeli Mondrian split conformal `%68`/`%90` aralıkları üretiyor ve out-of-sample kapsama testi geçiyor.
 
-### [ ] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
+### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
 - `crates/core/src/dedup.rs` için VIIRS 3-zonlu kümeleme ve bow-tie silme sınırlarına (`±31.72°` Bölge 2: 3→1, 4 dış satır silme; `±44.86°` Bölge 3: 2→1, 8 dış satır silme; `56.28°` kenar `[09, Bölüm 2; 13, Şek. 5]`) yönelik doğrulama testleri ekleme
 - `crates/server` içine `FireHarmonize` tarzı interaktif `radius_km` / `window_min` eşleşme duyarlılık önizleme endpoint'i ve entegrasyon testi ekleme
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P5, Yol Haritası #13 (+ `[09, 13]`, `FireHarmonize`)
 - **Bitti sayılır:** Bölge 2/3 sınır testleri `pyrosync-core`'da geçiyor ve sunucuda `radius_km` / `window_min` duyarlılık önizleme endpoint'i entegrasyon testiyle doğrulanıyor.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - **Çekirdek:** `crates/core/src/dedup.rs` içine `viirs_zone()` ve `viirs_zone_layout()` eklendi; sınırlar `±31.72°` (Bölge 2: 3→1, 4 dış satır), `±44.86°` (Bölge 3: 2→1, 8 dış satır) ve `56.28°` kenar. Her sınırın altı, kendisi ve üstü iki işarette test edildi. Bu mantık kodda önceden yoktu: fonksiyonlar bağımsız ve henüz `dedup` eşleştirmesine bağlı değil; bow-tie silmenin eşleştirmeye uygulanması ayrı iştir.
+> - **Sunucu:** `GET /api/sensitivity` (`crates/server/src/sensitivity.rs`). Bbox ve zaman penceresi `/api/harmonize` ile aynı; `radius_km` ve `window_min` virgüllü listeler (her eksen en çok 5 farklı değer, yarıçap `0 < r ≤ 10` km, pencere 0–1440 dk). FIRMS verisi bir kez çekilip her ızgara hücresinde yeniden eşleştirilir; hücre başına `matched`, `modis_only`, `viirs_only`, `harmonized_total`. Entegrasyon testleri: `matched` sayısının yarıçap ve pencereyle azalmaması, 6 geçersiz yarıçap, sınır değerleri, ızgara üst sınırı, eksik parametre. `docs/API.md`'ye eklendi.
+> - **Öneri (Görkem):** Izgara hücreleri senkron sırayla çalışıyor (mevcut `/api/harmonize` ile aynı desen); büyük bbox'larda 25 harmonizasyon sunucuyu yavaşlatabilir, `spawn_blocking` düşünülebilir.
 
 ### [ ] S12 — Dış doğrulama pilotu (atmosfer)
 - **Bekler:** G12 · **Açar:** —
@@ -959,6 +974,12 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - `academic-papers/04` dosyasının yanlış MDPI ID (`rs10071091` — Aasen et al. 2018 İHA derlemesi) olduğunun düzeltilmesi: hedeflenen **Vadrevu & Lasko (2018), *Remote Sens.*, 10, 978** makalesinin bulunup yerine konması ve envanterin güncellenmesi
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` Makale Envanteri (01–32) & Doğrulanması Gereken İddialar §1–3
 - **Bitti sayılır:** `academic-papers/04` doğru *Vadrevu & Lasko (2018)* PDF'i ile değiştirildi; 32 makalelik envanter ve açık boşluklar bölümü `S8` içeriğine hazırlandı.
+
+> **Durum notu (Samet, 2026-11-15):** `docs/REFERENCES.md` taslağı eklendi: 32 makalelik envanter, 6 referans proje, "doğrulanması gereken iddialar ve açık boşluklar" bölümü ve pipeline aşaması → kaynak tablosu. Disclaimer metni S8 kapsamında yazılacak.
+>
+> - **Makale 04 künyesi Crossref ile doğrulandı:** Vadrevu & Lasko (2018), *Remote Sens.* 10(7), 978, DOI `10.3390/rs10070978`. Aranan makale doğru; "10(6)" / `rs10060978` yok (doi.org 404).
+> - **Kutu bu yüzden işaretlenmedi:** Doğru PDF MDPI'den otomatik indirilemedi (403) ve `academic-papers/` gitignore'da, bu makinede yok. PDF elle indirilip `academic-papers/04` yerine konunca görev kapanır.
+> - Envanterde yazar, yayın yeri ve DOI çoğu makale için yok (`—`); PDF'lerden doğrulanmalı. Ayrıca [18] "Zhang2014" aslında Remy & Kaiser (2014), [07] yılı 2025 değil 2026.
 
 ### [ ] S7 — Türkiye/Akdeniz case study veri seti
 - **Bekler:** G1 · **Açar:** R7

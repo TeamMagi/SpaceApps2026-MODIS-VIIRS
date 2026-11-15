@@ -832,7 +832,7 @@ Not: Bu yanıt bir excerpt'tir; yalnızca `effort.reliable`, `effort.reason`, `w
 | 400 | Bbox geçersiz, `days` 1..=5 dışında, `start`/`end` eksik veya tarih biçimi yanlış, `days` ile `start`/`end` birlikte, `min_confidence` geçersiz | JSON |
 | 400 | Zorunlu parametre yok veya tip hatalı (ör. `south` yok, `days=abc`) | JSON: `Failed to deserialize query string: ...` |
 | 503 | `FIRMS_API_KEY` tanımlı değilse | JSON |
-| 502 | Tüm FIRMS istekleri başarısız olduysa (veya availability tablosu alınamadıysa) | JSON |
+| 502 | Hiç kayıt alınamadı ve en az bir FIRMS isteği başarısız oldu (veya availability tablosu alınamadı). Bazı istekler başarılı olsa bile sonuç boşsa da 502 döner | JSON |
 | 504 | `REQUEST_TIMEOUT_SECS` süresi dolduysa | JSON |
 
 Bbox ve zaman penceresi doğrulaması FIRMS anahtarı kontrolünden önce yapılır. Bu nedenle geçersiz bir istek anahtar yokken de 400 döner.
@@ -1381,7 +1381,7 @@ Bu dosyalarda `calibration` veya ek kalibrasyon alanı yoktur.
 | 400 | `format` `csv` veya `geojson` değilse | JSON |
 | 400 | Bbox, zaman penceresi veya sorgu parametresi hatalıysa | JSON (`harmonize` ile aynı) |
 | 503 | `FIRMS_API_KEY` tanımlı değilse | JSON |
-| 502 | Tüm FIRMS istekleri başarısız olduysa | JSON |
+| 502 | Hiç kayıt alınamadı ve en az bir FIRMS isteği başarısız oldu | JSON |
 | 504 | `REQUEST_TIMEOUT_SECS` süresi dolduysa | JSON |
 
 Örnek (400, geçersiz format):

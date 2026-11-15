@@ -24,6 +24,10 @@
 | `SUREKLILIK_ANALIZI.md` | G11 sensör dikişleri (2002 Aqua, 2012 SNPP, 2018 NOAA-20) süreklilik referans ölçümü: 10 ülkede ham vs harmonize metrik analizi |
 | `KOPRU_KATSAYILARI.md` | K13 S-NPP ↔ NOAA-20 sayım/FRP köprü katsayıları ve Terra `≤20 dk` VZA kontrolü: 6 ülkede arşiv ölçümü |
 | `DOGRULAMA_PAKETI.md` | G12 iç doğrulama paketi referans ölçümü: 10 ülkede placebo adım testi, LOYO normalizasyon testi ve Model vs Baseline kapısı |
+| `REFERENCES.md` | Bilimsel referans listesi taslağı: 32 makalelik envanter, referans projeler, doğrulanması gereken iddialar, pipeline aşaması → kaynak tablosu (S13, S8 içeriği için) |
+| `test/TEST_PLANI.md` | IEEE 829 ana test planı: kapsam, seviyeler, giriş/çıkış ölçütleri, riskler, hata yönetimi, metrikler, geçerleme planı |
+| `test/TEST_TASARIMI.md` | ID'li test vakaları: EP/BVA, karar tabloları, durum geçişi (0-switch), geçerleme vakaları (`TC-VAL`); otomatik testi olmayanlar `EKSİK` |
+| `test/IZLENEBILIRLIK.md` | Gereksinim → test vakası → otomatik test izlenebilirlik matrisi ve risk sırasına göre boşluk özeti |
 
 ## Doküman Ekleme Kuralları
 
