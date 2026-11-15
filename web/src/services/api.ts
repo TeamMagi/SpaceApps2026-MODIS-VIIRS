@@ -719,15 +719,18 @@ function adaptSource(value: string): HotspotSource {
   return HotspotSource.ModisOnly;
 }
 
-function adaptSensor(value: string): Sensor {
-  switch (value) {
-    case "MODIS_Terra": return Sensor.ModisTerra;
-    case "MODIS_Aqua": return Sensor.ModisAqua;
-    case "VIIRS_SNPP": return Sensor.ViirsSNPP;
-    case "VIIRS_NOAA20": return Sensor.ViirsNOAA20;
-    case "VIIRS_NOAA21": return Sensor.ViirsNOAA21;
-    default: return Sensor.ViirsSNPP;
+/** The server serializes `Sensor` by variant name (`ModisTerra`, `ViirsSNPP`, ...), which the enum values mirror. */
+const SENSOR_BY_WIRE: ReadonlyMap<string, Sensor> = new Map(
+  Object.values(Sensor).map((sensor): [string, Sensor] => [sensor, sensor]),
+);
+
+/** An unknown name is a contract break; guessing one platform would silently mislabel every record. */
+export function adaptSensor(value: string): Sensor {
+  const sensor = SENSOR_BY_WIRE.get(value);
+  if (sensor === undefined) {
+    throw new ApiError(`Unknown sensor '${String(value)}' in server response`, 200, "server", "invalid_response");
   }
+  return sensor;
 }
 
 function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
