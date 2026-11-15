@@ -1,14 +1,15 @@
 import { useEffect } from "react";
 import { t } from "../content/copy";
-import { storeTheme, useAppStore } from "../store/useAppStore";
+import { storePalette, storeTheme, useAppStore } from "../store/useAppStore";
 
 /**
- * Mirrors app-level state onto <html>: `lang`, `data-theme`, `data-presentation`, and the page
- * title. Mount once (App does).
+ * Mirrors app-level state onto <html>: `lang`, `data-theme`, `data-palette`, `data-presentation`,
+ * and the page title. Mount once (App does).
  */
 export function useDocumentSync(): void {
   const lang = useAppStore((state) => state.lang);
   const theme = useAppStore((state) => state.theme);
+  const palette = useAppStore((state) => state.palette);
   const presentation = useAppStore((state) => state.presentation);
 
   useEffect(() => {
@@ -20,6 +21,15 @@ export function useDocumentSync(): void {
     document.documentElement.dataset.theme = theme;
     storeTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (palette === "default") {
+      delete document.documentElement.dataset.palette;
+    } else {
+      document.documentElement.dataset.palette = palette;
+    }
+    storePalette(palette);
+  }, [palette]);
 
   useEffect(() => {
     if (presentation) document.documentElement.dataset.presentation = "true";

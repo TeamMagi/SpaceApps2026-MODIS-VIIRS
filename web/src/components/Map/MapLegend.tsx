@@ -1,8 +1,10 @@
-import { memo, useState } from "react";
-import { useCopy } from "../../hooks/useCopy";
+import { memo, useMemo, useState } from "react";
+import { useCopy, type CopyApi } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
 import { FRP_BREAKS } from "../../lib/scales";
+import { useAppStore } from "../../store/useAppStore";
+import type { Palette } from "../../types";
 import styles from "./MapLegend.module.css";
 
 export interface SensorFilter {
@@ -13,6 +15,27 @@ export interface SensorFilter {
 export interface MapLegendProps {
   readonly sensorFilter?: SensorFilter;
   readonly onSensorFilterChange?: (next: SensorFilter) => void;
+  readonly frpBreaks?: readonly number[];
+}
+
+function paletteLabelKey(
+  palette: Palette,
+): "paletteNameDefault" | "paletteNameViridis" | "paletteNameCividis" {
+  switch (palette) {
+    case "viridis":
+      return "paletteNameViridis";
+    case "cividis":
+      return "paletteNameCividis";
+    case "default":
+      return "paletteNameDefault";
+  }
+}
+
+function formatBreakValue(value: number, fmt: CopyApi["fmt"]): string {
+  if (value < 10 && !Number.isInteger(value)) {
+    return fmt.number(value, 1);
+  }
+  return fmt.number(Math.round(value));
 }
 
 const DEFAULT_SENSOR_FILTER: SensorFilter = { modis: true, viirs: true };
@@ -42,13 +65,41 @@ function nextSensorFilter(current: SensorFilter, target: keyof SensorFilter): Se
 function MapLegend({
   sensorFilter = DEFAULT_SENSOR_FILTER,
   onSensorFilterChange,
+  frpBreaks = FRP_BREAKS,
 }: MapLegendProps) {
   const { t, fmt } = useCopy();
   const { coverage } = useRegionData();
+  const palette = useAppStore((state) => state.palette);
   const { geometryHarmonized, showDuplicateRings } = useHarmonizeTransition((v) => ({
     geometryHarmonized: v.geometryHarmonized,
     showDuplicateRings: v.showDuplicateRings,
   }));
+
+  const activeBreaks = frpBreaks.length === FRP_BREAKS.length ? frpBreaks : FRP_BREAKS;
+  const isQuantile = frpBreaks !== FRP_BREAKS && frpBreaks.length === FRP_BREAKS.length;
+  const paletteName = t(paletteLabelKey(palette));
+  const scaleModeText = isQuantile ? t("mapLegendScaleQuantile") : t("mapLegendScaleFixed");
+
+  const formattedTicks = useMemo(
+    () => activeBreaks.map((val) => formatBreakValue(val, fmt)),
+    [activeBreaks, fmt],
+  );
+  const bucketRanges = useMemo(
+    () =>
+      FRP_STEPS.map((_step, index) => {
+        if (index === 0) {
+          return t("mapLegendFrpRange", { min: fmt.number(0), max: formattedTicks[0] });
+        }
+        if (index === FRP_STEPS.length - 1) {
+          return t("mapLegendFrpRangePlus", { min: formattedTicks[formattedTicks.length - 1] });
+        }
+        return t("mapLegendFrpRange", {
+          min: formattedTicks[index - 1],
+          max: formattedTicks[index],
+        });
+      }),
+    [formattedTicks, fmt, t],
+  );
 
   const [isOpen, setIsOpen] = useState<boolean>(shouldDefaultOpen);
 
@@ -147,16 +198,30 @@ function MapLegend({
                 </div>
 
                 <div className={styles.frpSection}>
-                  <p className={styles.title}>{t("mapLegendFrp")}</p>
-                  <div className={styles.ramp} aria-hidden="true">
-                    {FRP_STEPS.map((step) => (
-                      <span key={step} className={styles.swatch} data-bucket={step} />
+                  <div className={styles.frpHeader}>
+                    <p className={styles.title}>{t("mapLegendFrp")}</p>
+                    <span className={styles.paletteMeta}>
+                      {paletteName} · {scaleModeText}
+                    </span>
+                  </div>
+                  <div className={styles.ramp} role="img" aria-label={`${paletteName} · ${scaleModeText}`}>
+                    {FRP_STEPS.map((step, index) => (
+                      <span
+                        key={step}
+                        className={styles.swatch}
+                        data-bucket={step}
+                        title={bucketRanges[index]}
+                      />
                     ))}
                   </div>
                   <div className={styles.ticks}>
-                    {FRP_BREAKS.map((val) => (
-                      <span key={val}>{fmt.number(val)}</span>
+                    {formattedTicks.map((label, index) => (
+                      <span key={`${index}-${label}`}>{label}</span>
                     ))}
+                  </div>
+                  <div className={styles.rangeRow} aria-hidden="true">
+                    <span>{bucketRanges[0]}</span>
+                    <span>{bucketRanges[bucketRanges.length - 1]}</span>
                   </div>
                 </div>
               </div>

@@ -64,6 +64,15 @@
   font-size: var(--font-size-sm);
 }
 
+.sourceLine {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
 @media print {
   .findingCard {
     background: #fff !important;
@@ -85,5 +94,10 @@
 
   .metric dd {
     color: #000 !important;
+  }
+
+  .sourceLine {
+    border-top-color: #ccc !important;
+    color: #333 !important;
   }
 }

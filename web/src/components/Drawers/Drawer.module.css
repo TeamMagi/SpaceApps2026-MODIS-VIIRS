@@ -90,7 +90,8 @@
     display: none !important;
   }
 
-  :global(body:has([data-drawer="briefing"])) [data-drawer="methods"] {
+  :global(body:has([data-drawer="briefing"])) [data-drawer="methods"],
+  :global(body:has([data-drawer="briefing"])) [data-drawer="settings"] {
     display: none !important;
   }
 

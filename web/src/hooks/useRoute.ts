@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { DEFAULT_PIPELINE_CONFIG } from "../lib/pipelineOverrides";
 import { parseRoute, type Route } from "../lib/route";
 import { serializeHash } from "../lib/urlState";
 import { useAppStore } from "../store/useAppStore";
@@ -20,10 +21,22 @@ export function useRoute(): Route {
   return parseRoute(hash);
 }
 
-/** The dashboard hash rebuilt from the store (region, mode, month, language, confidence). */
+/** The dashboard hash rebuilt from the store (region, mode, month, language, palette, data mode, overrides, confidence). */
 export function dashboardHashFromStore(): string {
-  const { region, mode, selectedMonth, lang, minConfidence } = useAppStore.getState();
-  return serializeHash({ region, mode, month: selectedMonth, lang, minConfidence });
+  const s = useAppStore.getState();
+  return serializeHash(
+    {
+      region: s.region,
+      mode: s.mode,
+      month: s.selectedMonth,
+      lang: s.lang,
+      palette: s.palette,
+      data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
+      overrides: s.pipelineOverrides,
+      minConfidence: s.minConfidence,
+    },
+    s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+  );
 }
 
 /**

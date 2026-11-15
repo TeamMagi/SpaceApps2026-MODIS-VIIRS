@@ -157,6 +157,22 @@
   text-align: right;
 }
 
+.uncertCaption {
+  margin: 2px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.35;
+}
+
+.uncertHint {
+  margin: 2px 0 4px;
+  padding: 4px 6px;
+  border-left: 2px solid var(--uncert-slice-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.35;
+}
+
 .lensFooter {
   display: flex;
   flex-direction: column;

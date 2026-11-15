@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { downloadTextFile, mapPointsToCsv } from "../lib/csv";
 import { csvFileName } from "../lib/format";
+import { useAppStore } from "../store/useAppStore";
 import type { AsyncStatus } from "../types";
 import { useHarmonizeTransition } from "./useHarmonizeTransition";
 import { useMapPoints, useRegionData } from "./useRegionData";
@@ -15,16 +16,18 @@ export interface ExportView {
 
 /** "Download this view (CSV)": the map's current points in the current (revealed) mode. */
 export function useExportView(): ExportView {
+  const dataMode = useAppStore((state) => state.dataMode);
   const { region } = useRegionData();
   const points = useMapPoints();
   const revealAnswer = useHarmonizeTransition((v) => v.revealAnswer);
-  const fileName = csvFileName(region.slug, points.period);
+  const isDemo = dataMode === "demo";
+  const fileName = csvFileName(region.slug, points.period, isDemo);
   const canDownload = points.hasData && (revealAnswer ? points.harmonized.length > 0 : points.raw.length > 0);
 
   const download = useCallback(() => {
     if (!points.hasData) return;
-    downloadTextFile(fileName, mapPointsToCsv(points, revealAnswer));
-  }, [fileName, points, revealAnswer]);
+    downloadTextFile(fileName, mapPointsToCsv(points, revealAnswer, isDemo));
+  }, [fileName, isDemo, points, revealAnswer]);
 
   return { fileName, status: points.status, canDownload, download };
 }

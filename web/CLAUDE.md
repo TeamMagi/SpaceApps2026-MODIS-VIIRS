@@ -46,9 +46,9 @@ src/
 │   ├── geo/        → firmsCountries.json, loadGeo.ts, projection.ts, regionMatch.ts
 │   ├── route.ts    → Hash router (#/methods[/section], METHODS_SECTIONS)
 │   └── ...         → Diğer yardımcılar (urlState, formatlama vb.)
-├── mocks/          → Yalnızca mock.html önizlemesi için sentetik geliştirme fixture'ları (Y5)
+├── mocks/          → Sentetik geliştirme fixture'ları (Y5): mock.html önizlemesi ve demo modu (K1, `lib/demoData.ts` üzerinden)
 ├── services/
-│   ├── api.ts            → Rust backend API katmanı (/api → localhost:3001; ana uygulamada mock fallback yoktur)
+│   ├── api.ts            → Rust backend API katmanı (/api → localhost:3001; backend'e erişilemezse demo moduna düşer, K1)
 │   └── pipelineConfig.ts → Methods sayfası için GET /api/config tipleri ve fetch
 ├── store/
 │   └── useAppStore.ts → zustand uygulama durumu
@@ -64,10 +64,10 @@ src/
 
 - Her bileşen kendi alt dizininde bulunur: `components/FeatureName/FeatureName.tsx`.
 - Props interface'leri bileşen dosyasında tanımlanır; paylaşılan tipler `types/index.ts`'te tutulur.
-- API çağrıları bileşenlerde yapılmaz, `services/api.ts` kullanılır. Ana uygulamada mock fallback yoktur (veriyi yalnızca backend'den okur; `make dev-backend` çalışmıyorsa hata/boş durumlarını gösterir) ve `src/mocks/`'tan asla import edilmez.
-- `src/mocks/` sentetik geliştirme fixture'larını içerir (Y5: `hotspots.json`, `calendar.json`, `stats.json`, `raw-platforms.json`, `metadata.json`, `index.ts`, `preview.tsx`, `README.md`; NASA verisi veya pipeline çıktısı değildir). Yalnızca `npm run dev` altında `http://localhost:5173/mock.html` (`web/mock.html` → `src/mocks/preview.tsx`) ayrı önizleme girişi tarafından kullanılır. JSON fixture'lar elle düzenlenmez; repo kökünden deterministik seed ile `node web/scripts/generate-mocks.mjs` ile yeniden üretilir (ayrıntılar `src/mocks/README.md`).
+- API çağrıları bileşenlerde yapılmaz, `services/api.ts` kullanılır. Ana uygulama veriyi backend'den okur; backend'e erişilemezse (ağ hatası, zaman aşımı, `/api/health` 5xx) demo moduna (K1) düşer ve `src/mocks/` fixture'larını YALNIZCA `lib/demoData.ts` üzerinden okur. Demo modunda her kaynak etiketi ve CSV çıktısı verinin sentetik olduğunu söyler; fixture'lar hiçbir yerde NASA verisi gibi sunulmaz. Başka hiçbir modül `src/mocks/`'tan import etmez. HTTP 4xx yanıtları gerçek yanıttır ve demo'ya düşürmez.
+- `src/mocks/` sentetik geliştirme fixture'larını içerir (Y5: `hotspots.json`, `calendar.json`, `stats.json`, `raw-platforms.json`, `metadata.json`, `index.ts`, `preview.tsx`, `README.md`; NASA verisi veya pipeline çıktısı değildir). `npm run dev` altında `http://localhost:5173/mock.html` (`web/mock.html` → `src/mocks/preview.tsx`) ayrı önizleme girişi ve ana uygulamanın demo modu (`lib/demoData.ts`) tarafından kullanılır. JSON fixture'lar elle düzenlenmez; repo kökünden deterministik seed ile `node web/scripts/generate-mocks.mjs` ile yeniden üretilir (ayrıntılar `src/mocks/README.md`).
 - State yönetimi için custom hook'lar `hooks/` dizininde oluşturulur.
-- **Yönlendirme (routing):** Hash tabanlıdır (`useRoute`, `lib/route.ts`). Rotalar `#/` ile başlar (`#/methods[/section]`, bölümler `lib/route.ts` içindeki `METHODS_SECTIONS`); dashboard'un kendi URL durumu (`lib/urlState.ts` ile üretilen `#region=...`) asla `/` ile başlamaz. Backend'de SPA fallback olmadığı için pathname routing kullanılmaz (`/methods` yenilendiğinde 404 verir).
+- **Yönlendirme (routing):** Hash tabanlıdır (`useRoute`, `lib/route.ts`). Rotalar `#/` ile başlar (`#/methods[/section]`, bölümler `lib/route.ts` içindeki `METHODS_SECTIONS`); dashboard'un kendi URL durumu (`lib/urlState.ts` ile üretilen `#region=...`) asla `/` ile başlamaz. Hash routing bilinçli tercihtir ve korunur; backend artık bilinmeyen yollarda `index.html` döndürse de (K9) dashboard URL durumu hash'te tutulduğu için pathname routing'e geçilmez.
 - **Zorunlu alan ekleme:** `types/index.ts`, bir API yanıt tipi veya `UrlState` içine zorunlu bir alan eklendiğinde bu nesneyi oluşturan tüm yerler güncellenmelidir: `services/api.ts` eşleyicileri, `src/mocks/index.ts`, `hooks/useRoute.ts` (`serializeHash` çağrısı) ve `tests/`. `npm run typecheck` yalnızca `src/` altındakileri yakalar; `tests/` tip kontrolünden geçmediği için elle aranmalıdır.
 - Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`, `copyMethods.ts`, `copyAnalytics.ts`, `copyTour.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
 - Tüm animasyon zamanlaması `useHarmonizeTransition` (tek saat) üzerinden okunur; bileşenler kendi geçiş zamanlayıcısı kurmaz.

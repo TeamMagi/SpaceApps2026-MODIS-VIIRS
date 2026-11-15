@@ -7,6 +7,7 @@ import { useMapPoints, useRegionData, useRegions } from "../../hooks/useRegionDa
 import { formatYearSpan } from "../../lib/format";
 import { padBBox, type GeoBBox } from "../../lib/geo/projection";
 import { matchRegionsToFeatures, type RegionRef } from "../../lib/geo/regionMatch";
+import { computeQuantileBreaks } from "../../lib/scales";
 import { useAppStore } from "../../store/useAppStore";
 import type { HarmonizedPoint, MapState, RawPoint, RegionSummary } from "../../types";
 import { pointMatchesSensorFilter } from "./engine/renderer";
@@ -26,12 +27,12 @@ export function usePaletteVersion(targetRef: RefObject<HTMLElement | null>): num
     const observer = new MutationObserver(bump);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-theme", "class", "style"],
+      attributeFilter: ["data-theme", "data-palette", "class", "style"],
     });
     if (targetRef.current && targetRef.current !== document.documentElement) {
       observer.observe(targetRef.current, {
         attributes: true,
-        attributeFilter: ["data-theme", "class", "style"],
+        attributeFilter: ["data-theme", "data-palette", "class", "style"],
       });
     }
     return () => observer.disconnect();
@@ -250,12 +251,25 @@ export function useMapModel() {
             "long",
           );
 
+  const rawFrpBreaks = useMemo(
+    () => computeQuantileBreaks(points.raw.map((p) => p.frp)),
+    [points.raw],
+  );
+  const harmonizedFrpBreaks = useMemo(
+    () => computeQuantileBreaks(points.harmonized.map((p) => p.frpCorrected)),
+    [points.harmonized],
+  );
+  const frpBreaks = geometryHarmonized ? harmonizedFrpBreaks : rawFrpBreaks;
+
   return {
     copy,
     t,
     region,
     setRegion,
     points,
+    rawFrpBreaks,
+    harmonizedFrpBreaks,
+    frpBreaks,
     geo,
     geometryHarmonized,
     showDuplicateRings,
