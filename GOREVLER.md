@@ -263,7 +263,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
-| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
+| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [X] |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
 | Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
@@ -995,7 +995,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** DBSCAN (`2 km / 3 nokta`) olay kümeleme çıktısı ve API'de `no_detection_days` kesinti alanı testlerle doğrulanmış durumda.
 - **Kapanış notu (15 Kasım 2026):** `crates/core/src/events.rs`: harmonize tespitler üzerinde ST-DBSCAN (`eps 2 km`, `min_samples 3`, komşuluk için en fazla 1 UTC gün farkı; aynı yer farklı haftalarda/yıllarda birleşmez) ve `eg-firetrack`'in ardışık gün kuralı (2+ farklı günde görülen küçük gruplar `consecutive_days` olayı); kalan noktalar `watch`. `no_detection_days`: aile (MODIS/VIIRS) bazında tespitsiz bölge-günleri; Remy & Kaiser 2014 `[18, Böl. 4]` Terra pencereleri (6–17 Ağu 2000, 16 Haz–2 Tem 2001, 21–29 Mar 2002) `known_outage`, diğerleri `no_detections` (tek başına kesinti kanıtı değildir; `other_family_detected` boşluk ipucudur). `/api/points` yanıtında `events` (tam küme üzerinde, örneklemeden önce; en çok 1000 öğe) ve `no_detection_days`; harmonize noktalarda `event_id`. 18 core + 3 server testi; `cargo test --workspace` ve clippy temiz. Gerçek veri: Türkiye Ağu 2021 → 305 olay, en büyüğü 27 Tem–6 Ağu 36.93K/31.49D (2787 tespit, Manavgat ile uyumlu); Haziran 2001'de 16–30 Haziran `known_outage`. Sınır: 1 günlük zincirleme, sürekli yanan alanları tek olaya bağlayabilir (Brezilya Eyl 2020 Pantanal: 30 günlük 22.498 tespitlik olay); bu bir yangın kompleksidir, tekil ateş sayısı değildir. K12 (Sadık) tarihsel kesinti etiketlerini aynı `KNOWN_OUTAGES` tablosuna bağlamalı.
 
-### [ ] Y1 — FRP zaman serisi grafiği
+### [X] Y1 — FRP zaman serisi grafiği
 - **Bekler:** R1, Y5, S4 · **Açar:** G5
 - Recharts ile aylık ortalama FRP trendi:
   - X ekseni: zaman (2000–present), Y ekseni: ortalama FRP (MW)
@@ -1005,6 +1005,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Zoom, tooltip, legend
 - **Bu grafik sunum için kritik — "sensor cliff" problemini tek bakışta gösterir.**
 - **Bitti sayılır:** mock veriyle grafik render oluyor; sensor cliff Raw modda görünüyor, Harmonized modda kaybolıyor; tooltip çalışıyor.
+- **Kapanış notu (15 Kasım 2026):** `web/src/components/Charts/FrpTimeSeries.tsx` (elle SVG; Recharts eklenmedi, `web/CLAUDE.md` ve C7 ile uyumlu) + `web/src/lib/frpSeries.ts`. Metrik R9 ile uyumlu: Raw modda MODIS ve VIIRS için ayrı aylık **ham piksel ortalaması** (FRP toplamı / tespit), Harmonized modda `frp_per_detection_eq` (= `total_frp / count_normalized`, MODIS-eşdeğeri) ve `total_frp_lower/upper` ±1σ bandı; ikinci metrik olarak aylık toplam (`total_frp`). Aynı birim (MW/tespit) olduğu için cliff ile süreklilik aynı eksende kıyaslanır. C7 sensör kodlaması (MODIS noktalı + içi boş daire, VIIRS düz + dolu kare), boşluklar kesilir, zoom (ay seçimi + sıfırlama), klavyeyle gezilebilen tooltip, EN/TR. Backend: `/api/calendar` yanıtına `raw_monthly` (aylık ham MODIS/VIIRS sayı ve FRP toplamı, harmonizasyon girdisiyle aynı filtre; `*_covered=false` gözlenemedi demektir). Mock ile `web/mock.html` önizlemesinde çiziliyor; ayrıca isteğe bağlı "Live archive" ile gerçek Türkiye verisinde doğrulandı: ham MODIS ~28 MW, VIIRS ~8 MW (2012 cliff), harmonize yıllık 33.5 → 37.3 MW (2011→2012) — tamamen düz değil, grafik bunu olduğu gibi gösterir. Yalnız Terra dönemi (2002-07 öncesi) harmonize değeri `karşılaştırılamaz` olarak gösterilir. `frpSeries.test.ts` + server testleri, typecheck/build/clippy temiz; tarayıcıda 1366 px ve 375 px kontrol edildi. Açık kalanlar: ana ekran yerleşimi (Can/Serhat), S4'ün resmî teslimi, R9 bittiğinde Y1'in ayrı adaptörünün `api.ts` ile birleştirilmesi; `tokens.css`'e eklenen belirsizlik bandı token'ları K4 ile tekilleştirilmeli.
 
 ### [ ] Y2 — Sensör karşılaştırma grafikleri
 - **Bekler:** R1, Y5, S4 · **Açar:** —

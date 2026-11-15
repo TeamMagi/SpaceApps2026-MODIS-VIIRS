@@ -123,6 +123,20 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 
 `seasonality` (yalnızca `/api/calendar`): metrik harmonize aylık `count`'tur (`"metric": "count"`). Her mevsim yılı için Zhang & Qian (2003) yoğunlaşma derecesi/dönemi hesaplanır: 12 aylık değer `r_i` için açı `θ_i = (takvim_ayı − 0.5) × 30°` (ay aralığının orta noktası, Cui et al. 2021 Denk. 1–2; Ocak = 15°, Yangın Yılı modunda da takvim ayına sabit), `pcd = √(Rx² + Ry²) / R` ([0, 1]; 1 = tüm yangınlar tek ayda), `pcp_deg = atan2(Rx, Ry)` ([0, 360)), `peak_month = pcp_deg / 30 + 0.5` ((0.5, 12.5] aralığında kesirli takvim ayı; tek aylık girdi tam o ayı verir, Aralık+Ocak 12.5). Makale 36 on günlük aralık kullanır ve PCP'yi on günlük birimle verir; biz 12 aylık aralık kullandığımız için değerler doğrudan karşılaştırılamaz. `calendar_year` Ocak–Aralık'ı, `fire_year` Mart Y – Şubat Y+1 dönemini Y etiketiyle verir. Kapsam içinde olup hücresi olmayan ay 0 sayılır; 12 ayı tam kapsamda olmayan yıl `complete: false` ile döner ve `pcd`/`pcp_deg`/`peak_month` `null` olur (`total` yine kapsamdaki aylardan hesaplanır). Toplam sıfırsa üçü de `null`; ay dağılımı tamamen düzgünse `pcd ≈ 0` ve yön tanımsız olduğundan `pcp_deg`/`peak_month` `null` olur. Kapsam, istenen yıl aralığının arşiv kapsamıyla (MODIS Terra'nın ilk ayı 2000-11) kesişimidir.
 
+`raw_monthly` (yalnızca `/api/calendar`): harmonizasyondan **önceki** ham girdilerin aylık toplamıdır; harmonizasyona giren `modis` / `viirs` kümeleriyle aynı filtre ve kapsamdan (ülke, bbox, `type = 0`) hesaplanır. Kapsam penceresindeki (Ocak `effective_from` .. Aralık `effective_to`, başlangıç en erken 2000-11) **her ay** için bir öğe, kronolojik sırayla döner; kapsanan ama tespiti olmayan aylar 0 sayımla yer alır. Ay, `acquired` alanının UTC takvim ayıdır; FRP ham `frp` değeridir (MW, VZA düzeltmesi yok).
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `year`, `month` | integer | Yıl ve ay (1-12) |
+| `modis_covered` | boolean | MODIS ailesi o ay gözlenebilir mi (pencere içindeki tüm aylar için `true`) |
+| `modis_count` | integer | Ham MODIS (Terra + Aqua) tespit sayısı |
+| `modis_frp_sum` | number | Ham MODIS FRP toplamı (MW) |
+| `viirs_covered` | boolean | VIIRS ailesi o ay gözlenebilir mi (arşivde SNPP 2012-01'den itibaren) |
+| `viirs_count` | integer | Ham VIIRS (SNPP + NOAA-20) tespit sayısı |
+| `viirs_frp_sum` | number | Ham VIIRS FRP toplamı (MW) |
+
+`*_covered = false` "gözlenemedi" demektir, sıfır değildir: bu durumda sayım ve toplam 0 gelir ancak istemci bu ayı eksik veri olarak ele almalıdır. `modis_count + viirs_count` toplamı tüm pencerede `counts.raw_detections` ile eşittir.
+
 Terra'nın tek başına çalıştığı dönem (2002-07'den önce) için: seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır. Bu aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` olur; `count` ve FRP alanları ham değerleriyle kalır. Bu durumda `warnings` içinde bir uyarı bulunur. Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
 
 ### Belirsizlik

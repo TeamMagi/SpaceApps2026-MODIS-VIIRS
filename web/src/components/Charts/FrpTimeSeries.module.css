@@ -1,0 +1,35 @@
+.chart { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; padding: var(--space-2); background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); }
+.header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.title { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+.segmented { display: inline-flex; border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-sm); overflow: hidden; }
+.segmented button { background: var(--color-surface); color: var(--color-text-secondary); border: 0; padding: var(--space-half) var(--space-1); font: inherit; font-size: var(--font-size-sm); min-height: 32px; }
+.segmented button + button { border-left: var(--border-width) solid var(--color-border-strong); }
+.segmented button[aria-pressed="true"] { background: var(--color-text); color: var(--color-text-inverse); }
+.zoom { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+.zoom label { display: flex; align-items: center; gap: var(--space-half); }
+.zoom select, .zoom button { background: var(--color-surface); color: var(--color-text); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-half); font: inherit; min-height: 32px; }
+.zoom button:disabled { color: var(--color-text-disabled); }
+.segmented button:focus-visible, .zoom select:focus-visible, .zoom button:focus-visible, .canvasWrap:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.axisTitle { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
+.canvasWrap { position: relative; width: 100%; height: 260px; touch-action: pan-y; }
+.svg { display: block; overflow: visible; }
+.gridLine { stroke: var(--color-border-subtle); stroke-width: 1; }
+.axisLine { stroke: var(--color-border); stroke-width: 1; }
+.axisLabel { fill: var(--color-text-muted); font-size: var(--font-size-2xs); }
+.hoverGuide { stroke: var(--color-border-strong); stroke-width: 1; }
+.modisLine { fill: none; stroke: var(--color-sensor-modis); stroke-width: 1.5; stroke-dasharray: 2 2; }
+.modisMarker { fill: var(--color-surface); stroke: var(--color-sensor-modis); stroke-width: 1.5; }
+.viirsLine { fill: none; stroke: var(--color-sensor-viirs); stroke-width: 1.5; }
+.viirsMarker { fill: var(--color-sensor-viirs); }
+.harmLine { fill: none; stroke: var(--color-text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.harmDot { fill: var(--color-text); stroke: var(--color-surface); stroke-width: 1; }
+.bandFill { fill: var(--color-uncertainty-band); }
+.bandEdge { fill: none; stroke: var(--color-uncertainty-band-stroke); stroke-width: 1; stroke-dasharray: 3 3; }
+.tooltip { position: absolute; top: 0; z-index: 2; display: grid; gap: var(--space-half); min-width: 180px; max-width: calc(100% - var(--space-2)); padding: var(--space-1); pointer-events: none; background: var(--color-surface-raised); color: var(--color-text); border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-md); font-size: var(--font-size-xs); }
+.tooltipRow { display: flex; flex-wrap: wrap; gap: var(--space-half) var(--space-1); }
+.tooltipMeta { color: var(--color-text-muted); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-half) var(--space-2); list-style: none; padding: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+.legend li { display: inline-flex; align-items: center; gap: var(--space-half); }
+.note { color: var(--color-text-secondary); font-size: var(--font-size-xs); line-height: var(--line-height-body); }
+.empty { color: var(--color-text-secondary); }
+@media (max-width: 480px) { .canvasWrap { height: 220px; } }

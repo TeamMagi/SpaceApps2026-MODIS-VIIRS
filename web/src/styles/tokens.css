@@ -42,6 +42,8 @@
   /* Sensors in Raw mode: neutral greys, told apart by shape (MODIS hollow circle, VIIRS filled square) */
   --color-sensor-modis: #d4d9e2;
   --color-sensor-viirs: #8d96a6;
+  --color-uncertainty-band: rgb(148 156 171 / 0.22);
+  --color-uncertainty-band-stroke: rgba(203, 213, 225, 0.45);
   --color-duplicate-ring: #f1f3f7;
 
   /* Map canvas & geography palette */
@@ -117,6 +119,8 @@
 
   --color-sensor-modis: #3a4252;
   --color-sensor-viirs: #8a93a3;
+  --color-uncertainty-band: rgb(82 91 107 / 0.16);
+  --color-uncertainty-band-stroke: rgba(71, 85, 105, 0.40);
   --color-duplicate-ring: #12161d;
 
   --map-water: #dfe5ee;

@@ -7,3 +7,4 @@
 .controls label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .controls button, .controls select { background: var(--color-surface); color: var(--color-text); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-1); font: inherit; }
 .controls button:focus-visible, .controls select:focus-visible { outline: var(--border-width) solid var(--color-focus); }
+.liveToggle { display: flex; align-items: center; gap: var(--space-1); margin-bottom: var(--space-2); }
