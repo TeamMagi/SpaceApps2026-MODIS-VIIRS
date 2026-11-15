@@ -24,7 +24,7 @@ Her job ayrı bir Docker kabında, aynı anda çalıştırıldı: `--cpus 2 --me
 
 Üç job paralel çalışır; CI süresi en uzununa eşittir: **yaklaşık 158 sn**. GitHub'da araç zinciri kurulumu, önbellek geri yükleme ve daha yavaş çekirdekler eklenir; yine de 30 dk'ya (1800 sn) yaklaşık 11 kat pay var.
 
-**Sınır:** bu yerel bir provadır, GitHub'daki gerçek süre ölçülmedi (depo özel, `gh` girişi yok). İlk gerçek koşunun süresi §6 tablosuna yazılmalı.
+**GitHub'daki gerçek süreler** (Actions, `main`): toplam 1 dk 36 sn ile 2 dk 15 sn (§6). Yerel provanın tahmin ettiği 158 sn'den kısa; önbellek durumu bilinmiyor. Yerel prova burada yalnız bir tahmindi, doğrulayan GitHub'daki koşulardır.
 
 ## 4. Provada bulunan kırmızılar (düzeltmeden önce)
 
@@ -56,10 +56,12 @@ A3 kararı (çift test yürütmesi): **ayrım korunur.** `coverage` 107 sn, `rus
 
 | Koşu (commit) | Önbellek | `rust` | `coverage` | `web` | Toplam (en uzun) | Sonuç |
 |---------------|----------|--------|------------|-------|------------------|-------|
-| 1. koşu | soğuk | ? | ? | ? | ? | ? |
-| 2. koşu | ısınmış | ? | ? | ? | ? | ? |
+| #63 (`85d40df`) | bilinmiyor | ? | ? | ? | 2 dk 15 sn | kırmızı |
+| #64 (`a1e37ff`) | bilinmiyor | ? | ? | ? | 1 dk 37 sn | kırmızı |
+| #65 (`bba155f`) | bilinmiyor | ? | ? | ? | 1 dk 36 sn | **yeşil** |
+| #66 (`ddd4ba6`) | bilinmiyor | ? | ? | ? | 1 dk 58 sn | **yeşil** |
 
-`gh` girişi varsa: `gh run list --workflow CI --limit 5` ve `gh run view <id> --json jobs`.
+Toplam süreler Actions listesinden alındı. Job bazlı süreler (`?`) için ilgili koşuya tıklayıp her job'ın süresini yazmak yeterli. `gh` girişi varsa: `gh run list --workflow CI --limit 5` ve `gh run view <id> --json jobs`.
 
 ## 7. Kırmızı CI'da ilk bakılacak yerler
 
