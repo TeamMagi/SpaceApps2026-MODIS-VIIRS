@@ -917,6 +917,7 @@ struct YearEntry {
     raw_total: usize,
     harmonized: usize,
     matched: usize,
+    viirs_aggregated: usize,
     modis_only: usize,
     viirs_only: usize,
     static_masked: usize,
@@ -1052,6 +1053,7 @@ fn year_stats_with(
         raw_total: raw_modis + raw_viirs,
         harmonized: linked.hotspots.len(),
         matched: count_source(HotspotSource::Matched),
+        viirs_aggregated: linked.viirs_aggregated,
         modis_only: count_source(HotspotSource::ModisOnly),
         viirs_only: count_source(HotspotSource::ViirsOnly),
         static_masked: linked.static_masked,
@@ -1628,6 +1630,7 @@ struct Stages {
     interscan_removed: usize,
     fleet_merged: usize,
     matched_pairs: usize,
+    viirs_aggregated: usize,
     harmonized: usize,
 }
 
@@ -1992,6 +1995,7 @@ async fn points(
             interscan_removed: linked.interscan_removed,
             fleet_merged: linked.fleet_merged,
             matched_pairs: linked.matched_pairs,
+            viirs_aggregated: linked.viirs_aggregated,
             harmonized: linked.hotspots.len(),
         };
         let harmonized: Vec<HarmonizedPoint> = linked
@@ -2292,6 +2296,41 @@ mod tests {
         let sum: usize = stats.months.iter().map(|m| m.raw_total).sum();
         assert_eq!(sum, stats.entry.raw_total);
         assert_eq!(stats.months[2].raw_modis, 2);
+    }
+
+    #[test]
+    fn year_stats_counts_viirs_pixels_absorbed_into_one_matched_record() {
+        let modis = parse_csv(
+            &format!("{MODIS_HEADER}
+36.0,32.0,320,1,1,2015-08-11,1200,Terra,MODIS,80,6.2,290,10,D,0"),
+            "MODIS_SP",
+        )
+        .unwrap();
+        let viirs_rows: String = [36.0, 36.005, 36.01]
+            .iter()
+            .map(|lat| format!("
+{lat},32.0,330,0.375,0.375,2015-08-11,1210,N,VIIRS,n,2,290,5,D,0"))
+            .collect();
+        let viirs = parse_csv(&format!("{VIIRS_HEADER}{viirs_rows}"), "VIIRS_SNPP_SP").unwrap();
+        let span = DateSpan {
+            first: d(2000, 11, 1),
+            last: d(2025, 12, 31),
+        };
+        let stats = year_stats(2015, YearData { modis, viirs }, &[span]);
+        let e = &stats.entry;
+        assert_eq!(e.matched, 1);
+        assert_eq!(e.viirs_aggregated, 2);
+        assert_eq!(e.viirs_only, 0);
+        assert_eq!(
+            e.raw_total
+                - e.static_masked
+                - e.sama_removed
+                - e.interscan_removed
+                - e.fleet_merged
+                - e.matched
+                - e.viirs_aggregated,
+            e.harmonized
+        );
     }
 
     #[test]

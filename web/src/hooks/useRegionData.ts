@@ -461,6 +461,7 @@ const EMPTY_STAGES: PointStages = {
   interscanRemoved: 0,
   fleetMerged: 0,
   matchedPairs: 0,
+  viirsAggregated: 0,
   harmonized: 0,
 };
 const UNFILTERED: ConfidenceFilterInfo = { minConfidence: "low", excludedDetections: 0 };
@@ -474,6 +475,7 @@ const EMPTY_TOTALS: RegionTotals = {
   interscanRemoved: 0,
   fleetMerged: 0,
   matched: 0,
+  viirsAggregated: 0,
   doubleCounts: 0,
   doubleCountShare: 0,
 };
@@ -843,7 +845,7 @@ export function useRegionData(): UseRegionDataResult {
 
     const years = activeSeries.years;
     const totals = aggregateRegionTotals(years);
-    const { interscanRemoved, fleetMerged, matched, doubleCountShare } = totals;
+    const { interscanRemoved, fleetMerged, matched, viirsAggregated, doubleCountShare } = totals;
 
     const months = buildCalendarMonths(activeSeries, firstYear, lastYear);
 
@@ -874,7 +876,7 @@ export function useRegionData(): UseRegionDataResult {
       { key: "fleet", removed: fleetMerged },
       { key: "angle", frpDeltaPct: frpAngleCorrectionPct ?? undefined },
       { key: "grid" },
-      { key: "match", removed: matched },
+      { key: "match", removed: matched + viirsAggregated },
       { key: "fuse" },
       { key: "calendar" },
     ];

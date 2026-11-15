@@ -16,7 +16,7 @@ pub const DEFAULT_BUNDLED_DERIVED_DIR: &str = "data/derived";
 
 /// Bump manually whenever the `/api/series` response schema or the harmonization/aggregation
 /// logic that produces it changes, so previously persisted cache entries are invalidated.
-pub const DERIVED_SCHEMA_VERSION: u32 = 3;
+pub const DERIVED_SCHEMA_VERSION: u32 = 4;
 
 const FNV1A_64_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
 const FNV1A_64_PRIME: u64 = 0x00000100000001b3;

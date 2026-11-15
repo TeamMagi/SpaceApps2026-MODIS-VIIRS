@@ -170,6 +170,7 @@ export interface PointStages {
   interscanRemoved: number;
   fleetMerged: number;
   matchedPairs: number;
+  viirsAggregated: number;
   harmonized: number;
 }
 
@@ -214,6 +215,7 @@ export interface YearlyPoint {
   rawViirs: number;
   harmonized: number;
   matched: number;
+  viirsAggregated: number;
   modisOnly: number;
   viirsOnly: number;
   staticMasked: number;
@@ -252,6 +254,7 @@ export interface RegionTotals {
   interscanRemoved: number;
   fleetMerged: number;
   matched: number;
+  viirsAggregated: number;
   doubleCounts: number;
   /** doubleCounts / raw, as a ratio. */
   doubleCountShare: number;

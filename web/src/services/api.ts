@@ -114,6 +114,7 @@ interface WireSeriesYear {
   raw_total: number;
   harmonized: number;
   matched: number;
+  viirs_aggregated?: number;
   modis_only: number;
   viirs_only: number;
   static_masked?: number;
@@ -205,6 +206,7 @@ interface WirePointStages {
   interscan_removed: number;
   fleet_merged?: number;
   matched_pairs: number;
+  viirs_aggregated?: number;
   harmonized: number;
 }
 
@@ -771,6 +773,7 @@ export async function fetchSeries(region: string, signal?: AbortSignal): Promise
       rawViirs: y.raw_viirs,
       harmonized: y.harmonized,
       matched: y.matched,
+      viirsAggregated: y.viirs_aggregated ?? 0,
       modisOnly: y.modis_only,
       viirsOnly: y.viirs_only,
       staticMasked: y.static_masked ?? 0,
@@ -870,6 +873,7 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       interscanRemoved: wire.stages.interscan_removed,
       fleetMerged: wire.stages.fleet_merged ?? 0,
       matchedPairs: wire.stages.matched_pairs,
+      viirsAggregated: wire.stages.viirs_aggregated ?? 0,
       harmonized: wire.stages.harmonized,
     },
     bbox: wire.bbox ?? null,

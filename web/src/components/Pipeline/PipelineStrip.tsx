@@ -54,7 +54,7 @@ export default function PipelineStrip() {
     ? periodCounts.fleetMerged
     : (stages.find((stage) => stage.key === "fleet")?.removed ?? 0);
   const matchRemoved = usePeriodStages
-    ? periodCounts.matchedPairs
+    ? periodCounts.matchedPairs + periodCounts.viirsAggregated
     : (stages.find((stage) => stage.key === "match")?.removed ?? 0);
   const totalRemoved = usePeriodStages ? periodCounts.doubleCounts : totals.doubleCounts;
 

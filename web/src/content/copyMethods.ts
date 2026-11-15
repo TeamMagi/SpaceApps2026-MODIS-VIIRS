@@ -56,12 +56,12 @@ export const methodsPageCopyEn = {
   methodsDetailGridWhy: "MODIS pixels (about 1 km) and VIIRS pixels (375 m) would be aligned in the same spatial cell.",
   methodsDetailGridIo: "Fleet observations (indexed by H3, coordinates unchanged)",
   methodsDetailMatchWhat:
-    "For each MODIS observation, the best unmatched VIIRS observation inside the matching radius and time window is chosen by a score that weights spatial closeness 0.6 and temporal closeness 0.4.",
+    "Each VIIRS observation is assigned to its nearest MODIS observation inside the matching radius and time window. The best-scoring VIIRS observation (spatial closeness 0.6, temporal closeness 0.4) seeds the match, and every VIIRS pixel of that pass within 10 minutes of the seed is summed into one matched record, so FRP and observation counts add up (1 MODIS = N VIIRS).",
   methodsDetailMatchWhy:
     "MODIS and VIIRS overpasses of one fire are at least 34 minutes apart (median about 158 minutes), so a wide window is needed to avoid counting the same fire twice.",
-  methodsDetailMatchIo: "Fleet observations → matched pairs, plus MODIS-only and VIIRS-only remainders",
+  methodsDetailMatchIo: "Fleet observations → matched records, plus MODIS-only and VIIRS-only remainders",
   methodsDetailFuseWhat:
-    "For matched pairs, the VIIRS (375 m) position and FRP are kept, with the higher confidence of the two records. Every record gets an analytic FRP interval from sensor noise and VZA error; MODIS-only records also carry a MODIS scale uncertainty.",
+    "For matched records, the VIIRS (375 m) position and the summed VIIRS FRP are kept, with the higher confidence of the records involved. Every record gets an analytic FRP interval from sensor noise and VZA error; MODIS-only records also carry a MODIS scale uncertainty.",
   methodsDetailFuseWhy:
     "When both sensors see a fire, the finer sensor is the better witness. The interval shows how far each remaining record can be trusted.",
   methodsDetailFuseIo: "Matched, MODIS-only and VIIRS-only records → harmonized hotspots with frp_lower and frp_upper",
@@ -163,12 +163,12 @@ export const methodsPageCopyTr: { readonly [K in keyof typeof methodsPageCopyEn]
   methodsDetailGridWhy: "MODIS pikselleri (yaklaşık 1 km) ile VIIRS pikselleri (375 m) aynı mekânsal hücrede hizalanırdı.",
   methodsDetailGridIo: "Filo gözlemleri (H3 ile indekslenir, koordinatlar değişmez)",
   methodsDetailMatchWhat:
-    "Her MODIS gözlemi için, eşleştirme yarıçapı ve zaman penceresi içindeki en iyi eşleşmemiş VIIRS gözlemi seçilir; skor mekânsal yakınlığa 0,6, zamansal yakınlığa 0,4 ağırlık verir.",
+    "Her VIIRS gözlemi, eşleştirme yarıçapı ve zaman penceresi içindeki en yakın MODIS gözlemine atanır. En yüksek skorlu VIIRS gözlemi (mekânsal yakınlık 0,6, zamansal yakınlık 0,4) eşleşmeyi başlatır; aynı geçişin başlangıç gözleminden en fazla 10 dakika uzaktaki tüm VIIRS pikselleri tek bir eşleşmiş kayıtta toplanır, böylece FRP ve gözlem sayıları toplanır (1 MODIS = N VIIRS).",
   methodsDetailMatchWhy:
     "Bir yangının MODIS ve VIIRS geçişleri en az 34 dakika arayla gelir (medyan yaklaşık 158 dakika); aynı yangını iki kez saymamak için geniş bir pencere gerekir.",
-  methodsDetailMatchIo: "Filo gözlemleri → eşleşmiş çiftler, artı yalnız MODIS ve yalnız VIIRS kalanları",
+  methodsDetailMatchIo: "Filo gözlemleri → eşleşmiş kayıtlar, artı yalnız MODIS ve yalnız VIIRS kalanları",
   methodsDetailFuseWhat:
-    "Eşleşen çiftlerde VIIRS (375 m) konumu ve FRP'si, iki kaydın yüksek güveniyle birlikte tutulur. Her kayda sensör gürültüsü ve VZA hatasından analitik bir FRP aralığı verilir; yalnız MODIS kayıtları ayrıca MODIS ölçek belirsizliği taşır.",
+    "Eşleşen kayıtlarda VIIRS (375 m) konumu ve toplanan VIIRS FRP'si, ilgili kayıtların yüksek güveniyle birlikte tutulur. Her kayda sensör gürültüsü ve VZA hatasından analitik bir FRP aralığı verilir; yalnız MODIS kayıtları ayrıca MODIS ölçek belirsizliği taşır.",
   methodsDetailFuseWhy:
     "İki sensör de yangını gördüğünde ince çözünürlüklü sensör daha iyi tanıktır. Aralık, kalan her kayda ne kadar güvenilebileceğini gösterir.",
   methodsDetailFuseIo:

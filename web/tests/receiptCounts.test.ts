@@ -22,6 +22,7 @@ function makeYear(overrides: Partial<YearlyPoint> & { year: number }): YearlyPoi
     rawViirs: 0,
     harmonized: 0,
     matched: 0,
+    viirsAggregated: 0,
     modisOnly: 0,
     viirsOnly: 0,
     staticMasked: 0,
@@ -124,6 +125,7 @@ check("summarizePointStages matches archive aggregation for identical counts acr
     interscanRemoved: year.interscanRemoved,
     fleetMerged: year.fleetMerged,
     matchedPairs: year.matched,
+    viirsAggregated: year.viirsAggregated,
     harmonized: year.harmonized,
   };
 
