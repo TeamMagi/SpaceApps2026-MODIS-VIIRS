@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Malaysia.csv",
+      "bytes": 16889
+    },
+    {
+      "path": "modis/2001/modis_2001_Malaysia.csv",
+      "bytes": 177615
+    },
+    {
+      "path": "modis/2002/modis_2002_Malaysia.csv",
+      "bytes": 562537
+    },
+    {
+      "path": "modis/2003/modis_2003_Malaysia.csv",
+      "bytes": 403178
+    },
+    {
+      "path": "modis/2004/modis_2004_Malaysia.csv",
+      "bytes": 571662
+    },
+    {
+      "path": "modis/2005/modis_2005_Malaysia.csv",
+      "bytes": 704454
+    },
+    {
+      "path": "modis/2006/modis_2006_Malaysia.csv",
+      "bytes": 399746
+    },
+    {
+      "path": "modis/2007/modis_2007_Malaysia.csv",
+      "bytes": 387041
+    },
+    {
+      "path": "modis/2008/modis_2008_Malaysia.csv",
+      "bytes": 340680
+    },
+    {
+      "path": "modis/2009/modis_2009_Malaysia.csv",
+      "bytes": 686360
+    },
+    {
+      "path": "modis/2010/modis_2010_Malaysia.csv",
+      "bytes": 431881
+    },
+    {
+      "path": "modis/2011/modis_2011_Malaysia.csv",
+      "bytes": 296742
+    },
+    {
+      "path": "modis/2012/modis_2012_Malaysia.csv",
+      "bytes": 431171
+    },
+    {
+      "path": "modis/2013/modis_2013_Malaysia.csv",
+      "bytes": 349330
+    },
+    {
+      "path": "modis/2014/modis_2014_Malaysia.csv",
+      "bytes": 651752
+    },
+    {
+      "path": "modis/2015/modis_2015_Malaysia.csv",
+      "bytes": 446977
+    },
+    {
+      "path": "modis/2016/modis_2016_Malaysia.csv",
+      "bytes": 438985
+    },
+    {
+      "path": "modis/2017/modis_2017_Malaysia.csv",
+      "bytes": 166741
+    },
+    {
+      "path": "modis/2018/modis_2018_Malaysia.csv",
+      "bytes": 262701
+    },
+    {
+      "path": "modis/2019/modis_2019_Malaysia.csv",
+      "bytes": 368894
+    },
+    {
+      "path": "modis/2020/modis_2020_Malaysia.csv",
+      "bytes": 207914
+    },
+    {
+      "path": "modis/2021/modis_2021_Malaysia.csv",
+      "bytes": 179920
+    },
+    {
+      "path": "modis/2022/modis_2022_Malaysia.csv",
+      "bytes": 112229
+    },
+    {
+      "path": "modis/2023/modis_2023_Malaysia.csv",
+      "bytes": 181884
+    },
+    {
+      "path": "modis/2024/modis_2024_Malaysia.csv",
+      "bytes": 237427
+    },
+    {
+      "path": "modis/2025/modis_2025_Malaysia.csv",
+      "bytes": 127448
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Malaysia.csv",
+      "bytes": 906729
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Malaysia.csv",
+      "bytes": 1667770
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Malaysia.csv",
+      "bytes": 766466
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Malaysia.csv",
+      "bytes": 706266
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Malaysia.csv",
+      "bytes": 458581
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Malaysia.csv",
+      "bytes": 690807
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Malaysia.csv",
+      "bytes": 951252
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Malaysia.csv",
+      "bytes": 586929
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Malaysia.csv",
+      "bytes": 1560466
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Malaysia.csv",
+      "bytes": 1359679
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Malaysia.csv",
+      "bytes": 3043981
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Malaysia.csv",
+      "bytes": 1898177
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Malaysia.csv",
+      "bytes": 2003668
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Malaysia.csv",
+      "bytes": 595468
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Malaysia.csv",
+      "bytes": 1062362
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Malaysia.csv",
+      "bytes": 1594349
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Malaysia.csv",
+      "bytes": 747712
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Malaysia.csv",
+      "bytes": 672548
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Malaysia.csv",
+      "bytes": 413171
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Malaysia.csv",
+      "bytes": 647298
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Malaysia.csv",
+      "bytes": 864781
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Malaysia.csv",
+      "bytes": 564410
+    }
+  ],
+  "body_hash": "6abcac1ec9a4ee7e"
+}

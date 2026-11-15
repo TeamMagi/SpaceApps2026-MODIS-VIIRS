@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Togo.csv",
+      "bytes": 176956
+    },
+    {
+      "path": "modis/2001/modis_2001_Togo.csv",
+      "bytes": 341373
+    },
+    {
+      "path": "modis/2002/modis_2002_Togo.csv",
+      "bytes": 835028
+    },
+    {
+      "path": "modis/2003/modis_2003_Togo.csv",
+      "bytes": 955883
+    },
+    {
+      "path": "modis/2004/modis_2004_Togo.csv",
+      "bytes": 843525
+    },
+    {
+      "path": "modis/2005/modis_2005_Togo.csv",
+      "bytes": 1141963
+    },
+    {
+      "path": "modis/2006/modis_2006_Togo.csv",
+      "bytes": 917923
+    },
+    {
+      "path": "modis/2007/modis_2007_Togo.csv",
+      "bytes": 871710
+    },
+    {
+      "path": "modis/2008/modis_2008_Togo.csv",
+      "bytes": 1084396
+    },
+    {
+      "path": "modis/2009/modis_2009_Togo.csv",
+      "bytes": 975282
+    },
+    {
+      "path": "modis/2010/modis_2010_Togo.csv",
+      "bytes": 952581
+    },
+    {
+      "path": "modis/2011/modis_2011_Togo.csv",
+      "bytes": 1123547
+    },
+    {
+      "path": "modis/2012/modis_2012_Togo.csv",
+      "bytes": 788478
+    },
+    {
+      "path": "modis/2013/modis_2013_Togo.csv",
+      "bytes": 903768
+    },
+    {
+      "path": "modis/2014/modis_2014_Togo.csv",
+      "bytes": 703118
+    },
+    {
+      "path": "modis/2015/modis_2015_Togo.csv",
+      "bytes": 960819
+    },
+    {
+      "path": "modis/2016/modis_2016_Togo.csv",
+      "bytes": 669924
+    },
+    {
+      "path": "modis/2017/modis_2017_Togo.csv",
+      "bytes": 759638
+    },
+    {
+      "path": "modis/2018/modis_2018_Togo.csv",
+      "bytes": 685044
+    },
+    {
+      "path": "modis/2019/modis_2019_Togo.csv",
+      "bytes": 582688
+    },
+    {
+      "path": "modis/2020/modis_2020_Togo.csv",
+      "bytes": 702335
+    },
+    {
+      "path": "modis/2021/modis_2021_Togo.csv",
+      "bytes": 505431
+    },
+    {
+      "path": "modis/2022/modis_2022_Togo.csv",
+      "bytes": 599270
+    },
+    {
+      "path": "modis/2023/modis_2023_Togo.csv",
+      "bytes": 377547
+    },
+    {
+      "path": "modis/2024/modis_2024_Togo.csv",
+      "bytes": 512708
+    },
+    {
+      "path": "modis/2025/modis_2025_Togo.csv",
+      "bytes": 356414
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Togo.csv",
+      "bytes": 1518166
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Togo.csv",
+      "bytes": 3489725
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Togo.csv",
+      "bytes": 4001564
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Togo.csv",
+      "bytes": 3067377
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Togo.csv",
+      "bytes": 3648980
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Togo.csv",
+      "bytes": 2628221
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Togo.csv",
+      "bytes": 3304833
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Togo.csv",
+      "bytes": 2437774
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Togo.csv",
+      "bytes": 3056041
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Togo.csv",
+      "bytes": 4697308
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Togo.csv",
+      "bytes": 3866469
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Togo.csv",
+      "bytes": 4663270
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Togo.csv",
+      "bytes": 3892151
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Togo.csv",
+      "bytes": 4104877
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Togo.csv",
+      "bytes": 3474109
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Togo.csv",
+      "bytes": 3562415
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Togo.csv",
+      "bytes": 4020336
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Togo.csv",
+      "bytes": 2986221
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Togo.csv",
+      "bytes": 3450613
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Togo.csv",
+      "bytes": 2441052
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Togo.csv",
+      "bytes": 3221095
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Togo.csv",
+      "bytes": 2372501
+    }
+  ],
+  "body_hash": "d6e60468ed2f2045"
+}

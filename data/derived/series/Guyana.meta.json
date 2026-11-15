@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Guyana.csv",
+      "bytes": 6591
+    },
+    {
+      "path": "modis/2001/modis_2001_Guyana.csv",
+      "bytes": 74865
+    },
+    {
+      "path": "modis/2002/modis_2002_Guyana.csv",
+      "bytes": 103271
+    },
+    {
+      "path": "modis/2003/modis_2003_Guyana.csv",
+      "bytes": 257603
+    },
+    {
+      "path": "modis/2004/modis_2004_Guyana.csv",
+      "bytes": 145787
+    },
+    {
+      "path": "modis/2005/modis_2005_Guyana.csv",
+      "bytes": 121556
+    },
+    {
+      "path": "modis/2006/modis_2006_Guyana.csv",
+      "bytes": 118355
+    },
+    {
+      "path": "modis/2007/modis_2007_Guyana.csv",
+      "bytes": 105570
+    },
+    {
+      "path": "modis/2008/modis_2008_Guyana.csv",
+      "bytes": 90429
+    },
+    {
+      "path": "modis/2009/modis_2009_Guyana.csv",
+      "bytes": 164607
+    },
+    {
+      "path": "modis/2010/modis_2010_Guyana.csv",
+      "bytes": 136419
+    },
+    {
+      "path": "modis/2011/modis_2011_Guyana.csv",
+      "bytes": 101536
+    },
+    {
+      "path": "modis/2012/modis_2012_Guyana.csv",
+      "bytes": 151237
+    },
+    {
+      "path": "modis/2013/modis_2013_Guyana.csv",
+      "bytes": 115028
+    },
+    {
+      "path": "modis/2014/modis_2014_Guyana.csv",
+      "bytes": 144269
+    },
+    {
+      "path": "modis/2015/modis_2015_Guyana.csv",
+      "bytes": 218313
+    },
+    {
+      "path": "modis/2016/modis_2016_Guyana.csv",
+      "bytes": 166958
+    },
+    {
+      "path": "modis/2017/modis_2017_Guyana.csv",
+      "bytes": 113588
+    },
+    {
+      "path": "modis/2018/modis_2018_Guyana.csv",
+      "bytes": 116855
+    },
+    {
+      "path": "modis/2019/modis_2019_Guyana.csv",
+      "bytes": 163078
+    },
+    {
+      "path": "modis/2020/modis_2020_Guyana.csv",
+      "bytes": 155336
+    },
+    {
+      "path": "modis/2021/modis_2021_Guyana.csv",
+      "bytes": 65244
+    },
+    {
+      "path": "modis/2022/modis_2022_Guyana.csv",
+      "bytes": 60356
+    },
+    {
+      "path": "modis/2023/modis_2023_Guyana.csv",
+      "bytes": 305296
+    },
+    {
+      "path": "modis/2024/modis_2024_Guyana.csv",
+      "bytes": 434833
+    },
+    {
+      "path": "modis/2025/modis_2025_Guyana.csv",
+      "bytes": 135213
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Guyana.csv",
+      "bytes": 399330
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Guyana.csv",
+      "bytes": 867573
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Guyana.csv",
+      "bytes": 826533
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Guyana.csv",
+      "bytes": 377999
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Guyana.csv",
+      "bytes": 330894
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Guyana.csv",
+      "bytes": 1440391
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Guyana.csv",
+      "bytes": 2304060
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Guyana.csv",
+      "bytes": 734506
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Guyana.csv",
+      "bytes": 681788
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Guyana.csv",
+      "bytes": 579913
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Guyana.csv",
+      "bytes": 725757
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Guyana.csv",
+      "bytes": 1014844
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Guyana.csv",
+      "bytes": 835481
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Guyana.csv",
+      "bytes": 608821
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Guyana.csv",
+      "bytes": 646368
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Guyana.csv",
+      "bytes": 835740
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Guyana.csv",
+      "bytes": 781553
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Guyana.csv",
+      "bytes": 335818
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Guyana.csv",
+      "bytes": 304353
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Guyana.csv",
+      "bytes": 1370149
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Guyana.csv",
+      "bytes": 2299813
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Guyana.csv",
+      "bytes": 713861
+    }
+  ],
+  "body_hash": "3956edd500fa680d"
+}

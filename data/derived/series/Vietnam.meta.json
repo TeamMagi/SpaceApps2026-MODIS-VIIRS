@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Vietnam.csv",
+      "bytes": 14264
+    },
+    {
+      "path": "modis/2001/modis_2001_Vietnam.csv",
+      "bytes": 234740
+    },
+    {
+      "path": "modis/2002/modis_2002_Vietnam.csv",
+      "bytes": 389261
+    },
+    {
+      "path": "modis/2003/modis_2003_Vietnam.csv",
+      "bytes": 1519022
+    },
+    {
+      "path": "modis/2004/modis_2004_Vietnam.csv",
+      "bytes": 1688880
+    },
+    {
+      "path": "modis/2005/modis_2005_Vietnam.csv",
+      "bytes": 1789666
+    },
+    {
+      "path": "modis/2006/modis_2006_Vietnam.csv",
+      "bytes": 1248576
+    },
+    {
+      "path": "modis/2007/modis_2007_Vietnam.csv",
+      "bytes": 1854573
+    },
+    {
+      "path": "modis/2008/modis_2008_Vietnam.csv",
+      "bytes": 1178742
+    },
+    {
+      "path": "modis/2009/modis_2009_Vietnam.csv",
+      "bytes": 1356676
+    },
+    {
+      "path": "modis/2010/modis_2010_Vietnam.csv",
+      "bytes": 2017249
+    },
+    {
+      "path": "modis/2011/modis_2011_Vietnam.csv",
+      "bytes": 1277972
+    },
+    {
+      "path": "modis/2012/modis_2012_Vietnam.csv",
+      "bytes": 1609799
+    },
+    {
+      "path": "modis/2013/modis_2013_Vietnam.csv",
+      "bytes": 1380426
+    },
+    {
+      "path": "modis/2014/modis_2014_Vietnam.csv",
+      "bytes": 1848654
+    },
+    {
+      "path": "modis/2015/modis_2015_Vietnam.csv",
+      "bytes": 1764491
+    },
+    {
+      "path": "modis/2016/modis_2016_Vietnam.csv",
+      "bytes": 1646161
+    },
+    {
+      "path": "modis/2017/modis_2017_Vietnam.csv",
+      "bytes": 925617
+    },
+    {
+      "path": "modis/2018/modis_2018_Vietnam.csv",
+      "bytes": 1052205
+    },
+    {
+      "path": "modis/2019/modis_2019_Vietnam.csv",
+      "bytes": 1464364
+    },
+    {
+      "path": "modis/2020/modis_2020_Vietnam.csv",
+      "bytes": 1403225
+    },
+    {
+      "path": "modis/2021/modis_2021_Vietnam.csv",
+      "bytes": 1170913
+    },
+    {
+      "path": "modis/2022/modis_2022_Vietnam.csv",
+      "bytes": 810468
+    },
+    {
+      "path": "modis/2023/modis_2023_Vietnam.csv",
+      "bytes": 1357615
+    },
+    {
+      "path": "modis/2024/modis_2024_Vietnam.csv",
+      "bytes": 1349337
+    },
+    {
+      "path": "modis/2025/modis_2025_Vietnam.csv",
+      "bytes": 1163522
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Vietnam.csv",
+      "bytes": 2563589
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Vietnam.csv",
+      "bytes": 6073545
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Vietnam.csv",
+      "bytes": 5906724
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Vietnam.csv",
+      "bytes": 4600208
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Vietnam.csv",
+      "bytes": 3251681
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Vietnam.csv",
+      "bytes": 4774790
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Vietnam.csv",
+      "bytes": 5017385
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Vietnam.csv",
+      "bytes": 3624642
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Vietnam.csv",
+      "bytes": 6483323
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Vietnam.csv",
+      "bytes": 6524676
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Vietnam.csv",
+      "bytes": 8270589
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Vietnam.csv",
+      "bytes": 8078846
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Vietnam.csv",
+      "bytes": 7324333
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Vietnam.csv",
+      "bytes": 3723038
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Vietnam.csv",
+      "bytes": 4618930
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Vietnam.csv",
+      "bytes": 5822110
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Vietnam.csv",
+      "bytes": 5674371
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Vietnam.csv",
+      "bytes": 4434190
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Vietnam.csv",
+      "bytes": 3013649
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Vietnam.csv",
+      "bytes": 4681519
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Vietnam.csv",
+      "bytes": 4760617
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Vietnam.csv",
+      "bytes": 3449334
+    }
+  ],
+  "body_hash": "a292ee63f50fe0b8"
+}

@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Ireland.csv",
+      "bytes": 3599
+    },
+    {
+      "path": "modis/2002/modis_2002_Ireland.csv",
+      "bytes": 3579
+    },
+    {
+      "path": "modis/2003/modis_2003_Ireland.csv",
+      "bytes": 20676
+    },
+    {
+      "path": "modis/2004/modis_2004_Ireland.csv",
+      "bytes": 2721
+    },
+    {
+      "path": "modis/2005/modis_2005_Ireland.csv",
+      "bytes": 2283
+    },
+    {
+      "path": "modis/2006/modis_2006_Ireland.csv",
+      "bytes": 8303
+    },
+    {
+      "path": "modis/2007/modis_2007_Ireland.csv",
+      "bytes": 13746
+    },
+    {
+      "path": "modis/2008/modis_2008_Ireland.csv",
+      "bytes": 4382
+    },
+    {
+      "path": "modis/2009/modis_2009_Ireland.csv",
+      "bytes": 3111
+    },
+    {
+      "path": "modis/2010/modis_2010_Ireland.csv",
+      "bytes": 16762
+    },
+    {
+      "path": "modis/2011/modis_2011_Ireland.csv",
+      "bytes": 27301
+    },
+    {
+      "path": "modis/2012/modis_2012_Ireland.csv",
+      "bytes": 4148
+    },
+    {
+      "path": "modis/2013/modis_2013_Ireland.csv",
+      "bytes": 6864
+    },
+    {
+      "path": "modis/2014/modis_2014_Ireland.csv",
+      "bytes": 2354
+    },
+    {
+      "path": "modis/2015/modis_2015_Ireland.csv",
+      "bytes": 18258
+    },
+    {
+      "path": "modis/2016/modis_2016_Ireland.csv",
+      "bytes": 2911
+    },
+    {
+      "path": "modis/2017/modis_2017_Ireland.csv",
+      "bytes": 12909
+    },
+    {
+      "path": "modis/2018/modis_2018_Ireland.csv",
+      "bytes": 9519
+    },
+    {
+      "path": "modis/2019/modis_2019_Ireland.csv",
+      "bytes": 4837
+    },
+    {
+      "path": "modis/2020/modis_2020_Ireland.csv",
+      "bytes": 6183
+    },
+    {
+      "path": "modis/2021/modis_2021_Ireland.csv",
+      "bytes": 3508
+    },
+    {
+      "path": "modis/2022/modis_2022_Ireland.csv",
+      "bytes": 3819
+    },
+    {
+      "path": "modis/2023/modis_2023_Ireland.csv",
+      "bytes": 1687
+    },
+    {
+      "path": "modis/2024/modis_2024_Ireland.csv",
+      "bytes": 1638
+    },
+    {
+      "path": "modis/2025/modis_2025_Ireland.csv",
+      "bytes": 7568
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Ireland.csv",
+      "bytes": 61964
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Ireland.csv",
+      "bytes": 48871
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Ireland.csv",
+      "bytes": 52882
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Ireland.csv",
+      "bytes": 46283
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Ireland.csv",
+      "bytes": 51899
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Ireland.csv",
+      "bytes": 38268
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Ireland.csv",
+      "bytes": 21535
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Ireland.csv",
+      "bytes": 56564
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Ireland.csv",
+      "bytes": 29770
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Ireland.csv",
+      "bytes": 60108
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Ireland.csv",
+      "bytes": 33726
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Ireland.csv",
+      "bytes": 91327
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Ireland.csv",
+      "bytes": 41163
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Ireland.csv",
+      "bytes": 67966
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Ireland.csv",
+      "bytes": 67561
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Ireland.csv",
+      "bytes": 42677
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Ireland.csv",
+      "bytes": 42232
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Ireland.csv",
+      "bytes": 44494
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Ireland.csv",
+      "bytes": 46671
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Ireland.csv",
+      "bytes": 32724
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Ireland.csv",
+      "bytes": 18381
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Ireland.csv",
+      "bytes": 49454
+    }
+  ],
+  "body_hash": "370849d408521d33"
+}

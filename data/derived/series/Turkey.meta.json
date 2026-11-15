@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Turkey.csv",
+      "bytes": 38184
+    },
+    {
+      "path": "modis/2001/modis_2001_Turkey.csv",
+      "bytes": 400861
+    },
+    {
+      "path": "modis/2002/modis_2002_Turkey.csv",
+      "bytes": 531680
+    },
+    {
+      "path": "modis/2003/modis_2003_Turkey.csv",
+      "bytes": 595760
+    },
+    {
+      "path": "modis/2004/modis_2004_Turkey.csv",
+      "bytes": 609006
+    },
+    {
+      "path": "modis/2005/modis_2005_Turkey.csv",
+      "bytes": 639932
+    },
+    {
+      "path": "modis/2006/modis_2006_Turkey.csv",
+      "bytes": 730483
+    },
+    {
+      "path": "modis/2007/modis_2007_Turkey.csv",
+      "bytes": 678633
+    },
+    {
+      "path": "modis/2008/modis_2008_Turkey.csv",
+      "bytes": 475201
+    },
+    {
+      "path": "modis/2009/modis_2009_Turkey.csv",
+      "bytes": 1545012
+    },
+    {
+      "path": "modis/2010/modis_2010_Turkey.csv",
+      "bytes": 1053221
+    },
+    {
+      "path": "modis/2011/modis_2011_Turkey.csv",
+      "bytes": 1425898
+    },
+    {
+      "path": "modis/2012/modis_2012_Turkey.csv",
+      "bytes": 548280
+    },
+    {
+      "path": "modis/2013/modis_2013_Turkey.csv",
+      "bytes": 888285
+    },
+    {
+      "path": "modis/2014/modis_2014_Turkey.csv",
+      "bytes": 525762
+    },
+    {
+      "path": "modis/2015/modis_2015_Turkey.csv",
+      "bytes": 1397364
+    },
+    {
+      "path": "modis/2016/modis_2016_Turkey.csv",
+      "bytes": 1048699
+    },
+    {
+      "path": "modis/2017/modis_2017_Turkey.csv",
+      "bytes": 739739
+    },
+    {
+      "path": "modis/2018/modis_2018_Turkey.csv",
+      "bytes": 630992
+    },
+    {
+      "path": "modis/2019/modis_2019_Turkey.csv",
+      "bytes": 650021
+    },
+    {
+      "path": "modis/2020/modis_2020_Turkey.csv",
+      "bytes": 689465
+    },
+    {
+      "path": "modis/2021/modis_2021_Turkey.csv",
+      "bytes": 785321
+    },
+    {
+      "path": "modis/2022/modis_2022_Turkey.csv",
+      "bytes": 442497
+    },
+    {
+      "path": "modis/2023/modis_2023_Turkey.csv",
+      "bytes": 714306
+    },
+    {
+      "path": "modis/2024/modis_2024_Turkey.csv",
+      "bytes": 957029
+    },
+    {
+      "path": "modis/2025/modis_2025_Turkey.csv",
+      "bytes": 754493
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Turkey.csv",
+      "bytes": 2786234
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Turkey.csv",
+      "bytes": 3236314
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Turkey.csv",
+      "bytes": 3506149
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Turkey.csv",
+      "bytes": 3611878
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Turkey.csv",
+      "bytes": 2350261
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Turkey.csv",
+      "bytes": 3196719
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Turkey.csv",
+      "bytes": 4177902
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Turkey.csv",
+      "bytes": 3242543
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Turkey.csv",
+      "bytes": 2774036
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Turkey.csv",
+      "bytes": 4074299
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Turkey.csv",
+      "bytes": 2603195
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Turkey.csv",
+      "bytes": 5225608
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Turkey.csv",
+      "bytes": 4504956
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Turkey.csv",
+      "bytes": 3417295
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Turkey.csv",
+      "bytes": 2919578
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Turkey.csv",
+      "bytes": 3118614
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Turkey.csv",
+      "bytes": 3472482
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Turkey.csv",
+      "bytes": 3362331
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Turkey.csv",
+      "bytes": 2078467
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Turkey.csv",
+      "bytes": 3063361
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Turkey.csv",
+      "bytes": 3677694
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Turkey.csv",
+      "bytes": 3083240
+    }
+  ],
+  "body_hash": "3e53601d2d9f27fe"
+}

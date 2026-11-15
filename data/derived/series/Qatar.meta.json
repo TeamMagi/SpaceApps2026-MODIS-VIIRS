@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Qatar.csv",
+      "bytes": 8455
+    },
+    {
+      "path": "modis/2001/modis_2001_Qatar.csv",
+      "bytes": 34221
+    },
+    {
+      "path": "modis/2002/modis_2002_Qatar.csv",
+      "bytes": 48217
+    },
+    {
+      "path": "modis/2003/modis_2003_Qatar.csv",
+      "bytes": 46044
+    },
+    {
+      "path": "modis/2004/modis_2004_Qatar.csv",
+      "bytes": 95843
+    },
+    {
+      "path": "modis/2005/modis_2005_Qatar.csv",
+      "bytes": 98616
+    },
+    {
+      "path": "modis/2006/modis_2006_Qatar.csv",
+      "bytes": 73976
+    },
+    {
+      "path": "modis/2007/modis_2007_Qatar.csv",
+      "bytes": 144582
+    },
+    {
+      "path": "modis/2008/modis_2008_Qatar.csv",
+      "bytes": 82321
+    },
+    {
+      "path": "modis/2009/modis_2009_Qatar.csv",
+      "bytes": 135764
+    },
+    {
+      "path": "modis/2010/modis_2010_Qatar.csv",
+      "bytes": 132056
+    },
+    {
+      "path": "modis/2011/modis_2011_Qatar.csv",
+      "bytes": 83601
+    },
+    {
+      "path": "modis/2012/modis_2012_Qatar.csv",
+      "bytes": 68168
+    },
+    {
+      "path": "modis/2013/modis_2013_Qatar.csv",
+      "bytes": 46488
+    },
+    {
+      "path": "modis/2014/modis_2014_Qatar.csv",
+      "bytes": 44242
+    },
+    {
+      "path": "modis/2015/modis_2015_Qatar.csv",
+      "bytes": 34656
+    },
+    {
+      "path": "modis/2016/modis_2016_Qatar.csv",
+      "bytes": 31188
+    },
+    {
+      "path": "modis/2017/modis_2017_Qatar.csv",
+      "bytes": 29602
+    },
+    {
+      "path": "modis/2018/modis_2018_Qatar.csv",
+      "bytes": 29824
+    },
+    {
+      "path": "modis/2019/modis_2019_Qatar.csv",
+      "bytes": 33731
+    },
+    {
+      "path": "modis/2020/modis_2020_Qatar.csv",
+      "bytes": 30769
+    },
+    {
+      "path": "modis/2021/modis_2021_Qatar.csv",
+      "bytes": 28614
+    },
+    {
+      "path": "modis/2022/modis_2022_Qatar.csv",
+      "bytes": 27342
+    },
+    {
+      "path": "modis/2023/modis_2023_Qatar.csv",
+      "bytes": 23989
+    },
+    {
+      "path": "modis/2024/modis_2024_Qatar.csv",
+      "bytes": 33139
+    },
+    {
+      "path": "modis/2025/modis_2025_Qatar.csv",
+      "bytes": 26848
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Qatar.csv",
+      "bytes": 492934
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Qatar.csv",
+      "bytes": 717779
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Qatar.csv",
+      "bytes": 793477
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Qatar.csv",
+      "bytes": 787703
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Qatar.csv",
+      "bytes": 749298
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Qatar.csv",
+      "bytes": 732563
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Qatar.csv",
+      "bytes": 684511
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Qatar.csv",
+      "bytes": 725838
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Qatar.csv",
+      "bytes": 935245
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Qatar.csv",
+      "bytes": 879617
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Qatar.csv",
+      "bytes": 855520
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Qatar.csv",
+      "bytes": 822188
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Qatar.csv",
+      "bytes": 786529
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Qatar.csv",
+      "bytes": 765597
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Qatar.csv",
+      "bytes": 708842
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Qatar.csv",
+      "bytes": 733319
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Qatar.csv",
+      "bytes": 793845
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Qatar.csv",
+      "bytes": 772497
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Qatar.csv",
+      "bytes": 710500
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Qatar.csv",
+      "bytes": 712298
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Qatar.csv",
+      "bytes": 661638
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Qatar.csv",
+      "bytes": 674095
+    }
+  ],
+  "body_hash": "f1a22d9bed0b6351"
+}

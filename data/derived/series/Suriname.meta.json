@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Suriname.csv",
+      "bytes": 1150
+    },
+    {
+      "path": "modis/2001/modis_2001_Suriname.csv",
+      "bytes": 11163
+    },
+    {
+      "path": "modis/2002/modis_2002_Suriname.csv",
+      "bytes": 46354
+    },
+    {
+      "path": "modis/2003/modis_2003_Suriname.csv",
+      "bytes": 78016
+    },
+    {
+      "path": "modis/2004/modis_2004_Suriname.csv",
+      "bytes": 57930
+    },
+    {
+      "path": "modis/2005/modis_2005_Suriname.csv",
+      "bytes": 31157
+    },
+    {
+      "path": "modis/2006/modis_2006_Suriname.csv",
+      "bytes": 39952
+    },
+    {
+      "path": "modis/2007/modis_2007_Suriname.csv",
+      "bytes": 21095
+    },
+    {
+      "path": "modis/2008/modis_2008_Suriname.csv",
+      "bytes": 48694
+    },
+    {
+      "path": "modis/2009/modis_2009_Suriname.csv",
+      "bytes": 77748
+    },
+    {
+      "path": "modis/2010/modis_2010_Suriname.csv",
+      "bytes": 34437
+    },
+    {
+      "path": "modis/2011/modis_2011_Suriname.csv",
+      "bytes": 28133
+    },
+    {
+      "path": "modis/2012/modis_2012_Suriname.csv",
+      "bytes": 67261
+    },
+    {
+      "path": "modis/2013/modis_2013_Suriname.csv",
+      "bytes": 29226
+    },
+    {
+      "path": "modis/2014/modis_2014_Suriname.csv",
+      "bytes": 49163
+    },
+    {
+      "path": "modis/2015/modis_2015_Suriname.csv",
+      "bytes": 61801
+    },
+    {
+      "path": "modis/2016/modis_2016_Suriname.csv",
+      "bytes": 66879
+    },
+    {
+      "path": "modis/2017/modis_2017_Suriname.csv",
+      "bytes": 32579
+    },
+    {
+      "path": "modis/2018/modis_2018_Suriname.csv",
+      "bytes": 44860
+    },
+    {
+      "path": "modis/2019/modis_2019_Suriname.csv",
+      "bytes": 58396
+    },
+    {
+      "path": "modis/2020/modis_2020_Suriname.csv",
+      "bytes": 50696
+    },
+    {
+      "path": "modis/2021/modis_2021_Suriname.csv",
+      "bytes": 19319
+    },
+    {
+      "path": "modis/2022/modis_2022_Suriname.csv",
+      "bytes": 17726
+    },
+    {
+      "path": "modis/2023/modis_2023_Suriname.csv",
+      "bytes": 108185
+    },
+    {
+      "path": "modis/2024/modis_2024_Suriname.csv",
+      "bytes": 128471
+    },
+    {
+      "path": "modis/2025/modis_2025_Suriname.csv",
+      "bytes": 26446
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Suriname.csv",
+      "bytes": 162139
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Suriname.csv",
+      "bytes": 280837
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Suriname.csv",
+      "bytes": 247249
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Suriname.csv",
+      "bytes": 82613
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Suriname.csv",
+      "bytes": 104256
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Suriname.csv",
+      "bytes": 477249
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Suriname.csv",
+      "bytes": 632183
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Suriname.csv",
+      "bytes": 168684
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Suriname.csv",
+      "bytes": 297767
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Suriname.csv",
+      "bytes": 130193
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Suriname.csv",
+      "bytes": 228028
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Suriname.csv",
+      "bytes": 289382
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Suriname.csv",
+      "bytes": 275099
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Suriname.csv",
+      "bytes": 145326
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Suriname.csv",
+      "bytes": 185411
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Suriname.csv",
+      "bytes": 264247
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Suriname.csv",
+      "bytes": 237764
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Suriname.csv",
+      "bytes": 81061
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Suriname.csv",
+      "bytes": 105041
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Suriname.csv",
+      "bytes": 483511
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Suriname.csv",
+      "bytes": 599268
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Suriname.csv",
+      "bytes": 159378
+    }
+  ],
+  "body_hash": "ba431645c14f3985"
+}

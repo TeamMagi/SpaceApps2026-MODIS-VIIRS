@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Bangladesh.csv",
+      "bytes": 205
+    },
+    {
+      "path": "modis/2001/modis_2001_Bangladesh.csv",
+      "bytes": 54125
+    },
+    {
+      "path": "modis/2002/modis_2002_Bangladesh.csv",
+      "bytes": 12593
+    },
+    {
+      "path": "modis/2003/modis_2003_Bangladesh.csv",
+      "bytes": 226043
+    },
+    {
+      "path": "modis/2004/modis_2004_Bangladesh.csv",
+      "bytes": 226583
+    },
+    {
+      "path": "modis/2005/modis_2005_Bangladesh.csv",
+      "bytes": 288442
+    },
+    {
+      "path": "modis/2006/modis_2006_Bangladesh.csv",
+      "bytes": 318056
+    },
+    {
+      "path": "modis/2007/modis_2007_Bangladesh.csv",
+      "bytes": 304841
+    },
+    {
+      "path": "modis/2008/modis_2008_Bangladesh.csv",
+      "bytes": 224135
+    },
+    {
+      "path": "modis/2009/modis_2009_Bangladesh.csv",
+      "bytes": 297868
+    },
+    {
+      "path": "modis/2010/modis_2010_Bangladesh.csv",
+      "bytes": 216702
+    },
+    {
+      "path": "modis/2011/modis_2011_Bangladesh.csv",
+      "bytes": 205861
+    },
+    {
+      "path": "modis/2012/modis_2012_Bangladesh.csv",
+      "bytes": 250261
+    },
+    {
+      "path": "modis/2013/modis_2013_Bangladesh.csv",
+      "bytes": 225717
+    },
+    {
+      "path": "modis/2014/modis_2014_Bangladesh.csv",
+      "bytes": 217694
+    },
+    {
+      "path": "modis/2015/modis_2015_Bangladesh.csv",
+      "bytes": 122071
+    },
+    {
+      "path": "modis/2016/modis_2016_Bangladesh.csv",
+      "bytes": 142241
+    },
+    {
+      "path": "modis/2017/modis_2017_Bangladesh.csv",
+      "bytes": 113215
+    },
+    {
+      "path": "modis/2018/modis_2018_Bangladesh.csv",
+      "bytes": 178345
+    },
+    {
+      "path": "modis/2019/modis_2019_Bangladesh.csv",
+      "bytes": 212342
+    },
+    {
+      "path": "modis/2020/modis_2020_Bangladesh.csv",
+      "bytes": 226034
+    },
+    {
+      "path": "modis/2021/modis_2021_Bangladesh.csv",
+      "bytes": 225786
+    },
+    {
+      "path": "modis/2022/modis_2022_Bangladesh.csv",
+      "bytes": 74734
+    },
+    {
+      "path": "modis/2023/modis_2023_Bangladesh.csv",
+      "bytes": 209236
+    },
+    {
+      "path": "modis/2024/modis_2024_Bangladesh.csv",
+      "bytes": 149070
+    },
+    {
+      "path": "modis/2025/modis_2025_Bangladesh.csv",
+      "bytes": 177795
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Bangladesh.csv",
+      "bytes": 329826
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Bangladesh.csv",
+      "bytes": 919154
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Bangladesh.csv",
+      "bytes": 871483
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Bangladesh.csv",
+      "bytes": 965914
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Bangladesh.csv",
+      "bytes": 617603
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Bangladesh.csv",
+      "bytes": 957900
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Bangladesh.csv",
+      "bytes": 647052
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Bangladesh.csv",
+      "bytes": 687756
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Bangladesh.csv",
+      "bytes": 847275
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Bangladesh.csv",
+      "bytes": 1007112
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Bangladesh.csv",
+      "bytes": 1207989
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Bangladesh.csv",
+      "bytes": 676372
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Bangladesh.csv",
+      "bytes": 596641
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Bangladesh.csv",
+      "bytes": 527539
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Bangladesh.csv",
+      "bytes": 740319
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Bangladesh.csv",
+      "bytes": 866155
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Bangladesh.csv",
+      "bytes": 878824
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Bangladesh.csv",
+      "bytes": 959588
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Bangladesh.csv",
+      "bytes": 568246
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Bangladesh.csv",
+      "bytes": 916571
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Bangladesh.csv",
+      "bytes": 633974
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Bangladesh.csv",
+      "bytes": 705867
+    }
+  ],
+  "body_hash": "f861c79cc046e39a"
+}

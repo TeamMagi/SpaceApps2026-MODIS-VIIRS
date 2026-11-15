@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2002/modis_2002_Jersey.csv",
+      "bytes": 203
+    },
+    {
+      "path": "modis/2013/modis_2013_Jersey.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2019/modis_2019_Jersey.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Jersey.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Jersey.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Jersey.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Jersey.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Jersey.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Jersey.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Jersey.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Jersey.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Jersey.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Jersey.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Jersey.csv",
+      "bytes": 278
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Jersey.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Jersey.csv",
+      "bytes": 286
+    }
+  ],
+  "body_hash": "98f44e0fe0f321c7"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Senegal.csv",
+      "bytes": 251929
+    },
+    {
+      "path": "modis/2001/modis_2001_Senegal.csv",
+      "bytes": 672277
+    },
+    {
+      "path": "modis/2002/modis_2002_Senegal.csv",
+      "bytes": 980438
+    },
+    {
+      "path": "modis/2003/modis_2003_Senegal.csv",
+      "bytes": 1015368
+    },
+    {
+      "path": "modis/2004/modis_2004_Senegal.csv",
+      "bytes": 1711523
+    },
+    {
+      "path": "modis/2005/modis_2005_Senegal.csv",
+      "bytes": 1686352
+    },
+    {
+      "path": "modis/2006/modis_2006_Senegal.csv",
+      "bytes": 1793289
+    },
+    {
+      "path": "modis/2007/modis_2007_Senegal.csv",
+      "bytes": 1350304
+    },
+    {
+      "path": "modis/2008/modis_2008_Senegal.csv",
+      "bytes": 1551912
+    },
+    {
+      "path": "modis/2009/modis_2009_Senegal.csv",
+      "bytes": 1421336
+    },
+    {
+      "path": "modis/2010/modis_2010_Senegal.csv",
+      "bytes": 1611260
+    },
+    {
+      "path": "modis/2011/modis_2011_Senegal.csv",
+      "bytes": 1811763
+    },
+    {
+      "path": "modis/2012/modis_2012_Senegal.csv",
+      "bytes": 1236014
+    },
+    {
+      "path": "modis/2013/modis_2013_Senegal.csv",
+      "bytes": 1401248
+    },
+    {
+      "path": "modis/2014/modis_2014_Senegal.csv",
+      "bytes": 1367422
+    },
+    {
+      "path": "modis/2015/modis_2015_Senegal.csv",
+      "bytes": 911300
+    },
+    {
+      "path": "modis/2016/modis_2016_Senegal.csv",
+      "bytes": 1465720
+    },
+    {
+      "path": "modis/2017/modis_2017_Senegal.csv",
+      "bytes": 1531847
+    },
+    {
+      "path": "modis/2018/modis_2018_Senegal.csv",
+      "bytes": 1197619
+    },
+    {
+      "path": "modis/2019/modis_2019_Senegal.csv",
+      "bytes": 1369244
+    },
+    {
+      "path": "modis/2020/modis_2020_Senegal.csv",
+      "bytes": 1595764
+    },
+    {
+      "path": "modis/2021/modis_2021_Senegal.csv",
+      "bytes": 1471713
+    },
+    {
+      "path": "modis/2022/modis_2022_Senegal.csv",
+      "bytes": 1696445
+    },
+    {
+      "path": "modis/2023/modis_2023_Senegal.csv",
+      "bytes": 1914368
+    },
+    {
+      "path": "modis/2024/modis_2024_Senegal.csv",
+      "bytes": 1535302
+    },
+    {
+      "path": "modis/2025/modis_2025_Senegal.csv",
+      "bytes": 1333599
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Senegal.csv",
+      "bytes": 2845451
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Senegal.csv",
+      "bytes": 6227775
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Senegal.csv",
+      "bytes": 7214857
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Senegal.csv",
+      "bytes": 6935946
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Senegal.csv",
+      "bytes": 7896344
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Senegal.csv",
+      "bytes": 8594183
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Senegal.csv",
+      "bytes": 7164945
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Senegal.csv",
+      "bytes": 6770594
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Senegal.csv",
+      "bytes": 4784710
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Senegal.csv",
+      "bytes": 6284617
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Senegal.csv",
+      "bytes": 5956283
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Senegal.csv",
+      "bytes": 4254455
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Senegal.csv",
+      "bytes": 6570638
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Senegal.csv",
+      "bytes": 6801258
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Senegal.csv",
+      "bytes": 5346607
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Senegal.csv",
+      "bytes": 6186427
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Senegal.csv",
+      "bytes": 7163178
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Senegal.csv",
+      "bytes": 6878858
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Senegal.csv",
+      "bytes": 7816141
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Senegal.csv",
+      "bytes": 8585882
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Senegal.csv",
+      "bytes": 6763983
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Senegal.csv",
+      "bytes": 6641304
+    }
+  ],
+  "body_hash": "41211bb05e46159b"
+}

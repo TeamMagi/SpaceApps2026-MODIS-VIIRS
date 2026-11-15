@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Morocco.csv",
+      "bytes": 529
+    },
+    {
+      "path": "modis/2001/modis_2001_Morocco.csv",
+      "bytes": 8102
+    },
+    {
+      "path": "modis/2002/modis_2002_Morocco.csv",
+      "bytes": 7197
+    },
+    {
+      "path": "modis/2003/modis_2003_Morocco.csv",
+      "bytes": 37190
+    },
+    {
+      "path": "modis/2004/modis_2004_Morocco.csv",
+      "bytes": 46123
+    },
+    {
+      "path": "modis/2005/modis_2005_Morocco.csv",
+      "bytes": 37803
+    },
+    {
+      "path": "modis/2006/modis_2006_Morocco.csv",
+      "bytes": 41797
+    },
+    {
+      "path": "modis/2007/modis_2007_Morocco.csv",
+      "bytes": 18669
+    },
+    {
+      "path": "modis/2008/modis_2008_Morocco.csv",
+      "bytes": 8652
+    },
+    {
+      "path": "modis/2009/modis_2009_Morocco.csv",
+      "bytes": 21960
+    },
+    {
+      "path": "modis/2010/modis_2010_Morocco.csv",
+      "bytes": 18825
+    },
+    {
+      "path": "modis/2011/modis_2011_Morocco.csv",
+      "bytes": 29976
+    },
+    {
+      "path": "modis/2012/modis_2012_Morocco.csv",
+      "bytes": 31870
+    },
+    {
+      "path": "modis/2013/modis_2013_Morocco.csv",
+      "bytes": 23500
+    },
+    {
+      "path": "modis/2014/modis_2014_Morocco.csv",
+      "bytes": 15509
+    },
+    {
+      "path": "modis/2015/modis_2015_Morocco.csv",
+      "bytes": 17113
+    },
+    {
+      "path": "modis/2016/modis_2016_Morocco.csv",
+      "bytes": 22707
+    },
+    {
+      "path": "modis/2017/modis_2017_Morocco.csv",
+      "bytes": 23090
+    },
+    {
+      "path": "modis/2018/modis_2018_Morocco.csv",
+      "bytes": 21584
+    },
+    {
+      "path": "modis/2019/modis_2019_Morocco.csv",
+      "bytes": 28617
+    },
+    {
+      "path": "modis/2020/modis_2020_Morocco.csv",
+      "bytes": 27427
+    },
+    {
+      "path": "modis/2021/modis_2021_Morocco.csv",
+      "bytes": 26905
+    },
+    {
+      "path": "modis/2022/modis_2022_Morocco.csv",
+      "bytes": 65976
+    },
+    {
+      "path": "modis/2023/modis_2023_Morocco.csv",
+      "bytes": 33411
+    },
+    {
+      "path": "modis/2024/modis_2024_Morocco.csv",
+      "bytes": 13661
+    },
+    {
+      "path": "modis/2025/modis_2025_Morocco.csv",
+      "bytes": 19533
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Morocco.csv",
+      "bytes": 156179
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Morocco.csv",
+      "bytes": 234283
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Morocco.csv",
+      "bytes": 207218
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Morocco.csv",
+      "bytes": 239787
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Morocco.csv",
+      "bytes": 296901
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Morocco.csv",
+      "bytes": 253107
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Morocco.csv",
+      "bytes": 164950
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Morocco.csv",
+      "bytes": 174779
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Morocco.csv",
+      "bytes": 225639
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Morocco.csv",
+      "bytes": 195203
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Morocco.csv",
+      "bytes": 181175
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Morocco.csv",
+      "bytes": 183716
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Morocco.csv",
+      "bytes": 179894
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Morocco.csv",
+      "bytes": 191146
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Morocco.csv",
+      "bytes": 186431
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Morocco.csv",
+      "bytes": 223335
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Morocco.csv",
+      "bytes": 189490
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Morocco.csv",
+      "bytes": 200314
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Morocco.csv",
+      "bytes": 279426
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Morocco.csv",
+      "bytes": 220460
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Morocco.csv",
+      "bytes": 136399
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Morocco.csv",
+      "bytes": 154227
+    }
+  ],
+  "body_hash": "2b27c6a22d59d2d9"
+}

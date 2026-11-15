@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Switzerland.csv",
+      "bytes": 1542
+    },
+    {
+      "path": "modis/2002/modis_2002_Switzerland.csv",
+      "bytes": 2835
+    },
+    {
+      "path": "modis/2003/modis_2003_Switzerland.csv",
+      "bytes": 5089
+    },
+    {
+      "path": "modis/2004/modis_2004_Switzerland.csv",
+      "bytes": 3708
+    },
+    {
+      "path": "modis/2005/modis_2005_Switzerland.csv",
+      "bytes": 3420
+    },
+    {
+      "path": "modis/2006/modis_2006_Switzerland.csv",
+      "bytes": 4506
+    },
+    {
+      "path": "modis/2007/modis_2007_Switzerland.csv",
+      "bytes": 5527
+    },
+    {
+      "path": "modis/2008/modis_2008_Switzerland.csv",
+      "bytes": 3985
+    },
+    {
+      "path": "modis/2009/modis_2009_Switzerland.csv",
+      "bytes": 3725
+    },
+    {
+      "path": "modis/2010/modis_2010_Switzerland.csv",
+      "bytes": 3670
+    },
+    {
+      "path": "modis/2011/modis_2011_Switzerland.csv",
+      "bytes": 6292
+    },
+    {
+      "path": "modis/2012/modis_2012_Switzerland.csv",
+      "bytes": 5849
+    },
+    {
+      "path": "modis/2013/modis_2013_Switzerland.csv",
+      "bytes": 3269
+    },
+    {
+      "path": "modis/2014/modis_2014_Switzerland.csv",
+      "bytes": 5353
+    },
+    {
+      "path": "modis/2015/modis_2015_Switzerland.csv",
+      "bytes": 5571
+    },
+    {
+      "path": "modis/2016/modis_2016_Switzerland.csv",
+      "bytes": 5754
+    },
+    {
+      "path": "modis/2017/modis_2017_Switzerland.csv",
+      "bytes": 5575
+    },
+    {
+      "path": "modis/2018/modis_2018_Switzerland.csv",
+      "bytes": 6354
+    },
+    {
+      "path": "modis/2019/modis_2019_Switzerland.csv",
+      "bytes": 4391
+    },
+    {
+      "path": "modis/2020/modis_2020_Switzerland.csv",
+      "bytes": 6690
+    },
+    {
+      "path": "modis/2021/modis_2021_Switzerland.csv",
+      "bytes": 5982
+    },
+    {
+      "path": "modis/2022/modis_2022_Switzerland.csv",
+      "bytes": 5708
+    },
+    {
+      "path": "modis/2023/modis_2023_Switzerland.csv",
+      "bytes": 4647
+    },
+    {
+      "path": "modis/2024/modis_2024_Switzerland.csv",
+      "bytes": 4008
+    },
+    {
+      "path": "modis/2025/modis_2025_Switzerland.csv",
+      "bytes": 7060
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Switzerland.csv",
+      "bytes": 52757
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Switzerland.csv",
+      "bytes": 45237
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Switzerland.csv",
+      "bytes": 49989
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Switzerland.csv",
+      "bytes": 48149
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Switzerland.csv",
+      "bytes": 54193
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Switzerland.csv",
+      "bytes": 40566
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Switzerland.csv",
+      "bytes": 31593
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Switzerland.csv",
+      "bytes": 39059
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Switzerland.csv",
+      "bytes": 42014
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Switzerland.csv",
+      "bytes": 36500
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Switzerland.csv",
+      "bytes": 46784
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Switzerland.csv",
+      "bytes": 51721
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Switzerland.csv",
+      "bytes": 45160
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Switzerland.csv",
+      "bytes": 48783
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Switzerland.csv",
+      "bytes": 53658
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Switzerland.csv",
+      "bytes": 46852
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Switzerland.csv",
+      "bytes": 49572
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Switzerland.csv",
+      "bytes": 45529
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Switzerland.csv",
+      "bytes": 52390
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Switzerland.csv",
+      "bytes": 38101
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Switzerland.csv",
+      "bytes": 29113
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Switzerland.csv",
+      "bytes": 37034
+    }
+  ],
+  "body_hash": "721af1507ffb1d2c"
+}

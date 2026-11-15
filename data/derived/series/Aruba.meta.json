@@ -1,0 +1,111 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2002/modis_2002_Aruba.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2003/modis_2003_Aruba.csv",
+      "bytes": 355
+    },
+    {
+      "path": "modis/2005/modis_2005_Aruba.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2006/modis_2006_Aruba.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2008/modis_2008_Aruba.csv",
+      "bytes": 276
+    },
+    {
+      "path": "modis/2009/modis_2009_Aruba.csv",
+      "bytes": 201
+    },
+    {
+      "path": "modis/2012/modis_2012_Aruba.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2017/modis_2017_Aruba.csv",
+      "bytes": 287
+    },
+    {
+      "path": "modis/2018/modis_2018_Aruba.csv",
+      "bytes": 279
+    },
+    {
+      "path": "modis/2022/modis_2022_Aruba.csv",
+      "bytes": 280
+    },
+    {
+      "path": "modis/2023/modis_2023_Aruba.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2024/modis_2024_Aruba.csv",
+      "bytes": 204
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Aruba.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Aruba.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Aruba.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Aruba.csv",
+      "bytes": 451
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Aruba.csv",
+      "bytes": 452
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Aruba.csv",
+      "bytes": 538
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Aruba.csv",
+      "bytes": 1237
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Aruba.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Aruba.csv",
+      "bytes": 446
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Aruba.csv",
+      "bytes": 686
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Aruba.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Aruba.csv",
+      "bytes": 518
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Aruba.csv",
+      "bytes": 366
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Aruba.csv",
+      "bytes": 525
+    }
+  ],
+  "body_hash": "f276fe811b344c26"
+}

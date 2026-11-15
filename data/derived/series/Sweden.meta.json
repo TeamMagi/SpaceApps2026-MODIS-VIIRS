@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Sweden.csv",
+      "bytes": 6923
+    },
+    {
+      "path": "modis/2002/modis_2002_Sweden.csv",
+      "bytes": 36200
+    },
+    {
+      "path": "modis/2003/modis_2003_Sweden.csv",
+      "bytes": 31626
+    },
+    {
+      "path": "modis/2004/modis_2004_Sweden.csv",
+      "bytes": 27874
+    },
+    {
+      "path": "modis/2005/modis_2005_Sweden.csv",
+      "bytes": 27532
+    },
+    {
+      "path": "modis/2006/modis_2006_Sweden.csv",
+      "bytes": 48100
+    },
+    {
+      "path": "modis/2007/modis_2007_Sweden.csv",
+      "bytes": 22380
+    },
+    {
+      "path": "modis/2008/modis_2008_Sweden.csv",
+      "bytes": 24733
+    },
+    {
+      "path": "modis/2009/modis_2009_Sweden.csv",
+      "bytes": 25963
+    },
+    {
+      "path": "modis/2010/modis_2010_Sweden.csv",
+      "bytes": 11418
+    },
+    {
+      "path": "modis/2011/modis_2011_Sweden.csv",
+      "bytes": 22351
+    },
+    {
+      "path": "modis/2012/modis_2012_Sweden.csv",
+      "bytes": 10142
+    },
+    {
+      "path": "modis/2013/modis_2013_Sweden.csv",
+      "bytes": 18558
+    },
+    {
+      "path": "modis/2014/modis_2014_Sweden.csv",
+      "bytes": 53805
+    },
+    {
+      "path": "modis/2015/modis_2015_Sweden.csv",
+      "bytes": 15205
+    },
+    {
+      "path": "modis/2016/modis_2016_Sweden.csv",
+      "bytes": 12892
+    },
+    {
+      "path": "modis/2017/modis_2017_Sweden.csv",
+      "bytes": 14353
+    },
+    {
+      "path": "modis/2018/modis_2018_Sweden.csv",
+      "bytes": 86119
+    },
+    {
+      "path": "modis/2019/modis_2019_Sweden.csv",
+      "bytes": 17290
+    },
+    {
+      "path": "modis/2020/modis_2020_Sweden.csv",
+      "bytes": 17749
+    },
+    {
+      "path": "modis/2021/modis_2021_Sweden.csv",
+      "bytes": 14495
+    },
+    {
+      "path": "modis/2022/modis_2022_Sweden.csv",
+      "bytes": 10409
+    },
+    {
+      "path": "modis/2023/modis_2023_Sweden.csv",
+      "bytes": 13101
+    },
+    {
+      "path": "modis/2024/modis_2024_Sweden.csv",
+      "bytes": 13468
+    },
+    {
+      "path": "modis/2025/modis_2025_Sweden.csv",
+      "bytes": 15495
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Sweden.csv",
+      "bytes": 502127
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Sweden.csv",
+      "bytes": 306951
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Sweden.csv",
+      "bytes": 282567
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Sweden.csv",
+      "bytes": 272096
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Sweden.csv",
+      "bytes": 269038
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Sweden.csv",
+      "bytes": 228600
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Sweden.csv",
+      "bytes": 225011
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Sweden.csv",
+      "bytes": 252381
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Sweden.csv",
+      "bytes": 193695
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Sweden.csv",
+      "bytes": 255705
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Sweden.csv",
+      "bytes": 394085
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Sweden.csv",
+      "bytes": 274169
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Sweden.csv",
+      "bytes": 266557
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Sweden.csv",
+      "bytes": 255862
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Sweden.csv",
+      "bytes": 518955
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Sweden.csv",
+      "bytes": 286495
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Sweden.csv",
+      "bytes": 287362
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Sweden.csv",
+      "bytes": 263374
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Sweden.csv",
+      "bytes": 242232
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Sweden.csv",
+      "bytes": 222443
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Sweden.csv",
+      "bytes": 207011
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Sweden.csv",
+      "bytes": 245270
+    }
+  ],
+  "body_hash": "bee0acba1219b98a"
+}

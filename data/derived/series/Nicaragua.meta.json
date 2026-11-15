@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Nicaragua.csv",
+      "bytes": 5735
+    },
+    {
+      "path": "modis/2001/modis_2001_Nicaragua.csv",
+      "bytes": 136716
+    },
+    {
+      "path": "modis/2002/modis_2002_Nicaragua.csv",
+      "bytes": 123082
+    },
+    {
+      "path": "modis/2003/modis_2003_Nicaragua.csv",
+      "bytes": 621460
+    },
+    {
+      "path": "modis/2004/modis_2004_Nicaragua.csv",
+      "bytes": 356563
+    },
+    {
+      "path": "modis/2005/modis_2005_Nicaragua.csv",
+      "bytes": 656741
+    },
+    {
+      "path": "modis/2006/modis_2006_Nicaragua.csv",
+      "bytes": 343904
+    },
+    {
+      "path": "modis/2007/modis_2007_Nicaragua.csv",
+      "bytes": 259612
+    },
+    {
+      "path": "modis/2008/modis_2008_Nicaragua.csv",
+      "bytes": 347671
+    },
+    {
+      "path": "modis/2009/modis_2009_Nicaragua.csv",
+      "bytes": 357944
+    },
+    {
+      "path": "modis/2010/modis_2010_Nicaragua.csv",
+      "bytes": 362086
+    },
+    {
+      "path": "modis/2011/modis_2011_Nicaragua.csv",
+      "bytes": 353189
+    },
+    {
+      "path": "modis/2012/modis_2012_Nicaragua.csv",
+      "bytes": 248764
+    },
+    {
+      "path": "modis/2013/modis_2013_Nicaragua.csv",
+      "bytes": 482576
+    },
+    {
+      "path": "modis/2014/modis_2014_Nicaragua.csv",
+      "bytes": 429568
+    },
+    {
+      "path": "modis/2015/modis_2015_Nicaragua.csv",
+      "bytes": 294595
+    },
+    {
+      "path": "modis/2016/modis_2016_Nicaragua.csv",
+      "bytes": 425051
+    },
+    {
+      "path": "modis/2017/modis_2017_Nicaragua.csv",
+      "bytes": 254060
+    },
+    {
+      "path": "modis/2018/modis_2018_Nicaragua.csv",
+      "bytes": 402297
+    },
+    {
+      "path": "modis/2019/modis_2019_Nicaragua.csv",
+      "bytes": 436869
+    },
+    {
+      "path": "modis/2020/modis_2020_Nicaragua.csv",
+      "bytes": 465148
+    },
+    {
+      "path": "modis/2021/modis_2021_Nicaragua.csv",
+      "bytes": 217852
+    },
+    {
+      "path": "modis/2022/modis_2022_Nicaragua.csv",
+      "bytes": 189554
+    },
+    {
+      "path": "modis/2023/modis_2023_Nicaragua.csv",
+      "bytes": 672896
+    },
+    {
+      "path": "modis/2024/modis_2024_Nicaragua.csv",
+      "bytes": 644591
+    },
+    {
+      "path": "modis/2025/modis_2025_Nicaragua.csv",
+      "bytes": 275399
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Nicaragua.csv",
+      "bytes": 1968792
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Nicaragua.csv",
+      "bytes": 3010824
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Nicaragua.csv",
+      "bytes": 2936183
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Nicaragua.csv",
+      "bytes": 1432948
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Nicaragua.csv",
+      "bytes": 1425186
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Nicaragua.csv",
+      "bytes": 4022263
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Nicaragua.csv",
+      "bytes": 4012817
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Nicaragua.csv",
+      "bytes": 1429059
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Nicaragua.csv",
+      "bytes": 1577821
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Nicaragua.csv",
+      "bytes": 3036449
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Nicaragua.csv",
+      "bytes": 2954989
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Nicaragua.csv",
+      "bytes": 1990165
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Nicaragua.csv",
+      "bytes": 2783182
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Nicaragua.csv",
+      "bytes": 1429999
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Nicaragua.csv",
+      "bytes": 2536264
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Nicaragua.csv",
+      "bytes": 3006737
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Nicaragua.csv",
+      "bytes": 2997945
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Nicaragua.csv",
+      "bytes": 1344569
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Nicaragua.csv",
+      "bytes": 1444077
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Nicaragua.csv",
+      "bytes": 3939037
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Nicaragua.csv",
+      "bytes": 3786651
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Nicaragua.csv",
+      "bytes": 1451636
+    }
+  ],
+  "body_hash": "a4e87ff948f1eaa4"
+}

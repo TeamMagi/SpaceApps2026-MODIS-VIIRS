@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Burundi.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2001/modis_2001_Burundi.csv",
+      "bytes": 23783
+    },
+    {
+      "path": "modis/2002/modis_2002_Burundi.csv",
+      "bytes": 129323
+    },
+    {
+      "path": "modis/2003/modis_2003_Burundi.csv",
+      "bytes": 118310
+    },
+    {
+      "path": "modis/2004/modis_2004_Burundi.csv",
+      "bytes": 146752
+    },
+    {
+      "path": "modis/2005/modis_2005_Burundi.csv",
+      "bytes": 95084
+    },
+    {
+      "path": "modis/2006/modis_2006_Burundi.csv",
+      "bytes": 33059
+    },
+    {
+      "path": "modis/2007/modis_2007_Burundi.csv",
+      "bytes": 41615
+    },
+    {
+      "path": "modis/2008/modis_2008_Burundi.csv",
+      "bytes": 57532
+    },
+    {
+      "path": "modis/2009/modis_2009_Burundi.csv",
+      "bytes": 52038
+    },
+    {
+      "path": "modis/2010/modis_2010_Burundi.csv",
+      "bytes": 101671
+    },
+    {
+      "path": "modis/2011/modis_2011_Burundi.csv",
+      "bytes": 25422
+    },
+    {
+      "path": "modis/2012/modis_2012_Burundi.csv",
+      "bytes": 42348
+    },
+    {
+      "path": "modis/2013/modis_2013_Burundi.csv",
+      "bytes": 63666
+    },
+    {
+      "path": "modis/2014/modis_2014_Burundi.csv",
+      "bytes": 39621
+    },
+    {
+      "path": "modis/2015/modis_2015_Burundi.csv",
+      "bytes": 79940
+    },
+    {
+      "path": "modis/2016/modis_2016_Burundi.csv",
+      "bytes": 75572
+    },
+    {
+      "path": "modis/2017/modis_2017_Burundi.csv",
+      "bytes": 35599
+    },
+    {
+      "path": "modis/2018/modis_2018_Burundi.csv",
+      "bytes": 28744
+    },
+    {
+      "path": "modis/2019/modis_2019_Burundi.csv",
+      "bytes": 37900
+    },
+    {
+      "path": "modis/2020/modis_2020_Burundi.csv",
+      "bytes": 37923
+    },
+    {
+      "path": "modis/2021/modis_2021_Burundi.csv",
+      "bytes": 32490
+    },
+    {
+      "path": "modis/2022/modis_2022_Burundi.csv",
+      "bytes": 33456
+    },
+    {
+      "path": "modis/2023/modis_2023_Burundi.csv",
+      "bytes": 44668
+    },
+    {
+      "path": "modis/2024/modis_2024_Burundi.csv",
+      "bytes": 85223
+    },
+    {
+      "path": "modis/2025/modis_2025_Burundi.csv",
+      "bytes": 51323
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Burundi.csv",
+      "bytes": 148978
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Burundi.csv",
+      "bytes": 181668
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Burundi.csv",
+      "bytes": 243998
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Burundi.csv",
+      "bytes": 141579
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Burundi.csv",
+      "bytes": 194524
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Burundi.csv",
+      "bytes": 206117
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Burundi.csv",
+      "bytes": 431164
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Burundi.csv",
+      "bytes": 284664
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Burundi.csv",
+      "bytes": 219197
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Burundi.csv",
+      "bytes": 324512
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Burundi.csv",
+      "bytes": 213494
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Burundi.csv",
+      "bytes": 439289
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Burundi.csv",
+      "bytes": 382139
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Burundi.csv",
+      "bytes": 194634
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Burundi.csv",
+      "bytes": 154489
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Burundi.csv",
+      "bytes": 184796
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Burundi.csv",
+      "bytes": 233305
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Burundi.csv",
+      "bytes": 153882
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Burundi.csv",
+      "bytes": 170247
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Burundi.csv",
+      "bytes": 200969
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Burundi.csv",
+      "bytes": 368825
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Burundi.csv",
+      "bytes": 288838
+    }
+  ],
+  "body_hash": "3cdc0f3f909b1e3c"
+}

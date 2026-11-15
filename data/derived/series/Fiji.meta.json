@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Fiji.csv",
+      "bytes": 360
+    },
+    {
+      "path": "modis/2001/modis_2001_Fiji.csv",
+      "bytes": 9303
+    },
+    {
+      "path": "modis/2002/modis_2002_Fiji.csv",
+      "bytes": 14590
+    },
+    {
+      "path": "modis/2003/modis_2003_Fiji.csv",
+      "bytes": 68518
+    },
+    {
+      "path": "modis/2004/modis_2004_Fiji.csv",
+      "bytes": 18396
+    },
+    {
+      "path": "modis/2005/modis_2005_Fiji.csv",
+      "bytes": 24238
+    },
+    {
+      "path": "modis/2006/modis_2006_Fiji.csv",
+      "bytes": 22009
+    },
+    {
+      "path": "modis/2007/modis_2007_Fiji.csv",
+      "bytes": 23222
+    },
+    {
+      "path": "modis/2008/modis_2008_Fiji.csv",
+      "bytes": 35159
+    },
+    {
+      "path": "modis/2009/modis_2009_Fiji.csv",
+      "bytes": 29957
+    },
+    {
+      "path": "modis/2010/modis_2010_Fiji.csv",
+      "bytes": 51878
+    },
+    {
+      "path": "modis/2011/modis_2011_Fiji.csv",
+      "bytes": 5631
+    },
+    {
+      "path": "modis/2012/modis_2012_Fiji.csv",
+      "bytes": 18097
+    },
+    {
+      "path": "modis/2013/modis_2013_Fiji.csv",
+      "bytes": 26386
+    },
+    {
+      "path": "modis/2014/modis_2014_Fiji.csv",
+      "bytes": 78311
+    },
+    {
+      "path": "modis/2015/modis_2015_Fiji.csv",
+      "bytes": 39990
+    },
+    {
+      "path": "modis/2016/modis_2016_Fiji.csv",
+      "bytes": 30436
+    },
+    {
+      "path": "modis/2017/modis_2017_Fiji.csv",
+      "bytes": 38922
+    },
+    {
+      "path": "modis/2018/modis_2018_Fiji.csv",
+      "bytes": 37750
+    },
+    {
+      "path": "modis/2019/modis_2019_Fiji.csv",
+      "bytes": 16514
+    },
+    {
+      "path": "modis/2020/modis_2020_Fiji.csv",
+      "bytes": 17997
+    },
+    {
+      "path": "modis/2021/modis_2021_Fiji.csv",
+      "bytes": 26917
+    },
+    {
+      "path": "modis/2022/modis_2022_Fiji.csv",
+      "bytes": 16893
+    },
+    {
+      "path": "modis/2023/modis_2023_Fiji.csv",
+      "bytes": 22860
+    },
+    {
+      "path": "modis/2024/modis_2024_Fiji.csv",
+      "bytes": 27679
+    },
+    {
+      "path": "modis/2025/modis_2025_Fiji.csv",
+      "bytes": 21881
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Fiji.csv",
+      "bytes": 227669
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Fiji.csv",
+      "bytes": 128434
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Fiji.csv",
+      "bytes": 166922
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Fiji.csv",
+      "bytes": 198045
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Fiji.csv",
+      "bytes": 135060
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Fiji.csv",
+      "bytes": 199108
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Fiji.csv",
+      "bytes": 202973
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Fiji.csv",
+      "bytes": 183419
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Fiji.csv",
+      "bytes": 135335
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Fiji.csv",
+      "bytes": 184091
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Fiji.csv",
+      "bytes": 442998
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Fiji.csv",
+      "bytes": 263340
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Fiji.csv",
+      "bytes": 226373
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Fiji.csv",
+      "bytes": 255599
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Fiji.csv",
+      "bytes": 221155
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Fiji.csv",
+      "bytes": 110721
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Fiji.csv",
+      "bytes": 153061
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Fiji.csv",
+      "bytes": 191226
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Fiji.csv",
+      "bytes": 116834
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Fiji.csv",
+      "bytes": 179534
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Fiji.csv",
+      "bytes": 182648
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Fiji.csv",
+      "bytes": 172625
+    }
+  ],
+  "body_hash": "e745f2d912d76679"
+}

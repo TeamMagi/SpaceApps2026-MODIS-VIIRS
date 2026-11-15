@@ -1,0 +1,87 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2010/modis_2010_Palau.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2015/modis_2015_Palau.csv",
+      "bytes": 431
+    },
+    {
+      "path": "modis/2016/modis_2016_Palau.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2020/modis_2020_Palau.csv",
+      "bytes": 350
+    },
+    {
+      "path": "modis/2023/modis_2023_Palau.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Palau.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Palau.csv",
+      "bytes": 606
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Palau.csv",
+      "bytes": 532
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Palau.csv",
+      "bytes": 285
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Palau.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Palau.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Palau.csv",
+      "bytes": 284
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Palau.csv",
+      "bytes": 915
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Palau.csv",
+      "bytes": 1538
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Palau.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Palau.csv",
+      "bytes": 992
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Palau.csv",
+      "bytes": 1076
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Palau.csv",
+      "bytes": 283
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Palau.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Palau.csv",
+      "bytes": 204
+    }
+  ],
+  "body_hash": "df44f31713e4a969"
+}

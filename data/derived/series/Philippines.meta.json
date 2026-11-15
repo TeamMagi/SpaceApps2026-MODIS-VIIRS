@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Philippines.csv",
+      "bytes": 7904
+    },
+    {
+      "path": "modis/2001/modis_2001_Philippines.csv",
+      "bytes": 109682
+    },
+    {
+      "path": "modis/2002/modis_2002_Philippines.csv",
+      "bytes": 266707
+    },
+    {
+      "path": "modis/2003/modis_2003_Philippines.csv",
+      "bytes": 601218
+    },
+    {
+      "path": "modis/2004/modis_2004_Philippines.csv",
+      "bytes": 527523
+    },
+    {
+      "path": "modis/2005/modis_2005_Philippines.csv",
+      "bytes": 669543
+    },
+    {
+      "path": "modis/2006/modis_2006_Philippines.csv",
+      "bytes": 448025
+    },
+    {
+      "path": "modis/2007/modis_2007_Philippines.csv",
+      "bytes": 539385
+    },
+    {
+      "path": "modis/2008/modis_2008_Philippines.csv",
+      "bytes": 256916
+    },
+    {
+      "path": "modis/2009/modis_2009_Philippines.csv",
+      "bytes": 326081
+    },
+    {
+      "path": "modis/2010/modis_2010_Philippines.csv",
+      "bytes": 728015
+    },
+    {
+      "path": "modis/2011/modis_2011_Philippines.csv",
+      "bytes": 249028
+    },
+    {
+      "path": "modis/2012/modis_2012_Philippines.csv",
+      "bytes": 253430
+    },
+    {
+      "path": "modis/2013/modis_2013_Philippines.csv",
+      "bytes": 321898
+    },
+    {
+      "path": "modis/2014/modis_2014_Philippines.csv",
+      "bytes": 417419
+    },
+    {
+      "path": "modis/2015/modis_2015_Philippines.csv",
+      "bytes": 579754
+    },
+    {
+      "path": "modis/2016/modis_2016_Philippines.csv",
+      "bytes": 561763
+    },
+    {
+      "path": "modis/2017/modis_2017_Philippines.csv",
+      "bytes": 260918
+    },
+    {
+      "path": "modis/2018/modis_2018_Philippines.csv",
+      "bytes": 370782
+    },
+    {
+      "path": "modis/2019/modis_2019_Philippines.csv",
+      "bytes": 540210
+    },
+    {
+      "path": "modis/2020/modis_2020_Philippines.csv",
+      "bytes": 465865
+    },
+    {
+      "path": "modis/2021/modis_2021_Philippines.csv",
+      "bytes": 253163
+    },
+    {
+      "path": "modis/2022/modis_2022_Philippines.csv",
+      "bytes": 201336
+    },
+    {
+      "path": "modis/2023/modis_2023_Philippines.csv",
+      "bytes": 339744
+    },
+    {
+      "path": "modis/2024/modis_2024_Philippines.csv",
+      "bytes": 500711
+    },
+    {
+      "path": "modis/2025/modis_2025_Philippines.csv",
+      "bytes": 157583
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Philippines.csv",
+      "bytes": 1323987
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Philippines.csv",
+      "bytes": 3607367
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Philippines.csv",
+      "bytes": 3114120
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Philippines.csv",
+      "bytes": 1630260
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Philippines.csv",
+      "bytes": 1239693
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Philippines.csv",
+      "bytes": 1991653
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Philippines.csv",
+      "bytes": 3373413
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Philippines.csv",
+      "bytes": 1089225
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Philippines.csv",
+      "bytes": 1633221
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Philippines.csv",
+      "bytes": 2124062
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Philippines.csv",
+      "bytes": 2811842
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Philippines.csv",
+      "bytes": 3763114
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Philippines.csv",
+      "bytes": 4069818
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Philippines.csv",
+      "bytes": 1579637
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Philippines.csv",
+      "bytes": 2248415
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Philippines.csv",
+      "bytes": 3497047
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Philippines.csv",
+      "bytes": 3057021
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Philippines.csv",
+      "bytes": 1554831
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Philippines.csv",
+      "bytes": 1136309
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Philippines.csv",
+      "bytes": 1905923
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Philippines.csv",
+      "bytes": 3350389
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Philippines.csv",
+      "bytes": 1048474
+    }
+  ],
+  "body_hash": "c9d56ecd99c01721"
+}

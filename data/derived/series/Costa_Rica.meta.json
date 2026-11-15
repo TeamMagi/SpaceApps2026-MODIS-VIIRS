@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Costa_Rica.csv",
+      "bytes": 4370
+    },
+    {
+      "path": "modis/2001/modis_2001_Costa_Rica.csv",
+      "bytes": 65267
+    },
+    {
+      "path": "modis/2002/modis_2002_Costa_Rica.csv",
+      "bytes": 57258
+    },
+    {
+      "path": "modis/2003/modis_2003_Costa_Rica.csv",
+      "bytes": 128439
+    },
+    {
+      "path": "modis/2004/modis_2004_Costa_Rica.csv",
+      "bytes": 116786
+    },
+    {
+      "path": "modis/2005/modis_2005_Costa_Rica.csv",
+      "bytes": 83900
+    },
+    {
+      "path": "modis/2006/modis_2006_Costa_Rica.csv",
+      "bytes": 73688
+    },
+    {
+      "path": "modis/2007/modis_2007_Costa_Rica.csv",
+      "bytes": 87990
+    },
+    {
+      "path": "modis/2008/modis_2008_Costa_Rica.csv",
+      "bytes": 64348
+    },
+    {
+      "path": "modis/2009/modis_2009_Costa_Rica.csv",
+      "bytes": 83605
+    },
+    {
+      "path": "modis/2010/modis_2010_Costa_Rica.csv",
+      "bytes": 75507
+    },
+    {
+      "path": "modis/2011/modis_2011_Costa_Rica.csv",
+      "bytes": 62581
+    },
+    {
+      "path": "modis/2012/modis_2012_Costa_Rica.csv",
+      "bytes": 95806
+    },
+    {
+      "path": "modis/2013/modis_2013_Costa_Rica.csv",
+      "bytes": 134959
+    },
+    {
+      "path": "modis/2014/modis_2014_Costa_Rica.csv",
+      "bytes": 106383
+    },
+    {
+      "path": "modis/2015/modis_2015_Costa_Rica.csv",
+      "bytes": 122870
+    },
+    {
+      "path": "modis/2016/modis_2016_Costa_Rica.csv",
+      "bytes": 129927
+    },
+    {
+      "path": "modis/2017/modis_2017_Costa_Rica.csv",
+      "bytes": 82429
+    },
+    {
+      "path": "modis/2018/modis_2018_Costa_Rica.csv",
+      "bytes": 89733
+    },
+    {
+      "path": "modis/2019/modis_2019_Costa_Rica.csv",
+      "bytes": 104670
+    },
+    {
+      "path": "modis/2020/modis_2020_Costa_Rica.csv",
+      "bytes": 95654
+    },
+    {
+      "path": "modis/2021/modis_2021_Costa_Rica.csv",
+      "bytes": 53667
+    },
+    {
+      "path": "modis/2022/modis_2022_Costa_Rica.csv",
+      "bytes": 97010
+    },
+    {
+      "path": "modis/2023/modis_2023_Costa_Rica.csv",
+      "bytes": 66816
+    },
+    {
+      "path": "modis/2024/modis_2024_Costa_Rica.csv",
+      "bytes": 99009
+    },
+    {
+      "path": "modis/2025/modis_2025_Costa_Rica.csv",
+      "bytes": 36665
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Costa_Rica.csv",
+      "bytes": 151800
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Costa_Rica.csv",
+      "bytes": 582346
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Costa_Rica.csv",
+      "bytes": 476947
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Costa_Rica.csv",
+      "bytes": 200493
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Costa_Rica.csv",
+      "bytes": 495056
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Costa_Rica.csv",
+      "bytes": 244514
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Costa_Rica.csv",
+      "bytes": 515476
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Costa_Rica.csv",
+      "bytes": 152162
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Costa_Rica.csv",
+      "bytes": 450404
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Costa_Rica.csv",
+      "bytes": 678001
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Costa_Rica.csv",
+      "bytes": 508306
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Costa_Rica.csv",
+      "bytes": 532171
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Costa_Rica.csv",
+      "bytes": 618354
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Costa_Rica.csv",
+      "bytes": 357868
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Costa_Rica.csv",
+      "bytes": 461075
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Costa_Rica.csv",
+      "bytes": 564816
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Costa_Rica.csv",
+      "bytes": 472434
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Costa_Rica.csv",
+      "bytes": 197583
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Costa_Rica.csv",
+      "bytes": 471304
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Costa_Rica.csv",
+      "bytes": 233291
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Costa_Rica.csv",
+      "bytes": 501246
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Costa_Rica.csv",
+      "bytes": 153804
+    }
+  ],
+  "body_hash": "104dbbe70da887fe"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Iran.csv",
+      "bytes": 73109
+    },
+    {
+      "path": "modis/2001/modis_2001_Iran.csv",
+      "bytes": 636612
+    },
+    {
+      "path": "modis/2002/modis_2002_Iran.csv",
+      "bytes": 945415
+    },
+    {
+      "path": "modis/2003/modis_2003_Iran.csv",
+      "bytes": 1428353
+    },
+    {
+      "path": "modis/2004/modis_2004_Iran.csv",
+      "bytes": 1508857
+    },
+    {
+      "path": "modis/2005/modis_2005_Iran.csv",
+      "bytes": 1735068
+    },
+    {
+      "path": "modis/2006/modis_2006_Iran.csv",
+      "bytes": 1727262
+    },
+    {
+      "path": "modis/2007/modis_2007_Iran.csv",
+      "bytes": 1961659
+    },
+    {
+      "path": "modis/2008/modis_2008_Iran.csv",
+      "bytes": 1743093
+    },
+    {
+      "path": "modis/2009/modis_2009_Iran.csv",
+      "bytes": 1707543
+    },
+    {
+      "path": "modis/2010/modis_2010_Iran.csv",
+      "bytes": 1955030
+    },
+    {
+      "path": "modis/2011/modis_2011_Iran.csv",
+      "bytes": 1505046
+    },
+    {
+      "path": "modis/2012/modis_2012_Iran.csv",
+      "bytes": 1172892
+    },
+    {
+      "path": "modis/2013/modis_2013_Iran.csv",
+      "bytes": 1180292
+    },
+    {
+      "path": "modis/2014/modis_2014_Iran.csv",
+      "bytes": 1224681
+    },
+    {
+      "path": "modis/2015/modis_2015_Iran.csv",
+      "bytes": 1160867
+    },
+    {
+      "path": "modis/2016/modis_2016_Iran.csv",
+      "bytes": 2020176
+    },
+    {
+      "path": "modis/2017/modis_2017_Iran.csv",
+      "bytes": 2410750
+    },
+    {
+      "path": "modis/2018/modis_2018_Iran.csv",
+      "bytes": 2165641
+    },
+    {
+      "path": "modis/2019/modis_2019_Iran.csv",
+      "bytes": 1827315
+    },
+    {
+      "path": "modis/2020/modis_2020_Iran.csv",
+      "bytes": 1614098
+    },
+    {
+      "path": "modis/2021/modis_2021_Iran.csv",
+      "bytes": 1846522
+    },
+    {
+      "path": "modis/2022/modis_2022_Iran.csv",
+      "bytes": 1798630
+    },
+    {
+      "path": "modis/2023/modis_2023_Iran.csv",
+      "bytes": 2549738
+    },
+    {
+      "path": "modis/2024/modis_2024_Iran.csv",
+      "bytes": 3178709
+    },
+    {
+      "path": "modis/2025/modis_2025_Iran.csv",
+      "bytes": 3088221
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Iran.csv",
+      "bytes": 10535432
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Iran.csv",
+      "bytes": 11640518
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Iran.csv",
+      "bytes": 11452500
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Iran.csv",
+      "bytes": 14054451
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Iran.csv",
+      "bytes": 14095914
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Iran.csv",
+      "bytes": 15538672
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Iran.csv",
+      "bytes": 17931215
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Iran.csv",
+      "bytes": 17646266
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Iran.csv",
+      "bytes": 8970707
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Iran.csv",
+      "bytes": 9932399
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Iran.csv",
+      "bytes": 9834971
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Iran.csv",
+      "bytes": 9411654
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Iran.csv",
+      "bytes": 13118091
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Iran.csv",
+      "bytes": 14279202
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Iran.csv",
+      "bytes": 13403647
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Iran.csv",
+      "bytes": 11638427
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Iran.csv",
+      "bytes": 11441347
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Iran.csv",
+      "bytes": 14124103
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Iran.csv",
+      "bytes": 13785715
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Iran.csv",
+      "bytes": 16204788
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Iran.csv",
+      "bytes": 16682369
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Iran.csv",
+      "bytes": 17653257
+    }
+  ],
+  "body_hash": "f50abc59b273c79a"
+}

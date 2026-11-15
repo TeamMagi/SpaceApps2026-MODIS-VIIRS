@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Solomon_Islands.csv",
+      "bytes": 357
+    },
+    {
+      "path": "modis/2001/modis_2001_Solomon_Islands.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2002/modis_2002_Solomon_Islands.csv",
+      "bytes": 598
+    },
+    {
+      "path": "modis/2003/modis_2003_Solomon_Islands.csv",
+      "bytes": 1527
+    },
+    {
+      "path": "modis/2004/modis_2004_Solomon_Islands.csv",
+      "bytes": 590
+    },
+    {
+      "path": "modis/2005/modis_2005_Solomon_Islands.csv",
+      "bytes": 3196
+    },
+    {
+      "path": "modis/2006/modis_2006_Solomon_Islands.csv",
+      "bytes": 1438
+    },
+    {
+      "path": "modis/2007/modis_2007_Solomon_Islands.csv",
+      "bytes": 1205
+    },
+    {
+      "path": "modis/2008/modis_2008_Solomon_Islands.csv",
+      "bytes": 1065
+    },
+    {
+      "path": "modis/2009/modis_2009_Solomon_Islands.csv",
+      "bytes": 667
+    },
+    {
+      "path": "modis/2010/modis_2010_Solomon_Islands.csv",
+      "bytes": 822
+    },
+    {
+      "path": "modis/2011/modis_2011_Solomon_Islands.csv",
+      "bytes": 1539
+    },
+    {
+      "path": "modis/2012/modis_2012_Solomon_Islands.csv",
+      "bytes": 3344
+    },
+    {
+      "path": "modis/2013/modis_2013_Solomon_Islands.csv",
+      "bytes": 1903
+    },
+    {
+      "path": "modis/2014/modis_2014_Solomon_Islands.csv",
+      "bytes": 1972
+    },
+    {
+      "path": "modis/2015/modis_2015_Solomon_Islands.csv",
+      "bytes": 2270
+    },
+    {
+      "path": "modis/2016/modis_2016_Solomon_Islands.csv",
+      "bytes": 2197
+    },
+    {
+      "path": "modis/2017/modis_2017_Solomon_Islands.csv",
+      "bytes": 739
+    },
+    {
+      "path": "modis/2018/modis_2018_Solomon_Islands.csv",
+      "bytes": 1364
+    },
+    {
+      "path": "modis/2019/modis_2019_Solomon_Islands.csv",
+      "bytes": 659
+    },
+    {
+      "path": "modis/2020/modis_2020_Solomon_Islands.csv",
+      "bytes": 1363
+    },
+    {
+      "path": "modis/2021/modis_2021_Solomon_Islands.csv",
+      "bytes": 1949
+    },
+    {
+      "path": "modis/2022/modis_2022_Solomon_Islands.csv",
+      "bytes": 1311
+    },
+    {
+      "path": "modis/2023/modis_2023_Solomon_Islands.csv",
+      "bytes": 1442
+    },
+    {
+      "path": "modis/2024/modis_2024_Solomon_Islands.csv",
+      "bytes": 1872
+    },
+    {
+      "path": "modis/2025/modis_2025_Solomon_Islands.csv",
+      "bytes": 1134
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Solomon_Islands.csv",
+      "bytes": 9975
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Solomon_Islands.csv",
+      "bytes": 13882
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Solomon_Islands.csv",
+      "bytes": 13562
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Solomon_Islands.csv",
+      "bytes": 16575
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Solomon_Islands.csv",
+      "bytes": 24369
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Solomon_Islands.csv",
+      "bytes": 13083
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Solomon_Islands.csv",
+      "bytes": 17035
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Solomon_Islands.csv",
+      "bytes": 18261
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Solomon_Islands.csv",
+      "bytes": 12037
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Solomon_Islands.csv",
+      "bytes": 11780
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Solomon_Islands.csv",
+      "bytes": 13296
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Solomon_Islands.csv",
+      "bytes": 24008
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Solomon_Islands.csv",
+      "bytes": 21631
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Solomon_Islands.csv",
+      "bytes": 8628
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Solomon_Islands.csv",
+      "bytes": 11487
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Solomon_Islands.csv",
+      "bytes": 15656
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Solomon_Islands.csv",
+      "bytes": 12248
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Solomon_Islands.csv",
+      "bytes": 12318
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Solomon_Islands.csv",
+      "bytes": 19537
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Solomon_Islands.csv",
+      "bytes": 10845
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Solomon_Islands.csv",
+      "bytes": 15059
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Solomon_Islands.csv",
+      "bytes": 15287
+    }
+  ],
+  "body_hash": "4e1d605339b6fe3a"
+}

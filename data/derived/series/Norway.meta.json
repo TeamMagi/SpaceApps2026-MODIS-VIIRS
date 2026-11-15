@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Norway.csv",
+      "bytes": 4262
+    },
+    {
+      "path": "modis/2002/modis_2002_Norway.csv",
+      "bytes": 5835
+    },
+    {
+      "path": "modis/2003/modis_2003_Norway.csv",
+      "bytes": 13291
+    },
+    {
+      "path": "modis/2004/modis_2004_Norway.csv",
+      "bytes": 8686
+    },
+    {
+      "path": "modis/2005/modis_2005_Norway.csv",
+      "bytes": 14299
+    },
+    {
+      "path": "modis/2006/modis_2006_Norway.csv",
+      "bytes": 13002
+    },
+    {
+      "path": "modis/2007/modis_2007_Norway.csv",
+      "bytes": 8858
+    },
+    {
+      "path": "modis/2008/modis_2008_Norway.csv",
+      "bytes": 13763
+    },
+    {
+      "path": "modis/2009/modis_2009_Norway.csv",
+      "bytes": 5933
+    },
+    {
+      "path": "modis/2010/modis_2010_Norway.csv",
+      "bytes": 7324
+    },
+    {
+      "path": "modis/2011/modis_2011_Norway.csv",
+      "bytes": 9209
+    },
+    {
+      "path": "modis/2012/modis_2012_Norway.csv",
+      "bytes": 5791
+    },
+    {
+      "path": "modis/2013/modis_2013_Norway.csv",
+      "bytes": 8599
+    },
+    {
+      "path": "modis/2014/modis_2014_Norway.csv",
+      "bytes": 9695
+    },
+    {
+      "path": "modis/2015/modis_2015_Norway.csv",
+      "bytes": 5486
+    },
+    {
+      "path": "modis/2016/modis_2016_Norway.csv",
+      "bytes": 4568
+    },
+    {
+      "path": "modis/2017/modis_2017_Norway.csv",
+      "bytes": 6642
+    },
+    {
+      "path": "modis/2018/modis_2018_Norway.csv",
+      "bytes": 10969
+    },
+    {
+      "path": "modis/2019/modis_2019_Norway.csv",
+      "bytes": 8863
+    },
+    {
+      "path": "modis/2020/modis_2020_Norway.csv",
+      "bytes": 3615
+    },
+    {
+      "path": "modis/2021/modis_2021_Norway.csv",
+      "bytes": 4582
+    },
+    {
+      "path": "modis/2022/modis_2022_Norway.csv",
+      "bytes": 4033
+    },
+    {
+      "path": "modis/2023/modis_2023_Norway.csv",
+      "bytes": 3705
+    },
+    {
+      "path": "modis/2024/modis_2024_Norway.csv",
+      "bytes": 4339
+    },
+    {
+      "path": "modis/2025/modis_2025_Norway.csv",
+      "bytes": 5820
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Norway.csv",
+      "bytes": 108230
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Norway.csv",
+      "bytes": 127991
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Norway.csv",
+      "bytes": 104448
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Norway.csv",
+      "bytes": 93482
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Norway.csv",
+      "bytes": 87477
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Norway.csv",
+      "bytes": 80152
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Norway.csv",
+      "bytes": 84673
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Norway.csv",
+      "bytes": 102836
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Norway.csv",
+      "bytes": 91259
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Norway.csv",
+      "bytes": 98756
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Norway.csv",
+      "bytes": 140217
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Norway.csv",
+      "bytes": 98429
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Norway.csv",
+      "bytes": 122124
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Norway.csv",
+      "bytes": 105696
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Norway.csv",
+      "bytes": 113823
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Norway.csv",
+      "bytes": 124947
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Norway.csv",
+      "bytes": 98309
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Norway.csv",
+      "bytes": 84935
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Norway.csv",
+      "bytes": 86798
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Norway.csv",
+      "bytes": 71685
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Norway.csv",
+      "bytes": 71901
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Norway.csv",
+      "bytes": 94804
+    }
+  ],
+  "body_hash": "6772820dcd63456a"
+}

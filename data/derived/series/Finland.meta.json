@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Finland.csv",
+      "bytes": 5706
+    },
+    {
+      "path": "modis/2002/modis_2002_Finland.csv",
+      "bytes": 21239
+    },
+    {
+      "path": "modis/2003/modis_2003_Finland.csv",
+      "bytes": 31615
+    },
+    {
+      "path": "modis/2004/modis_2004_Finland.csv",
+      "bytes": 6327
+    },
+    {
+      "path": "modis/2005/modis_2005_Finland.csv",
+      "bytes": 24314
+    },
+    {
+      "path": "modis/2006/modis_2006_Finland.csv",
+      "bytes": 24295
+    },
+    {
+      "path": "modis/2007/modis_2007_Finland.csv",
+      "bytes": 8928
+    },
+    {
+      "path": "modis/2008/modis_2008_Finland.csv",
+      "bytes": 9980
+    },
+    {
+      "path": "modis/2009/modis_2009_Finland.csv",
+      "bytes": 14542
+    },
+    {
+      "path": "modis/2010/modis_2010_Finland.csv",
+      "bytes": 10602
+    },
+    {
+      "path": "modis/2011/modis_2011_Finland.csv",
+      "bytes": 17325
+    },
+    {
+      "path": "modis/2012/modis_2012_Finland.csv",
+      "bytes": 9524
+    },
+    {
+      "path": "modis/2013/modis_2013_Finland.csv",
+      "bytes": 16511
+    },
+    {
+      "path": "modis/2014/modis_2014_Finland.csv",
+      "bytes": 9657
+    },
+    {
+      "path": "modis/2015/modis_2015_Finland.csv",
+      "bytes": 7911
+    },
+    {
+      "path": "modis/2016/modis_2016_Finland.csv",
+      "bytes": 11410
+    },
+    {
+      "path": "modis/2017/modis_2017_Finland.csv",
+      "bytes": 9179
+    },
+    {
+      "path": "modis/2018/modis_2018_Finland.csv",
+      "bytes": 19939
+    },
+    {
+      "path": "modis/2019/modis_2019_Finland.csv",
+      "bytes": 7585
+    },
+    {
+      "path": "modis/2020/modis_2020_Finland.csv",
+      "bytes": 9439
+    },
+    {
+      "path": "modis/2021/modis_2021_Finland.csv",
+      "bytes": 15491
+    },
+    {
+      "path": "modis/2022/modis_2022_Finland.csv",
+      "bytes": 7213
+    },
+    {
+      "path": "modis/2023/modis_2023_Finland.csv",
+      "bytes": 10157
+    },
+    {
+      "path": "modis/2024/modis_2024_Finland.csv",
+      "bytes": 13302
+    },
+    {
+      "path": "modis/2025/modis_2025_Finland.csv",
+      "bytes": 13090
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Finland.csv",
+      "bytes": 123412
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Finland.csv",
+      "bytes": 83462
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Finland.csv",
+      "bytes": 95439
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Finland.csv",
+      "bytes": 115781
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Finland.csv",
+      "bytes": 90631
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Finland.csv",
+      "bytes": 92489
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Finland.csv",
+      "bytes": 108573
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Finland.csv",
+      "bytes": 99846
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Finland.csv",
+      "bytes": 76755
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Finland.csv",
+      "bytes": 89181
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Finland.csv",
+      "bytes": 86321
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Finland.csv",
+      "bytes": 92288
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Finland.csv",
+      "bytes": 82886
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Finland.csv",
+      "bytes": 79190
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Finland.csv",
+      "bytes": 122311
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Finland.csv",
+      "bytes": 78603
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Finland.csv",
+      "bytes": 99346
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Finland.csv",
+      "bytes": 108717
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Finland.csv",
+      "bytes": 76128
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Finland.csv",
+      "bytes": 89049
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Finland.csv",
+      "bytes": 88310
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Finland.csv",
+      "bytes": 89747
+    }
+  ],
+  "body_hash": "64b87838527dfedb"
+}

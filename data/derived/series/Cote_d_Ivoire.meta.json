@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Cote_d_Ivoire.csv",
+      "bytes": 545752
+    },
+    {
+      "path": "modis/2001/modis_2001_Cote_d_Ivoire.csv",
+      "bytes": 1461519
+    },
+    {
+      "path": "modis/2002/modis_2002_Cote_d_Ivoire.csv",
+      "bytes": 2777648
+    },
+    {
+      "path": "modis/2003/modis_2003_Cote_d_Ivoire.csv",
+      "bytes": 3676347
+    },
+    {
+      "path": "modis/2004/modis_2004_Cote_d_Ivoire.csv",
+      "bytes": 3261003
+    },
+    {
+      "path": "modis/2005/modis_2005_Cote_d_Ivoire.csv",
+      "bytes": 4173552
+    },
+    {
+      "path": "modis/2006/modis_2006_Cote_d_Ivoire.csv",
+      "bytes": 3987932
+    },
+    {
+      "path": "modis/2007/modis_2007_Cote_d_Ivoire.csv",
+      "bytes": 3788901
+    },
+    {
+      "path": "modis/2008/modis_2008_Cote_d_Ivoire.csv",
+      "bytes": 4519134
+    },
+    {
+      "path": "modis/2009/modis_2009_Cote_d_Ivoire.csv",
+      "bytes": 3493463
+    },
+    {
+      "path": "modis/2010/modis_2010_Cote_d_Ivoire.csv",
+      "bytes": 3057731
+    },
+    {
+      "path": "modis/2011/modis_2011_Cote_d_Ivoire.csv",
+      "bytes": 3643472
+    },
+    {
+      "path": "modis/2012/modis_2012_Cote_d_Ivoire.csv",
+      "bytes": 3277170
+    },
+    {
+      "path": "modis/2013/modis_2013_Cote_d_Ivoire.csv",
+      "bytes": 3338352
+    },
+    {
+      "path": "modis/2014/modis_2014_Cote_d_Ivoire.csv",
+      "bytes": 2288161
+    },
+    {
+      "path": "modis/2015/modis_2015_Cote_d_Ivoire.csv",
+      "bytes": 2425271
+    },
+    {
+      "path": "modis/2016/modis_2016_Cote_d_Ivoire.csv",
+      "bytes": 2397253
+    },
+    {
+      "path": "modis/2017/modis_2017_Cote_d_Ivoire.csv",
+      "bytes": 1956146
+    },
+    {
+      "path": "modis/2018/modis_2018_Cote_d_Ivoire.csv",
+      "bytes": 1852392
+    },
+    {
+      "path": "modis/2019/modis_2019_Cote_d_Ivoire.csv",
+      "bytes": 1653835
+    },
+    {
+      "path": "modis/2020/modis_2020_Cote_d_Ivoire.csv",
+      "bytes": 1936587
+    },
+    {
+      "path": "modis/2021/modis_2021_Cote_d_Ivoire.csv",
+      "bytes": 1398164
+    },
+    {
+      "path": "modis/2022/modis_2022_Cote_d_Ivoire.csv",
+      "bytes": 1531366
+    },
+    {
+      "path": "modis/2023/modis_2023_Cote_d_Ivoire.csv",
+      "bytes": 1246775
+    },
+    {
+      "path": "modis/2024/modis_2024_Cote_d_Ivoire.csv",
+      "bytes": 1810184
+    },
+    {
+      "path": "modis/2025/modis_2025_Cote_d_Ivoire.csv",
+      "bytes": 975561
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Cote_d_Ivoire.csv",
+      "bytes": 3149149
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Cote_d_Ivoire.csv",
+      "bytes": 8180353
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Cote_d_Ivoire.csv",
+      "bytes": 9264217
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Cote_d_Ivoire.csv",
+      "bytes": 6904269
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Cote_d_Ivoire.csv",
+      "bytes": 7618500
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Cote_d_Ivoire.csv",
+      "bytes": 6588769
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Cote_d_Ivoire.csv",
+      "bytes": 8204812
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Cote_d_Ivoire.csv",
+      "bytes": 5177656
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Cote_d_Ivoire.csv",
+      "bytes": 9681343
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Cote_d_Ivoire.csv",
+      "bytes": 15352574
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Cote_d_Ivoire.csv",
+      "bytes": 10704160
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Cote_d_Ivoire.csv",
+      "bytes": 11088644
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Cote_d_Ivoire.csv",
+      "bytes": 11640762
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Cote_d_Ivoire.csv",
+      "bytes": 9420395
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Cote_d_Ivoire.csv",
+      "bytes": 8412212
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Cote_d_Ivoire.csv",
+      "bytes": 7843469
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Cote_d_Ivoire.csv",
+      "bytes": 8878223
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Cote_d_Ivoire.csv",
+      "bytes": 6693945
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Cote_d_Ivoire.csv",
+      "bytes": 7544378
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Cote_d_Ivoire.csv",
+      "bytes": 6236039
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Cote_d_Ivoire.csv",
+      "bytes": 8338722
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Cote_d_Ivoire.csv",
+      "bytes": 5091907
+    }
+  ],
+  "body_hash": "bebfd213c573ef6b"
+}

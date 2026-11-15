@@ -1,0 +1,103 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2003/modis_2003_Grenada.csv",
+      "bytes": 289
+    },
+    {
+      "path": "modis/2007/modis_2007_Grenada.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2008/modis_2008_Grenada.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2010/modis_2010_Grenada.csv",
+      "bytes": 582
+    },
+    {
+      "path": "modis/2018/modis_2018_Grenada.csv",
+      "bytes": 210
+    },
+    {
+      "path": "modis/2019/modis_2019_Grenada.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Grenada.csv",
+      "bytes": 693
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Grenada.csv",
+      "bytes": 855
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Grenada.csv",
+      "bytes": 1436
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Grenada.csv",
+      "bytes": 1753
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Grenada.csv",
+      "bytes": 374
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Grenada.csv",
+      "bytes": 1264
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Grenada.csv",
+      "bytes": 365
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Grenada.csv",
+      "bytes": 599
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Grenada.csv",
+      "bytes": 846
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Grenada.csv",
+      "bytes": 923
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Grenada.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Grenada.csv",
+      "bytes": 685
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Grenada.csv",
+      "bytes": 600
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Grenada.csv",
+      "bytes": 843
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Grenada.csv",
+      "bytes": 1234
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Grenada.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Grenada.csv",
+      "bytes": 447
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Grenada.csv",
+      "bytes": 761
+    }
+  ],
+  "body_hash": "33e07ad23d351dce"
+}

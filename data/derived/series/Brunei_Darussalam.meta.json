@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Brunei_Darussalam.csv",
+      "bytes": 1064
+    },
+    {
+      "path": "modis/2002/modis_2002_Brunei_Darussalam.csv",
+      "bytes": 6200
+    },
+    {
+      "path": "modis/2003/modis_2003_Brunei_Darussalam.csv",
+      "bytes": 9082
+    },
+    {
+      "path": "modis/2004/modis_2004_Brunei_Darussalam.csv",
+      "bytes": 4353
+    },
+    {
+      "path": "modis/2005/modis_2005_Brunei_Darussalam.csv",
+      "bytes": 12486
+    },
+    {
+      "path": "modis/2006/modis_2006_Brunei_Darussalam.csv",
+      "bytes": 2895
+    },
+    {
+      "path": "modis/2007/modis_2007_Brunei_Darussalam.csv",
+      "bytes": 4140
+    },
+    {
+      "path": "modis/2008/modis_2008_Brunei_Darussalam.csv",
+      "bytes": 2469
+    },
+    {
+      "path": "modis/2009/modis_2009_Brunei_Darussalam.csv",
+      "bytes": 6133
+    },
+    {
+      "path": "modis/2010/modis_2010_Brunei_Darussalam.csv",
+      "bytes": 5745
+    },
+    {
+      "path": "modis/2011/modis_2011_Brunei_Darussalam.csv",
+      "bytes": 4075
+    },
+    {
+      "path": "modis/2012/modis_2012_Brunei_Darussalam.csv",
+      "bytes": 4997
+    },
+    {
+      "path": "modis/2013/modis_2013_Brunei_Darussalam.csv",
+      "bytes": 4921
+    },
+    {
+      "path": "modis/2014/modis_2014_Brunei_Darussalam.csv",
+      "bytes": 5423
+    },
+    {
+      "path": "modis/2015/modis_2015_Brunei_Darussalam.csv",
+      "bytes": 7451
+    },
+    {
+      "path": "modis/2016/modis_2016_Brunei_Darussalam.csv",
+      "bytes": 9753
+    },
+    {
+      "path": "modis/2017/modis_2017_Brunei_Darussalam.csv",
+      "bytes": 2358
+    },
+    {
+      "path": "modis/2018/modis_2018_Brunei_Darussalam.csv",
+      "bytes": 1211
+    },
+    {
+      "path": "modis/2019/modis_2019_Brunei_Darussalam.csv",
+      "bytes": 4709
+    },
+    {
+      "path": "modis/2020/modis_2020_Brunei_Darussalam.csv",
+      "bytes": 2773
+    },
+    {
+      "path": "modis/2021/modis_2021_Brunei_Darussalam.csv",
+      "bytes": 1930
+    },
+    {
+      "path": "modis/2022/modis_2022_Brunei_Darussalam.csv",
+      "bytes": 1531
+    },
+    {
+      "path": "modis/2023/modis_2023_Brunei_Darussalam.csv",
+      "bytes": 3654
+    },
+    {
+      "path": "modis/2024/modis_2024_Brunei_Darussalam.csv",
+      "bytes": 5586
+    },
+    {
+      "path": "modis/2025/modis_2025_Brunei_Darussalam.csv",
+      "bytes": 1151
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Brunei_Darussalam.csv",
+      "bytes": 6372
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Brunei_Darussalam.csv",
+      "bytes": 22473
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Brunei_Darussalam.csv",
+      "bytes": 13143
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Brunei_Darussalam.csv",
+      "bytes": 9888
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Brunei_Darussalam.csv",
+      "bytes": 7032
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Brunei_Darussalam.csv",
+      "bytes": 10192
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Brunei_Darussalam.csv",
+      "bytes": 14742
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Brunei_Darussalam.csv",
+      "bytes": 4067
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Brunei_Darussalam.csv",
+      "bytes": 13452
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Brunei_Darussalam.csv",
+      "bytes": 6382
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Brunei_Darussalam.csv",
+      "bytes": 14120
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Brunei_Darussalam.csv",
+      "bytes": 31537
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Brunei_Darussalam.csv",
+      "bytes": 44233
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Brunei_Darussalam.csv",
+      "bytes": 5524
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Brunei_Darussalam.csv",
+      "bytes": 8184
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Brunei_Darussalam.csv",
+      "bytes": 20561
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Brunei_Darussalam.csv",
+      "bytes": 15240
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Brunei_Darussalam.csv",
+      "bytes": 9435
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Brunei_Darussalam.csv",
+      "bytes": 5147
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Brunei_Darussalam.csv",
+      "bytes": 7642
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Brunei_Darussalam.csv",
+      "bytes": 12990
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Brunei_Darussalam.csv",
+      "bytes": 5220
+    }
+  ],
+  "body_hash": "7e4536d3171defb5"
+}

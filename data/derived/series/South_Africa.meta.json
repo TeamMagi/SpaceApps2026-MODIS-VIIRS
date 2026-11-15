@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_South_Africa.csv",
+      "bytes": 100502
+    },
+    {
+      "path": "modis/2001/modis_2001_South_Africa.csv",
+      "bytes": 1683160
+    },
+    {
+      "path": "modis/2002/modis_2002_South_Africa.csv",
+      "bytes": 3360455
+    },
+    {
+      "path": "modis/2003/modis_2003_South_Africa.csv",
+      "bytes": 3375938
+    },
+    {
+      "path": "modis/2004/modis_2004_South_Africa.csv",
+      "bytes": 2753216
+    },
+    {
+      "path": "modis/2005/modis_2005_South_Africa.csv",
+      "bytes": 4063231
+    },
+    {
+      "path": "modis/2006/modis_2006_South_Africa.csv",
+      "bytes": 3381851
+    },
+    {
+      "path": "modis/2007/modis_2007_South_Africa.csv",
+      "bytes": 4184310
+    },
+    {
+      "path": "modis/2008/modis_2008_South_Africa.csv",
+      "bytes": 3802320
+    },
+    {
+      "path": "modis/2009/modis_2009_South_Africa.csv",
+      "bytes": 3658731
+    },
+    {
+      "path": "modis/2010/modis_2010_South_Africa.csv",
+      "bytes": 4412157
+    },
+    {
+      "path": "modis/2011/modis_2011_South_Africa.csv",
+      "bytes": 3956487
+    },
+    {
+      "path": "modis/2012/modis_2012_South_Africa.csv",
+      "bytes": 3761982
+    },
+    {
+      "path": "modis/2013/modis_2013_South_Africa.csv",
+      "bytes": 3839749
+    },
+    {
+      "path": "modis/2014/modis_2014_South_Africa.csv",
+      "bytes": 3878666
+    },
+    {
+      "path": "modis/2015/modis_2015_South_Africa.csv",
+      "bytes": 2940709
+    },
+    {
+      "path": "modis/2016/modis_2016_South_Africa.csv",
+      "bytes": 2351156
+    },
+    {
+      "path": "modis/2017/modis_2017_South_Africa.csv",
+      "bytes": 3452849
+    },
+    {
+      "path": "modis/2018/modis_2018_South_Africa.csv",
+      "bytes": 3403391
+    },
+    {
+      "path": "modis/2019/modis_2019_South_Africa.csv",
+      "bytes": 3204620
+    },
+    {
+      "path": "modis/2020/modis_2020_South_Africa.csv",
+      "bytes": 3031879
+    },
+    {
+      "path": "modis/2021/modis_2021_South_Africa.csv",
+      "bytes": 4055720
+    },
+    {
+      "path": "modis/2022/modis_2022_South_Africa.csv",
+      "bytes": 3268467
+    },
+    {
+      "path": "modis/2023/modis_2023_South_Africa.csv",
+      "bytes": 4667223
+    },
+    {
+      "path": "modis/2024/modis_2024_South_Africa.csv",
+      "bytes": 4676852
+    },
+    {
+      "path": "modis/2025/modis_2025_South_Africa.csv",
+      "bytes": 2542678
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_South_Africa.csv",
+      "bytes": 12887831
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_South_Africa.csv",
+      "bytes": 14439736
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_South_Africa.csv",
+      "bytes": 13357331
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_South_Africa.csv",
+      "bytes": 17417186
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_South_Africa.csv",
+      "bytes": 14339525
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_South_Africa.csv",
+      "bytes": 20216229
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_South_Africa.csv",
+      "bytes": 20545724
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_South_Africa.csv",
+      "bytes": 11936015
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_South_Africa.csv",
+      "bytes": 15729631
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_South_Africa.csv",
+      "bytes": 17163931
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_South_Africa.csv",
+      "bytes": 16673475
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_South_Africa.csv",
+      "bytes": 12737439
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_South_Africa.csv",
+      "bytes": 10423707
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_South_Africa.csv",
+      "bytes": 14585976
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_South_Africa.csv",
+      "bytes": 14345564
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_South_Africa.csv",
+      "bytes": 14384356
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_South_Africa.csv",
+      "bytes": 13027022
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_South_Africa.csv",
+      "bytes": 16828824
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_South_Africa.csv",
+      "bytes": 13550651
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_South_Africa.csv",
+      "bytes": 20009551
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_South_Africa.csv",
+      "bytes": 16605433
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_South_Africa.csv",
+      "bytes": 11545565
+    }
+  ],
+  "body_hash": "fbc208c9ef88518d"
+}

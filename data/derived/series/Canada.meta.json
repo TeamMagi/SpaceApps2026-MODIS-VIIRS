@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Canada.csv",
+      "bytes": 67584
+    },
+    {
+      "path": "modis/2001/modis_2001_Canada.csv",
+      "bytes": 618779
+    },
+    {
+      "path": "modis/2002/modis_2002_Canada.csv",
+      "bytes": 2307835
+    },
+    {
+      "path": "modis/2003/modis_2003_Canada.csv",
+      "bytes": 4124770
+    },
+    {
+      "path": "modis/2004/modis_2004_Canada.csv",
+      "bytes": 6055037
+    },
+    {
+      "path": "modis/2005/modis_2005_Canada.csv",
+      "bytes": 2617966
+    },
+    {
+      "path": "modis/2006/modis_2006_Canada.csv",
+      "bytes": 2860885
+    },
+    {
+      "path": "modis/2007/modis_2007_Canada.csv",
+      "bytes": 2708539
+    },
+    {
+      "path": "modis/2008/modis_2008_Canada.csv",
+      "bytes": 2597914
+    },
+    {
+      "path": "modis/2009/modis_2009_Canada.csv",
+      "bytes": 2273708
+    },
+    {
+      "path": "modis/2010/modis_2010_Canada.csv",
+      "bytes": 4188728
+    },
+    {
+      "path": "modis/2011/modis_2011_Canada.csv",
+      "bytes": 3100451
+    },
+    {
+      "path": "modis/2012/modis_2012_Canada.csv",
+      "bytes": 3191026
+    },
+    {
+      "path": "modis/2013/modis_2013_Canada.csv",
+      "bytes": 5370932
+    },
+    {
+      "path": "modis/2014/modis_2014_Canada.csv",
+      "bytes": 6289708
+    },
+    {
+      "path": "modis/2015/modis_2015_Canada.csv",
+      "bytes": 5895144
+    },
+    {
+      "path": "modis/2016/modis_2016_Canada.csv",
+      "bytes": 2144357
+    },
+    {
+      "path": "modis/2017/modis_2017_Canada.csv",
+      "bytes": 7578235
+    },
+    {
+      "path": "modis/2018/modis_2018_Canada.csv",
+      "bytes": 5139248
+    },
+    {
+      "path": "modis/2019/modis_2019_Canada.csv",
+      "bytes": 3271204
+    },
+    {
+      "path": "modis/2020/modis_2020_Canada.csv",
+      "bytes": 978642
+    },
+    {
+      "path": "modis/2021/modis_2021_Canada.csv",
+      "bytes": 7813074
+    },
+    {
+      "path": "modis/2022/modis_2022_Canada.csv",
+      "bytes": 2827694
+    },
+    {
+      "path": "modis/2023/modis_2023_Canada.csv",
+      "bytes": 26472607
+    },
+    {
+      "path": "modis/2024/modis_2024_Canada.csv",
+      "bytes": 12052143
+    },
+    {
+      "path": "modis/2025/modis_2025_Canada.csv",
+      "bytes": 12749281
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Canada.csv",
+      "bytes": 25785533
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Canada.csv",
+      "bytes": 15899238
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Canada.csv",
+      "bytes": 3906933
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Canada.csv",
+      "bytes": 38367350
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Canada.csv",
+      "bytes": 14552533
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Canada.csv",
+      "bytes": 138176145
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Canada.csv",
+      "bytes": 66308238
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Canada.csv",
+      "bytes": 76000768
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Canada.csv",
+      "bytes": 15231513
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Canada.csv",
+      "bytes": 27665154
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Canada.csv",
+      "bytes": 42015486
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Canada.csv",
+      "bytes": 26647955
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Canada.csv",
+      "bytes": 9532246
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Canada.csv",
+      "bytes": 37461017
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Canada.csv",
+      "bytes": 26089031
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Canada.csv",
+      "bytes": 15125906
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Canada.csv",
+      "bytes": 3762134
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Canada.csv",
+      "bytes": 37166522
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Canada.csv",
+      "bytes": 13606146
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Canada.csv",
+      "bytes": 140649416
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Canada.csv",
+      "bytes": 58265064
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Canada.csv",
+      "bytes": 73405312
+    }
+  ],
+  "body_hash": "9ba6b95fea51c2b8"
+}

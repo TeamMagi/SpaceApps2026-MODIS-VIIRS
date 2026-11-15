@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Georgia.csv",
+      "bytes": 902
+    },
+    {
+      "path": "modis/2001/modis_2001_Georgia.csv",
+      "bytes": 36510
+    },
+    {
+      "path": "modis/2002/modis_2002_Georgia.csv",
+      "bytes": 23992
+    },
+    {
+      "path": "modis/2003/modis_2003_Georgia.csv",
+      "bytes": 39136
+    },
+    {
+      "path": "modis/2004/modis_2004_Georgia.csv",
+      "bytes": 73951
+    },
+    {
+      "path": "modis/2005/modis_2005_Georgia.csv",
+      "bytes": 48268
+    },
+    {
+      "path": "modis/2006/modis_2006_Georgia.csv",
+      "bytes": 45763
+    },
+    {
+      "path": "modis/2007/modis_2007_Georgia.csv",
+      "bytes": 44638
+    },
+    {
+      "path": "modis/2008/modis_2008_Georgia.csv",
+      "bytes": 60054
+    },
+    {
+      "path": "modis/2009/modis_2009_Georgia.csv",
+      "bytes": 25536
+    },
+    {
+      "path": "modis/2010/modis_2010_Georgia.csv",
+      "bytes": 77208
+    },
+    {
+      "path": "modis/2011/modis_2011_Georgia.csv",
+      "bytes": 35912
+    },
+    {
+      "path": "modis/2012/modis_2012_Georgia.csv",
+      "bytes": 52970
+    },
+    {
+      "path": "modis/2013/modis_2013_Georgia.csv",
+      "bytes": 39230
+    },
+    {
+      "path": "modis/2014/modis_2014_Georgia.csv",
+      "bytes": 45974
+    },
+    {
+      "path": "modis/2015/modis_2015_Georgia.csv",
+      "bytes": 62961
+    },
+    {
+      "path": "modis/2016/modis_2016_Georgia.csv",
+      "bytes": 46749
+    },
+    {
+      "path": "modis/2017/modis_2017_Georgia.csv",
+      "bytes": 70503
+    },
+    {
+      "path": "modis/2018/modis_2018_Georgia.csv",
+      "bytes": 33433
+    },
+    {
+      "path": "modis/2019/modis_2019_Georgia.csv",
+      "bytes": 53177
+    },
+    {
+      "path": "modis/2020/modis_2020_Georgia.csv",
+      "bytes": 56588
+    },
+    {
+      "path": "modis/2021/modis_2021_Georgia.csv",
+      "bytes": 44086
+    },
+    {
+      "path": "modis/2022/modis_2022_Georgia.csv",
+      "bytes": 35484
+    },
+    {
+      "path": "modis/2023/modis_2023_Georgia.csv",
+      "bytes": 20768
+    },
+    {
+      "path": "modis/2024/modis_2024_Georgia.csv",
+      "bytes": 31754
+    },
+    {
+      "path": "modis/2025/modis_2025_Georgia.csv",
+      "bytes": 72562
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Georgia.csv",
+      "bytes": 162219
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Georgia.csv",
+      "bytes": 271975
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Georgia.csv",
+      "bytes": 233272
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Georgia.csv",
+      "bytes": 176718
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Georgia.csv",
+      "bytes": 169574
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Georgia.csv",
+      "bytes": 109014
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Georgia.csv",
+      "bytes": 143748
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Georgia.csv",
+      "bytes": 315505
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Georgia.csv",
+      "bytes": 227901
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Georgia.csv",
+      "bytes": 188699
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Georgia.csv",
+      "bytes": 227386
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Georgia.csv",
+      "bytes": 257544
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Georgia.csv",
+      "bytes": 250484
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Georgia.csv",
+      "bytes": 331616
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Georgia.csv",
+      "bytes": 184491
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Georgia.csv",
+      "bytes": 277781
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Georgia.csv",
+      "bytes": 218512
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Georgia.csv",
+      "bytes": 171391
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Georgia.csv",
+      "bytes": 147567
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Georgia.csv",
+      "bytes": 110097
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Georgia.csv",
+      "bytes": 131886
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Georgia.csv",
+      "bytes": 303164
+    }
+  ],
+  "body_hash": "fca9ac006b7f1ee3"
+}

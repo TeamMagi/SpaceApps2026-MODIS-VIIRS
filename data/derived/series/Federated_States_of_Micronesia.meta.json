@@ -1,0 +1,79 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2016/modis_2016_Federated_States_of_Micronesia.csv",
+      "bytes": 202
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Federated_States_of_Micronesia.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Federated_States_of_Micronesia.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Federated_States_of_Micronesia.csv",
+      "bytes": 525
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Federated_States_of_Micronesia.csv",
+      "bytes": 450
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Federated_States_of_Micronesia.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Federated_States_of_Micronesia.csv",
+      "bytes": 447
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Federated_States_of_Micronesia.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Federated_States_of_Micronesia.csv",
+      "bytes": 364
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Federated_States_of_Micronesia.csv",
+      "bytes": 363
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Federated_States_of_Micronesia.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Federated_States_of_Micronesia.csv",
+      "bytes": 1600
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Federated_States_of_Micronesia.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Federated_States_of_Micronesia.csv",
+      "bytes": 363
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Federated_States_of_Micronesia.csv",
+      "bytes": 285
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Federated_States_of_Micronesia.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Federated_States_of_Micronesia.csv",
+      "bytes": 284
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Federated_States_of_Micronesia.csv",
+      "bytes": 206
+    }
+  ],
+  "body_hash": "8d64fb8ec0661f8f"
+}

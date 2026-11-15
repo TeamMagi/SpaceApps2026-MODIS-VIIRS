@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Croatia.csv",
+      "bytes": 280
+    },
+    {
+      "path": "modis/2001/modis_2001_Croatia.csv",
+      "bytes": 42631
+    },
+    {
+      "path": "modis/2002/modis_2002_Croatia.csv",
+      "bytes": 35276
+    },
+    {
+      "path": "modis/2003/modis_2003_Croatia.csv",
+      "bytes": 95132
+    },
+    {
+      "path": "modis/2004/modis_2004_Croatia.csv",
+      "bytes": 48644
+    },
+    {
+      "path": "modis/2005/modis_2005_Croatia.csv",
+      "bytes": 55022
+    },
+    {
+      "path": "modis/2006/modis_2006_Croatia.csv",
+      "bytes": 41304
+    },
+    {
+      "path": "modis/2007/modis_2007_Croatia.csv",
+      "bytes": 93379
+    },
+    {
+      "path": "modis/2008/modis_2008_Croatia.csv",
+      "bytes": 68177
+    },
+    {
+      "path": "modis/2009/modis_2009_Croatia.csv",
+      "bytes": 73756
+    },
+    {
+      "path": "modis/2010/modis_2010_Croatia.csv",
+      "bytes": 16031
+    },
+    {
+      "path": "modis/2011/modis_2011_Croatia.csv",
+      "bytes": 111815
+    },
+    {
+      "path": "modis/2012/modis_2012_Croatia.csv",
+      "bytes": 120799
+    },
+    {
+      "path": "modis/2013/modis_2013_Croatia.csv",
+      "bytes": 15803
+    },
+    {
+      "path": "modis/2014/modis_2014_Croatia.csv",
+      "bytes": 13627
+    },
+    {
+      "path": "modis/2015/modis_2015_Croatia.csv",
+      "bytes": 27055
+    },
+    {
+      "path": "modis/2016/modis_2016_Croatia.csv",
+      "bytes": 17310
+    },
+    {
+      "path": "modis/2017/modis_2017_Croatia.csv",
+      "bytes": 110641
+    },
+    {
+      "path": "modis/2018/modis_2018_Croatia.csv",
+      "bytes": 17206
+    },
+    {
+      "path": "modis/2019/modis_2019_Croatia.csv",
+      "bytes": 41476
+    },
+    {
+      "path": "modis/2020/modis_2020_Croatia.csv",
+      "bytes": 31671
+    },
+    {
+      "path": "modis/2021/modis_2021_Croatia.csv",
+      "bytes": 23209
+    },
+    {
+      "path": "modis/2022/modis_2022_Croatia.csv",
+      "bytes": 47891
+    },
+    {
+      "path": "modis/2023/modis_2023_Croatia.csv",
+      "bytes": 8502
+    },
+    {
+      "path": "modis/2024/modis_2024_Croatia.csv",
+      "bytes": 19483
+    },
+    {
+      "path": "modis/2025/modis_2025_Croatia.csv",
+      "bytes": 9167
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Croatia.csv",
+      "bytes": 80193
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Croatia.csv",
+      "bytes": 160039
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Croatia.csv",
+      "bytes": 138094
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Croatia.csv",
+      "bytes": 88859
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Croatia.csv",
+      "bytes": 178523
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Croatia.csv",
+      "bytes": 34888
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Croatia.csv",
+      "bytes": 74371
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Croatia.csv",
+      "bytes": 44284
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Croatia.csv",
+      "bytes": 380496
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Croatia.csv",
+      "bytes": 69794
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Croatia.csv",
+      "bytes": 52912
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Croatia.csv",
+      "bytes": 116470
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Croatia.csv",
+      "bytes": 99150
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Croatia.csv",
+      "bytes": 396702
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Croatia.csv",
+      "bytes": 82205
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Croatia.csv",
+      "bytes": 147653
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Croatia.csv",
+      "bytes": 133933
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Croatia.csv",
+      "bytes": 76633
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Croatia.csv",
+      "bytes": 156216
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Croatia.csv",
+      "bytes": 30522
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Croatia.csv",
+      "bytes": 68406
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Croatia.csv",
+      "bytes": 35166
+    }
+  ],
+  "body_hash": "99016d64deac8b40"
+}

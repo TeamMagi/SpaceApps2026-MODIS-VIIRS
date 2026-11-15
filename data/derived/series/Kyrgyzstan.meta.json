@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Kyrgyzstan.csv",
+      "bytes": 514
+    },
+    {
+      "path": "modis/2001/modis_2001_Kyrgyzstan.csv",
+      "bytes": 30849
+    },
+    {
+      "path": "modis/2002/modis_2002_Kyrgyzstan.csv",
+      "bytes": 115460
+    },
+    {
+      "path": "modis/2003/modis_2003_Kyrgyzstan.csv",
+      "bytes": 75856
+    },
+    {
+      "path": "modis/2004/modis_2004_Kyrgyzstan.csv",
+      "bytes": 88552
+    },
+    {
+      "path": "modis/2005/modis_2005_Kyrgyzstan.csv",
+      "bytes": 77586
+    },
+    {
+      "path": "modis/2006/modis_2006_Kyrgyzstan.csv",
+      "bytes": 81258
+    },
+    {
+      "path": "modis/2007/modis_2007_Kyrgyzstan.csv",
+      "bytes": 97710
+    },
+    {
+      "path": "modis/2008/modis_2008_Kyrgyzstan.csv",
+      "bytes": 43607
+    },
+    {
+      "path": "modis/2009/modis_2009_Kyrgyzstan.csv",
+      "bytes": 49734
+    },
+    {
+      "path": "modis/2010/modis_2010_Kyrgyzstan.csv",
+      "bytes": 31714
+    },
+    {
+      "path": "modis/2011/modis_2011_Kyrgyzstan.csv",
+      "bytes": 48357
+    },
+    {
+      "path": "modis/2012/modis_2012_Kyrgyzstan.csv",
+      "bytes": 27208
+    },
+    {
+      "path": "modis/2013/modis_2013_Kyrgyzstan.csv",
+      "bytes": 31240
+    },
+    {
+      "path": "modis/2014/modis_2014_Kyrgyzstan.csv",
+      "bytes": 30398
+    },
+    {
+      "path": "modis/2015/modis_2015_Kyrgyzstan.csv",
+      "bytes": 24632
+    },
+    {
+      "path": "modis/2016/modis_2016_Kyrgyzstan.csv",
+      "bytes": 37638
+    },
+    {
+      "path": "modis/2017/modis_2017_Kyrgyzstan.csv",
+      "bytes": 32098
+    },
+    {
+      "path": "modis/2018/modis_2018_Kyrgyzstan.csv",
+      "bytes": 35714
+    },
+    {
+      "path": "modis/2019/modis_2019_Kyrgyzstan.csv",
+      "bytes": 38592
+    },
+    {
+      "path": "modis/2020/modis_2020_Kyrgyzstan.csv",
+      "bytes": 33090
+    },
+    {
+      "path": "modis/2021/modis_2021_Kyrgyzstan.csv",
+      "bytes": 18100
+    },
+    {
+      "path": "modis/2022/modis_2022_Kyrgyzstan.csv",
+      "bytes": 15157
+    },
+    {
+      "path": "modis/2023/modis_2023_Kyrgyzstan.csv",
+      "bytes": 19206
+    },
+    {
+      "path": "modis/2024/modis_2024_Kyrgyzstan.csv",
+      "bytes": 16519
+    },
+    {
+      "path": "modis/2025/modis_2025_Kyrgyzstan.csv",
+      "bytes": 30401
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Kyrgyzstan.csv",
+      "bytes": 184424
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Kyrgyzstan.csv",
+      "bytes": 208153
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Kyrgyzstan.csv",
+      "bytes": 178354
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Kyrgyzstan.csv",
+      "bytes": 155959
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Kyrgyzstan.csv",
+      "bytes": 146456
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Kyrgyzstan.csv",
+      "bytes": 155364
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Kyrgyzstan.csv",
+      "bytes": 108168
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Kyrgyzstan.csv",
+      "bytes": 168080
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Kyrgyzstan.csv",
+      "bytes": 219734
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Kyrgyzstan.csv",
+      "bytes": 205649
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Kyrgyzstan.csv",
+      "bytes": 186383
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Kyrgyzstan.csv",
+      "bytes": 137264
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Kyrgyzstan.csv",
+      "bytes": 207613
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Kyrgyzstan.csv",
+      "bytes": 204230
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Kyrgyzstan.csv",
+      "bytes": 190755
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Kyrgyzstan.csv",
+      "bytes": 195458
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Kyrgyzstan.csv",
+      "bytes": 173414
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Kyrgyzstan.csv",
+      "bytes": 149032
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Kyrgyzstan.csv",
+      "bytes": 135227
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Kyrgyzstan.csv",
+      "bytes": 155087
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Kyrgyzstan.csv",
+      "bytes": 97012
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Kyrgyzstan.csv",
+      "bytes": 164207
+    }
+  ],
+  "body_hash": "95fc564a37793512"
+}

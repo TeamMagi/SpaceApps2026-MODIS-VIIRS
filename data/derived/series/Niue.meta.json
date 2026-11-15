@@ -1,0 +1,107 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2004/modis_2004_Niue.csv",
+      "bytes": 612
+    },
+    {
+      "path": "modis/2009/modis_2009_Niue.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2011/modis_2011_Niue.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2012/modis_2012_Niue.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2014/modis_2014_Niue.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2016/modis_2016_Niue.csv",
+      "bytes": 203
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Niue.csv",
+      "bytes": 212
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Niue.csv",
+      "bytes": 968
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Niue.csv",
+      "bytes": 546
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Niue.csv",
+      "bytes": 375
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Niue.csv",
+      "bytes": 375
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Niue.csv",
+      "bytes": 296
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Niue.csv",
+      "bytes": 627
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Niue.csv",
+      "bytes": 620
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Niue.csv",
+      "bytes": 292
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Niue.csv",
+      "bytes": 783
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Niue.csv",
+      "bytes": 373
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Niue.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Niue.csv",
+      "bytes": 1026
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Niue.csv",
+      "bytes": 620
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Niue.csv",
+      "bytes": 374
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Niue.csv",
+      "bytes": 456
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Niue.csv",
+      "bytes": 373
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Niue.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Niue.csv",
+      "bytes": 208
+    }
+  ],
+  "body_hash": "a7f47bcef9d4122b"
+}

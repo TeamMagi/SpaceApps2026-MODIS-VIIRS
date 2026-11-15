@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Hungary.csv",
+      "bytes": 1341
+    },
+    {
+      "path": "modis/2001/modis_2001_Hungary.csv",
+      "bytes": 132882
+    },
+    {
+      "path": "modis/2002/modis_2002_Hungary.csv",
+      "bytes": 73455
+    },
+    {
+      "path": "modis/2003/modis_2003_Hungary.csv",
+      "bytes": 117446
+    },
+    {
+      "path": "modis/2004/modis_2004_Hungary.csv",
+      "bytes": 108259
+    },
+    {
+      "path": "modis/2005/modis_2005_Hungary.csv",
+      "bytes": 126629
+    },
+    {
+      "path": "modis/2006/modis_2006_Hungary.csv",
+      "bytes": 82713
+    },
+    {
+      "path": "modis/2007/modis_2007_Hungary.csv",
+      "bytes": 125310
+    },
+    {
+      "path": "modis/2008/modis_2008_Hungary.csv",
+      "bytes": 117845
+    },
+    {
+      "path": "modis/2009/modis_2009_Hungary.csv",
+      "bytes": 66690
+    },
+    {
+      "path": "modis/2010/modis_2010_Hungary.csv",
+      "bytes": 24762
+    },
+    {
+      "path": "modis/2011/modis_2011_Hungary.csv",
+      "bytes": 100304
+    },
+    {
+      "path": "modis/2012/modis_2012_Hungary.csv",
+      "bytes": 109463
+    },
+    {
+      "path": "modis/2013/modis_2013_Hungary.csv",
+      "bytes": 29883
+    },
+    {
+      "path": "modis/2014/modis_2014_Hungary.csv",
+      "bytes": 45118
+    },
+    {
+      "path": "modis/2015/modis_2015_Hungary.csv",
+      "bytes": 28975
+    },
+    {
+      "path": "modis/2016/modis_2016_Hungary.csv",
+      "bytes": 14372
+    },
+    {
+      "path": "modis/2017/modis_2017_Hungary.csv",
+      "bytes": 25352
+    },
+    {
+      "path": "modis/2018/modis_2018_Hungary.csv",
+      "bytes": 22984
+    },
+    {
+      "path": "modis/2019/modis_2019_Hungary.csv",
+      "bytes": 44904
+    },
+    {
+      "path": "modis/2020/modis_2020_Hungary.csv",
+      "bytes": 25156
+    },
+    {
+      "path": "modis/2021/modis_2021_Hungary.csv",
+      "bytes": 21055
+    },
+    {
+      "path": "modis/2022/modis_2022_Hungary.csv",
+      "bytes": 42081
+    },
+    {
+      "path": "modis/2023/modis_2023_Hungary.csv",
+      "bytes": 17209
+    },
+    {
+      "path": "modis/2024/modis_2024_Hungary.csv",
+      "bytes": 20973
+    },
+    {
+      "path": "modis/2025/modis_2025_Hungary.csv",
+      "bytes": 20875
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Hungary.csv",
+      "bytes": 113546
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Hungary.csv",
+      "bytes": 191202
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Hungary.csv",
+      "bytes": 149722
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Hungary.csv",
+      "bytes": 132180
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Hungary.csv",
+      "bytes": 190728
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Hungary.csv",
+      "bytes": 76507
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Hungary.csv",
+      "bytes": 85864
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Hungary.csv",
+      "bytes": 94425
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Hungary.csv",
+      "bytes": 305850
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Hungary.csv",
+      "bytes": 130877
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Hungary.csv",
+      "bytes": 139665
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Hungary.csv",
+      "bytes": 130821
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Hungary.csv",
+      "bytes": 82097
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Hungary.csv",
+      "bytes": 130862
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Hungary.csv",
+      "bytes": 120051
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Hungary.csv",
+      "bytes": 169566
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Hungary.csv",
+      "bytes": 144477
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Hungary.csv",
+      "bytes": 123520
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Hungary.csv",
+      "bytes": 182640
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Hungary.csv",
+      "bytes": 63333
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Hungary.csv",
+      "bytes": 67336
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Hungary.csv",
+      "bytes": 92496
+    }
+  ],
+  "body_hash": "02f22c53c4996544"
+}

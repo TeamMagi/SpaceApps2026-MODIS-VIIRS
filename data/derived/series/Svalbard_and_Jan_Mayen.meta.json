@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2014/modis_2014_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2020/modis_2020_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 354
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 284
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 362
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 204
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 443
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Svalbard_and_Jan_Mayen.csv",
+      "bytes": 207
+    }
+  ],
+  "body_hash": "9864bcf32d5501e9"
+}

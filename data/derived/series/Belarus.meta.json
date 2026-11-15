@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Belarus.csv",
+      "bytes": 434
+    },
+    {
+      "path": "modis/2001/modis_2001_Belarus.csv",
+      "bytes": 106507
+    },
+    {
+      "path": "modis/2002/modis_2002_Belarus.csv",
+      "bytes": 910643
+    },
+    {
+      "path": "modis/2003/modis_2003_Belarus.csv",
+      "bytes": 289500
+    },
+    {
+      "path": "modis/2004/modis_2004_Belarus.csv",
+      "bytes": 196368
+    },
+    {
+      "path": "modis/2005/modis_2005_Belarus.csv",
+      "bytes": 192385
+    },
+    {
+      "path": "modis/2006/modis_2006_Belarus.csv",
+      "bytes": 491217
+    },
+    {
+      "path": "modis/2007/modis_2007_Belarus.csv",
+      "bytes": 200245
+    },
+    {
+      "path": "modis/2008/modis_2008_Belarus.csv",
+      "bytes": 158562
+    },
+    {
+      "path": "modis/2009/modis_2009_Belarus.csv",
+      "bytes": 272510
+    },
+    {
+      "path": "modis/2010/modis_2010_Belarus.csv",
+      "bytes": 122265
+    },
+    {
+      "path": "modis/2011/modis_2011_Belarus.csv",
+      "bytes": 72050
+    },
+    {
+      "path": "modis/2012/modis_2012_Belarus.csv",
+      "bytes": 114485
+    },
+    {
+      "path": "modis/2013/modis_2013_Belarus.csv",
+      "bytes": 72953
+    },
+    {
+      "path": "modis/2014/modis_2014_Belarus.csv",
+      "bytes": 253119
+    },
+    {
+      "path": "modis/2015/modis_2015_Belarus.csv",
+      "bytes": 324688
+    },
+    {
+      "path": "modis/2016/modis_2016_Belarus.csv",
+      "bytes": 62624
+    },
+    {
+      "path": "modis/2017/modis_2017_Belarus.csv",
+      "bytes": 92403
+    },
+    {
+      "path": "modis/2018/modis_2018_Belarus.csv",
+      "bytes": 101978
+    },
+    {
+      "path": "modis/2019/modis_2019_Belarus.csv",
+      "bytes": 222147
+    },
+    {
+      "path": "modis/2020/modis_2020_Belarus.csv",
+      "bytes": 172880
+    },
+    {
+      "path": "modis/2021/modis_2021_Belarus.csv",
+      "bytes": 70907
+    },
+    {
+      "path": "modis/2022/modis_2022_Belarus.csv",
+      "bytes": 70624
+    },
+    {
+      "path": "modis/2023/modis_2023_Belarus.csv",
+      "bytes": 51607
+    },
+    {
+      "path": "modis/2024/modis_2024_Belarus.csv",
+      "bytes": 48912
+    },
+    {
+      "path": "modis/2025/modis_2025_Belarus.csv",
+      "bytes": 78132
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Belarus.csv",
+      "bytes": 392846
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Belarus.csv",
+      "bytes": 774497
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Belarus.csv",
+      "bytes": 586994
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Belarus.csv",
+      "bytes": 276107
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Belarus.csv",
+      "bytes": 282123
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Belarus.csv",
+      "bytes": 217298
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Belarus.csv",
+      "bytes": 252174
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Belarus.csv",
+      "bytes": 326460
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Belarus.csv",
+      "bytes": 443090
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Belarus.csv",
+      "bytes": 333257
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Belarus.csv",
+      "bytes": 983995
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Belarus.csv",
+      "bytes": 1234614
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Belarus.csv",
+      "bytes": 280460
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Belarus.csv",
+      "bytes": 327751
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Belarus.csv",
+      "bytes": 382647
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Belarus.csv",
+      "bytes": 734183
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Belarus.csv",
+      "bytes": 563231
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Belarus.csv",
+      "bytes": 267454
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Belarus.csv",
+      "bytes": 267979
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Belarus.csv",
+      "bytes": 219051
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Belarus.csv",
+      "bytes": 231231
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Belarus.csv",
+      "bytes": 316279
+    }
+  ],
+  "body_hash": "f398e988dee55f64"
+}

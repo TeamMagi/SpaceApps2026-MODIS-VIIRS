@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Chile.csv",
+      "bytes": 15947
+    },
+    {
+      "path": "modis/2001/modis_2001_Chile.csv",
+      "bytes": 122213
+    },
+    {
+      "path": "modis/2002/modis_2002_Chile.csv",
+      "bytes": 165069
+    },
+    {
+      "path": "modis/2003/modis_2003_Chile.csv",
+      "bytes": 443906
+    },
+    {
+      "path": "modis/2004/modis_2004_Chile.csv",
+      "bytes": 510965
+    },
+    {
+      "path": "modis/2005/modis_2005_Chile.csv",
+      "bytes": 565559
+    },
+    {
+      "path": "modis/2006/modis_2006_Chile.csv",
+      "bytes": 480654
+    },
+    {
+      "path": "modis/2007/modis_2007_Chile.csv",
+      "bytes": 539375
+    },
+    {
+      "path": "modis/2008/modis_2008_Chile.csv",
+      "bytes": 668400
+    },
+    {
+      "path": "modis/2009/modis_2009_Chile.csv",
+      "bytes": 654555
+    },
+    {
+      "path": "modis/2010/modis_2010_Chile.csv",
+      "bytes": 559031
+    },
+    {
+      "path": "modis/2011/modis_2011_Chile.csv",
+      "bytes": 600489
+    },
+    {
+      "path": "modis/2012/modis_2012_Chile.csv",
+      "bytes": 586878
+    },
+    {
+      "path": "modis/2013/modis_2013_Chile.csv",
+      "bytes": 529441
+    },
+    {
+      "path": "modis/2014/modis_2014_Chile.csv",
+      "bytes": 566674
+    },
+    {
+      "path": "modis/2015/modis_2015_Chile.csv",
+      "bytes": 756992
+    },
+    {
+      "path": "modis/2016/modis_2016_Chile.csv",
+      "bytes": 558505
+    },
+    {
+      "path": "modis/2017/modis_2017_Chile.csv",
+      "bytes": 1315453
+    },
+    {
+      "path": "modis/2018/modis_2018_Chile.csv",
+      "bytes": 573150
+    },
+    {
+      "path": "modis/2019/modis_2019_Chile.csv",
+      "bytes": 611853
+    },
+    {
+      "path": "modis/2020/modis_2020_Chile.csv",
+      "bytes": 677635
+    },
+    {
+      "path": "modis/2021/modis_2021_Chile.csv",
+      "bytes": 605538
+    },
+    {
+      "path": "modis/2022/modis_2022_Chile.csv",
+      "bytes": 605800
+    },
+    {
+      "path": "modis/2023/modis_2023_Chile.csv",
+      "bytes": 1341774
+    },
+    {
+      "path": "modis/2024/modis_2024_Chile.csv",
+      "bytes": 526327
+    },
+    {
+      "path": "modis/2025/modis_2025_Chile.csv",
+      "bytes": 547628
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Chile.csv",
+      "bytes": 1070908
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Chile.csv",
+      "bytes": 2022884
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Chile.csv",
+      "bytes": 2204998
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Chile.csv",
+      "bytes": 2034314
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Chile.csv",
+      "bytes": 2300860
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Chile.csv",
+      "bytes": 4213684
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Chile.csv",
+      "bytes": 1771440
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Chile.csv",
+      "bytes": 2073080
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Chile.csv",
+      "bytes": 1737573
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Chile.csv",
+      "bytes": 1907758
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Chile.csv",
+      "bytes": 2009133
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Chile.csv",
+      "bytes": 2766725
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Chile.csv",
+      "bytes": 2004658
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Chile.csv",
+      "bytes": 4398957
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Chile.csv",
+      "bytes": 1849971
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Chile.csv",
+      "bytes": 1990774
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Chile.csv",
+      "bytes": 2224611
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Chile.csv",
+      "bytes": 1980639
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Chile.csv",
+      "bytes": 2360998
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Chile.csv",
+      "bytes": 4409079
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Chile.csv",
+      "bytes": 1737186
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Chile.csv",
+      "bytes": 2078518
+    }
+  ],
+  "body_hash": "c2cca1b83a92bbb8"
+}

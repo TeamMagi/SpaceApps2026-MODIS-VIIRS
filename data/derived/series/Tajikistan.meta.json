@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Tajikistan.csv",
+      "bytes": 360
+    },
+    {
+      "path": "modis/2001/modis_2001_Tajikistan.csv",
+      "bytes": 5585
+    },
+    {
+      "path": "modis/2002/modis_2002_Tajikistan.csv",
+      "bytes": 15619
+    },
+    {
+      "path": "modis/2003/modis_2003_Tajikistan.csv",
+      "bytes": 24945
+    },
+    {
+      "path": "modis/2004/modis_2004_Tajikistan.csv",
+      "bytes": 29513
+    },
+    {
+      "path": "modis/2005/modis_2005_Tajikistan.csv",
+      "bytes": 12091
+    },
+    {
+      "path": "modis/2006/modis_2006_Tajikistan.csv",
+      "bytes": 12024
+    },
+    {
+      "path": "modis/2007/modis_2007_Tajikistan.csv",
+      "bytes": 12166
+    },
+    {
+      "path": "modis/2008/modis_2008_Tajikistan.csv",
+      "bytes": 5958
+    },
+    {
+      "path": "modis/2009/modis_2009_Tajikistan.csv",
+      "bytes": 10131
+    },
+    {
+      "path": "modis/2010/modis_2010_Tajikistan.csv",
+      "bytes": 17476
+    },
+    {
+      "path": "modis/2011/modis_2011_Tajikistan.csv",
+      "bytes": 8551
+    },
+    {
+      "path": "modis/2012/modis_2012_Tajikistan.csv",
+      "bytes": 6991
+    },
+    {
+      "path": "modis/2013/modis_2013_Tajikistan.csv",
+      "bytes": 20090
+    },
+    {
+      "path": "modis/2014/modis_2014_Tajikistan.csv",
+      "bytes": 13032
+    },
+    {
+      "path": "modis/2015/modis_2015_Tajikistan.csv",
+      "bytes": 7088
+    },
+    {
+      "path": "modis/2016/modis_2016_Tajikistan.csv",
+      "bytes": 12965
+    },
+    {
+      "path": "modis/2017/modis_2017_Tajikistan.csv",
+      "bytes": 9289
+    },
+    {
+      "path": "modis/2018/modis_2018_Tajikistan.csv",
+      "bytes": 6043
+    },
+    {
+      "path": "modis/2019/modis_2019_Tajikistan.csv",
+      "bytes": 8427
+    },
+    {
+      "path": "modis/2020/modis_2020_Tajikistan.csv",
+      "bytes": 11036
+    },
+    {
+      "path": "modis/2021/modis_2021_Tajikistan.csv",
+      "bytes": 9688
+    },
+    {
+      "path": "modis/2022/modis_2022_Tajikistan.csv",
+      "bytes": 7370
+    },
+    {
+      "path": "modis/2023/modis_2023_Tajikistan.csv",
+      "bytes": 7870
+    },
+    {
+      "path": "modis/2024/modis_2024_Tajikistan.csv",
+      "bytes": 9369
+    },
+    {
+      "path": "modis/2025/modis_2025_Tajikistan.csv",
+      "bytes": 11585
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Tajikistan.csv",
+      "bytes": 46450
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Tajikistan.csv",
+      "bytes": 64513
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Tajikistan.csv",
+      "bytes": 89517
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Tajikistan.csv",
+      "bytes": 76806
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Tajikistan.csv",
+      "bytes": 71129
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Tajikistan.csv",
+      "bytes": 64962
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Tajikistan.csv",
+      "bytes": 56716
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Tajikistan.csv",
+      "bytes": 93801
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Tajikistan.csv",
+      "bytes": 34005
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Tajikistan.csv",
+      "bytes": 83867
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Tajikistan.csv",
+      "bytes": 66004
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Tajikistan.csv",
+      "bytes": 50788
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Tajikistan.csv",
+      "bytes": 73032
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Tajikistan.csv",
+      "bytes": 50368
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Tajikistan.csv",
+      "bytes": 54230
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Tajikistan.csv",
+      "bytes": 59538
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Tajikistan.csv",
+      "bytes": 79763
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Tajikistan.csv",
+      "bytes": 69854
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Tajikistan.csv",
+      "bytes": 61510
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Tajikistan.csv",
+      "bytes": 60930
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Tajikistan.csv",
+      "bytes": 51185
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Tajikistan.csv",
+      "bytes": 81057
+    }
+  ],
+  "body_hash": "45f337d32e20e34b"
+}

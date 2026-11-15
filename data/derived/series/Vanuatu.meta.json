@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Vanuatu.csv",
+      "bytes": 362
+    },
+    {
+      "path": "modis/2001/modis_2001_Vanuatu.csv",
+      "bytes": 7250
+    },
+    {
+      "path": "modis/2002/modis_2002_Vanuatu.csv",
+      "bytes": 22789
+    },
+    {
+      "path": "modis/2003/modis_2003_Vanuatu.csv",
+      "bytes": 30014
+    },
+    {
+      "path": "modis/2004/modis_2004_Vanuatu.csv",
+      "bytes": 23571
+    },
+    {
+      "path": "modis/2005/modis_2005_Vanuatu.csv",
+      "bytes": 20540
+    },
+    {
+      "path": "modis/2006/modis_2006_Vanuatu.csv",
+      "bytes": 20555
+    },
+    {
+      "path": "modis/2007/modis_2007_Vanuatu.csv",
+      "bytes": 26711
+    },
+    {
+      "path": "modis/2008/modis_2008_Vanuatu.csv",
+      "bytes": 17858
+    },
+    {
+      "path": "modis/2009/modis_2009_Vanuatu.csv",
+      "bytes": 27738
+    },
+    {
+      "path": "modis/2010/modis_2010_Vanuatu.csv",
+      "bytes": 38841
+    },
+    {
+      "path": "modis/2011/modis_2011_Vanuatu.csv",
+      "bytes": 42963
+    },
+    {
+      "path": "modis/2012/modis_2012_Vanuatu.csv",
+      "bytes": 34970
+    },
+    {
+      "path": "modis/2013/modis_2013_Vanuatu.csv",
+      "bytes": 45456
+    },
+    {
+      "path": "modis/2014/modis_2014_Vanuatu.csv",
+      "bytes": 47749
+    },
+    {
+      "path": "modis/2015/modis_2015_Vanuatu.csv",
+      "bytes": 56660
+    },
+    {
+      "path": "modis/2016/modis_2016_Vanuatu.csv",
+      "bytes": 85564
+    },
+    {
+      "path": "modis/2017/modis_2017_Vanuatu.csv",
+      "bytes": 52525
+    },
+    {
+      "path": "modis/2018/modis_2018_Vanuatu.csv",
+      "bytes": 63658
+    },
+    {
+      "path": "modis/2019/modis_2019_Vanuatu.csv",
+      "bytes": 22776
+    },
+    {
+      "path": "modis/2020/modis_2020_Vanuatu.csv",
+      "bytes": 18167
+    },
+    {
+      "path": "modis/2021/modis_2021_Vanuatu.csv",
+      "bytes": 10295
+    },
+    {
+      "path": "modis/2022/modis_2022_Vanuatu.csv",
+      "bytes": 12244
+    },
+    {
+      "path": "modis/2023/modis_2023_Vanuatu.csv",
+      "bytes": 17702
+    },
+    {
+      "path": "modis/2024/modis_2024_Vanuatu.csv",
+      "bytes": 5756
+    },
+    {
+      "path": "modis/2025/modis_2025_Vanuatu.csv",
+      "bytes": 4619
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Vanuatu.csv",
+      "bytes": 234005
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Vanuatu.csv",
+      "bytes": 84355
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Vanuatu.csv",
+      "bytes": 58045
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Vanuatu.csv",
+      "bytes": 40333
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Vanuatu.csv",
+      "bytes": 35879
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Vanuatu.csv",
+      "bytes": 50846
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Vanuatu.csv",
+      "bytes": 43211
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Vanuatu.csv",
+      "bytes": 22268
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Vanuatu.csv",
+      "bytes": 132236
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Vanuatu.csv",
+      "bytes": 199999
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Vanuatu.csv",
+      "bytes": 240271
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Vanuatu.csv",
+      "bytes": 246894
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Vanuatu.csv",
+      "bytes": 396325
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Vanuatu.csv",
+      "bytes": 261091
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Vanuatu.csv",
+      "bytes": 321028
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Vanuatu.csv",
+      "bytes": 88727
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Vanuatu.csv",
+      "bytes": 58720
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Vanuatu.csv",
+      "bytes": 29603
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Vanuatu.csv",
+      "bytes": 38424
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Vanuatu.csv",
+      "bytes": 52024
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Vanuatu.csv",
+      "bytes": 31358
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Vanuatu.csv",
+      "bytes": 21272
+    }
+  ],
+  "body_hash": "db51f31ae3562f84"
+}

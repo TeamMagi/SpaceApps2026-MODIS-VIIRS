@@ -1,0 +1,163 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_United_States_Virgin_Islands.csv",
+      "bytes": 369
+    },
+    {
+      "path": "modis/2002/modis_2002_United_States_Virgin_Islands.csv",
+      "bytes": 365
+    },
+    {
+      "path": "modis/2003/modis_2003_United_States_Virgin_Islands.csv",
+      "bytes": 358
+    },
+    {
+      "path": "modis/2004/modis_2004_United_States_Virgin_Islands.csv",
+      "bytes": 591
+    },
+    {
+      "path": "modis/2005/modis_2005_United_States_Virgin_Islands.csv",
+      "bytes": 748
+    },
+    {
+      "path": "modis/2006/modis_2006_United_States_Virgin_Islands.csv",
+      "bytes": 515
+    },
+    {
+      "path": "modis/2007/modis_2007_United_States_Virgin_Islands.csv",
+      "bytes": 357
+    },
+    {
+      "path": "modis/2008/modis_2008_United_States_Virgin_Islands.csv",
+      "bytes": 365
+    },
+    {
+      "path": "modis/2009/modis_2009_United_States_Virgin_Islands.csv",
+      "bytes": 443
+    },
+    {
+      "path": "modis/2010/modis_2010_United_States_Virgin_Islands.csv",
+      "bytes": 437
+    },
+    {
+      "path": "modis/2011/modis_2011_United_States_Virgin_Islands.csv",
+      "bytes": 522
+    },
+    {
+      "path": "modis/2013/modis_2013_United_States_Virgin_Islands.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2015/modis_2015_United_States_Virgin_Islands.csv",
+      "bytes": 908
+    },
+    {
+      "path": "modis/2018/modis_2018_United_States_Virgin_Islands.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2019/modis_2019_United_States_Virgin_Islands.csv",
+      "bytes": 209
+    },
+    {
+      "path": "modis/2020/modis_2020_United_States_Virgin_Islands.csv",
+      "bytes": 444
+    },
+    {
+      "path": "modis/2021/modis_2021_United_States_Virgin_Islands.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2022/modis_2022_United_States_Virgin_Islands.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2025/modis_2025_United_States_Virgin_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_United_States_Virgin_Islands.csv",
+      "bytes": 376
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_United_States_Virgin_Islands.csv",
+      "bytes": 369
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_United_States_Virgin_Islands.csv",
+      "bytes": 855
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_United_States_Virgin_Islands.csv",
+      "bytes": 3869
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_United_States_Virgin_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_United_States_Virgin_Islands.csv",
+      "bytes": 1100
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_United_States_Virgin_Islands.csv",
+      "bytes": 210
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_United_States_Virgin_Islands.csv",
+      "bytes": 3067
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_United_States_Virgin_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_United_States_Virgin_Islands.csv",
+      "bytes": 283
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_United_States_Virgin_Islands.csv",
+      "bytes": 1005
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_United_States_Virgin_Islands.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_United_States_Virgin_Islands.csv",
+      "bytes": 686
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_United_States_Virgin_Islands.csv",
+      "bytes": 519
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_United_States_Virgin_Islands.csv",
+      "bytes": 681
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_United_States_Virgin_Islands.csv",
+      "bytes": 3537
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_United_States_Virgin_Islands.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_United_States_Virgin_Islands.csv",
+      "bytes": 605
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_United_States_Virgin_Islands.csv",
+      "bytes": 287
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_United_States_Virgin_Islands.csv",
+      "bytes": 367
+    }
+  ],
+  "body_hash": "ce6839575fa4bfc0"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Mali.csv",
+      "bytes": 572774
+    },
+    {
+      "path": "modis/2001/modis_2001_Mali.csv",
+      "bytes": 1334286
+    },
+    {
+      "path": "modis/2002/modis_2002_Mali.csv",
+      "bytes": 1935850
+    },
+    {
+      "path": "modis/2003/modis_2003_Mali.csv",
+      "bytes": 2510824
+    },
+    {
+      "path": "modis/2004/modis_2004_Mali.csv",
+      "bytes": 3398094
+    },
+    {
+      "path": "modis/2005/modis_2005_Mali.csv",
+      "bytes": 3342017
+    },
+    {
+      "path": "modis/2006/modis_2006_Mali.csv",
+      "bytes": 3157408
+    },
+    {
+      "path": "modis/2007/modis_2007_Mali.csv",
+      "bytes": 2815847
+    },
+    {
+      "path": "modis/2008/modis_2008_Mali.csv",
+      "bytes": 3386361
+    },
+    {
+      "path": "modis/2009/modis_2009_Mali.csv",
+      "bytes": 2577270
+    },
+    {
+      "path": "modis/2010/modis_2010_Mali.csv",
+      "bytes": 3049675
+    },
+    {
+      "path": "modis/2011/modis_2011_Mali.csv",
+      "bytes": 2774023
+    },
+    {
+      "path": "modis/2012/modis_2012_Mali.csv",
+      "bytes": 2375639
+    },
+    {
+      "path": "modis/2013/modis_2013_Mali.csv",
+      "bytes": 2652907
+    },
+    {
+      "path": "modis/2014/modis_2014_Mali.csv",
+      "bytes": 2398270
+    },
+    {
+      "path": "modis/2015/modis_2015_Mali.csv",
+      "bytes": 2072193
+    },
+    {
+      "path": "modis/2016/modis_2016_Mali.csv",
+      "bytes": 2618005
+    },
+    {
+      "path": "modis/2017/modis_2017_Mali.csv",
+      "bytes": 2607087
+    },
+    {
+      "path": "modis/2018/modis_2018_Mali.csv",
+      "bytes": 1996461
+    },
+    {
+      "path": "modis/2019/modis_2019_Mali.csv",
+      "bytes": 2332016
+    },
+    {
+      "path": "modis/2020/modis_2020_Mali.csv",
+      "bytes": 2713543
+    },
+    {
+      "path": "modis/2021/modis_2021_Mali.csv",
+      "bytes": 2592517
+    },
+    {
+      "path": "modis/2022/modis_2022_Mali.csv",
+      "bytes": 2470304
+    },
+    {
+      "path": "modis/2023/modis_2023_Mali.csv",
+      "bytes": 2789959
+    },
+    {
+      "path": "modis/2024/modis_2024_Mali.csv",
+      "bytes": 2820620
+    },
+    {
+      "path": "modis/2025/modis_2025_Mali.csv",
+      "bytes": 2427914
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Mali.csv",
+      "bytes": 6705737
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Mali.csv",
+      "bytes": 12240986
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Mali.csv",
+      "bytes": 14022216
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Mali.csv",
+      "bytes": 13563342
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Mali.csv",
+      "bytes": 12840471
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Mali.csv",
+      "bytes": 15068185
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Mali.csv",
+      "bytes": 14711240
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Mali.csv",
+      "bytes": 14610319
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Mali.csv",
+      "bytes": 10241547
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Mali.csv",
+      "bytes": 14165092
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Mali.csv",
+      "bytes": 13047749
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Mali.csv",
+      "bytes": 11233042
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Mali.csv",
+      "bytes": 13983067
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Mali.csv",
+      "bytes": 13803347
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Mali.csv",
+      "bytes": 10180405
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Mali.csv",
+      "bytes": 11994902
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Mali.csv",
+      "bytes": 13741809
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Mali.csv",
+      "bytes": 13442903
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Mali.csv",
+      "bytes": 12647771
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Mali.csv",
+      "bytes": 14475955
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Mali.csv",
+      "bytes": 13653026
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Mali.csv",
+      "bytes": 14336405
+    }
+  ],
+  "body_hash": "09190b48aac4a748"
+}

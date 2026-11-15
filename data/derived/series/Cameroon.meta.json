@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Cameroon.csv",
+      "bytes": 886467
+    },
+    {
+      "path": "modis/2001/modis_2001_Cameroon.csv",
+      "bytes": 1616956
+    },
+    {
+      "path": "modis/2002/modis_2002_Cameroon.csv",
+      "bytes": 3071097
+    },
+    {
+      "path": "modis/2003/modis_2003_Cameroon.csv",
+      "bytes": 4627202
+    },
+    {
+      "path": "modis/2004/modis_2004_Cameroon.csv",
+      "bytes": 4757381
+    },
+    {
+      "path": "modis/2005/modis_2005_Cameroon.csv",
+      "bytes": 4607972
+    },
+    {
+      "path": "modis/2006/modis_2006_Cameroon.csv",
+      "bytes": 3927772
+    },
+    {
+      "path": "modis/2007/modis_2007_Cameroon.csv",
+      "bytes": 4582884
+    },
+    {
+      "path": "modis/2008/modis_2008_Cameroon.csv",
+      "bytes": 4375564
+    },
+    {
+      "path": "modis/2009/modis_2009_Cameroon.csv",
+      "bytes": 3696657
+    },
+    {
+      "path": "modis/2010/modis_2010_Cameroon.csv",
+      "bytes": 3896903
+    },
+    {
+      "path": "modis/2011/modis_2011_Cameroon.csv",
+      "bytes": 3687618
+    },
+    {
+      "path": "modis/2012/modis_2012_Cameroon.csv",
+      "bytes": 3330695
+    },
+    {
+      "path": "modis/2013/modis_2013_Cameroon.csv",
+      "bytes": 2881875
+    },
+    {
+      "path": "modis/2014/modis_2014_Cameroon.csv",
+      "bytes": 2979668
+    },
+    {
+      "path": "modis/2015/modis_2015_Cameroon.csv",
+      "bytes": 3062994
+    },
+    {
+      "path": "modis/2016/modis_2016_Cameroon.csv",
+      "bytes": 3424180
+    },
+    {
+      "path": "modis/2017/modis_2017_Cameroon.csv",
+      "bytes": 3355431
+    },
+    {
+      "path": "modis/2018/modis_2018_Cameroon.csv",
+      "bytes": 3279634
+    },
+    {
+      "path": "modis/2019/modis_2019_Cameroon.csv",
+      "bytes": 3133698
+    },
+    {
+      "path": "modis/2020/modis_2020_Cameroon.csv",
+      "bytes": 4030358
+    },
+    {
+      "path": "modis/2021/modis_2021_Cameroon.csv",
+      "bytes": 3476007
+    },
+    {
+      "path": "modis/2022/modis_2022_Cameroon.csv",
+      "bytes": 3361467
+    },
+    {
+      "path": "modis/2023/modis_2023_Cameroon.csv",
+      "bytes": 3347275
+    },
+    {
+      "path": "modis/2024/modis_2024_Cameroon.csv",
+      "bytes": 3088067
+    },
+    {
+      "path": "modis/2025/modis_2025_Cameroon.csv",
+      "bytes": 3264968
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Cameroon.csv",
+      "bytes": 5635098
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Cameroon.csv",
+      "bytes": 15391947
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Cameroon.csv",
+      "bytes": 19807708
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Cameroon.csv",
+      "bytes": 18030679
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Cameroon.csv",
+      "bytes": 17443748
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Cameroon.csv",
+      "bytes": 17337848
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Cameroon.csv",
+      "bytes": 16892601
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Cameroon.csv",
+      "bytes": 17819692
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Cameroon.csv",
+      "bytes": 13000544
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Cameroon.csv",
+      "bytes": 13920224
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Cameroon.csv",
+      "bytes": 14377619
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Cameroon.csv",
+      "bytes": 13912206
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Cameroon.csv",
+      "bytes": 16958800
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Cameroon.csv",
+      "bytes": 16909363
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Cameroon.csv",
+      "bytes": 15258402
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Cameroon.csv",
+      "bytes": 15088721
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Cameroon.csv",
+      "bytes": 19086274
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Cameroon.csv",
+      "bytes": 17570299
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Cameroon.csv",
+      "bytes": 17182987
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Cameroon.csv",
+      "bytes": 17080442
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Cameroon.csv",
+      "bytes": 16241470
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Cameroon.csv",
+      "bytes": 17578645
+    }
+  ],
+  "body_hash": "38b46d6c1f4d9638"
+}

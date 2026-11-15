@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Portugal.csv",
+      "bytes": 353
+    },
+    {
+      "path": "modis/2001/modis_2001_Portugal.csv",
+      "bytes": 125114
+    },
+    {
+      "path": "modis/2002/modis_2002_Portugal.csv",
+      "bytes": 205531
+    },
+    {
+      "path": "modis/2003/modis_2003_Portugal.csv",
+      "bytes": 488211
+    },
+    {
+      "path": "modis/2004/modis_2004_Portugal.csv",
+      "bytes": 236295
+    },
+    {
+      "path": "modis/2005/modis_2005_Portugal.csv",
+      "bytes": 722900
+    },
+    {
+      "path": "modis/2006/modis_2006_Portugal.csv",
+      "bytes": 206547
+    },
+    {
+      "path": "modis/2007/modis_2007_Portugal.csv",
+      "bytes": 122625
+    },
+    {
+      "path": "modis/2008/modis_2008_Portugal.csv",
+      "bytes": 76965
+    },
+    {
+      "path": "modis/2009/modis_2009_Portugal.csv",
+      "bytes": 268219
+    },
+    {
+      "path": "modis/2010/modis_2010_Portugal.csv",
+      "bytes": 328523
+    },
+    {
+      "path": "modis/2011/modis_2011_Portugal.csv",
+      "bytes": 235203
+    },
+    {
+      "path": "modis/2012/modis_2012_Portugal.csv",
+      "bytes": 276315
+    },
+    {
+      "path": "modis/2013/modis_2013_Portugal.csv",
+      "bytes": 345651
+    },
+    {
+      "path": "modis/2014/modis_2014_Portugal.csv",
+      "bytes": 47514
+    },
+    {
+      "path": "modis/2015/modis_2015_Portugal.csv",
+      "bytes": 159883
+    },
+    {
+      "path": "modis/2016/modis_2016_Portugal.csv",
+      "bytes": 373472
+    },
+    {
+      "path": "modis/2017/modis_2017_Portugal.csv",
+      "bytes": 517415
+    },
+    {
+      "path": "modis/2018/modis_2018_Portugal.csv",
+      "bytes": 102991
+    },
+    {
+      "path": "modis/2019/modis_2019_Portugal.csv",
+      "bytes": 100031
+    },
+    {
+      "path": "modis/2020/modis_2020_Portugal.csv",
+      "bytes": 106460
+    },
+    {
+      "path": "modis/2021/modis_2021_Portugal.csv",
+      "bytes": 74425
+    },
+    {
+      "path": "modis/2022/modis_2022_Portugal.csv",
+      "bytes": 179244
+    },
+    {
+      "path": "modis/2023/modis_2023_Portugal.csv",
+      "bytes": 84920
+    },
+    {
+      "path": "modis/2024/modis_2024_Portugal.csv",
+      "bytes": 252905
+    },
+    {
+      "path": "modis/2025/modis_2025_Portugal.csv",
+      "bytes": 391329
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Portugal.csv",
+      "bytes": 295333
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Portugal.csv",
+      "bytes": 289171
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Portugal.csv",
+      "bytes": 320762
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Portugal.csv",
+      "bytes": 200957
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Portugal.csv",
+      "bytes": 471146
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Portugal.csv",
+      "bytes": 271978
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Portugal.csv",
+      "bytes": 966085
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Portugal.csv",
+      "bytes": 1113849
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Portugal.csv",
+      "bytes": 742901
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Portugal.csv",
+      "bytes": 948113
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Portugal.csv",
+      "bytes": 183497
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Portugal.csv",
+      "bytes": 460144
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Portugal.csv",
+      "bytes": 1090617
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Portugal.csv",
+      "bytes": 1504115
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Portugal.csv",
+      "bytes": 299634
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Portugal.csv",
+      "bytes": 297234
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Portugal.csv",
+      "bytes": 295151
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Portugal.csv",
+      "bytes": 203155
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Portugal.csv",
+      "bytes": 397984
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Portugal.csv",
+      "bytes": 231545
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Portugal.csv",
+      "bytes": 946487
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Portugal.csv",
+      "bytes": 1065513
+    }
+  ],
+  "body_hash": "b4659ff6d6c3954f"
+}

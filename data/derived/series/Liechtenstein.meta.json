@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Liechtenstein.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Liechtenstein.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Liechtenstein.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Liechtenstein.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Liechtenstein.csv",
+      "bytes": 206
+    }
+  ],
+  "body_hash": "bc8e99d273934891"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Colombia.csv",
+      "bytes": 106418
+    },
+    {
+      "path": "modis/2001/modis_2001_Colombia.csv",
+      "bytes": 1079263
+    },
+    {
+      "path": "modis/2002/modis_2002_Colombia.csv",
+      "bytes": 1373792
+    },
+    {
+      "path": "modis/2003/modis_2003_Colombia.csv",
+      "bytes": 3006124
+    },
+    {
+      "path": "modis/2004/modis_2004_Colombia.csv",
+      "bytes": 3525887
+    },
+    {
+      "path": "modis/2005/modis_2005_Colombia.csv",
+      "bytes": 2158462
+    },
+    {
+      "path": "modis/2006/modis_2006_Colombia.csv",
+      "bytes": 1853856
+    },
+    {
+      "path": "modis/2007/modis_2007_Colombia.csv",
+      "bytes": 3452115
+    },
+    {
+      "path": "modis/2008/modis_2008_Colombia.csv",
+      "bytes": 2093735
+    },
+    {
+      "path": "modis/2009/modis_2009_Colombia.csv",
+      "bytes": 2058198
+    },
+    {
+      "path": "modis/2010/modis_2010_Colombia.csv",
+      "bytes": 1865699
+    },
+    {
+      "path": "modis/2011/modis_2011_Colombia.csv",
+      "bytes": 1442662
+    },
+    {
+      "path": "modis/2012/modis_2012_Colombia.csv",
+      "bytes": 1759620
+    },
+    {
+      "path": "modis/2013/modis_2013_Colombia.csv",
+      "bytes": 1840112
+    },
+    {
+      "path": "modis/2014/modis_2014_Colombia.csv",
+      "bytes": 2285166
+    },
+    {
+      "path": "modis/2015/modis_2015_Colombia.csv",
+      "bytes": 1877379
+    },
+    {
+      "path": "modis/2016/modis_2016_Colombia.csv",
+      "bytes": 2339289
+    },
+    {
+      "path": "modis/2017/modis_2017_Colombia.csv",
+      "bytes": 1696300
+    },
+    {
+      "path": "modis/2018/modis_2018_Colombia.csv",
+      "bytes": 2489162
+    },
+    {
+      "path": "modis/2019/modis_2019_Colombia.csv",
+      "bytes": 2135514
+    },
+    {
+      "path": "modis/2020/modis_2020_Colombia.csv",
+      "bytes": 2753237
+    },
+    {
+      "path": "modis/2021/modis_2021_Colombia.csv",
+      "bytes": 1653440
+    },
+    {
+      "path": "modis/2022/modis_2022_Colombia.csv",
+      "bytes": 2367432
+    },
+    {
+      "path": "modis/2023/modis_2023_Colombia.csv",
+      "bytes": 1801095
+    },
+    {
+      "path": "modis/2024/modis_2024_Colombia.csv",
+      "bytes": 1945326
+    },
+    {
+      "path": "modis/2025/modis_2025_Colombia.csv",
+      "bytes": 1484130
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Colombia.csv",
+      "bytes": 2809240
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Colombia.csv",
+      "bytes": 9444640
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Colombia.csv",
+      "bytes": 11730672
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Colombia.csv",
+      "bytes": 6967217
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Colombia.csv",
+      "bytes": 10043214
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Colombia.csv",
+      "bytes": 7939296
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Colombia.csv",
+      "bytes": 8400941
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Colombia.csv",
+      "bytes": 6586839
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Colombia.csv",
+      "bytes": 7013422
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Colombia.csv",
+      "bytes": 8038242
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Colombia.csv",
+      "bytes": 10169312
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Colombia.csv",
+      "bytes": 8562776
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Colombia.csv",
+      "bytes": 10741195
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Colombia.csv",
+      "bytes": 7158648
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Colombia.csv",
+      "bytes": 10491650
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Colombia.csv",
+      "bytes": 9315913
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Colombia.csv",
+      "bytes": 11572171
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Colombia.csv",
+      "bytes": 6919898
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Colombia.csv",
+      "bytes": 9540668
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Colombia.csv",
+      "bytes": 7810188
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Colombia.csv",
+      "bytes": 8392680
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Colombia.csv",
+      "bytes": 6338502
+    }
+  ],
+  "body_hash": "f4b096da645c9c80"
+}

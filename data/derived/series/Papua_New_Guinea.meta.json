@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Papua_New_Guinea.csv",
+      "bytes": 8706
+    },
+    {
+      "path": "modis/2001/modis_2001_Papua_New_Guinea.csv",
+      "bytes": 162666
+    },
+    {
+      "path": "modis/2002/modis_2002_Papua_New_Guinea.csv",
+      "bytes": 826126
+    },
+    {
+      "path": "modis/2003/modis_2003_Papua_New_Guinea.csv",
+      "bytes": 567110
+    },
+    {
+      "path": "modis/2004/modis_2004_Papua_New_Guinea.csv",
+      "bytes": 1001767
+    },
+    {
+      "path": "modis/2005/modis_2005_Papua_New_Guinea.csv",
+      "bytes": 377426
+    },
+    {
+      "path": "modis/2006/modis_2006_Papua_New_Guinea.csv",
+      "bytes": 573798
+    },
+    {
+      "path": "modis/2007/modis_2007_Papua_New_Guinea.csv",
+      "bytes": 352161
+    },
+    {
+      "path": "modis/2008/modis_2008_Papua_New_Guinea.csv",
+      "bytes": 399877
+    },
+    {
+      "path": "modis/2009/modis_2009_Papua_New_Guinea.csv",
+      "bytes": 445190
+    },
+    {
+      "path": "modis/2010/modis_2010_Papua_New_Guinea.csv",
+      "bytes": 514472
+    },
+    {
+      "path": "modis/2011/modis_2011_Papua_New_Guinea.csv",
+      "bytes": 399104
+    },
+    {
+      "path": "modis/2012/modis_2012_Papua_New_Guinea.csv",
+      "bytes": 420754
+    },
+    {
+      "path": "modis/2013/modis_2013_Papua_New_Guinea.csv",
+      "bytes": 393666
+    },
+    {
+      "path": "modis/2014/modis_2014_Papua_New_Guinea.csv",
+      "bytes": 530332
+    },
+    {
+      "path": "modis/2015/modis_2015_Papua_New_Guinea.csv",
+      "bytes": 1661112
+    },
+    {
+      "path": "modis/2016/modis_2016_Papua_New_Guinea.csv",
+      "bytes": 333053
+    },
+    {
+      "path": "modis/2017/modis_2017_Papua_New_Guinea.csv",
+      "bytes": 427693
+    },
+    {
+      "path": "modis/2018/modis_2018_Papua_New_Guinea.csv",
+      "bytes": 633778
+    },
+    {
+      "path": "modis/2019/modis_2019_Papua_New_Guinea.csv",
+      "bytes": 485900
+    },
+    {
+      "path": "modis/2020/modis_2020_Papua_New_Guinea.csv",
+      "bytes": 297412
+    },
+    {
+      "path": "modis/2021/modis_2021_Papua_New_Guinea.csv",
+      "bytes": 370724
+    },
+    {
+      "path": "modis/2022/modis_2022_Papua_New_Guinea.csv",
+      "bytes": 499024
+    },
+    {
+      "path": "modis/2023/modis_2023_Papua_New_Guinea.csv",
+      "bytes": 582761
+    },
+    {
+      "path": "modis/2024/modis_2024_Papua_New_Guinea.csv",
+      "bytes": 357148
+    },
+    {
+      "path": "modis/2025/modis_2025_Papua_New_Guinea.csv",
+      "bytes": 252012
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Papua_New_Guinea.csv",
+      "bytes": 3326961
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Papua_New_Guinea.csv",
+      "bytes": 2711328
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Papua_New_Guinea.csv",
+      "bytes": 1879408
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Papua_New_Guinea.csv",
+      "bytes": 2288166
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Papua_New_Guinea.csv",
+      "bytes": 3170771
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Papua_New_Guinea.csv",
+      "bytes": 3081029
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Papua_New_Guinea.csv",
+      "bytes": 2093809
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Papua_New_Guinea.csv",
+      "bytes": 1643927
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Papua_New_Guinea.csv",
+      "bytes": 2209606
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Papua_New_Guinea.csv",
+      "bytes": 2045383
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Papua_New_Guinea.csv",
+      "bytes": 2876523
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Papua_New_Guinea.csv",
+      "bytes": 9033378
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Papua_New_Guinea.csv",
+      "bytes": 1818956
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Papua_New_Guinea.csv",
+      "bytes": 2196404
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Papua_New_Guinea.csv",
+      "bytes": 3400114
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Papua_New_Guinea.csv",
+      "bytes": 2636779
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Papua_New_Guinea.csv",
+      "bytes": 1792429
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Papua_New_Guinea.csv",
+      "bytes": 2050861
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Papua_New_Guinea.csv",
+      "bytes": 2768273
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Papua_New_Guinea.csv",
+      "bytes": 2995951
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Papua_New_Guinea.csv",
+      "bytes": 1819941
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Papua_New_Guinea.csv",
+      "bytes": 1569347
+    }
+  ],
+  "body_hash": "41dbbcc699d69f31"
+}

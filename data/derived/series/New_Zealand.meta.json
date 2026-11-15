@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_New_Zealand.csv",
+      "bytes": 4086
+    },
+    {
+      "path": "modis/2001/modis_2001_New_Zealand.csv",
+      "bytes": 14715
+    },
+    {
+      "path": "modis/2002/modis_2002_New_Zealand.csv",
+      "bytes": 29769
+    },
+    {
+      "path": "modis/2003/modis_2003_New_Zealand.csv",
+      "bytes": 68549
+    },
+    {
+      "path": "modis/2004/modis_2004_New_Zealand.csv",
+      "bytes": 35938
+    },
+    {
+      "path": "modis/2005/modis_2005_New_Zealand.csv",
+      "bytes": 54315
+    },
+    {
+      "path": "modis/2006/modis_2006_New_Zealand.csv",
+      "bytes": 62762
+    },
+    {
+      "path": "modis/2007/modis_2007_New_Zealand.csv",
+      "bytes": 83734
+    },
+    {
+      "path": "modis/2008/modis_2008_New_Zealand.csv",
+      "bytes": 66108
+    },
+    {
+      "path": "modis/2009/modis_2009_New_Zealand.csv",
+      "bytes": 46272
+    },
+    {
+      "path": "modis/2010/modis_2010_New_Zealand.csv",
+      "bytes": 60385
+    },
+    {
+      "path": "modis/2011/modis_2011_New_Zealand.csv",
+      "bytes": 51105
+    },
+    {
+      "path": "modis/2012/modis_2012_New_Zealand.csv",
+      "bytes": 43511
+    },
+    {
+      "path": "modis/2013/modis_2013_New_Zealand.csv",
+      "bytes": 61428
+    },
+    {
+      "path": "modis/2014/modis_2014_New_Zealand.csv",
+      "bytes": 65114
+    },
+    {
+      "path": "modis/2015/modis_2015_New_Zealand.csv",
+      "bytes": 64223
+    },
+    {
+      "path": "modis/2016/modis_2016_New_Zealand.csv",
+      "bytes": 50713
+    },
+    {
+      "path": "modis/2017/modis_2017_New_Zealand.csv",
+      "bytes": 42290
+    },
+    {
+      "path": "modis/2018/modis_2018_New_Zealand.csv",
+      "bytes": 37064
+    },
+    {
+      "path": "modis/2019/modis_2019_New_Zealand.csv",
+      "bytes": 63482
+    },
+    {
+      "path": "modis/2020/modis_2020_New_Zealand.csv",
+      "bytes": 56346
+    },
+    {
+      "path": "modis/2021/modis_2021_New_Zealand.csv",
+      "bytes": 51776
+    },
+    {
+      "path": "modis/2022/modis_2022_New_Zealand.csv",
+      "bytes": 42043
+    },
+    {
+      "path": "modis/2023/modis_2023_New_Zealand.csv",
+      "bytes": 29394
+    },
+    {
+      "path": "modis/2024/modis_2024_New_Zealand.csv",
+      "bytes": 34797
+    },
+    {
+      "path": "modis/2025/modis_2025_New_Zealand.csv",
+      "bytes": 38067
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_New_Zealand.csv",
+      "bytes": 219607
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_New_Zealand.csv",
+      "bytes": 405844
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_New_Zealand.csv",
+      "bytes": 371698
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_New_Zealand.csv",
+      "bytes": 368808
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_New_Zealand.csv",
+      "bytes": 336775
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_New_Zealand.csv",
+      "bytes": 248771
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_New_Zealand.csv",
+      "bytes": 289490
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_New_Zealand.csv",
+      "bytes": 320916
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_New_Zealand.csv",
+      "bytes": 355767
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_New_Zealand.csv",
+      "bytes": 400086
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_New_Zealand.csv",
+      "bytes": 427234
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_New_Zealand.csv",
+      "bytes": 396761
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_New_Zealand.csv",
+      "bytes": 334381
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_New_Zealand.csv",
+      "bytes": 302554
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_New_Zealand.csv",
+      "bytes": 310365
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_New_Zealand.csv",
+      "bytes": 407671
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_New_Zealand.csv",
+      "bytes": 346830
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_New_Zealand.csv",
+      "bytes": 348135
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_New_Zealand.csv",
+      "bytes": 309321
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_New_Zealand.csv",
+      "bytes": 247477
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_New_Zealand.csv",
+      "bytes": 257558
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_New_Zealand.csv",
+      "bytes": 320423
+    }
+  ],
+  "body_hash": "663f77109f4f2e74"
+}

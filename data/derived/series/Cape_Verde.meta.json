@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Cape_Verde.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2002/modis_2002_Cape_Verde.csv",
+      "bytes": 200
+    },
+    {
+      "path": "modis/2003/modis_2003_Cape_Verde.csv",
+      "bytes": 361
+    },
+    {
+      "path": "modis/2004/modis_2004_Cape_Verde.csv",
+      "bytes": 1377
+    },
+    {
+      "path": "modis/2005/modis_2005_Cape_Verde.csv",
+      "bytes": 356
+    },
+    {
+      "path": "modis/2006/modis_2006_Cape_Verde.csv",
+      "bytes": 441
+    },
+    {
+      "path": "modis/2007/modis_2007_Cape_Verde.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2008/modis_2008_Cape_Verde.csv",
+      "bytes": 438
+    },
+    {
+      "path": "modis/2009/modis_2009_Cape_Verde.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2010/modis_2010_Cape_Verde.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2011/modis_2011_Cape_Verde.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2012/modis_2012_Cape_Verde.csv",
+      "bytes": 676
+    },
+    {
+      "path": "modis/2013/modis_2013_Cape_Verde.csv",
+      "bytes": 441
+    },
+    {
+      "path": "modis/2014/modis_2014_Cape_Verde.csv",
+      "bytes": 40453
+    },
+    {
+      "path": "modis/2015/modis_2015_Cape_Verde.csv",
+      "bytes": 2322
+    },
+    {
+      "path": "modis/2016/modis_2016_Cape_Verde.csv",
+      "bytes": 437
+    },
+    {
+      "path": "modis/2017/modis_2017_Cape_Verde.csv",
+      "bytes": 1300
+    },
+    {
+      "path": "modis/2018/modis_2018_Cape_Verde.csv",
+      "bytes": 764
+    },
+    {
+      "path": "modis/2019/modis_2019_Cape_Verde.csv",
+      "bytes": 518
+    },
+    {
+      "path": "modis/2020/modis_2020_Cape_Verde.csv",
+      "bytes": 441
+    },
+    {
+      "path": "modis/2021/modis_2021_Cape_Verde.csv",
+      "bytes": 205
+    },
+    {
+      "path": "modis/2022/modis_2022_Cape_Verde.csv",
+      "bytes": 918
+    },
+    {
+      "path": "modis/2023/modis_2023_Cape_Verde.csv",
+      "bytes": 1492
+    },
+    {
+      "path": "modis/2024/modis_2024_Cape_Verde.csv",
+      "bytes": 288
+    },
+    {
+      "path": "modis/2025/modis_2025_Cape_Verde.csv",
+      "bytes": 1170
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Cape_Verde.csv",
+      "bytes": 2570
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Cape_Verde.csv",
+      "bytes": 1431
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Cape_Verde.csv",
+      "bytes": 1355
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Cape_Verde.csv",
+      "bytes": 2166
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Cape_Verde.csv",
+      "bytes": 1834
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Cape_Verde.csv",
+      "bytes": 5490
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Cape_Verde.csv",
+      "bytes": 3948
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Cape_Verde.csv",
+      "bytes": 7266
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Cape_Verde.csv",
+      "bytes": 2274
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Cape_Verde.csv",
+      "bytes": 1556
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Cape_Verde.csv",
+      "bytes": 210585
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Cape_Verde.csv",
+      "bytes": 29953
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Cape_Verde.csv",
+      "bytes": 923
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Cape_Verde.csv",
+      "bytes": 2260
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Cape_Verde.csv",
+      "bytes": 1951
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Cape_Verde.csv",
+      "bytes": 1557
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Cape_Verde.csv",
+      "bytes": 1161
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Cape_Verde.csv",
+      "bytes": 1556
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Cape_Verde.csv",
+      "bytes": 2107
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Cape_Verde.csv",
+      "bytes": 6226
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Cape_Verde.csv",
+      "bytes": 4252
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Cape_Verde.csv",
+      "bytes": 7094
+    }
+  ],
+  "body_hash": "a1a2b47864b2bc59"
+}

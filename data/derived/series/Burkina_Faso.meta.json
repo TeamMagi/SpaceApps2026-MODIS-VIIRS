@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Burkina_Faso.csv",
+      "bytes": 517262
+    },
+    {
+      "path": "modis/2001/modis_2001_Burkina_Faso.csv",
+      "bytes": 751170
+    },
+    {
+      "path": "modis/2002/modis_2002_Burkina_Faso.csv",
+      "bytes": 1423493
+    },
+    {
+      "path": "modis/2003/modis_2003_Burkina_Faso.csv",
+      "bytes": 1606499
+    },
+    {
+      "path": "modis/2004/modis_2004_Burkina_Faso.csv",
+      "bytes": 1830632
+    },
+    {
+      "path": "modis/2005/modis_2005_Burkina_Faso.csv",
+      "bytes": 1713336
+    },
+    {
+      "path": "modis/2006/modis_2006_Burkina_Faso.csv",
+      "bytes": 1476653
+    },
+    {
+      "path": "modis/2007/modis_2007_Burkina_Faso.csv",
+      "bytes": 1383194
+    },
+    {
+      "path": "modis/2008/modis_2008_Burkina_Faso.csv",
+      "bytes": 1415612
+    },
+    {
+      "path": "modis/2009/modis_2009_Burkina_Faso.csv",
+      "bytes": 1461965
+    },
+    {
+      "path": "modis/2010/modis_2010_Burkina_Faso.csv",
+      "bytes": 1703790
+    },
+    {
+      "path": "modis/2011/modis_2011_Burkina_Faso.csv",
+      "bytes": 1555471
+    },
+    {
+      "path": "modis/2012/modis_2012_Burkina_Faso.csv",
+      "bytes": 1087030
+    },
+    {
+      "path": "modis/2013/modis_2013_Burkina_Faso.csv",
+      "bytes": 1154452
+    },
+    {
+      "path": "modis/2014/modis_2014_Burkina_Faso.csv",
+      "bytes": 974471
+    },
+    {
+      "path": "modis/2015/modis_2015_Burkina_Faso.csv",
+      "bytes": 894922
+    },
+    {
+      "path": "modis/2016/modis_2016_Burkina_Faso.csv",
+      "bytes": 1044618
+    },
+    {
+      "path": "modis/2017/modis_2017_Burkina_Faso.csv",
+      "bytes": 1020138
+    },
+    {
+      "path": "modis/2018/modis_2018_Burkina_Faso.csv",
+      "bytes": 776367
+    },
+    {
+      "path": "modis/2019/modis_2019_Burkina_Faso.csv",
+      "bytes": 858167
+    },
+    {
+      "path": "modis/2020/modis_2020_Burkina_Faso.csv",
+      "bytes": 916329
+    },
+    {
+      "path": "modis/2021/modis_2021_Burkina_Faso.csv",
+      "bytes": 909245
+    },
+    {
+      "path": "modis/2022/modis_2022_Burkina_Faso.csv",
+      "bytes": 735987
+    },
+    {
+      "path": "modis/2023/modis_2023_Burkina_Faso.csv",
+      "bytes": 1086107
+    },
+    {
+      "path": "modis/2024/modis_2024_Burkina_Faso.csv",
+      "bytes": 1652062
+    },
+    {
+      "path": "modis/2025/modis_2025_Burkina_Faso.csv",
+      "bytes": 1165810
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Burkina_Faso.csv",
+      "bytes": 2537660
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Burkina_Faso.csv",
+      "bytes": 4793340
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Burkina_Faso.csv",
+      "bytes": 5055911
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Burkina_Faso.csv",
+      "bytes": 5258935
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Burkina_Faso.csv",
+      "bytes": 4285241
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Burkina_Faso.csv",
+      "bytes": 6128578
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Burkina_Faso.csv",
+      "bytes": 8178156
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Burkina_Faso.csv",
+      "bytes": 7292865
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Burkina_Faso.csv",
+      "bytes": 4804465
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Burkina_Faso.csv",
+      "bytes": 6646080
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Burkina_Faso.csv",
+      "bytes": 5611420
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Burkina_Faso.csv",
+      "bytes": 5028308
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Burkina_Faso.csv",
+      "bytes": 5941169
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Burkina_Faso.csv",
+      "bytes": 6016862
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Burkina_Faso.csv",
+      "bytes": 4142624
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Burkina_Faso.csv",
+      "bytes": 4761819
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Burkina_Faso.csv",
+      "bytes": 4915462
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Burkina_Faso.csv",
+      "bytes": 5209427
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Burkina_Faso.csv",
+      "bytes": 4134449
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Burkina_Faso.csv",
+      "bytes": 6003883
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Burkina_Faso.csv",
+      "bytes": 7730128
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Burkina_Faso.csv",
+      "bytes": 7070224
+    }
+  ],
+  "body_hash": "dba04825403e9857"
+}

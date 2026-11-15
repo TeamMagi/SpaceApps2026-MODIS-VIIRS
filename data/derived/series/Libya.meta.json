@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Libya.csv",
+      "bytes": 17051
+    },
+    {
+      "path": "modis/2001/modis_2001_Libya.csv",
+      "bytes": 133588
+    },
+    {
+      "path": "modis/2002/modis_2002_Libya.csv",
+      "bytes": 204004
+    },
+    {
+      "path": "modis/2003/modis_2003_Libya.csv",
+      "bytes": 302059
+    },
+    {
+      "path": "modis/2004/modis_2004_Libya.csv",
+      "bytes": 362965
+    },
+    {
+      "path": "modis/2005/modis_2005_Libya.csv",
+      "bytes": 281494
+    },
+    {
+      "path": "modis/2006/modis_2006_Libya.csv",
+      "bytes": 359001
+    },
+    {
+      "path": "modis/2007/modis_2007_Libya.csv",
+      "bytes": 317915
+    },
+    {
+      "path": "modis/2008/modis_2008_Libya.csv",
+      "bytes": 325755
+    },
+    {
+      "path": "modis/2009/modis_2009_Libya.csv",
+      "bytes": 259973
+    },
+    {
+      "path": "modis/2010/modis_2010_Libya.csv",
+      "bytes": 319624
+    },
+    {
+      "path": "modis/2011/modis_2011_Libya.csv",
+      "bytes": 198663
+    },
+    {
+      "path": "modis/2012/modis_2012_Libya.csv",
+      "bytes": 321107
+    },
+    {
+      "path": "modis/2013/modis_2013_Libya.csv",
+      "bytes": 219910
+    },
+    {
+      "path": "modis/2014/modis_2014_Libya.csv",
+      "bytes": 200034
+    },
+    {
+      "path": "modis/2015/modis_2015_Libya.csv",
+      "bytes": 189921
+    },
+    {
+      "path": "modis/2016/modis_2016_Libya.csv",
+      "bytes": 157931
+    },
+    {
+      "path": "modis/2017/modis_2017_Libya.csv",
+      "bytes": 204183
+    },
+    {
+      "path": "modis/2018/modis_2018_Libya.csv",
+      "bytes": 312436
+    },
+    {
+      "path": "modis/2019/modis_2019_Libya.csv",
+      "bytes": 361914
+    },
+    {
+      "path": "modis/2020/modis_2020_Libya.csv",
+      "bytes": 130074
+    },
+    {
+      "path": "modis/2021/modis_2021_Libya.csv",
+      "bytes": 399969
+    },
+    {
+      "path": "modis/2022/modis_2022_Libya.csv",
+      "bytes": 309672
+    },
+    {
+      "path": "modis/2023/modis_2023_Libya.csv",
+      "bytes": 485263
+    },
+    {
+      "path": "modis/2024/modis_2024_Libya.csv",
+      "bytes": 463365
+    },
+    {
+      "path": "modis/2025/modis_2025_Libya.csv",
+      "bytes": 462017
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Libya.csv",
+      "bytes": 2569602
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Libya.csv",
+      "bytes": 3633160
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Libya.csv",
+      "bytes": 1758272
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Libya.csv",
+      "bytes": 3954744
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Libya.csv",
+      "bytes": 3660560
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Libya.csv",
+      "bytes": 4334731
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Libya.csv",
+      "bytes": 4182582
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Libya.csv",
+      "bytes": 4616159
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Libya.csv",
+      "bytes": 3886567
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Libya.csv",
+      "bytes": 3198855
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Libya.csv",
+      "bytes": 2261004
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Libya.csv",
+      "bytes": 2084439
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Libya.csv",
+      "bytes": 1903510
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Libya.csv",
+      "bytes": 3033781
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Libya.csv",
+      "bytes": 3476418
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Libya.csv",
+      "bytes": 3788652
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Libya.csv",
+      "bytes": 1788447
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Libya.csv",
+      "bytes": 4071339
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Libya.csv",
+      "bytes": 3582046
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Libya.csv",
+      "bytes": 4401694
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Libya.csv",
+      "bytes": 4010389
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Libya.csv",
+      "bytes": 4668131
+    }
+  ],
+  "body_hash": "b54131a27ca42bfa"
+}

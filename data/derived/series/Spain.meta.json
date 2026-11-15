@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Spain.csv",
+      "bytes": 10044
+    },
+    {
+      "path": "modis/2001/modis_2001_Spain.csv",
+      "bytes": 257381
+    },
+    {
+      "path": "modis/2002/modis_2002_Spain.csv",
+      "bytes": 398357
+    },
+    {
+      "path": "modis/2003/modis_2003_Spain.csv",
+      "bytes": 578352
+    },
+    {
+      "path": "modis/2004/modis_2004_Spain.csv",
+      "bytes": 609997
+    },
+    {
+      "path": "modis/2005/modis_2005_Spain.csv",
+      "bytes": 540387
+    },
+    {
+      "path": "modis/2006/modis_2006_Spain.csv",
+      "bytes": 559822
+    },
+    {
+      "path": "modis/2007/modis_2007_Spain.csv",
+      "bytes": 339961
+    },
+    {
+      "path": "modis/2008/modis_2008_Spain.csv",
+      "bytes": 230531
+    },
+    {
+      "path": "modis/2009/modis_2009_Spain.csv",
+      "bytes": 357323
+    },
+    {
+      "path": "modis/2010/modis_2010_Spain.csv",
+      "bytes": 208717
+    },
+    {
+      "path": "modis/2011/modis_2011_Spain.csv",
+      "bytes": 421630
+    },
+    {
+      "path": "modis/2012/modis_2012_Spain.csv",
+      "bytes": 479582
+    },
+    {
+      "path": "modis/2013/modis_2013_Spain.csv",
+      "bytes": 266012
+    },
+    {
+      "path": "modis/2014/modis_2014_Spain.csv",
+      "bytes": 200014
+    },
+    {
+      "path": "modis/2015/modis_2015_Spain.csv",
+      "bytes": 245092
+    },
+    {
+      "path": "modis/2016/modis_2016_Spain.csv",
+      "bytes": 248139
+    },
+    {
+      "path": "modis/2017/modis_2017_Spain.csv",
+      "bytes": 400380
+    },
+    {
+      "path": "modis/2018/modis_2018_Spain.csv",
+      "bytes": 130927
+    },
+    {
+      "path": "modis/2019/modis_2019_Spain.csv",
+      "bytes": 258462
+    },
+    {
+      "path": "modis/2020/modis_2020_Spain.csv",
+      "bytes": 202904
+    },
+    {
+      "path": "modis/2021/modis_2021_Spain.csv",
+      "bytes": 374191
+    },
+    {
+      "path": "modis/2022/modis_2022_Spain.csv",
+      "bytes": 466980
+    },
+    {
+      "path": "modis/2023/modis_2023_Spain.csv",
+      "bytes": 222893
+    },
+    {
+      "path": "modis/2024/modis_2024_Spain.csv",
+      "bytes": 167436
+    },
+    {
+      "path": "modis/2025/modis_2025_Spain.csv",
+      "bytes": 757793
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Spain.csv",
+      "bytes": 648697
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Spain.csv",
+      "bytes": 1184457
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Spain.csv",
+      "bytes": 896296
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Spain.csv",
+      "bytes": 2216604
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Spain.csv",
+      "bytes": 1886610
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Spain.csv",
+      "bytes": 1018479
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Spain.csv",
+      "bytes": 729168
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Spain.csv",
+      "bytes": 2469474
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Spain.csv",
+      "bytes": 1683750
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Spain.csv",
+      "bytes": 1089475
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Spain.csv",
+      "bytes": 1000999
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Spain.csv",
+      "bytes": 1170092
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Spain.csv",
+      "bytes": 1072754
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Spain.csv",
+      "bytes": 1558431
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Spain.csv",
+      "bytes": 760665
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Spain.csv",
+      "bytes": 1121105
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Spain.csv",
+      "bytes": 859193
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Spain.csv",
+      "bytes": 2058504
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Spain.csv",
+      "bytes": 1727127
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Spain.csv",
+      "bytes": 974247
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Spain.csv",
+      "bytes": 654773
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Spain.csv",
+      "bytes": 2407569
+    }
+  ],
+  "body_hash": "878fe9894ad27cc6"
+}

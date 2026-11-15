@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Armenia.csv",
+      "bytes": 511
+    },
+    {
+      "path": "modis/2001/modis_2001_Armenia.csv",
+      "bytes": 11089
+    },
+    {
+      "path": "modis/2002/modis_2002_Armenia.csv",
+      "bytes": 10972
+    },
+    {
+      "path": "modis/2003/modis_2003_Armenia.csv",
+      "bytes": 5032
+    },
+    {
+      "path": "modis/2004/modis_2004_Armenia.csv",
+      "bytes": 29964
+    },
+    {
+      "path": "modis/2005/modis_2005_Armenia.csv",
+      "bytes": 17125
+    },
+    {
+      "path": "modis/2006/modis_2006_Armenia.csv",
+      "bytes": 17995
+    },
+    {
+      "path": "modis/2007/modis_2007_Armenia.csv",
+      "bytes": 6971
+    },
+    {
+      "path": "modis/2008/modis_2008_Armenia.csv",
+      "bytes": 30666
+    },
+    {
+      "path": "modis/2009/modis_2009_Armenia.csv",
+      "bytes": 9837
+    },
+    {
+      "path": "modis/2010/modis_2010_Armenia.csv",
+      "bytes": 72925
+    },
+    {
+      "path": "modis/2011/modis_2011_Armenia.csv",
+      "bytes": 20940
+    },
+    {
+      "path": "modis/2012/modis_2012_Armenia.csv",
+      "bytes": 26203
+    },
+    {
+      "path": "modis/2013/modis_2013_Armenia.csv",
+      "bytes": 33817
+    },
+    {
+      "path": "modis/2014/modis_2014_Armenia.csv",
+      "bytes": 19301
+    },
+    {
+      "path": "modis/2015/modis_2015_Armenia.csv",
+      "bytes": 16883
+    },
+    {
+      "path": "modis/2016/modis_2016_Armenia.csv",
+      "bytes": 27007
+    },
+    {
+      "path": "modis/2017/modis_2017_Armenia.csv",
+      "bytes": 31119
+    },
+    {
+      "path": "modis/2018/modis_2018_Armenia.csv",
+      "bytes": 37590
+    },
+    {
+      "path": "modis/2019/modis_2019_Armenia.csv",
+      "bytes": 29921
+    },
+    {
+      "path": "modis/2020/modis_2020_Armenia.csv",
+      "bytes": 8772
+    },
+    {
+      "path": "modis/2021/modis_2021_Armenia.csv",
+      "bytes": 12701
+    },
+    {
+      "path": "modis/2022/modis_2022_Armenia.csv",
+      "bytes": 23494
+    },
+    {
+      "path": "modis/2023/modis_2023_Armenia.csv",
+      "bytes": 16156
+    },
+    {
+      "path": "modis/2024/modis_2024_Armenia.csv",
+      "bytes": 16356
+    },
+    {
+      "path": "modis/2025/modis_2025_Armenia.csv",
+      "bytes": 44487
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Armenia.csv",
+      "bytes": 139507
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Armenia.csv",
+      "bytes": 136133
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Armenia.csv",
+      "bytes": 54965
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Armenia.csv",
+      "bytes": 67490
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Armenia.csv",
+      "bytes": 114330
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Armenia.csv",
+      "bytes": 86273
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Armenia.csv",
+      "bytes": 63567
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Armenia.csv",
+      "bytes": 220900
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Armenia.csv",
+      "bytes": 105272
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Armenia.csv",
+      "bytes": 137794
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Armenia.csv",
+      "bytes": 82887
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Armenia.csv",
+      "bytes": 89341
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Armenia.csv",
+      "bytes": 110740
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Armenia.csv",
+      "bytes": 141477
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Armenia.csv",
+      "bytes": 134038
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Armenia.csv",
+      "bytes": 136750
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Armenia.csv",
+      "bytes": 55157
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Armenia.csv",
+      "bytes": 62499
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Armenia.csv",
+      "bytes": 116812
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Armenia.csv",
+      "bytes": 79879
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Armenia.csv",
+      "bytes": 57777
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Armenia.csv",
+      "bytes": 216827
+    }
+  ],
+  "body_hash": "0f4848aa738b2557"
+}

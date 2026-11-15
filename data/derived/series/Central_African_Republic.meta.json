@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Central_African_Republic.csv",
+      "bytes": 1986030
+    },
+    {
+      "path": "modis/2001/modis_2001_Central_African_Republic.csv",
+      "bytes": 5229147
+    },
+    {
+      "path": "modis/2002/modis_2002_Central_African_Republic.csv",
+      "bytes": 7141928
+    },
+    {
+      "path": "modis/2003/modis_2003_Central_African_Republic.csv",
+      "bytes": 13905438
+    },
+    {
+      "path": "modis/2004/modis_2004_Central_African_Republic.csv",
+      "bytes": 13378139
+    },
+    {
+      "path": "modis/2005/modis_2005_Central_African_Republic.csv",
+      "bytes": 14500655
+    },
+    {
+      "path": "modis/2006/modis_2006_Central_African_Republic.csv",
+      "bytes": 13340542
+    },
+    {
+      "path": "modis/2007/modis_2007_Central_African_Republic.csv",
+      "bytes": 14136279
+    },
+    {
+      "path": "modis/2008/modis_2008_Central_African_Republic.csv",
+      "bytes": 15784191
+    },
+    {
+      "path": "modis/2009/modis_2009_Central_African_Republic.csv",
+      "bytes": 10722627
+    },
+    {
+      "path": "modis/2010/modis_2010_Central_African_Republic.csv",
+      "bytes": 11344688
+    },
+    {
+      "path": "modis/2011/modis_2011_Central_African_Republic.csv",
+      "bytes": 13895375
+    },
+    {
+      "path": "modis/2012/modis_2012_Central_African_Republic.csv",
+      "bytes": 11112415
+    },
+    {
+      "path": "modis/2013/modis_2013_Central_African_Republic.csv",
+      "bytes": 11112875
+    },
+    {
+      "path": "modis/2014/modis_2014_Central_African_Republic.csv",
+      "bytes": 12160139
+    },
+    {
+      "path": "modis/2015/modis_2015_Central_African_Republic.csv",
+      "bytes": 14205291
+    },
+    {
+      "path": "modis/2016/modis_2016_Central_African_Republic.csv",
+      "bytes": 14941567
+    },
+    {
+      "path": "modis/2017/modis_2017_Central_African_Republic.csv",
+      "bytes": 12486166
+    },
+    {
+      "path": "modis/2018/modis_2018_Central_African_Republic.csv",
+      "bytes": 14556176
+    },
+    {
+      "path": "modis/2019/modis_2019_Central_African_Republic.csv",
+      "bytes": 11154840
+    },
+    {
+      "path": "modis/2020/modis_2020_Central_African_Republic.csv",
+      "bytes": 13219047
+    },
+    {
+      "path": "modis/2021/modis_2021_Central_African_Republic.csv",
+      "bytes": 11713028
+    },
+    {
+      "path": "modis/2022/modis_2022_Central_African_Republic.csv",
+      "bytes": 12333381
+    },
+    {
+      "path": "modis/2023/modis_2023_Central_African_Republic.csv",
+      "bytes": 9876611
+    },
+    {
+      "path": "modis/2024/modis_2024_Central_African_Republic.csv",
+      "bytes": 10486796
+    },
+    {
+      "path": "modis/2025/modis_2025_Central_African_Republic.csv",
+      "bytes": 8222932
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Central_African_Republic.csv",
+      "bytes": 26440281
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Central_African_Republic.csv",
+      "bytes": 45513435
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Central_African_Republic.csv",
+      "bytes": 56341089
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Central_African_Republic.csv",
+      "bytes": 51310698
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Central_African_Republic.csv",
+      "bytes": 54253916
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Central_African_Republic.csv",
+      "bytes": 44488906
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Central_African_Republic.csv",
+      "bytes": 50117114
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Central_African_Republic.csv",
+      "bytes": 43901119
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Central_African_Republic.csv",
+      "bytes": 35141663
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Central_African_Republic.csv",
+      "bytes": 46781273
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Central_African_Republic.csv",
+      "bytes": 49115669
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Central_African_Republic.csv",
+      "bytes": 55421717
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Central_African_Republic.csv",
+      "bytes": 61626613
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Central_African_Republic.csv",
+      "bytes": 49542806
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Central_African_Republic.csv",
+      "bytes": 57761325
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Central_African_Republic.csv",
+      "bytes": 45241515
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Central_African_Republic.csv",
+      "bytes": 56718727
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Central_African_Republic.csv",
+      "bytes": 51498973
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Central_African_Republic.csv",
+      "bytes": 52498661
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Central_African_Republic.csv",
+      "bytes": 43150951
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Central_African_Republic.csv",
+      "bytes": 49252226
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Central_African_Republic.csv",
+      "bytes": 42838862
+    }
+  ],
+  "body_hash": "e5ddf2a21a30e23a"
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2002/modis_2002_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 521
+    },
+    {
+      "path": "modis/2003/modis_2003_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 1704
+    },
+    {
+      "path": "modis/2004/modis_2004_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 1085
+    },
+    {
+      "path": "modis/2005/modis_2005_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 3617
+    },
+    {
+      "path": "modis/2006/modis_2006_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 2980
+    },
+    {
+      "path": "modis/2007/modis_2007_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 365
+    },
+    {
+      "path": "modis/2016/modis_2016_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 4115
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_South_Georgia_and_South_Sandwich_Islands.csv",
+      "bytes": 1251
+    }
+  ],
+  "body_hash": "6d506b4b8e35947f"
+}

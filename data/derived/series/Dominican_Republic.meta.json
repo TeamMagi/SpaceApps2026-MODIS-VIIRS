@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Dominican_Republic.csv",
+      "bytes": 5791
+    },
+    {
+      "path": "modis/2001/modis_2001_Dominican_Republic.csv",
+      "bytes": 65142
+    },
+    {
+      "path": "modis/2002/modis_2002_Dominican_Republic.csv",
+      "bytes": 82618
+    },
+    {
+      "path": "modis/2003/modis_2003_Dominican_Republic.csv",
+      "bytes": 147931
+    },
+    {
+      "path": "modis/2004/modis_2004_Dominican_Republic.csv",
+      "bytes": 144759
+    },
+    {
+      "path": "modis/2005/modis_2005_Dominican_Republic.csv",
+      "bytes": 243653
+    },
+    {
+      "path": "modis/2006/modis_2006_Dominican_Republic.csv",
+      "bytes": 189135
+    },
+    {
+      "path": "modis/2007/modis_2007_Dominican_Republic.csv",
+      "bytes": 180646
+    },
+    {
+      "path": "modis/2008/modis_2008_Dominican_Republic.csv",
+      "bytes": 174346
+    },
+    {
+      "path": "modis/2009/modis_2009_Dominican_Republic.csv",
+      "bytes": 113375
+    },
+    {
+      "path": "modis/2010/modis_2010_Dominican_Republic.csv",
+      "bytes": 104597
+    },
+    {
+      "path": "modis/2011/modis_2011_Dominican_Republic.csv",
+      "bytes": 167740
+    },
+    {
+      "path": "modis/2012/modis_2012_Dominican_Republic.csv",
+      "bytes": 145875
+    },
+    {
+      "path": "modis/2013/modis_2013_Dominican_Republic.csv",
+      "bytes": 166304
+    },
+    {
+      "path": "modis/2014/modis_2014_Dominican_Republic.csv",
+      "bytes": 120963
+    },
+    {
+      "path": "modis/2015/modis_2015_Dominican_Republic.csv",
+      "bytes": 123738
+    },
+    {
+      "path": "modis/2016/modis_2016_Dominican_Republic.csv",
+      "bytes": 74860
+    },
+    {
+      "path": "modis/2017/modis_2017_Dominican_Republic.csv",
+      "bytes": 78310
+    },
+    {
+      "path": "modis/2018/modis_2018_Dominican_Republic.csv",
+      "bytes": 108321
+    },
+    {
+      "path": "modis/2019/modis_2019_Dominican_Republic.csv",
+      "bytes": 138309
+    },
+    {
+      "path": "modis/2020/modis_2020_Dominican_Republic.csv",
+      "bytes": 130981
+    },
+    {
+      "path": "modis/2021/modis_2021_Dominican_Republic.csv",
+      "bytes": 140474
+    },
+    {
+      "path": "modis/2022/modis_2022_Dominican_Republic.csv",
+      "bytes": 127427
+    },
+    {
+      "path": "modis/2023/modis_2023_Dominican_Republic.csv",
+      "bytes": 174035
+    },
+    {
+      "path": "modis/2024/modis_2024_Dominican_Republic.csv",
+      "bytes": 78915
+    },
+    {
+      "path": "modis/2025/modis_2025_Dominican_Republic.csv",
+      "bytes": 87034
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Dominican_Republic.csv",
+      "bytes": 367314
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Dominican_Republic.csv",
+      "bytes": 645593
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Dominican_Republic.csv",
+      "bytes": 644537
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Dominican_Republic.csv",
+      "bytes": 622345
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Dominican_Republic.csv",
+      "bytes": 599422
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Dominican_Republic.csv",
+      "bytes": 839066
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Dominican_Republic.csv",
+      "bytes": 469544
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Dominican_Republic.csv",
+      "bytes": 516148
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Dominican_Republic.csv",
+      "bytes": 660289
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Dominican_Republic.csv",
+      "bytes": 875067
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Dominican_Republic.csv",
+      "bytes": 716788
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Dominican_Republic.csv",
+      "bytes": 779491
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Dominican_Republic.csv",
+      "bytes": 416745
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Dominican_Republic.csv",
+      "bytes": 385657
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Dominican_Republic.csv",
+      "bytes": 513844
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Dominican_Republic.csv",
+      "bytes": 614015
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Dominican_Republic.csv",
+      "bytes": 597429
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Dominican_Republic.csv",
+      "bytes": 593940
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Dominican_Republic.csv",
+      "bytes": 554279
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Dominican_Republic.csv",
+      "bytes": 824939
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Dominican_Republic.csv",
+      "bytes": 448407
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Dominican_Republic.csv",
+      "bytes": 485440
+    }
+  ],
+  "body_hash": "3d4b2c0480a7d3fc"
+}

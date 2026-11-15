@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Palestine.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2001/modis_2001_Palestine.csv",
+      "bytes": 1050
+    },
+    {
+      "path": "modis/2002/modis_2002_Palestine.csv",
+      "bytes": 3340
+    },
+    {
+      "path": "modis/2003/modis_2003_Palestine.csv",
+      "bytes": 2657
+    },
+    {
+      "path": "modis/2004/modis_2004_Palestine.csv",
+      "bytes": 1340
+    },
+    {
+      "path": "modis/2005/modis_2005_Palestine.csv",
+      "bytes": 1529
+    },
+    {
+      "path": "modis/2006/modis_2006_Palestine.csv",
+      "bytes": 1820
+    },
+    {
+      "path": "modis/2007/modis_2007_Palestine.csv",
+      "bytes": 2628
+    },
+    {
+      "path": "modis/2008/modis_2008_Palestine.csv",
+      "bytes": 2272
+    },
+    {
+      "path": "modis/2009/modis_2009_Palestine.csv",
+      "bytes": 1133
+    },
+    {
+      "path": "modis/2010/modis_2010_Palestine.csv",
+      "bytes": 3471
+    },
+    {
+      "path": "modis/2011/modis_2011_Palestine.csv",
+      "bytes": 2125
+    },
+    {
+      "path": "modis/2012/modis_2012_Palestine.csv",
+      "bytes": 1583
+    },
+    {
+      "path": "modis/2013/modis_2013_Palestine.csv",
+      "bytes": 2593
+    },
+    {
+      "path": "modis/2014/modis_2014_Palestine.csv",
+      "bytes": 2016
+    },
+    {
+      "path": "modis/2015/modis_2015_Palestine.csv",
+      "bytes": 3467
+    },
+    {
+      "path": "modis/2016/modis_2016_Palestine.csv",
+      "bytes": 6385
+    },
+    {
+      "path": "modis/2017/modis_2017_Palestine.csv",
+      "bytes": 2384
+    },
+    {
+      "path": "modis/2018/modis_2018_Palestine.csv",
+      "bytes": 1883
+    },
+    {
+      "path": "modis/2019/modis_2019_Palestine.csv",
+      "bytes": 6905
+    },
+    {
+      "path": "modis/2020/modis_2020_Palestine.csv",
+      "bytes": 6211
+    },
+    {
+      "path": "modis/2021/modis_2021_Palestine.csv",
+      "bytes": 7902
+    },
+    {
+      "path": "modis/2022/modis_2022_Palestine.csv",
+      "bytes": 3571
+    },
+    {
+      "path": "modis/2023/modis_2023_Palestine.csv",
+      "bytes": 4354
+    },
+    {
+      "path": "modis/2024/modis_2024_Palestine.csv",
+      "bytes": 9308
+    },
+    {
+      "path": "modis/2025/modis_2025_Palestine.csv",
+      "bytes": 4346
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Palestine.csv",
+      "bytes": 16778
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Palestine.csv",
+      "bytes": 49030
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Palestine.csv",
+      "bytes": 44502
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Palestine.csv",
+      "bytes": 55436
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Palestine.csv",
+      "bytes": 32075
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Palestine.csv",
+      "bytes": 41383
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Palestine.csv",
+      "bytes": 55382
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Palestine.csv",
+      "bytes": 33137
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Palestine.csv",
+      "bytes": 19574
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Palestine.csv",
+      "bytes": 31962
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Palestine.csv",
+      "bytes": 21067
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Palestine.csv",
+      "bytes": 27230
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Palestine.csv",
+      "bytes": 43836
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Palestine.csv",
+      "bytes": 20557
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Palestine.csv",
+      "bytes": 19111
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Palestine.csv",
+      "bytes": 47574
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Palestine.csv",
+      "bytes": 42823
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Palestine.csv",
+      "bytes": 52579
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Palestine.csv",
+      "bytes": 31238
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Palestine.csv",
+      "bytes": 41438
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Palestine.csv",
+      "bytes": 41811
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Palestine.csv",
+      "bytes": 32690
+    }
+  ],
+  "body_hash": "14125fa48031170a"
+}

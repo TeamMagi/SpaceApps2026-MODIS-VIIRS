@@ -1,0 +1,187 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Curacao.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2001/modis_2001_Curacao.csv",
+      "bytes": 285
+    },
+    {
+      "path": "modis/2002/modis_2002_Curacao.csv",
+      "bytes": 994
+    },
+    {
+      "path": "modis/2004/modis_2004_Curacao.csv",
+      "bytes": 2013
+    },
+    {
+      "path": "modis/2005/modis_2005_Curacao.csv",
+      "bytes": 443
+    },
+    {
+      "path": "modis/2006/modis_2006_Curacao.csv",
+      "bytes": 1454
+    },
+    {
+      "path": "modis/2007/modis_2007_Curacao.csv",
+      "bytes": 440
+    },
+    {
+      "path": "modis/2008/modis_2008_Curacao.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2009/modis_2009_Curacao.csv",
+      "bytes": 591
+    },
+    {
+      "path": "modis/2010/modis_2010_Curacao.csv",
+      "bytes": 434
+    },
+    {
+      "path": "modis/2011/modis_2011_Curacao.csv",
+      "bytes": 672
+    },
+    {
+      "path": "modis/2012/modis_2012_Curacao.csv",
+      "bytes": 367
+    },
+    {
+      "path": "modis/2013/modis_2013_Curacao.csv",
+      "bytes": 505
+    },
+    {
+      "path": "modis/2014/modis_2014_Curacao.csv",
+      "bytes": 664
+    },
+    {
+      "path": "modis/2015/modis_2015_Curacao.csv",
+      "bytes": 669
+    },
+    {
+      "path": "modis/2016/modis_2016_Curacao.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2017/modis_2017_Curacao.csv",
+      "bytes": 357
+    },
+    {
+      "path": "modis/2020/modis_2020_Curacao.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2021/modis_2021_Curacao.csv",
+      "bytes": 605
+    },
+    {
+      "path": "modis/2022/modis_2022_Curacao.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2023/modis_2023_Curacao.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2024/modis_2024_Curacao.csv",
+      "bytes": 287
+    },
+    {
+      "path": "modis/2025/modis_2025_Curacao.csv",
+      "bytes": 447
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Curacao.csv",
+      "bytes": 2566
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Curacao.csv",
+      "bytes": 2393
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Curacao.csv",
+      "bytes": 1995
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Curacao.csv",
+      "bytes": 1916
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Curacao.csv",
+      "bytes": 860
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Curacao.csv",
+      "bytes": 862
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Curacao.csv",
+      "bytes": 1429
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Curacao.csv",
+      "bytes": 1915
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Curacao.csv",
+      "bytes": 20105
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Curacao.csv",
+      "bytes": 21459
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Curacao.csv",
+      "bytes": 14387
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Curacao.csv",
+      "bytes": 14965
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Curacao.csv",
+      "bytes": 10030
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Curacao.csv",
+      "bytes": 11147
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Curacao.csv",
+      "bytes": 3300
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Curacao.csv",
+      "bytes": 1317
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Curacao.csv",
+      "bytes": 2029
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Curacao.csv",
+      "bytes": 1407
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Curacao.csv",
+      "bytes": 759
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Curacao.csv",
+      "bytes": 1078
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Curacao.csv",
+      "bytes": 1466
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Curacao.csv",
+      "bytes": 1167
+    }
+  ],
+  "body_hash": "98cad0322e9c9f6d"
+}

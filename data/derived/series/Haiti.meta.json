@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Haiti.csv",
+      "bytes": 912
+    },
+    {
+      "path": "modis/2001/modis_2001_Haiti.csv",
+      "bytes": 9717
+    },
+    {
+      "path": "modis/2002/modis_2002_Haiti.csv",
+      "bytes": 11295
+    },
+    {
+      "path": "modis/2003/modis_2003_Haiti.csv",
+      "bytes": 14759
+    },
+    {
+      "path": "modis/2004/modis_2004_Haiti.csv",
+      "bytes": 21400
+    },
+    {
+      "path": "modis/2005/modis_2005_Haiti.csv",
+      "bytes": 24083
+    },
+    {
+      "path": "modis/2006/modis_2006_Haiti.csv",
+      "bytes": 36847
+    },
+    {
+      "path": "modis/2007/modis_2007_Haiti.csv",
+      "bytes": 21969
+    },
+    {
+      "path": "modis/2008/modis_2008_Haiti.csv",
+      "bytes": 28232
+    },
+    {
+      "path": "modis/2009/modis_2009_Haiti.csv",
+      "bytes": 21127
+    },
+    {
+      "path": "modis/2010/modis_2010_Haiti.csv",
+      "bytes": 17487
+    },
+    {
+      "path": "modis/2011/modis_2011_Haiti.csv",
+      "bytes": 26543
+    },
+    {
+      "path": "modis/2012/modis_2012_Haiti.csv",
+      "bytes": 26434
+    },
+    {
+      "path": "modis/2013/modis_2013_Haiti.csv",
+      "bytes": 25844
+    },
+    {
+      "path": "modis/2014/modis_2014_Haiti.csv",
+      "bytes": 19913
+    },
+    {
+      "path": "modis/2015/modis_2015_Haiti.csv",
+      "bytes": 20871
+    },
+    {
+      "path": "modis/2016/modis_2016_Haiti.csv",
+      "bytes": 12097
+    },
+    {
+      "path": "modis/2017/modis_2017_Haiti.csv",
+      "bytes": 16447
+    },
+    {
+      "path": "modis/2018/modis_2018_Haiti.csv",
+      "bytes": 22852
+    },
+    {
+      "path": "modis/2019/modis_2019_Haiti.csv",
+      "bytes": 21536
+    },
+    {
+      "path": "modis/2020/modis_2020_Haiti.csv",
+      "bytes": 27088
+    },
+    {
+      "path": "modis/2021/modis_2021_Haiti.csv",
+      "bytes": 22297
+    },
+    {
+      "path": "modis/2022/modis_2022_Haiti.csv",
+      "bytes": 14020
+    },
+    {
+      "path": "modis/2023/modis_2023_Haiti.csv",
+      "bytes": 33370
+    },
+    {
+      "path": "modis/2024/modis_2024_Haiti.csv",
+      "bytes": 22484
+    },
+    {
+      "path": "modis/2025/modis_2025_Haiti.csv",
+      "bytes": 21750
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Haiti.csv",
+      "bytes": 76442
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Haiti.csv",
+      "bytes": 183482
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Haiti.csv",
+      "bytes": 220373
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Haiti.csv",
+      "bytes": 187438
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Haiti.csv",
+      "bytes": 123812
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Haiti.csv",
+      "bytes": 258267
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Haiti.csv",
+      "bytes": 181741
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Haiti.csv",
+      "bytes": 183166
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Haiti.csv",
+      "bytes": 192842
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Haiti.csv",
+      "bytes": 217865
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Haiti.csv",
+      "bytes": 170672
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Haiti.csv",
+      "bytes": 211180
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Haiti.csv",
+      "bytes": 120744
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Haiti.csv",
+      "bytes": 123158
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Haiti.csv",
+      "bytes": 180297
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Haiti.csv",
+      "bytes": 172914
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Haiti.csv",
+      "bytes": 205288
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Haiti.csv",
+      "bytes": 173076
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Haiti.csv",
+      "bytes": 117954
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Haiti.csv",
+      "bytes": 248281
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Haiti.csv",
+      "bytes": 189075
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Haiti.csv",
+      "bytes": 167337
+    }
+  ],
+  "body_hash": "addd184a28977360"
+}

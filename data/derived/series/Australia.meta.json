@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Australia.csv",
+      "bytes": 2468473
+    },
+    {
+      "path": "modis/2001/modis_2001_Australia.csv",
+      "bytes": 18877470
+    },
+    {
+      "path": "modis/2002/modis_2002_Australia.csv",
+      "bytes": 26777015
+    },
+    {
+      "path": "modis/2003/modis_2003_Australia.csv",
+      "bytes": 16891102
+    },
+    {
+      "path": "modis/2004/modis_2004_Australia.csv",
+      "bytes": 24884629
+    },
+    {
+      "path": "modis/2005/modis_2005_Australia.csv",
+      "bytes": 15110858
+    },
+    {
+      "path": "modis/2006/modis_2006_Australia.csv",
+      "bytes": 24255399
+    },
+    {
+      "path": "modis/2007/modis_2007_Australia.csv",
+      "bytes": 20310032
+    },
+    {
+      "path": "modis/2008/modis_2008_Australia.csv",
+      "bytes": 14591371
+    },
+    {
+      "path": "modis/2009/modis_2009_Australia.csv",
+      "bytes": 20038608
+    },
+    {
+      "path": "modis/2010/modis_2010_Australia.csv",
+      "bytes": 9563570
+    },
+    {
+      "path": "modis/2011/modis_2011_Australia.csv",
+      "bytes": 34841249
+    },
+    {
+      "path": "modis/2012/modis_2012_Australia.csv",
+      "bytes": 37847345
+    },
+    {
+      "path": "modis/2013/modis_2013_Australia.csv",
+      "bytes": 15143483
+    },
+    {
+      "path": "modis/2014/modis_2014_Australia.csv",
+      "bytes": 20449784
+    },
+    {
+      "path": "modis/2015/modis_2015_Australia.csv",
+      "bytes": 19053692
+    },
+    {
+      "path": "modis/2016/modis_2016_Australia.csv",
+      "bytes": 12650638
+    },
+    {
+      "path": "modis/2017/modis_2017_Australia.csv",
+      "bytes": 21760820
+    },
+    {
+      "path": "modis/2018/modis_2018_Australia.csv",
+      "bytes": 24763900
+    },
+    {
+      "path": "modis/2019/modis_2019_Australia.csv",
+      "bytes": 25021097
+    },
+    {
+      "path": "modis/2020/modis_2020_Australia.csv",
+      "bytes": 12487063
+    },
+    {
+      "path": "modis/2021/modis_2021_Australia.csv",
+      "bytes": 13819813
+    },
+    {
+      "path": "modis/2022/modis_2022_Australia.csv",
+      "bytes": 12887209
+    },
+    {
+      "path": "modis/2023/modis_2023_Australia.csv",
+      "bytes": 32319634
+    },
+    {
+      "path": "modis/2024/modis_2024_Australia.csv",
+      "bytes": 18232002
+    },
+    {
+      "path": "modis/2025/modis_2025_Australia.csv",
+      "bytes": 20793178
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Australia.csv",
+      "bytes": 109751718
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Australia.csv",
+      "bytes": 127798032
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Australia.csv",
+      "bytes": 68267989
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Australia.csv",
+      "bytes": 66817499
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Australia.csv",
+      "bytes": 68004078
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Australia.csv",
+      "bytes": 146585463
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Australia.csv",
+      "bytes": 87165772
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Australia.csv",
+      "bytes": 102666971
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Australia.csv",
+      "bytes": 171934398
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Australia.csv",
+      "bytes": 75973068
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Australia.csv",
+      "bytes": 97603965
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Australia.csv",
+      "bytes": 91698462
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Australia.csv",
+      "bytes": 62416647
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Australia.csv",
+      "bytes": 99604917
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Australia.csv",
+      "bytes": 117965462
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Australia.csv",
+      "bytes": 126681711
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Australia.csv",
+      "bytes": 68015966
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Australia.csv",
+      "bytes": 65754049
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Australia.csv",
+      "bytes": 64573386
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Australia.csv",
+      "bytes": 148805600
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Australia.csv",
+      "bytes": 78623446
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Australia.csv",
+      "bytes": 100419912
+    }
+  ],
+  "body_hash": "7c62ac3a23064295"
+}

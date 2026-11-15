@@ -1,0 +1,191 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Samoa.csv",
+      "bytes": 457
+    },
+    {
+      "path": "modis/2001/modis_2001_Samoa.csv",
+      "bytes": 1262
+    },
+    {
+      "path": "modis/2002/modis_2002_Samoa.csv",
+      "bytes": 2150
+    },
+    {
+      "path": "modis/2003/modis_2003_Samoa.csv",
+      "bytes": 3604
+    },
+    {
+      "path": "modis/2004/modis_2004_Samoa.csv",
+      "bytes": 4167
+    },
+    {
+      "path": "modis/2005/modis_2005_Samoa.csv",
+      "bytes": 2893
+    },
+    {
+      "path": "modis/2006/modis_2006_Samoa.csv",
+      "bytes": 2710
+    },
+    {
+      "path": "modis/2007/modis_2007_Samoa.csv",
+      "bytes": 2650
+    },
+    {
+      "path": "modis/2008/modis_2008_Samoa.csv",
+      "bytes": 2305
+    },
+    {
+      "path": "modis/2009/modis_2009_Samoa.csv",
+      "bytes": 2627
+    },
+    {
+      "path": "modis/2010/modis_2010_Samoa.csv",
+      "bytes": 2474
+    },
+    {
+      "path": "modis/2011/modis_2011_Samoa.csv",
+      "bytes": 3795
+    },
+    {
+      "path": "modis/2012/modis_2012_Samoa.csv",
+      "bytes": 2715
+    },
+    {
+      "path": "modis/2013/modis_2013_Samoa.csv",
+      "bytes": 1668
+    },
+    {
+      "path": "modis/2014/modis_2014_Samoa.csv",
+      "bytes": 2476
+    },
+    {
+      "path": "modis/2015/modis_2015_Samoa.csv",
+      "bytes": 3280
+    },
+    {
+      "path": "modis/2016/modis_2016_Samoa.csv",
+      "bytes": 2779
+    },
+    {
+      "path": "modis/2017/modis_2017_Samoa.csv",
+      "bytes": 2955
+    },
+    {
+      "path": "modis/2018/modis_2018_Samoa.csv",
+      "bytes": 2587
+    },
+    {
+      "path": "modis/2019/modis_2019_Samoa.csv",
+      "bytes": 2507
+    },
+    {
+      "path": "modis/2020/modis_2020_Samoa.csv",
+      "bytes": 2017
+    },
+    {
+      "path": "modis/2021/modis_2021_Samoa.csv",
+      "bytes": 3237
+    },
+    {
+      "path": "modis/2022/modis_2022_Samoa.csv",
+      "bytes": 1428
+    },
+    {
+      "path": "modis/2023/modis_2023_Samoa.csv",
+      "bytes": 2453
+    },
+    {
+      "path": "modis/2024/modis_2024_Samoa.csv",
+      "bytes": 1631
+    },
+    {
+      "path": "modis/2025/modis_2025_Samoa.csv",
+      "bytes": 459
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Samoa.csv",
+      "bytes": 463
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Samoa.csv",
+      "bytes": 296
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Samoa.csv",
+      "bytes": 296
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Samoa.csv",
+      "bytes": 629
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Samoa.csv",
+      "bytes": 293
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Samoa.csv",
+      "bytes": 464
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Samoa.csv",
+      "bytes": 459
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Samoa.csv",
+      "bytes": 966
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Samoa.csv",
+      "bytes": 942
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Samoa.csv",
+      "bytes": 371
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Samoa.csv",
+      "bytes": 3626
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Samoa.csv",
+      "bytes": 696
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Samoa.csv",
+      "bytes": 292
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Samoa.csv",
+      "bytes": 454
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Samoa.csv",
+      "bytes": 612
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Samoa.csv",
+      "bytes": 291
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Samoa.csv",
+      "bytes": 780
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Samoa.csv",
+      "bytes": 535
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Samoa.csv",
+      "bytes": 373
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Samoa.csv",
+      "bytes": 697
+    }
+  ],
+  "body_hash": "f8ce0b732d6b07cb"
+}

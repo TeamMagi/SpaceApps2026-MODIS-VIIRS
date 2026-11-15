@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Eritrea.csv",
+      "bytes": 8376
+    },
+    {
+      "path": "modis/2001/modis_2001_Eritrea.csv",
+      "bytes": 25512
+    },
+    {
+      "path": "modis/2002/modis_2002_Eritrea.csv",
+      "bytes": 22805
+    },
+    {
+      "path": "modis/2003/modis_2003_Eritrea.csv",
+      "bytes": 28304
+    },
+    {
+      "path": "modis/2004/modis_2004_Eritrea.csv",
+      "bytes": 17741
+    },
+    {
+      "path": "modis/2005/modis_2005_Eritrea.csv",
+      "bytes": 18070
+    },
+    {
+      "path": "modis/2006/modis_2006_Eritrea.csv",
+      "bytes": 23262
+    },
+    {
+      "path": "modis/2007/modis_2007_Eritrea.csv",
+      "bytes": 41341
+    },
+    {
+      "path": "modis/2008/modis_2008_Eritrea.csv",
+      "bytes": 46358
+    },
+    {
+      "path": "modis/2009/modis_2009_Eritrea.csv",
+      "bytes": 18614
+    },
+    {
+      "path": "modis/2010/modis_2010_Eritrea.csv",
+      "bytes": 19656
+    },
+    {
+      "path": "modis/2011/modis_2011_Eritrea.csv",
+      "bytes": 154418
+    },
+    {
+      "path": "modis/2012/modis_2012_Eritrea.csv",
+      "bytes": 26719
+    },
+    {
+      "path": "modis/2013/modis_2013_Eritrea.csv",
+      "bytes": 13862
+    },
+    {
+      "path": "modis/2014/modis_2014_Eritrea.csv",
+      "bytes": 20744
+    },
+    {
+      "path": "modis/2015/modis_2015_Eritrea.csv",
+      "bytes": 20641
+    },
+    {
+      "path": "modis/2016/modis_2016_Eritrea.csv",
+      "bytes": 14657
+    },
+    {
+      "path": "modis/2017/modis_2017_Eritrea.csv",
+      "bytes": 12380
+    },
+    {
+      "path": "modis/2018/modis_2018_Eritrea.csv",
+      "bytes": 17359
+    },
+    {
+      "path": "modis/2019/modis_2019_Eritrea.csv",
+      "bytes": 29334
+    },
+    {
+      "path": "modis/2020/modis_2020_Eritrea.csv",
+      "bytes": 47958
+    },
+    {
+      "path": "modis/2021/modis_2021_Eritrea.csv",
+      "bytes": 33723
+    },
+    {
+      "path": "modis/2022/modis_2022_Eritrea.csv",
+      "bytes": 35944
+    },
+    {
+      "path": "modis/2023/modis_2023_Eritrea.csv",
+      "bytes": 48253
+    },
+    {
+      "path": "modis/2024/modis_2024_Eritrea.csv",
+      "bytes": 24395
+    },
+    {
+      "path": "modis/2025/modis_2025_Eritrea.csv",
+      "bytes": 41756
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Eritrea.csv",
+      "bytes": 30039
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Eritrea.csv",
+      "bytes": 100677
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Eritrea.csv",
+      "bytes": 194056
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Eritrea.csv",
+      "bytes": 112013
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Eritrea.csv",
+      "bytes": 156174
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Eritrea.csv",
+      "bytes": 172282
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Eritrea.csv",
+      "bytes": 98021
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Eritrea.csv",
+      "bytes": 192010
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Eritrea.csv",
+      "bytes": 109786
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Eritrea.csv",
+      "bytes": 81048
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Eritrea.csv",
+      "bytes": 67490
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Eritrea.csv",
+      "bytes": 67437
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Eritrea.csv",
+      "bytes": 31320
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Eritrea.csv",
+      "bytes": 35356
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Eritrea.csv",
+      "bytes": 46447
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Eritrea.csv",
+      "bytes": 92861
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Eritrea.csv",
+      "bytes": 201252
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Eritrea.csv",
+      "bytes": 111468
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Eritrea.csv",
+      "bytes": 154984
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Eritrea.csv",
+      "bytes": 176760
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Eritrea.csv",
+      "bytes": 86952
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Eritrea.csv",
+      "bytes": 193971
+    }
+  ],
+  "body_hash": "f1862613652ae770"
+}

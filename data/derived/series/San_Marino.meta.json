@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2007/modis_2007_San_Marino.csv",
+      "bytes": 286
+    },
+    {
+      "path": "modis/2015/modis_2015_San_Marino.csv",
+      "bytes": 281
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_San_Marino.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_San_Marino.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_San_Marino.csv",
+      "bytes": 207
+    }
+  ],
+  "body_hash": "50cc46eb00843d23"
+}

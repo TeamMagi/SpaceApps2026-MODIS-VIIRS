@@ -1,0 +1,91 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2005/modis_2005_Seychelles.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2006/modis_2006_Seychelles.csv",
+      "bytes": 357
+    },
+    {
+      "path": "modis/2007/modis_2007_Seychelles.csv",
+      "bytes": 656
+    },
+    {
+      "path": "modis/2008/modis_2008_Seychelles.csv",
+      "bytes": 496
+    },
+    {
+      "path": "modis/2009/modis_2009_Seychelles.csv",
+      "bytes": 349
+    },
+    {
+      "path": "modis/2012/modis_2012_Seychelles.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2020/modis_2020_Seychelles.csv",
+      "bytes": 289
+    },
+    {
+      "path": "modis/2023/modis_2023_Seychelles.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2024/modis_2024_Seychelles.csv",
+      "bytes": 202
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Seychelles.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Seychelles.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Seychelles.csv",
+      "bytes": 288
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Seychelles.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Seychelles.csv",
+      "bytes": 529
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Seychelles.csv",
+      "bytes": 362
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Seychelles.csv",
+      "bytes": 284
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Seychelles.csv",
+      "bytes": 284
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Seychelles.csv",
+      "bytes": 206
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Seychelles.csv",
+      "bytes": 282
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Seychelles.csv",
+      "bytes": 286
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Seychelles.csv",
+      "bytes": 522
+    }
+  ],
+  "body_hash": "62c7895400d59a78"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Kosovo.csv",
+      "bytes": 1959
+    },
+    {
+      "path": "modis/2001/modis_2001_Kosovo.csv",
+      "bytes": 3135
+    },
+    {
+      "path": "modis/2002/modis_2002_Kosovo.csv",
+      "bytes": 2474
+    },
+    {
+      "path": "modis/2003/modis_2003_Kosovo.csv",
+      "bytes": 10876
+    },
+    {
+      "path": "modis/2004/modis_2004_Kosovo.csv",
+      "bytes": 10127
+    },
+    {
+      "path": "modis/2005/modis_2005_Kosovo.csv",
+      "bytes": 7546
+    },
+    {
+      "path": "modis/2006/modis_2006_Kosovo.csv",
+      "bytes": 4788
+    },
+    {
+      "path": "modis/2007/modis_2007_Kosovo.csv",
+      "bytes": 74636
+    },
+    {
+      "path": "modis/2008/modis_2008_Kosovo.csv",
+      "bytes": 11536
+    },
+    {
+      "path": "modis/2009/modis_2009_Kosovo.csv",
+      "bytes": 10480
+    },
+    {
+      "path": "modis/2010/modis_2010_Kosovo.csv",
+      "bytes": 10687
+    },
+    {
+      "path": "modis/2011/modis_2011_Kosovo.csv",
+      "bytes": 45770
+    },
+    {
+      "path": "modis/2012/modis_2012_Kosovo.csv",
+      "bytes": 57856
+    },
+    {
+      "path": "modis/2013/modis_2013_Kosovo.csv",
+      "bytes": 12198
+    },
+    {
+      "path": "modis/2014/modis_2014_Kosovo.csv",
+      "bytes": 11989
+    },
+    {
+      "path": "modis/2015/modis_2015_Kosovo.csv",
+      "bytes": 9953
+    },
+    {
+      "path": "modis/2016/modis_2016_Kosovo.csv",
+      "bytes": 5857
+    },
+    {
+      "path": "modis/2017/modis_2017_Kosovo.csv",
+      "bytes": 14402
+    },
+    {
+      "path": "modis/2018/modis_2018_Kosovo.csv",
+      "bytes": 12640
+    },
+    {
+      "path": "modis/2019/modis_2019_Kosovo.csv",
+      "bytes": 34611
+    },
+    {
+      "path": "modis/2020/modis_2020_Kosovo.csv",
+      "bytes": 19687
+    },
+    {
+      "path": "modis/2021/modis_2021_Kosovo.csv",
+      "bytes": 14723
+    },
+    {
+      "path": "modis/2022/modis_2022_Kosovo.csv",
+      "bytes": 8715
+    },
+    {
+      "path": "modis/2023/modis_2023_Kosovo.csv",
+      "bytes": 13453
+    },
+    {
+      "path": "modis/2024/modis_2024_Kosovo.csv",
+      "bytes": 21193
+    },
+    {
+      "path": "modis/2025/modis_2025_Kosovo.csv",
+      "bytes": 29589
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Kosovo.csv",
+      "bytes": 41213
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Kosovo.csv",
+      "bytes": 136993
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Kosovo.csv",
+      "bytes": 80470
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Kosovo.csv",
+      "bytes": 80316
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Kosovo.csv",
+      "bytes": 39477
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Kosovo.csv",
+      "bytes": 63353
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Kosovo.csv",
+      "bytes": 112854
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Kosovo.csv",
+      "bytes": 135709
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Kosovo.csv",
+      "bytes": 245128
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Kosovo.csv",
+      "bytes": 68087
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Kosovo.csv",
+      "bytes": 53861
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Kosovo.csv",
+      "bytes": 68816
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Kosovo.csv",
+      "bytes": 28676
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Kosovo.csv",
+      "bytes": 84258
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Kosovo.csv",
+      "bytes": 42427
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Kosovo.csv",
+      "bytes": 137604
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Kosovo.csv",
+      "bytes": 74288
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Kosovo.csv",
+      "bytes": 80583
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Kosovo.csv",
+      "bytes": 36803
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Kosovo.csv",
+      "bytes": 63398
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Kosovo.csv",
+      "bytes": 81618
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Kosovo.csv",
+      "bytes": 119963
+    }
+  ],
+  "body_hash": "dfa8ddf7ac2816d0"
+}

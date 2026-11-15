@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Chad.csv",
+      "bytes": 1037911
+    },
+    {
+      "path": "modis/2001/modis_2001_Chad.csv",
+      "bytes": 1907034
+    },
+    {
+      "path": "modis/2002/modis_2002_Chad.csv",
+      "bytes": 3771463
+    },
+    {
+      "path": "modis/2003/modis_2003_Chad.csv",
+      "bytes": 4960860
+    },
+    {
+      "path": "modis/2004/modis_2004_Chad.csv",
+      "bytes": 5819951
+    },
+    {
+      "path": "modis/2005/modis_2005_Chad.csv",
+      "bytes": 5286012
+    },
+    {
+      "path": "modis/2006/modis_2006_Chad.csv",
+      "bytes": 4900606
+    },
+    {
+      "path": "modis/2007/modis_2007_Chad.csv",
+      "bytes": 5103458
+    },
+    {
+      "path": "modis/2008/modis_2008_Chad.csv",
+      "bytes": 4790558
+    },
+    {
+      "path": "modis/2009/modis_2009_Chad.csv",
+      "bytes": 3727305
+    },
+    {
+      "path": "modis/2010/modis_2010_Chad.csv",
+      "bytes": 3974036
+    },
+    {
+      "path": "modis/2011/modis_2011_Chad.csv",
+      "bytes": 4310898
+    },
+    {
+      "path": "modis/2012/modis_2012_Chad.csv",
+      "bytes": 4407658
+    },
+    {
+      "path": "modis/2013/modis_2013_Chad.csv",
+      "bytes": 3879920
+    },
+    {
+      "path": "modis/2014/modis_2014_Chad.csv",
+      "bytes": 3225722
+    },
+    {
+      "path": "modis/2015/modis_2015_Chad.csv",
+      "bytes": 3441306
+    },
+    {
+      "path": "modis/2016/modis_2016_Chad.csv",
+      "bytes": 4372733
+    },
+    {
+      "path": "modis/2017/modis_2017_Chad.csv",
+      "bytes": 3533858
+    },
+    {
+      "path": "modis/2018/modis_2018_Chad.csv",
+      "bytes": 3988656
+    },
+    {
+      "path": "modis/2019/modis_2019_Chad.csv",
+      "bytes": 3310164
+    },
+    {
+      "path": "modis/2020/modis_2020_Chad.csv",
+      "bytes": 3882152
+    },
+    {
+      "path": "modis/2021/modis_2021_Chad.csv",
+      "bytes": 3881138
+    },
+    {
+      "path": "modis/2022/modis_2022_Chad.csv",
+      "bytes": 2830658
+    },
+    {
+      "path": "modis/2023/modis_2023_Chad.csv",
+      "bytes": 3139297
+    },
+    {
+      "path": "modis/2024/modis_2024_Chad.csv",
+      "bytes": 3016814
+    },
+    {
+      "path": "modis/2025/modis_2025_Chad.csv",
+      "bytes": 2754984
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Chad.csv",
+      "bytes": 12102139
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Chad.csv",
+      "bytes": 15681411
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Chad.csv",
+      "bytes": 19199888
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Chad.csv",
+      "bytes": 18793490
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Chad.csv",
+      "bytes": 14463685
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Chad.csv",
+      "bytes": 16029859
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Chad.csv",
+      "bytes": 15518523
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Chad.csv",
+      "bytes": 17135564
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Chad.csv",
+      "bytes": 17958670
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Chad.csv",
+      "bytes": 19148589
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Chad.csv",
+      "bytes": 16412540
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Chad.csv",
+      "bytes": 16553357
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Chad.csv",
+      "bytes": 20692118
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Chad.csv",
+      "bytes": 16749229
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Chad.csv",
+      "bytes": 18496852
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Chad.csv",
+      "bytes": 15733884
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Chad.csv",
+      "bytes": 18966376
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Chad.csv",
+      "bytes": 18707220
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Chad.csv",
+      "bytes": 14309206
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Chad.csv",
+      "bytes": 15938241
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Chad.csv",
+      "bytes": 14978486
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Chad.csv",
+      "bytes": 16386907
+    }
+  ],
+  "body_hash": "3ae4a73cc4941efd"
+}

@@ -1,0 +1,99 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2022/modis_2022_Antarctica.csv",
+      "bytes": 364
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Antarctica.csv",
+      "bytes": 64406
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Antarctica.csv",
+      "bytes": 61589
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Antarctica.csv",
+      "bytes": 35133
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Antarctica.csv",
+      "bytes": 61366
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Antarctica.csv",
+      "bytes": 57645
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Antarctica.csv",
+      "bytes": 74751
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Antarctica.csv",
+      "bytes": 61870
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Antarctica.csv",
+      "bytes": 25844
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Antarctica.csv",
+      "bytes": 51238
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Antarctica.csv",
+      "bytes": 44549
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Antarctica.csv",
+      "bytes": 40418
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Antarctica.csv",
+      "bytes": 30694
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Antarctica.csv",
+      "bytes": 44027
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Antarctica.csv",
+      "bytes": 35449
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Antarctica.csv",
+      "bytes": 76166
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Antarctica.csv",
+      "bytes": 69262
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Antarctica.csv",
+      "bytes": 36021
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Antarctica.csv",
+      "bytes": 59277
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Antarctica.csv",
+      "bytes": 55270
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Antarctica.csv",
+      "bytes": 74612
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Antarctica.csv",
+      "bytes": 52276
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Antarctica.csv",
+      "bytes": 23423
+    }
+  ],
+  "body_hash": "d9a762db56d99e95"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Panama.csv",
+      "bytes": 354
+    },
+    {
+      "path": "modis/2001/modis_2001_Panama.csv",
+      "bytes": 74729
+    },
+    {
+      "path": "modis/2002/modis_2002_Panama.csv",
+      "bytes": 56967
+    },
+    {
+      "path": "modis/2003/modis_2003_Panama.csv",
+      "bytes": 285883
+    },
+    {
+      "path": "modis/2004/modis_2004_Panama.csv",
+      "bytes": 247372
+    },
+    {
+      "path": "modis/2005/modis_2005_Panama.csv",
+      "bytes": 132912
+    },
+    {
+      "path": "modis/2006/modis_2006_Panama.csv",
+      "bytes": 190162
+    },
+    {
+      "path": "modis/2007/modis_2007_Panama.csv",
+      "bytes": 162245
+    },
+    {
+      "path": "modis/2008/modis_2008_Panama.csv",
+      "bytes": 182713
+    },
+    {
+      "path": "modis/2009/modis_2009_Panama.csv",
+      "bytes": 231764
+    },
+    {
+      "path": "modis/2010/modis_2010_Panama.csv",
+      "bytes": 101871
+    },
+    {
+      "path": "modis/2011/modis_2011_Panama.csv",
+      "bytes": 86629
+    },
+    {
+      "path": "modis/2012/modis_2012_Panama.csv",
+      "bytes": 121690
+    },
+    {
+      "path": "modis/2013/modis_2013_Panama.csv",
+      "bytes": 140107
+    },
+    {
+      "path": "modis/2014/modis_2014_Panama.csv",
+      "bytes": 135242
+    },
+    {
+      "path": "modis/2015/modis_2015_Panama.csv",
+      "bytes": 173567
+    },
+    {
+      "path": "modis/2016/modis_2016_Panama.csv",
+      "bytes": 170472
+    },
+    {
+      "path": "modis/2017/modis_2017_Panama.csv",
+      "bytes": 107931
+    },
+    {
+      "path": "modis/2018/modis_2018_Panama.csv",
+      "bytes": 86736
+    },
+    {
+      "path": "modis/2019/modis_2019_Panama.csv",
+      "bytes": 232678
+    },
+    {
+      "path": "modis/2020/modis_2020_Panama.csv",
+      "bytes": 177822
+    },
+    {
+      "path": "modis/2021/modis_2021_Panama.csv",
+      "bytes": 93967
+    },
+    {
+      "path": "modis/2022/modis_2022_Panama.csv",
+      "bytes": 68990
+    },
+    {
+      "path": "modis/2023/modis_2023_Panama.csv",
+      "bytes": 183443
+    },
+    {
+      "path": "modis/2024/modis_2024_Panama.csv",
+      "bytes": 122965
+    },
+    {
+      "path": "modis/2025/modis_2025_Panama.csv",
+      "bytes": 57064
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Panama.csv",
+      "bytes": 332700
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Panama.csv",
+      "bytes": 1271753
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Panama.csv",
+      "bytes": 776188
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Panama.csv",
+      "bytes": 497197
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Panama.csv",
+      "bytes": 477848
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Panama.csv",
+      "bytes": 1035144
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Panama.csv",
+      "bytes": 684253
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Panama.csv",
+      "bytes": 299773
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Panama.csv",
+      "bytes": 712683
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Panama.csv",
+      "bytes": 650070
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Panama.csv",
+      "bytes": 771049
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Panama.csv",
+      "bytes": 934505
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Panama.csv",
+      "bytes": 970461
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Panama.csv",
+      "bytes": 610404
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Panama.csv",
+      "bytes": 512494
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Panama.csv",
+      "bytes": 1153704
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Panama.csv",
+      "bytes": 791987
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Panama.csv",
+      "bytes": 455232
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Panama.csv",
+      "bytes": 492179
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Panama.csv",
+      "bytes": 993951
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Panama.csv",
+      "bytes": 692522
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Panama.csv",
+      "bytes": 308108
+    }
+  ],
+  "body_hash": "1c38c6dd8f2403ea"
+}

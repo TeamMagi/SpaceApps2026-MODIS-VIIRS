@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Namibia.csv",
+      "bytes": 73814
+    },
+    {
+      "path": "modis/2001/modis_2001_Namibia.csv",
+      "bytes": 409596
+    },
+    {
+      "path": "modis/2002/modis_2002_Namibia.csv",
+      "bytes": 831853
+    },
+    {
+      "path": "modis/2003/modis_2003_Namibia.csv",
+      "bytes": 938885
+    },
+    {
+      "path": "modis/2004/modis_2004_Namibia.csv",
+      "bytes": 901054
+    },
+    {
+      "path": "modis/2005/modis_2005_Namibia.csv",
+      "bytes": 840117
+    },
+    {
+      "path": "modis/2006/modis_2006_Namibia.csv",
+      "bytes": 1092409
+    },
+    {
+      "path": "modis/2007/modis_2007_Namibia.csv",
+      "bytes": 1479241
+    },
+    {
+      "path": "modis/2008/modis_2008_Namibia.csv",
+      "bytes": 927225
+    },
+    {
+      "path": "modis/2009/modis_2009_Namibia.csv",
+      "bytes": 1568666
+    },
+    {
+      "path": "modis/2010/modis_2010_Namibia.csv",
+      "bytes": 1432465
+    },
+    {
+      "path": "modis/2011/modis_2011_Namibia.csv",
+      "bytes": 2518988
+    },
+    {
+      "path": "modis/2012/modis_2012_Namibia.csv",
+      "bytes": 2734499
+    },
+    {
+      "path": "modis/2013/modis_2013_Namibia.csv",
+      "bytes": 1185545
+    },
+    {
+      "path": "modis/2014/modis_2014_Namibia.csv",
+      "bytes": 906523
+    },
+    {
+      "path": "modis/2015/modis_2015_Namibia.csv",
+      "bytes": 925460
+    },
+    {
+      "path": "modis/2016/modis_2016_Namibia.csv",
+      "bytes": 793374
+    },
+    {
+      "path": "modis/2017/modis_2017_Namibia.csv",
+      "bytes": 980874
+    },
+    {
+      "path": "modis/2018/modis_2018_Namibia.csv",
+      "bytes": 766624
+    },
+    {
+      "path": "modis/2019/modis_2019_Namibia.csv",
+      "bytes": 426576
+    },
+    {
+      "path": "modis/2020/modis_2020_Namibia.csv",
+      "bytes": 1052793
+    },
+    {
+      "path": "modis/2021/modis_2021_Namibia.csv",
+      "bytes": 1220430
+    },
+    {
+      "path": "modis/2022/modis_2022_Namibia.csv",
+      "bytes": 965163
+    },
+    {
+      "path": "modis/2023/modis_2023_Namibia.csv",
+      "bytes": 1120385
+    },
+    {
+      "path": "modis/2024/modis_2024_Namibia.csv",
+      "bytes": 488063
+    },
+    {
+      "path": "modis/2025/modis_2025_Namibia.csv",
+      "bytes": 568645
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Namibia.csv",
+      "bytes": 3753105
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Namibia.csv",
+      "bytes": 2219553
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Namibia.csv",
+      "bytes": 5112147
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Namibia.csv",
+      "bytes": 5806102
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Namibia.csv",
+      "bytes": 4742047
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Namibia.csv",
+      "bytes": 5176397
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Namibia.csv",
+      "bytes": 2534662
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Namibia.csv",
+      "bytes": 2759032
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Namibia.csv",
+      "bytes": 11938375
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Namibia.csv",
+      "bytes": 5575305
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Namibia.csv",
+      "bytes": 3810482
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Namibia.csv",
+      "bytes": 4423037
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Namibia.csv",
+      "bytes": 3674850
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Namibia.csv",
+      "bytes": 4646405
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Namibia.csv",
+      "bytes": 3863622
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Namibia.csv",
+      "bytes": 2191557
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Namibia.csv",
+      "bytes": 5192024
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Namibia.csv",
+      "bytes": 5902313
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Namibia.csv",
+      "bytes": 4531700
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Namibia.csv",
+      "bytes": 5318096
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Namibia.csv",
+      "bytes": 2364148
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Namibia.csv",
+      "bytes": 2801746
+    }
+  ],
+  "body_hash": "39bdb7de9fd7ff96"
+}

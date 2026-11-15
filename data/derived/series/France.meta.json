@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_France.csv",
+      "bytes": 4026
+    },
+    {
+      "path": "modis/2001/modis_2001_France.csv",
+      "bytes": 97479
+    },
+    {
+      "path": "modis/2002/modis_2002_France.csv",
+      "bytes": 182873
+    },
+    {
+      "path": "modis/2003/modis_2003_France.csv",
+      "bytes": 358925
+    },
+    {
+      "path": "modis/2004/modis_2004_France.csv",
+      "bytes": 228002
+    },
+    {
+      "path": "modis/2005/modis_2005_France.csv",
+      "bytes": 218387
+    },
+    {
+      "path": "modis/2006/modis_2006_France.csv",
+      "bytes": 171563
+    },
+    {
+      "path": "modis/2007/modis_2007_France.csv",
+      "bytes": 159504
+    },
+    {
+      "path": "modis/2008/modis_2008_France.csv",
+      "bytes": 161283
+    },
+    {
+      "path": "modis/2009/modis_2009_France.csv",
+      "bytes": 162139
+    },
+    {
+      "path": "modis/2010/modis_2010_France.csv",
+      "bytes": 123859
+    },
+    {
+      "path": "modis/2011/modis_2011_France.csv",
+      "bytes": 160421
+    },
+    {
+      "path": "modis/2012/modis_2012_France.csv",
+      "bytes": 166749
+    },
+    {
+      "path": "modis/2013/modis_2013_France.csv",
+      "bytes": 115147
+    },
+    {
+      "path": "modis/2014/modis_2014_France.csv",
+      "bytes": 147561
+    },
+    {
+      "path": "modis/2015/modis_2015_France.csv",
+      "bytes": 158075
+    },
+    {
+      "path": "modis/2016/modis_2016_France.csv",
+      "bytes": 146634
+    },
+    {
+      "path": "modis/2017/modis_2017_France.csv",
+      "bytes": 212997
+    },
+    {
+      "path": "modis/2018/modis_2018_France.csv",
+      "bytes": 122447
+    },
+    {
+      "path": "modis/2019/modis_2019_France.csv",
+      "bytes": 223655
+    },
+    {
+      "path": "modis/2020/modis_2020_France.csv",
+      "bytes": 125978
+    },
+    {
+      "path": "modis/2021/modis_2021_France.csv",
+      "bytes": 171424
+    },
+    {
+      "path": "modis/2022/modis_2022_France.csv",
+      "bytes": 275421
+    },
+    {
+      "path": "modis/2023/modis_2023_France.csv",
+      "bytes": 149126
+    },
+    {
+      "path": "modis/2024/modis_2024_France.csv",
+      "bytes": 108007
+    },
+    {
+      "path": "modis/2025/modis_2025_France.csv",
+      "bytes": 151116
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_France.csv",
+      "bytes": 911498
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_France.csv",
+      "bytes": 1307966
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_France.csv",
+      "bytes": 895401
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_France.csv",
+      "bytes": 1048436
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_France.csv",
+      "bytes": 1459385
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_France.csv",
+      "bytes": 841539
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_France.csv",
+      "bytes": 644262
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_France.csv",
+      "bytes": 833802
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_France.csv",
+      "bytes": 1078785
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_France.csv",
+      "bytes": 965745
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_France.csv",
+      "bytes": 1085957
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_France.csv",
+      "bytes": 1088326
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_France.csv",
+      "bytes": 1016561
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_France.csv",
+      "bytes": 1265529
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_France.csv",
+      "bytes": 1029351
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_France.csv",
+      "bytes": 1277459
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_France.csv",
+      "bytes": 868979
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_France.csv",
+      "bytes": 1001437
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_France.csv",
+      "bytes": 1262837
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_France.csv",
+      "bytes": 806455
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_France.csv",
+      "bytes": 578653
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_France.csv",
+      "bytes": 764984
+    }
+  ],
+  "body_hash": "37e9b9c9509f26a6"
+}

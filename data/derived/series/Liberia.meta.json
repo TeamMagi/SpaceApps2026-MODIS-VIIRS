@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Liberia.csv",
+      "bytes": 359
+    },
+    {
+      "path": "modis/2001/modis_2001_Liberia.csv",
+      "bytes": 8673
+    },
+    {
+      "path": "modis/2002/modis_2002_Liberia.csv",
+      "bytes": 6976
+    },
+    {
+      "path": "modis/2003/modis_2003_Liberia.csv",
+      "bytes": 546803
+    },
+    {
+      "path": "modis/2004/modis_2004_Liberia.csv",
+      "bytes": 368053
+    },
+    {
+      "path": "modis/2005/modis_2005_Liberia.csv",
+      "bytes": 204362
+    },
+    {
+      "path": "modis/2006/modis_2006_Liberia.csv",
+      "bytes": 500206
+    },
+    {
+      "path": "modis/2007/modis_2007_Liberia.csv",
+      "bytes": 621929
+    },
+    {
+      "path": "modis/2008/modis_2008_Liberia.csv",
+      "bytes": 552408
+    },
+    {
+      "path": "modis/2009/modis_2009_Liberia.csv",
+      "bytes": 1250889
+    },
+    {
+      "path": "modis/2010/modis_2010_Liberia.csv",
+      "bytes": 461820
+    },
+    {
+      "path": "modis/2011/modis_2011_Liberia.csv",
+      "bytes": 505109
+    },
+    {
+      "path": "modis/2012/modis_2012_Liberia.csv",
+      "bytes": 918312
+    },
+    {
+      "path": "modis/2013/modis_2013_Liberia.csv",
+      "bytes": 502010
+    },
+    {
+      "path": "modis/2014/modis_2014_Liberia.csv",
+      "bytes": 829618
+    },
+    {
+      "path": "modis/2015/modis_2015_Liberia.csv",
+      "bytes": 1268025
+    },
+    {
+      "path": "modis/2016/modis_2016_Liberia.csv",
+      "bytes": 680602
+    },
+    {
+      "path": "modis/2017/modis_2017_Liberia.csv",
+      "bytes": 567647
+    },
+    {
+      "path": "modis/2018/modis_2018_Liberia.csv",
+      "bytes": 426065
+    },
+    {
+      "path": "modis/2019/modis_2019_Liberia.csv",
+      "bytes": 1017797
+    },
+    {
+      "path": "modis/2020/modis_2020_Liberia.csv",
+      "bytes": 623124
+    },
+    {
+      "path": "modis/2021/modis_2021_Liberia.csv",
+      "bytes": 375445
+    },
+    {
+      "path": "modis/2022/modis_2022_Liberia.csv",
+      "bytes": 574350
+    },
+    {
+      "path": "modis/2023/modis_2023_Liberia.csv",
+      "bytes": 821763
+    },
+    {
+      "path": "modis/2024/modis_2024_Liberia.csv",
+      "bytes": 924021
+    },
+    {
+      "path": "modis/2025/modis_2025_Liberia.csv",
+      "bytes": 669604
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Liberia.csv",
+      "bytes": 1194499
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Liberia.csv",
+      "bytes": 3080546
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Liberia.csv",
+      "bytes": 2812610
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Liberia.csv",
+      "bytes": 1674986
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Liberia.csv",
+      "bytes": 2049398
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Liberia.csv",
+      "bytes": 2864894
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Liberia.csv",
+      "bytes": 3069305
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Liberia.csv",
+      "bytes": 2502150
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Liberia.csv",
+      "bytes": 3031372
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Liberia.csv",
+      "bytes": 2107059
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Liberia.csv",
+      "bytes": 2754178
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Liberia.csv",
+      "bytes": 4534837
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Liberia.csv",
+      "bytes": 2849936
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Liberia.csv",
+      "bytes": 2561699
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Liberia.csv",
+      "bytes": 2106670
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Liberia.csv",
+      "bytes": 3317475
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Liberia.csv",
+      "bytes": 2653590
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Liberia.csv",
+      "bytes": 1965894
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Liberia.csv",
+      "bytes": 2467313
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Liberia.csv",
+      "bytes": 2948882
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Liberia.csv",
+      "bytes": 3064415
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Liberia.csv",
+      "bytes": 2749504
+    }
+  ],
+  "body_hash": "ece717519517379a"
+}

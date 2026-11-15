@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Sri_Lanka.csv",
+      "bytes": 432
+    },
+    {
+      "path": "modis/2001/modis_2001_Sri_Lanka.csv",
+      "bytes": 26711
+    },
+    {
+      "path": "modis/2002/modis_2002_Sri_Lanka.csv",
+      "bytes": 117517
+    },
+    {
+      "path": "modis/2003/modis_2003_Sri_Lanka.csv",
+      "bytes": 112763
+    },
+    {
+      "path": "modis/2004/modis_2004_Sri_Lanka.csv",
+      "bytes": 144889
+    },
+    {
+      "path": "modis/2005/modis_2005_Sri_Lanka.csv",
+      "bytes": 134548
+    },
+    {
+      "path": "modis/2006/modis_2006_Sri_Lanka.csv",
+      "bytes": 98540
+    },
+    {
+      "path": "modis/2007/modis_2007_Sri_Lanka.csv",
+      "bytes": 90402
+    },
+    {
+      "path": "modis/2008/modis_2008_Sri_Lanka.csv",
+      "bytes": 105207
+    },
+    {
+      "path": "modis/2009/modis_2009_Sri_Lanka.csv",
+      "bytes": 142866
+    },
+    {
+      "path": "modis/2010/modis_2010_Sri_Lanka.csv",
+      "bytes": 81537
+    },
+    {
+      "path": "modis/2011/modis_2011_Sri_Lanka.csv",
+      "bytes": 103100
+    },
+    {
+      "path": "modis/2012/modis_2012_Sri_Lanka.csv",
+      "bytes": 137643
+    },
+    {
+      "path": "modis/2013/modis_2013_Sri_Lanka.csv",
+      "bytes": 86117
+    },
+    {
+      "path": "modis/2014/modis_2014_Sri_Lanka.csv",
+      "bytes": 103887
+    },
+    {
+      "path": "modis/2015/modis_2015_Sri_Lanka.csv",
+      "bytes": 50613
+    },
+    {
+      "path": "modis/2016/modis_2016_Sri_Lanka.csv",
+      "bytes": 110798
+    },
+    {
+      "path": "modis/2017/modis_2017_Sri_Lanka.csv",
+      "bytes": 54625
+    },
+    {
+      "path": "modis/2018/modis_2018_Sri_Lanka.csv",
+      "bytes": 71696
+    },
+    {
+      "path": "modis/2019/modis_2019_Sri_Lanka.csv",
+      "bytes": 74869
+    },
+    {
+      "path": "modis/2020/modis_2020_Sri_Lanka.csv",
+      "bytes": 56364
+    },
+    {
+      "path": "modis/2021/modis_2021_Sri_Lanka.csv",
+      "bytes": 44757
+    },
+    {
+      "path": "modis/2022/modis_2022_Sri_Lanka.csv",
+      "bytes": 45068
+    },
+    {
+      "path": "modis/2023/modis_2023_Sri_Lanka.csv",
+      "bytes": 64703
+    },
+    {
+      "path": "modis/2024/modis_2024_Sri_Lanka.csv",
+      "bytes": 42582
+    },
+    {
+      "path": "modis/2025/modis_2025_Sri_Lanka.csv",
+      "bytes": 52622
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Sri_Lanka.csv",
+      "bytes": 493548
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Sri_Lanka.csv",
+      "bytes": 630926
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Sri_Lanka.csv",
+      "bytes": 636362
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Sri_Lanka.csv",
+      "bytes": 324797
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Sri_Lanka.csv",
+      "bytes": 309932
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Sri_Lanka.csv",
+      "bytes": 481461
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Sri_Lanka.csv",
+      "bytes": 460128
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Sri_Lanka.csv",
+      "bytes": 432096
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Sri_Lanka.csv",
+      "bytes": 879744
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Sri_Lanka.csv",
+      "bytes": 746833
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Sri_Lanka.csv",
+      "bytes": 793133
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Sri_Lanka.csv",
+      "bytes": 339119
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Sri_Lanka.csv",
+      "bytes": 928977
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Sri_Lanka.csv",
+      "bytes": 437758
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Sri_Lanka.csv",
+      "bytes": 552611
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Sri_Lanka.csv",
+      "bytes": 569539
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Sri_Lanka.csv",
+      "bytes": 597211
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Sri_Lanka.csv",
+      "bytes": 305610
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Sri_Lanka.csv",
+      "bytes": 314685
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Sri_Lanka.csv",
+      "bytes": 495961
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Sri_Lanka.csv",
+      "bytes": 386150
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Sri_Lanka.csv",
+      "bytes": 426657
+    }
+  ],
+  "body_hash": "b6763331c8213cc7"
+}

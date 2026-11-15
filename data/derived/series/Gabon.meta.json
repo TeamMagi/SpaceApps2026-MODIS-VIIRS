@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Gabon.csv",
+      "bytes": 7677
+    },
+    {
+      "path": "modis/2001/modis_2001_Gabon.csv",
+      "bytes": 118091
+    },
+    {
+      "path": "modis/2002/modis_2002_Gabon.csv",
+      "bytes": 129426
+    },
+    {
+      "path": "modis/2003/modis_2003_Gabon.csv",
+      "bytes": 213266
+    },
+    {
+      "path": "modis/2004/modis_2004_Gabon.csv",
+      "bytes": 252053
+    },
+    {
+      "path": "modis/2005/modis_2005_Gabon.csv",
+      "bytes": 213437
+    },
+    {
+      "path": "modis/2006/modis_2006_Gabon.csv",
+      "bytes": 177711
+    },
+    {
+      "path": "modis/2007/modis_2007_Gabon.csv",
+      "bytes": 174894
+    },
+    {
+      "path": "modis/2008/modis_2008_Gabon.csv",
+      "bytes": 202286
+    },
+    {
+      "path": "modis/2009/modis_2009_Gabon.csv",
+      "bytes": 140588
+    },
+    {
+      "path": "modis/2010/modis_2010_Gabon.csv",
+      "bytes": 190610
+    },
+    {
+      "path": "modis/2011/modis_2011_Gabon.csv",
+      "bytes": 220247
+    },
+    {
+      "path": "modis/2012/modis_2012_Gabon.csv",
+      "bytes": 190547
+    },
+    {
+      "path": "modis/2013/modis_2013_Gabon.csv",
+      "bytes": 199719
+    },
+    {
+      "path": "modis/2014/modis_2014_Gabon.csv",
+      "bytes": 154606
+    },
+    {
+      "path": "modis/2015/modis_2015_Gabon.csv",
+      "bytes": 171193
+    },
+    {
+      "path": "modis/2016/modis_2016_Gabon.csv",
+      "bytes": 184176
+    },
+    {
+      "path": "modis/2017/modis_2017_Gabon.csv",
+      "bytes": 158580
+    },
+    {
+      "path": "modis/2018/modis_2018_Gabon.csv",
+      "bytes": 173168
+    },
+    {
+      "path": "modis/2019/modis_2019_Gabon.csv",
+      "bytes": 180560
+    },
+    {
+      "path": "modis/2020/modis_2020_Gabon.csv",
+      "bytes": 161641
+    },
+    {
+      "path": "modis/2021/modis_2021_Gabon.csv",
+      "bytes": 179079
+    },
+    {
+      "path": "modis/2022/modis_2022_Gabon.csv",
+      "bytes": 173012
+    },
+    {
+      "path": "modis/2023/modis_2023_Gabon.csv",
+      "bytes": 157897
+    },
+    {
+      "path": "modis/2024/modis_2024_Gabon.csv",
+      "bytes": 246611
+    },
+    {
+      "path": "modis/2025/modis_2025_Gabon.csv",
+      "bytes": 204434
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Gabon.csv",
+      "bytes": 747872
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Gabon.csv",
+      "bytes": 916730
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Gabon.csv",
+      "bytes": 887636
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Gabon.csv",
+      "bytes": 792557
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Gabon.csv",
+      "bytes": 871420
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Gabon.csv",
+      "bytes": 769591
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Gabon.csv",
+      "bytes": 1013488
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Gabon.csv",
+      "bytes": 848889
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Gabon.csv",
+      "bytes": 837123
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Gabon.csv",
+      "bytes": 910449
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Gabon.csv",
+      "bytes": 724754
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Gabon.csv",
+      "bytes": 764771
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Gabon.csv",
+      "bytes": 827016
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Gabon.csv",
+      "bytes": 770495
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Gabon.csv",
+      "bytes": 891380
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Gabon.csv",
+      "bytes": 893792
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Gabon.csv",
+      "bytes": 878840
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Gabon.csv",
+      "bytes": 752162
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Gabon.csv",
+      "bytes": 780048
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Gabon.csv",
+      "bytes": 762000
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Gabon.csv",
+      "bytes": 888388
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Gabon.csv",
+      "bytes": 846221
+    }
+  ],
+  "body_hash": "87d39e29d2f9ed40"
+}

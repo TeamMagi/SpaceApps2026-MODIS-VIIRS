@@ -1,0 +1,103 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2007/modis_2007_Saint-Martin.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2016/modis_2016_Saint-Martin.csv",
+      "bytes": 208
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Saint-Martin.csv",
+      "bytes": 617
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Saint-Martin.csv",
+      "bytes": 290
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Saint-Martin.csv",
+      "bytes": 1265
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Saint-Martin.csv",
+      "bytes": 1024
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Saint-Martin.csv",
+      "bytes": 771
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Saint-Martin.csv",
+      "bytes": 209
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Saint-Martin.csv",
+      "bytes": 616
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Saint-Martin.csv",
+      "bytes": 370
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Saint-Martin.csv",
+      "bytes": 604
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Saint-Martin.csv",
+      "bytes": 525
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Saint-Martin.csv",
+      "bytes": 761
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Saint-Martin.csv",
+      "bytes": 522
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Saint-Martin.csv",
+      "bytes": 207
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Saint-Martin.csv",
+      "bytes": 526
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Saint-Martin.csv",
+      "bytes": 1084
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Saint-Martin.csv",
+      "bytes": 526
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Saint-Martin.csv",
+      "bytes": 523
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Saint-Martin.csv",
+      "bytes": 765
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Saint-Martin.csv",
+      "bytes": 1157
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Saint-Martin.csv",
+      "bytes": 366
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Saint-Martin.csv",
+      "bytes": 367
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Saint-Martin.csv",
+      "bytes": 287
+    }
+  ],
+  "body_hash": "253d5a425de782b2"
+}

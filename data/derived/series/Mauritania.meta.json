@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Mauritania.csv",
+      "bytes": 22453
+    },
+    {
+      "path": "modis/2001/modis_2001_Mauritania.csv",
+      "bytes": 47220
+    },
+    {
+      "path": "modis/2002/modis_2002_Mauritania.csv",
+      "bytes": 12134
+    },
+    {
+      "path": "modis/2003/modis_2003_Mauritania.csv",
+      "bytes": 6624
+    },
+    {
+      "path": "modis/2004/modis_2004_Mauritania.csv",
+      "bytes": 40681
+    },
+    {
+      "path": "modis/2005/modis_2005_Mauritania.csv",
+      "bytes": 37820
+    },
+    {
+      "path": "modis/2006/modis_2006_Mauritania.csv",
+      "bytes": 50749
+    },
+    {
+      "path": "modis/2007/modis_2007_Mauritania.csv",
+      "bytes": 126116
+    },
+    {
+      "path": "modis/2008/modis_2008_Mauritania.csv",
+      "bytes": 53811
+    },
+    {
+      "path": "modis/2009/modis_2009_Mauritania.csv",
+      "bytes": 49730
+    },
+    {
+      "path": "modis/2010/modis_2010_Mauritania.csv",
+      "bytes": 94498
+    },
+    {
+      "path": "modis/2011/modis_2011_Mauritania.csv",
+      "bytes": 42470
+    },
+    {
+      "path": "modis/2012/modis_2012_Mauritania.csv",
+      "bytes": 35957
+    },
+    {
+      "path": "modis/2013/modis_2013_Mauritania.csv",
+      "bytes": 34995
+    },
+    {
+      "path": "modis/2014/modis_2014_Mauritania.csv",
+      "bytes": 16573
+    },
+    {
+      "path": "modis/2015/modis_2015_Mauritania.csv",
+      "bytes": 10420
+    },
+    {
+      "path": "modis/2016/modis_2016_Mauritania.csv",
+      "bytes": 30766
+    },
+    {
+      "path": "modis/2017/modis_2017_Mauritania.csv",
+      "bytes": 21772
+    },
+    {
+      "path": "modis/2018/modis_2018_Mauritania.csv",
+      "bytes": 10397
+    },
+    {
+      "path": "modis/2019/modis_2019_Mauritania.csv",
+      "bytes": 24588
+    },
+    {
+      "path": "modis/2020/modis_2020_Mauritania.csv",
+      "bytes": 32220
+    },
+    {
+      "path": "modis/2021/modis_2021_Mauritania.csv",
+      "bytes": 53707
+    },
+    {
+      "path": "modis/2022/modis_2022_Mauritania.csv",
+      "bytes": 46798
+    },
+    {
+      "path": "modis/2023/modis_2023_Mauritania.csv",
+      "bytes": 77018
+    },
+    {
+      "path": "modis/2024/modis_2024_Mauritania.csv",
+      "bytes": 54985
+    },
+    {
+      "path": "modis/2025/modis_2025_Mauritania.csv",
+      "bytes": 83451
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Mauritania.csv",
+      "bytes": 46094
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Mauritania.csv",
+      "bytes": 139258
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Mauritania.csv",
+      "bytes": 169951
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Mauritania.csv",
+      "bytes": 270845
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Mauritania.csv",
+      "bytes": 197033
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Mauritania.csv",
+      "bytes": 332715
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Mauritania.csv",
+      "bytes": 247147
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Mauritania.csv",
+      "bytes": 371623
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Mauritania.csv",
+      "bytes": 214232
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Mauritania.csv",
+      "bytes": 238816
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Mauritania.csv",
+      "bytes": 100660
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Mauritania.csv",
+      "bytes": 73910
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Mauritania.csv",
+      "bytes": 171773
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Mauritania.csv",
+      "bytes": 110996
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Mauritania.csv",
+      "bytes": 60666
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Mauritania.csv",
+      "bytes": 142607
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Mauritania.csv",
+      "bytes": 168301
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Mauritania.csv",
+      "bytes": 285464
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Mauritania.csv",
+      "bytes": 230323
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Mauritania.csv",
+      "bytes": 337820
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Mauritania.csv",
+      "bytes": 255692
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Mauritania.csv",
+      "bytes": 379970
+    }
+  ],
+  "body_hash": "32772f57fde06e62"
+}

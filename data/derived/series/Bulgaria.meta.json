@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Bulgaria.csv",
+      "bytes": 7172
+    },
+    {
+      "path": "modis/2001/modis_2001_Bulgaria.csv",
+      "bytes": 414169
+    },
+    {
+      "path": "modis/2002/modis_2002_Bulgaria.csv",
+      "bytes": 139745
+    },
+    {
+      "path": "modis/2003/modis_2003_Bulgaria.csv",
+      "bytes": 206154
+    },
+    {
+      "path": "modis/2004/modis_2004_Bulgaria.csv",
+      "bytes": 419264
+    },
+    {
+      "path": "modis/2005/modis_2005_Bulgaria.csv",
+      "bytes": 296343
+    },
+    {
+      "path": "modis/2006/modis_2006_Bulgaria.csv",
+      "bytes": 425863
+    },
+    {
+      "path": "modis/2007/modis_2007_Bulgaria.csv",
+      "bytes": 266674
+    },
+    {
+      "path": "modis/2008/modis_2008_Bulgaria.csv",
+      "bytes": 274244
+    },
+    {
+      "path": "modis/2009/modis_2009_Bulgaria.csv",
+      "bytes": 122819
+    },
+    {
+      "path": "modis/2010/modis_2010_Bulgaria.csv",
+      "bytes": 145229
+    },
+    {
+      "path": "modis/2011/modis_2011_Bulgaria.csv",
+      "bytes": 295088
+    },
+    {
+      "path": "modis/2012/modis_2012_Bulgaria.csv",
+      "bytes": 313029
+    },
+    {
+      "path": "modis/2013/modis_2013_Bulgaria.csv",
+      "bytes": 198300
+    },
+    {
+      "path": "modis/2014/modis_2014_Bulgaria.csv",
+      "bytes": 135397
+    },
+    {
+      "path": "modis/2015/modis_2015_Bulgaria.csv",
+      "bytes": 133915
+    },
+    {
+      "path": "modis/2016/modis_2016_Bulgaria.csv",
+      "bytes": 200143
+    },
+    {
+      "path": "modis/2017/modis_2017_Bulgaria.csv",
+      "bytes": 229703
+    },
+    {
+      "path": "modis/2018/modis_2018_Bulgaria.csv",
+      "bytes": 183554
+    },
+    {
+      "path": "modis/2019/modis_2019_Bulgaria.csv",
+      "bytes": 308699
+    },
+    {
+      "path": "modis/2020/modis_2020_Bulgaria.csv",
+      "bytes": 87312
+    },
+    {
+      "path": "modis/2021/modis_2021_Bulgaria.csv",
+      "bytes": 81397
+    },
+    {
+      "path": "modis/2022/modis_2022_Bulgaria.csv",
+      "bytes": 97186
+    },
+    {
+      "path": "modis/2023/modis_2023_Bulgaria.csv",
+      "bytes": 82076
+    },
+    {
+      "path": "modis/2024/modis_2024_Bulgaria.csv",
+      "bytes": 113083
+    },
+    {
+      "path": "modis/2025/modis_2025_Bulgaria.csv",
+      "bytes": 74892
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Bulgaria.csv",
+      "bytes": 536803
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Bulgaria.csv",
+      "bytes": 969929
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Bulgaria.csv",
+      "bytes": 337898
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Bulgaria.csv",
+      "bytes": 281584
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Bulgaria.csv",
+      "bytes": 369211
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Bulgaria.csv",
+      "bytes": 282394
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Bulgaria.csv",
+      "bytes": 392662
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Bulgaria.csv",
+      "bytes": 273680
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Bulgaria.csv",
+      "bytes": 1105947
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Bulgaria.csv",
+      "bytes": 708676
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Bulgaria.csv",
+      "bytes": 463009
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Bulgaria.csv",
+      "bytes": 479566
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Bulgaria.csv",
+      "bytes": 657361
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Bulgaria.csv",
+      "bytes": 729843
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Bulgaria.csv",
+      "bytes": 547453
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Bulgaria.csv",
+      "bytes": 943507
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Bulgaria.csv",
+      "bytes": 333510
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Bulgaria.csv",
+      "bytes": 270917
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Bulgaria.csv",
+      "bytes": 332422
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Bulgaria.csv",
+      "bytes": 263760
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Bulgaria.csv",
+      "bytes": 305581
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Bulgaria.csv",
+      "bytes": 254493
+    }
+  ],
+  "body_hash": "a4b8249d76fbcb36"
+}

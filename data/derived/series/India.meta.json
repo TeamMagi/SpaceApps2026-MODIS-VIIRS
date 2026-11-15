@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_India.csv",
+      "bytes": 108305
+    },
+    {
+      "path": "modis/2001/modis_2001_India.csv",
+      "bytes": 1447396
+    },
+    {
+      "path": "modis/2002/modis_2002_India.csv",
+      "bytes": 2055961
+    },
+    {
+      "path": "modis/2003/modis_2003_India.csv",
+      "bytes": 4308068
+    },
+    {
+      "path": "modis/2004/modis_2004_India.csv",
+      "bytes": 4971228
+    },
+    {
+      "path": "modis/2005/modis_2005_India.csv",
+      "bytes": 4872730
+    },
+    {
+      "path": "modis/2006/modis_2006_India.csv",
+      "bytes": 5068315
+    },
+    {
+      "path": "modis/2007/modis_2007_India.csv",
+      "bytes": 5787496
+    },
+    {
+      "path": "modis/2008/modis_2008_India.csv",
+      "bytes": 5445146
+    },
+    {
+      "path": "modis/2009/modis_2009_India.csv",
+      "bytes": 6921977
+    },
+    {
+      "path": "modis/2010/modis_2010_India.csv",
+      "bytes": 5879982
+    },
+    {
+      "path": "modis/2011/modis_2011_India.csv",
+      "bytes": 5556081
+    },
+    {
+      "path": "modis/2012/modis_2012_India.csv",
+      "bytes": 7143319
+    },
+    {
+      "path": "modis/2013/modis_2013_India.csv",
+      "bytes": 5455537
+    },
+    {
+      "path": "modis/2014/modis_2014_India.csv",
+      "bytes": 5862968
+    },
+    {
+      "path": "modis/2015/modis_2015_India.csv",
+      "bytes": 5250611
+    },
+    {
+      "path": "modis/2016/modis_2016_India.csv",
+      "bytes": 6807058
+    },
+    {
+      "path": "modis/2017/modis_2017_India.csv",
+      "bytes": 6327567
+    },
+    {
+      "path": "modis/2018/modis_2018_India.csv",
+      "bytes": 7075855
+    },
+    {
+      "path": "modis/2019/modis_2019_India.csv",
+      "bytes": 5870621
+    },
+    {
+      "path": "modis/2020/modis_2020_India.csv",
+      "bytes": 5904236
+    },
+    {
+      "path": "modis/2021/modis_2021_India.csv",
+      "bytes": 8650398
+    },
+    {
+      "path": "modis/2022/modis_2022_India.csv",
+      "bytes": 6336734
+    },
+    {
+      "path": "modis/2023/modis_2023_India.csv",
+      "bytes": 6174807
+    },
+    {
+      "path": "modis/2024/modis_2024_India.csv",
+      "bytes": 5822801
+    },
+    {
+      "path": "modis/2025/modis_2025_India.csv",
+      "bytes": 7465011
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_India.csv",
+      "bytes": 26830886
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_India.csv",
+      "bytes": 43248153
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_India.csv",
+      "bytes": 39710553
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_India.csv",
+      "bytes": 61381333
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_India.csv",
+      "bytes": 48704440
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_India.csv",
+      "bytes": 47438738
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_India.csv",
+      "bytes": 46389955
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_India.csv",
+      "bytes": 52601868
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_India.csv",
+      "bytes": 46099435
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_India.csv",
+      "bytes": 38976399
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_India.csv",
+      "bytes": 42610416
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_India.csv",
+      "bytes": 38014026
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_India.csv",
+      "bytes": 53362517
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_India.csv",
+      "bytes": 47267991
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_India.csv",
+      "bytes": 50897260
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_India.csv",
+      "bytes": 42080767
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_India.csv",
+      "bytes": 38315904
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_India.csv",
+      "bytes": 60402120
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_India.csv",
+      "bytes": 46288282
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_India.csv",
+      "bytes": 45363702
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_India.csv",
+      "bytes": 43219694
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_India.csv",
+      "bytes": 50570367
+    }
+  ],
+  "body_hash": "6f70767bdd583ae7"
+}

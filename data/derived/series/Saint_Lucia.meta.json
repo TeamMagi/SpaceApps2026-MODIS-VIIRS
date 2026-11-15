@@ -1,0 +1,167 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Saint_Lucia.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2003/modis_2003_Saint_Lucia.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2004/modis_2004_Saint_Lucia.csv",
+      "bytes": 206
+    },
+    {
+      "path": "modis/2005/modis_2005_Saint_Lucia.csv",
+      "bytes": 437
+    },
+    {
+      "path": "modis/2006/modis_2006_Saint_Lucia.csv",
+      "bytes": 508
+    },
+    {
+      "path": "modis/2008/modis_2008_Saint_Lucia.csv",
+      "bytes": 427
+    },
+    {
+      "path": "modis/2009/modis_2009_Saint_Lucia.csv",
+      "bytes": 278
+    },
+    {
+      "path": "modis/2010/modis_2010_Saint_Lucia.csv",
+      "bytes": 353
+    },
+    {
+      "path": "modis/2011/modis_2011_Saint_Lucia.csv",
+      "bytes": 360
+    },
+    {
+      "path": "modis/2012/modis_2012_Saint_Lucia.csv",
+      "bytes": 201
+    },
+    {
+      "path": "modis/2014/modis_2014_Saint_Lucia.csv",
+      "bytes": 199
+    },
+    {
+      "path": "modis/2015/modis_2015_Saint_Lucia.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2019/modis_2019_Saint_Lucia.csv",
+      "bytes": 276
+    },
+    {
+      "path": "modis/2020/modis_2020_Saint_Lucia.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2021/modis_2021_Saint_Lucia.csv",
+      "bytes": 204
+    },
+    {
+      "path": "modis/2022/modis_2022_Saint_Lucia.csv",
+      "bytes": 202
+    },
+    {
+      "path": "modis/2024/modis_2024_Saint_Lucia.csv",
+      "bytes": 283
+    },
+    {
+      "path": "modis/2025/modis_2025_Saint_Lucia.csv",
+      "bytes": 359
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Saint_Lucia.csv",
+      "bytes": 534
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Saint_Lucia.csv",
+      "bytes": 1351
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Saint_Lucia.csv",
+      "bytes": 1677
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Saint_Lucia.csv",
+      "bytes": 859
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Saint_Lucia.csv",
+      "bytes": 1585
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Saint_Lucia.csv",
+      "bytes": 455
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Saint_Lucia.csv",
+      "bytes": 1355
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Saint_Lucia.csv",
+      "bytes": 533
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Saint_Lucia.csv",
+      "bytes": 685
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Saint_Lucia.csv",
+      "bytes": 1877
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Saint_Lucia.csv",
+      "bytes": 2036
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Saint_Lucia.csv",
+      "bytes": 2103
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Saint_Lucia.csv",
+      "bytes": 523
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Saint_Lucia.csv",
+      "bytes": 1238
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Saint_Lucia.csv",
+      "bytes": 678
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Saint_Lucia.csv",
+      "bytes": 1477
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Saint_Lucia.csv",
+      "bytes": 2586
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Saint_Lucia.csv",
+      "bytes": 685
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Saint_Lucia.csv",
+      "bytes": 1242
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Saint_Lucia.csv",
+      "bytes": 1083
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Saint_Lucia.csv",
+      "bytes": 1949
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Saint_Lucia.csv",
+      "bytes": 444
+    }
+  ],
+  "body_hash": "16262408277707d6"
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Botswana.csv",
+      "bytes": 58596
+    },
+    {
+      "path": "modis/2001/modis_2001_Botswana.csv",
+      "bytes": 829514
+    },
+    {
+      "path": "modis/2002/modis_2002_Botswana.csv",
+      "bytes": 1683264
+    },
+    {
+      "path": "modis/2003/modis_2003_Botswana.csv",
+      "bytes": 487333
+    },
+    {
+      "path": "modis/2004/modis_2004_Botswana.csv",
+      "bytes": 338902
+    },
+    {
+      "path": "modis/2005/modis_2005_Botswana.csv",
+      "bytes": 670379
+    },
+    {
+      "path": "modis/2006/modis_2006_Botswana.csv",
+      "bytes": 1065019
+    },
+    {
+      "path": "modis/2007/modis_2007_Botswana.csv",
+      "bytes": 758289
+    },
+    {
+      "path": "modis/2008/modis_2008_Botswana.csv",
+      "bytes": 2085345
+    },
+    {
+      "path": "modis/2009/modis_2009_Botswana.csv",
+      "bytes": 533955
+    },
+    {
+      "path": "modis/2010/modis_2010_Botswana.csv",
+      "bytes": 2802958
+    },
+    {
+      "path": "modis/2011/modis_2011_Botswana.csv",
+      "bytes": 3623785
+    },
+    {
+      "path": "modis/2012/modis_2012_Botswana.csv",
+      "bytes": 1115411
+    },
+    {
+      "path": "modis/2013/modis_2013_Botswana.csv",
+      "bytes": 959751
+    },
+    {
+      "path": "modis/2014/modis_2014_Botswana.csv",
+      "bytes": 577229
+    },
+    {
+      "path": "modis/2015/modis_2015_Botswana.csv",
+      "bytes": 664606
+    },
+    {
+      "path": "modis/2016/modis_2016_Botswana.csv",
+      "bytes": 473751
+    },
+    {
+      "path": "modis/2017/modis_2017_Botswana.csv",
+      "bytes": 1180147
+    },
+    {
+      "path": "modis/2018/modis_2018_Botswana.csv",
+      "bytes": 828257
+    },
+    {
+      "path": "modis/2019/modis_2019_Botswana.csv",
+      "bytes": 654219
+    },
+    {
+      "path": "modis/2020/modis_2020_Botswana.csv",
+      "bytes": 711083
+    },
+    {
+      "path": "modis/2021/modis_2021_Botswana.csv",
+      "bytes": 2460908
+    },
+    {
+      "path": "modis/2022/modis_2022_Botswana.csv",
+      "bytes": 1987279
+    },
+    {
+      "path": "modis/2023/modis_2023_Botswana.csv",
+      "bytes": 3196403
+    },
+    {
+      "path": "modis/2024/modis_2024_Botswana.csv",
+      "bytes": 674113
+    },
+    {
+      "path": "modis/2025/modis_2025_Botswana.csv",
+      "bytes": 538322
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Botswana.csv",
+      "bytes": 4036916
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Botswana.csv",
+      "bytes": 2951286
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Botswana.csv",
+      "bytes": 3637603
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Botswana.csv",
+      "bytes": 13130128
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Botswana.csv",
+      "bytes": 10352126
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Botswana.csv",
+      "bytes": 14637046
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Botswana.csv",
+      "bytes": 3178819
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Botswana.csv",
+      "bytes": 2751698
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Botswana.csv",
+      "bytes": 5221736
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Botswana.csv",
+      "bytes": 4657233
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Botswana.csv",
+      "bytes": 2727468
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Botswana.csv",
+      "bytes": 3168701
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Botswana.csv",
+      "bytes": 2263504
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Botswana.csv",
+      "bytes": 6507557
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Botswana.csv",
+      "bytes": 4390588
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Botswana.csv",
+      "bytes": 2887784
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Botswana.csv",
+      "bytes": 3639633
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Botswana.csv",
+      "bytes": 13511910
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Botswana.csv",
+      "bytes": 9641616
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Botswana.csv",
+      "bytes": 14451554
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Botswana.csv",
+      "bytes": 3093614
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Botswana.csv",
+      "bytes": 2983886
+    }
+  ],
+  "body_hash": "52ad48f326049b22"
+}

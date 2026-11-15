@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Romania.csv",
+      "bytes": 5637
+    },
+    {
+      "path": "modis/2001/modis_2001_Romania.csv",
+      "bytes": 400247
+    },
+    {
+      "path": "modis/2002/modis_2002_Romania.csv",
+      "bytes": 125973
+    },
+    {
+      "path": "modis/2003/modis_2003_Romania.csv",
+      "bytes": 189499
+    },
+    {
+      "path": "modis/2004/modis_2004_Romania.csv",
+      "bytes": 394636
+    },
+    {
+      "path": "modis/2005/modis_2005_Romania.csv",
+      "bytes": 470979
+    },
+    {
+      "path": "modis/2006/modis_2006_Romania.csv",
+      "bytes": 418876
+    },
+    {
+      "path": "modis/2007/modis_2007_Romania.csv",
+      "bytes": 378667
+    },
+    {
+      "path": "modis/2008/modis_2008_Romania.csv",
+      "bytes": 638336
+    },
+    {
+      "path": "modis/2009/modis_2009_Romania.csv",
+      "bytes": 357571
+    },
+    {
+      "path": "modis/2010/modis_2010_Romania.csv",
+      "bytes": 342215
+    },
+    {
+      "path": "modis/2011/modis_2011_Romania.csv",
+      "bytes": 732371
+    },
+    {
+      "path": "modis/2012/modis_2012_Romania.csv",
+      "bytes": 647201
+    },
+    {
+      "path": "modis/2013/modis_2013_Romania.csv",
+      "bytes": 257133
+    },
+    {
+      "path": "modis/2014/modis_2014_Romania.csv",
+      "bytes": 327555
+    },
+    {
+      "path": "modis/2015/modis_2015_Romania.csv",
+      "bytes": 270700
+    },
+    {
+      "path": "modis/2016/modis_2016_Romania.csv",
+      "bytes": 302559
+    },
+    {
+      "path": "modis/2017/modis_2017_Romania.csv",
+      "bytes": 372567
+    },
+    {
+      "path": "modis/2018/modis_2018_Romania.csv",
+      "bytes": 276857
+    },
+    {
+      "path": "modis/2019/modis_2019_Romania.csv",
+      "bytes": 471241
+    },
+    {
+      "path": "modis/2020/modis_2020_Romania.csv",
+      "bytes": 336602
+    },
+    {
+      "path": "modis/2021/modis_2021_Romania.csv",
+      "bytes": 245935
+    },
+    {
+      "path": "modis/2022/modis_2022_Romania.csv",
+      "bytes": 311408
+    },
+    {
+      "path": "modis/2023/modis_2023_Romania.csv",
+      "bytes": 97893
+    },
+    {
+      "path": "modis/2024/modis_2024_Romania.csv",
+      "bytes": 138633
+    },
+    {
+      "path": "modis/2025/modis_2025_Romania.csv",
+      "bytes": 160532
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Romania.csv",
+      "bytes": 978850
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Romania.csv",
+      "bytes": 1740453
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Romania.csv",
+      "bytes": 1299645
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Romania.csv",
+      "bytes": 991994
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Romania.csv",
+      "bytes": 1229476
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Romania.csv",
+      "bytes": 430838
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Romania.csv",
+      "bytes": 641456
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Romania.csv",
+      "bytes": 753777
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Romania.csv",
+      "bytes": 2106277
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Romania.csv",
+      "bytes": 1085406
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Romania.csv",
+      "bytes": 1183095
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Romania.csv",
+      "bytes": 1129682
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Romania.csv",
+      "bytes": 1267831
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Romania.csv",
+      "bytes": 1406688
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Romania.csv",
+      "bytes": 955308
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Romania.csv",
+      "bytes": 1649873
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Romania.csv",
+      "bytes": 1267723
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Romania.csv",
+      "bytes": 933407
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Romania.csv",
+      "bytes": 1139857
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Romania.csv",
+      "bytes": 423514
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Romania.csv",
+      "bytes": 542329
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Romania.csv",
+      "bytes": 725217
+    }
+  ],
+  "body_hash": "69172390a77551de"
+}

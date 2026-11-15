@@ -1,0 +1,199 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2000/modis_2000_Greece.csv",
+      "bytes": 7177
+    },
+    {
+      "path": "modis/2001/modis_2001_Greece.csv",
+      "bytes": 142727
+    },
+    {
+      "path": "modis/2002/modis_2002_Greece.csv",
+      "bytes": 68051
+    },
+    {
+      "path": "modis/2003/modis_2003_Greece.csv",
+      "bytes": 124962
+    },
+    {
+      "path": "modis/2004/modis_2004_Greece.csv",
+      "bytes": 163543
+    },
+    {
+      "path": "modis/2005/modis_2005_Greece.csv",
+      "bytes": 139517
+    },
+    {
+      "path": "modis/2006/modis_2006_Greece.csv",
+      "bytes": 110019
+    },
+    {
+      "path": "modis/2007/modis_2007_Greece.csv",
+      "bytes": 482801
+    },
+    {
+      "path": "modis/2008/modis_2008_Greece.csv",
+      "bytes": 209910
+    },
+    {
+      "path": "modis/2009/modis_2009_Greece.csv",
+      "bytes": 139986
+    },
+    {
+      "path": "modis/2010/modis_2010_Greece.csv",
+      "bytes": 72034
+    },
+    {
+      "path": "modis/2011/modis_2011_Greece.csv",
+      "bytes": 204340
+    },
+    {
+      "path": "modis/2012/modis_2012_Greece.csv",
+      "bytes": 166399
+    },
+    {
+      "path": "modis/2013/modis_2013_Greece.csv",
+      "bytes": 139906
+    },
+    {
+      "path": "modis/2014/modis_2014_Greece.csv",
+      "bytes": 104942
+    },
+    {
+      "path": "modis/2015/modis_2015_Greece.csv",
+      "bytes": 101565
+    },
+    {
+      "path": "modis/2016/modis_2016_Greece.csv",
+      "bytes": 129400
+    },
+    {
+      "path": "modis/2017/modis_2017_Greece.csv",
+      "bytes": 116669
+    },
+    {
+      "path": "modis/2018/modis_2018_Greece.csv",
+      "bytes": 65529
+    },
+    {
+      "path": "modis/2019/modis_2019_Greece.csv",
+      "bytes": 80383
+    },
+    {
+      "path": "modis/2020/modis_2020_Greece.csv",
+      "bytes": 89710
+    },
+    {
+      "path": "modis/2021/modis_2021_Greece.csv",
+      "bytes": 196787
+    },
+    {
+      "path": "modis/2022/modis_2022_Greece.csv",
+      "bytes": 89652
+    },
+    {
+      "path": "modis/2023/modis_2023_Greece.csv",
+      "bytes": 260442
+    },
+    {
+      "path": "modis/2024/modis_2024_Greece.csv",
+      "bytes": 102412
+    },
+    {
+      "path": "modis/2025/modis_2025_Greece.csv",
+      "bytes": 94741
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Greece.csv",
+      "bytes": 281707
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Greece.csv",
+      "bytes": 413509
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Greece.csv",
+      "bytes": 378662
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Greece.csv",
+      "bytes": 888944
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Greece.csv",
+      "bytes": 404066
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Greece.csv",
+      "bytes": 855918
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Greece.csv",
+      "bytes": 423376
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Greece.csv",
+      "bytes": 335553
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Greece.csv",
+      "bytes": 725267
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Greece.csv",
+      "bytes": 577002
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Greece.csv",
+      "bytes": 468177
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Greece.csv",
+      "bytes": 473655
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Greece.csv",
+      "bytes": 598365
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Greece.csv",
+      "bytes": 481657
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Greece.csv",
+      "bytes": 314295
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Greece.csv",
+      "bytes": 388512
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Greece.csv",
+      "bytes": 352573
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Greece.csv",
+      "bytes": 824271
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Greece.csv",
+      "bytes": 357373
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Greece.csv",
+      "bytes": 820492
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Greece.csv",
+      "bytes": 362508
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Greece.csv",
+      "bytes": 335287
+    }
+  ],
+  "body_hash": "8450d84942a2e58f"
+}

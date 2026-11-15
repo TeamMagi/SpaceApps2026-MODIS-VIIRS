@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "config_hash": "69e027a683c09b69",
+  "files": [
+    {
+      "path": "modis/2001/modis_2001_Singapore.csv",
+      "bytes": 441
+    },
+    {
+      "path": "modis/2002/modis_2002_Singapore.csv",
+      "bytes": 596
+    },
+    {
+      "path": "modis/2003/modis_2003_Singapore.csv",
+      "bytes": 517
+    },
+    {
+      "path": "modis/2004/modis_2004_Singapore.csv",
+      "bytes": 510
+    },
+    {
+      "path": "modis/2005/modis_2005_Singapore.csv",
+      "bytes": 363
+    },
+    {
+      "path": "modis/2006/modis_2006_Singapore.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2007/modis_2007_Singapore.csv",
+      "bytes": 828
+    },
+    {
+      "path": "modis/2008/modis_2008_Singapore.csv",
+      "bytes": 507
+    },
+    {
+      "path": "modis/2009/modis_2009_Singapore.csv",
+      "bytes": 1201
+    },
+    {
+      "path": "modis/2010/modis_2010_Singapore.csv",
+      "bytes": 669
+    },
+    {
+      "path": "modis/2011/modis_2011_Singapore.csv",
+      "bytes": 599
+    },
+    {
+      "path": "modis/2012/modis_2012_Singapore.csv",
+      "bytes": 666
+    },
+    {
+      "path": "modis/2013/modis_2013_Singapore.csv",
+      "bytes": 819
+    },
+    {
+      "path": "modis/2014/modis_2014_Singapore.csv",
+      "bytes": 742
+    },
+    {
+      "path": "modis/2015/modis_2015_Singapore.csv",
+      "bytes": 514
+    },
+    {
+      "path": "modis/2016/modis_2016_Singapore.csv",
+      "bytes": 671
+    },
+    {
+      "path": "modis/2017/modis_2017_Singapore.csv",
+      "bytes": 894
+    },
+    {
+      "path": "modis/2018/modis_2018_Singapore.csv",
+      "bytes": 363
+    },
+    {
+      "path": "modis/2019/modis_2019_Singapore.csv",
+      "bytes": 522
+    },
+    {
+      "path": "modis/2020/modis_2020_Singapore.csv",
+      "bytes": 284
+    },
+    {
+      "path": "modis/2021/modis_2021_Singapore.csv",
+      "bytes": 516
+    },
+    {
+      "path": "modis/2022/modis_2022_Singapore.csv",
+      "bytes": 207
+    },
+    {
+      "path": "modis/2023/modis_2023_Singapore.csv",
+      "bytes": 518
+    },
+    {
+      "path": "modis/2024/modis_2024_Singapore.csv",
+      "bytes": 208
+    },
+    {
+      "path": "modis/2025/modis_2025_Singapore.csv",
+      "bytes": 289
+    },
+    {
+      "path": "viirs-jpss1/2018/viirs-jpss1_2018_Singapore.csv",
+      "bytes": 2059
+    },
+    {
+      "path": "viirs-jpss1/2019/viirs-jpss1_2019_Singapore.csv",
+      "bytes": 2533
+    },
+    {
+      "path": "viirs-jpss1/2020/viirs-jpss1_2020_Singapore.csv",
+      "bytes": 2467
+    },
+    {
+      "path": "viirs-jpss1/2021/viirs-jpss1_2021_Singapore.csv",
+      "bytes": 1489
+    },
+    {
+      "path": "viirs-jpss1/2022/viirs-jpss1_2022_Singapore.csv",
+      "bytes": 770
+    },
+    {
+      "path": "viirs-jpss1/2023/viirs-jpss1_2023_Singapore.csv",
+      "bytes": 773
+    },
+    {
+      "path": "viirs-jpss1/2024/viirs-jpss1_2024_Singapore.csv",
+      "bytes": 692
+    },
+    {
+      "path": "viirs-jpss1/2025/viirs-jpss1_2025_Singapore.csv",
+      "bytes": 371
+    },
+    {
+      "path": "viirs-snpp/2012/viirs-snpp_2012_Singapore.csv",
+      "bytes": 3103
+    },
+    {
+      "path": "viirs-snpp/2013/viirs-snpp_2013_Singapore.csv",
+      "bytes": 2474
+    },
+    {
+      "path": "viirs-snpp/2014/viirs-snpp_2014_Singapore.csv",
+      "bytes": 2560
+    },
+    {
+      "path": "viirs-snpp/2015/viirs-snpp_2015_Singapore.csv",
+      "bytes": 4591
+    },
+    {
+      "path": "viirs-snpp/2016/viirs-snpp_2016_Singapore.csv",
+      "bytes": 1700
+    },
+    {
+      "path": "viirs-snpp/2017/viirs-snpp_2017_Singapore.csv",
+      "bytes": 2167
+    },
+    {
+      "path": "viirs-snpp/2018/viirs-snpp_2018_Singapore.csv",
+      "bytes": 2319
+    },
+    {
+      "path": "viirs-snpp/2019/viirs-snpp_2019_Singapore.csv",
+      "bytes": 2164
+    },
+    {
+      "path": "viirs-snpp/2020/viirs-snpp_2020_Singapore.csv",
+      "bytes": 1307
+    },
+    {
+      "path": "viirs-snpp/2021/viirs-snpp_2021_Singapore.csv",
+      "bytes": 1071
+    },
+    {
+      "path": "viirs-snpp/2022/viirs-snpp_2022_Singapore.csv",
+      "bytes": 362
+    },
+    {
+      "path": "viirs-snpp/2023/viirs-snpp_2023_Singapore.csv",
+      "bytes": 672
+    },
+    {
+      "path": "viirs-snpp/2024/viirs-snpp_2024_Singapore.csv",
+      "bytes": 205
+    },
+    {
+      "path": "viirs-snpp/2025/viirs-snpp_2025_Singapore.csv",
+      "bytes": 207
+    }
+  ],
+  "body_hash": "f5e145326fa831fb"
+}
