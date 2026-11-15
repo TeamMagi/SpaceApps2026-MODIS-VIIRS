@@ -32,7 +32,7 @@ Son doğrulama: 2026-11-15 · commit 8846819 · örnekler bu sürümden yakaland
 | `GET /api/compare` | Ham ve harmonize sayıların karşılaştırması | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
 | `GET /api/sensitivity` | Eşleştirme yarıçapı ve zaman penceresi duyarlılık önizlemesi | FIRMS canlı API (NRT ve SP) | Gerekir | Yok |
 | `GET /api/stats` | Toplamlar, sensör kırılımı, pipeline metrikleri | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
-| `GET /api/export` | Harmonize hotspot'lar, CSV veya GeoJSON dosyası | FIRMS canlı API (NRT ve SP) | Gerekir | Var |
+| `GET /api/export` | Harmonize (veya ham) hotspot'lar, CSV veya GeoJSON dosyası | FIRMS canlı API (NRT ve SP); `region` verilirse yerel arşiv | Canlı modda gerekir; arşiv modu (`region`) API anahtarı gerektirmez | Canlı modda var; arşiv modunda yok |
 | `GET /api/calendar` | Ülke bazında tarihsel aylık yanma takvimi | Yerel FIRMS ülke arşivi (yalnızca okuma) | Gerekmez | Var |
 | `GET /api/regions` | Arşivdeki ülkeler, yıl aralıkları, boyut | Yalnızca yerel arşiv dizini | Gerekmez | Yok |
 | `GET /api/series` | Bir bölgenin yıllık ve aylık serisi | Yerel arşiv; türetilmiş seri önbelleği | Gerekmez | Yok (`X-Series-Source` başlığı var) |
@@ -1418,6 +1418,31 @@ Bu dosyalarda `calibration` veya ek kalibrasyon alanı yoktur.
 - Önbellek anahtarı `export-csv` veya `export-geojson` rotasıyla ayrılır; aynı bbox ve zaman penceresi için iki biçim ayrı önbelleklenir.
 - Aynı istek tekrarlanınca gövde birebir aynı döner; yalnızca `X-Cache: HIT` olur.
 - Dosya tek bir yanıttır; sayfalama yoktur. Büyük aralıklar `REQUEST_TIMEOUT_SECS` süresini aşabilir.
+
+### Arşiv modu (`region`)
+
+Sorguda `region` parametresi varsa `/api/export` canlı FIRMS yerine yerel arşivden çalışır; `FIRMS_API_KEY` gerekmez ve yukarıdaki canlı davranış (bbox, `days`) değişmez. Dosya, `/api/points` ile aynı parametrelerde örneklemeden önceki kayıtların tamamını içerir.
+
+| Ad | Tip | Zorunlu | Varsayılan | Kural |
+|----|-----|---------|------------|-------|
+| `region` | string | Evet | - | Arşiv bölge kimliği (`/api/regions`) |
+| `year` | tamsayı | Evet | - | Arşivde bulunan yıl |
+| `month` | tamsayı | Hayır | tüm yıl | 1..=12 |
+| `format` | string | Hayır | `csv` | `csv` veya `geojson`; başka değer 400 |
+| `view` | string | Hayır | `harmonized` | `harmonized` (füzyon modeli sonrası harmonize kayıtlar) veya `raw` (`min_confidence` sonrası ham tespitler); başka değer 400 |
+| `dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`, `min_confidence`, `fusion_model` | - | Hayır | sunucu konfigürasyonu | `/api/points` ile aynı doğrulama ve aynı 400 mesajları |
+
+`limit` yoktur. Dönem 500000 tespiti aşarsa `413` döner (tek ay seçin veya `min_confidence` yükseltin). Bölge yoksa, yıl arşivde yoksa veya arşiv eksikse `/api/points` ile aynı hatalar döner (404, 413 vb.).
+
+Harmonize görünümün sütunları ve GeoJSON özellikleri canlı modla aynıdır. Ham görünümün sütunları: `latitude,longitude,sensor,platform,frp,confidence,acquired,daynight` (`sensor`: `MODIS` veya `VIIRS`, `platform`: ör. `ModisAqua`, `acquired`: RFC 3339 UTC). GeoJSON'da aynı alanlar `properties` içindedir.
+
+CSV yanıtı UTF-8 BOM ile başlar (Excel uyumu), ondalık ayracı `.`, satır sonu `
+`'dir. Yanıt başlıkları: `Content-Type: text/csv; charset=utf-8` veya `application/geo+json`; `Content-Disposition: attachment; filename="pyrosync_{bolge}_{donem}[_raw].{csv|geojson}"`. `{bolge}` bölge kimliğinin küçük harfli ASCII slug'ıdır (`Turkey` -> `turkey`, `Korea, South` -> `korea_south`), `{donem}` ay verilmişse `YYYY-MM`, yoksa `YYYY`'dir; `view=raw` için uzantıdan önce `_raw` eklenir (ör. `pyrosync_turkey_2023-08_raw.csv`).
+
+```bash
+curl -s -OJ "http://localhost:3001/api/export?region=Turkey&year=2023&month=8"
+curl -s -OJ "http://localhost:3001/api/export?region=Turkey&year=2023&format=geojson&view=raw&min_confidence=nominal"
+```
 
 ## GET /api/calendar
 

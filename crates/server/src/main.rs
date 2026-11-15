@@ -802,7 +802,13 @@ fn build_router(
         .route("/sensitivity", get(sensitivity::sensitivity))
         .route("/stats", get(stats))
         .route("/calendar", get(calendar))
-        .route("/export", get(export))
+        .route(
+            "/export",
+            get(export).route_layer(axum::middleware::from_fn_with_state(
+                archive_api.clone(),
+                archive_api::export_dispatch,
+            )),
+        )
         .with_state(state);
 
     if let Some(archive_api) = archive_api {
