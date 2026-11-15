@@ -4,6 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{HotspotSource, Sensor};
 
+pub use crate::conformal::{
+    ConformalBand, ConformalEra, ConformalSample, ConformalTable, calibration_fingerprint,
+    conformal_interval, fit_mondrian,
+};
+
 /// Yayımlanmış değer: Freeborn et al. 2014a alt-piksel yerleşim belirsizliği, tek piksel MODIS
 /// göreli FRP 1σ = 0.266 (`docs/REFERANS_ANALIZI.md` `[12, Bölüm 5.1]`). Radyometrik gürültüyü
 /// değil, pikselin içinde yangının konumundan doğan FRP belirsizliğini yansıtır.
