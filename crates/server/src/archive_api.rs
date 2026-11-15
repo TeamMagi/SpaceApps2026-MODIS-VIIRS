@@ -963,6 +963,7 @@ fn anomalies(months: &[MonthEntry], count: impl Fn(&MonthEntry) -> usize) -> Vec
             total_frp_upper: None,
             frp_per_detection_eq: None,
             anomaly: None,
+            sfai: None,
         })
         .collect();
     compute_anomalies(&mut cells);

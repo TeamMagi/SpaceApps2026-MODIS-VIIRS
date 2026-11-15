@@ -261,7 +261,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
 | S8 | Bilimsel referans + disclaimer içerik | Samet | C5, S13 | — | [ ] bekliyor |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
-| Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [ ] |
+| Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [ ] |
 | Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
 | Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
@@ -972,13 +972,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** mock dosyaları `web/src/mocks/` altında; TypeScript hatasız import ediliyor; sensor cliff 2012'de görünüyor.
 - **Kapanış notu (15 Kasım 2026):** Sentetik, seed'li paket `web/scripts/generate-mocks.mjs` ile üretilir (800 ham / 500 harmonize nokta, 2000-11–2025-12 aylık seri, `calendar.json` içinde aylık sayım + `frpMonths` ortalama FRP + anomali, `stats.json`). `npm run typecheck` hatasız; `web/tests/mocks.test.ts` 8 kontrolle geçiyor (bağlantılar, aşama toplamları, mevsimsellik, 2021 tutarlılığı). 2012 cliff'i: ham sayım 277 → 894, ham ortalama FRP 128.6 → 74.3 MW; harmonize ortalama +%3.9. Harmonize süreklilik sentetik 0.35 köprüsüyle **yapı gereği** sağlanır, pipeline bulgusu değildir.
 
-### [ ] Y6 — Takvim analitiği (`crates/core/src/calendar.rs`)
+### [X] Y6 — Takvim analitiği (`crates/core/src/calendar.rs`)
 - **Bekler:** — · **Açar:** Y3
 - `crates/core/src/calendar.rs` içine dairesel mevsimsellik metrikleri **PCD** (Peak Concentration Degree) ve **PCP** (Peak Concentration Period) hesaplarının eklenmesi (`[30, Denklem 1–2]`)
 - Takvim yılı (Ocak–Aralık) yanında tarım/iklim analizleri için opsiyonel **Fire-Year** (Mart–Şubat `[21]`) gruplama modu eklenmesi
 - Standart sapma tabanlı `anomaly` z-skoru yanında aykırı değerlere dayanıklı **MAD-tabanlı SFAI** z-skorunun hesaplanması (`flare-chronos`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7, Yol Haritası #14 (+ `[21, 30]`, `flare-chronos`)
 - **Bitti sayılır:** `calendar.rs` birim testleriyle birlikte PCD/PCP, opsiyonel Fire-Year ve MAD-tabanlı SFAI z-skorunu üretiyor ve API çıktısında sunuyor.
+- **Kapanış notu (15 Kasım 2026):** `calendar::concentration` / `calendar::seasonality` (`SeasonYear::Calendar | FireYear`) ve `CalendarCell.sfai` eklendi; tanımlar kaynaklarla karşılaştırıldı. PCD/PCP `[30, Dnk. 1–2]`: dönem açısı aralığın orta noktası (`θ_m = (m−0.5)·30°`); makale 36 on günlük dönem kullanır ve PCP'yi on günlük birimde verir, biz 12 ay kullandığımız için değerler doğrudan kıyaslanamaz. Fire-Year `[21]`: Mart–Şubat, başlangıç yılıyla etiketlenir (`2013–14` = 2013). SFAI (`flare-chronos`): `(x − medyan) / (0.65·1.4826·MAD + 0.35·σ)`, `anomaly` ile aynı havuz; pay olarak medyan seçimi bizimdir (referans analizi yalnız paydayı kaydediyor). `/api/calendar` yanıtı `seasonality { metric: "count", calendar_year, fire_year }` taşır; kapsamı tam olmayan yıl `complete: false` ve `null` döner, kapsam içindeki tespitsiz ay gözlenmiş sıfırdır; `/api/series` şeması değişmedi. 18 yeni core + 1 server testi; `cargo test --workspace` ve clippy temiz. Metrik harmonize kayıt sayısıdır, Ω-normalize değildir: Türkiye'de PCD 2001'de 0.64, 2012'de 0.43; bu düşüşün bir kısmı VIIRS'in sezon dışı küçük yangınları yakalamasından gelebilir, mevsim kayması diye yorumlanmadan önce sensör etkisi ayrıştırılmalı.
 
 ### [ ] Y7 — Olay kümeleme ve kesinti şeffaflığı
 - **Bekler:** — · **Açar:** —

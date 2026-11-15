@@ -117,8 +117,11 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `total_frp_lower`, `total_frp_upper` | number \| null | `total_frp` için analitik güven sınırları |
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
+| `sfai` | number \| null | `count_normalized` için dayanıklı z-skoru (SFAI): `(x − medyan) / (0.65 × 1.4826 × MAD + 0.35 × σ)`; σ popülasyon standart sapmasıdır. Payda ağırlıkları flare-chronos referans projesinden gelir, medyan payı bize aittir. `anomaly` ile aynı havuz (aynı takvim ayı); en az 3 değer gerekir, payda 0 ise `null` |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
+
+`seasonality` (yalnızca `/api/calendar`): metrik harmonize aylık `count`'tur (`"metric": "count"`). Her mevsim yılı için Zhang & Qian (2003) yoğunlaşma derecesi/dönemi hesaplanır: 12 aylık değer `r_i` için açı `θ_i = (takvim_ayı − 0.5) × 30°` (ay aralığının orta noktası, Cui et al. 2021 Denk. 1–2; Ocak = 15°, Yangın Yılı modunda da takvim ayına sabit), `pcd = √(Rx² + Ry²) / R` ([0, 1]; 1 = tüm yangınlar tek ayda), `pcp_deg = atan2(Rx, Ry)` ([0, 360)), `peak_month = pcp_deg / 30 + 0.5` ((0.5, 12.5] aralığında kesirli takvim ayı; tek aylık girdi tam o ayı verir, Aralık+Ocak 12.5). Makale 36 on günlük aralık kullanır ve PCP'yi on günlük birimle verir; biz 12 aylık aralık kullandığımız için değerler doğrudan karşılaştırılamaz. `calendar_year` Ocak–Aralık'ı, `fire_year` Mart Y – Şubat Y+1 dönemini Y etiketiyle verir. Kapsam içinde olup hücresi olmayan ay 0 sayılır; 12 ayı tam kapsamda olmayan yıl `complete: false` ile döner ve `pcd`/`pcp_deg`/`peak_month` `null` olur (`total` yine kapsamdaki aylardan hesaplanır). Toplam sıfırsa üçü de `null`; ay dağılımı tamamen düzgünse `pcd ≈ 0` ve yön tanımsız olduğundan `pcp_deg`/`peak_month` `null` olur. Kapsam, istenen yıl aralığının arşiv kapsamıyla (MODIS Terra'nın ilk ayı 2000-11) kesişimidir.
 
 Terra'nın tek başına çalıştığı dönem (2002-07'den önce) için: seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır. Bu aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` olur; `count` ve FRP alanları ham değerleriyle kalır. Bu durumda `warnings` içinde bir uyarı bulunur. Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
 
@@ -1544,6 +1547,7 @@ Not: `$.calendar` dizisindeki 12 öğeden ilk 4 tanesi gösteriliyor; ilgili yı
 | `counts.raw_detections` | integer | Ham tespit sayısı (tip filtresi ve bbox'tan sonra) |
 | `counts.harmonized_records` | integer | Harmonize kayıt sayısı |
 | `calendar[]` | array of CalendarCell | Bkz. "CalendarCell" |
+| `seasonality` | object | Mevsimsellik: `{ metric: "count", calendar_year: [...], fire_year: [...] }`. Aşağıdaki "seasonality" notuna bakın |
 | `effort` | object | Bkz. "effort ve effort.reliable". Bir ülke-yıl dosyası başarısızsa `reliable` `false` olur |
 | `uncertainty` | object | Bkz. "Belirsizlik" |
 | `fetch.per_sensor_year[]` | array | `sensor`, `year`, `detections` (tip ve bbox filtresinden sonraki sayı). `ModisTerra` tüm MODIS dosyasını (Terra ve Aqua birlikte) temsil eder |

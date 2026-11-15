@@ -1,7 +1,7 @@
 use crate::calibration::calibration_for;
 use crate::config::CalibrationConfig;
 use crate::effort::monthly_omegas;
-use crate::models::{CalendarCell, HarmonizedHotspot};
+use crate::models::{CalendarCell, HarmonizedHotspot, SeasonYear, SeasonalityYear};
 use crate::uncertainty::{
     SensorFamily, UncertaintyParams, mean_frp_uncertainty, relative_uncertainty_for_obs,
     total_frp_uncertainty,
@@ -156,6 +156,7 @@ pub fn build_calendar_with(
                 total_frp_upper: total_estimate.map(|e| e.upper),
                 frp_per_detection_eq,
                 anomaly: None,
+                sfai: None,
             }
         })
         .collect();
@@ -167,6 +168,7 @@ pub fn build_calendar_with(
 
 /// Fill `anomaly` with the z-score of each cell's `count_normalized` against the same
 /// calendar month across all cells; left `None` when that month has fewer than 3 cells or zero spread.
+/// `sfai` is the blended robust counterpart over the same pool (see [`SFAI_MAD_WEIGHT`]).
 pub fn compute_anomalies(cells: &mut [CalendarCell]) {
     let mut monthly_values: HashMap<u32, Vec<f64>> = HashMap::new();
 
@@ -176,25 +178,145 @@ pub fn compute_anomalies(cells: &mut [CalendarCell]) {
         }
     }
 
-    let baselines: HashMap<u32, (f64, f64)> = monthly_values
+    let baselines: HashMap<u32, (f64, f64, f64, f64)> = monthly_values
         .into_iter()
         .filter(|(_, vals)| vals.len() >= 3)
         .map(|(month, vals)| {
             let n = vals.len() as f64;
             let mean = vals.iter().sum::<f64>() / n;
             let std = (vals.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / n).sqrt();
-            (month, (mean, std))
+            let med = median(&vals);
+            let deviations: Vec<f64> = vals.iter().map(|v| (v - med).abs()).collect();
+            (month, (mean, std, med, median(&deviations)))
         })
         .collect();
 
     for cell in cells.iter_mut() {
-        cell.anomaly = match (cell.count_normalized, baselines.get(&cell.month)) {
-            (Some(norm), Some(&(mean, std))) if norm.is_finite() && std > 0.0 => {
-                Some((norm - mean) / std)
+        let finite = cell.count_normalized.filter(|v| v.is_finite());
+        let baseline = baselines.get(&cell.month);
+        cell.anomaly = match (finite, baseline) {
+            (Some(norm), Some(&(mean, std, _, _))) if std > 0.0 => Some((norm - mean) / std),
+            _ => None,
+        };
+        cell.sfai = match (finite, baseline) {
+            (Some(norm), Some(&(_, std, med, mad))) => {
+                let denom = SFAI_MAD_WEIGHT * MAD_TO_SIGMA * mad + SFAI_STD_WEIGHT * std;
+                (denom > 0.0).then(|| (norm - med) / denom)
             }
             _ => None,
         };
     }
+}
+
+/// SFAI denominator follows the flare-chronos reference project: `0.65 * 1.4826 * MAD + 0.35 * sigma`.
+/// The pure modified z-score (Iglewicz & Hoaglin) is the special case with MAD weight 1 and std weight 0.
+/// The median numerator is our choice; the reference analysis only records the denominator.
+const SFAI_MAD_WEIGHT: f64 = 0.65;
+const SFAI_STD_WEIGHT: f64 = 0.35;
+/// Makes the MAD a consistent estimator of sigma for normally distributed data.
+const MAD_TO_SIGMA: f64 = 1.4826;
+
+fn median(values: &[f64]) -> f64 {
+    let mut sorted = values.to_vec();
+    sorted.sort_by(|a, b| a.total_cmp(b));
+    let mid = sorted.len() / 2;
+    if sorted.len().is_multiple_of(2) {
+        (sorted[mid - 1] + sorted[mid]) / 2.0
+    } else {
+        sorted[mid]
+    }
+}
+
+/// Zhang & Qian (2003) concentration degree and period over `(calendar_month, value)` pairs.
+///
+/// Returns `(pcd, peak_month)`: `pcd` in [0, 1] (`None` when the total is zero) and the fractional
+/// calendar month of the vector mean direction in (0.5, 12.5] (`None` when the direction is undefined).
+///
+/// Month `m` gets the midpoint angle `(m - 0.5) * 30` degrees (Cui et al. 2021, Eq. 1-2), so a single
+/// month yields exactly that month and Dec+Jan yields 12.5. The paper uses 36 ten-day intervals and
+/// reports PCP in ten-day units; we use 12 monthly intervals, so values are not directly comparable.
+pub fn concentration(values: &[(u32, f64)]) -> (Option<f64>, Option<f64>) {
+    let (mut rx, mut ry, mut total) = (0.0_f64, 0.0_f64, 0.0_f64);
+    for &(month, value) in values {
+        let theta = (month as f64 - 0.5) * 30.0_f64.to_radians();
+        rx += value * theta.sin();
+        ry += value * theta.cos();
+        total += value;
+    }
+    if total <= 0.0 || !total.is_finite() {
+        return (None, None);
+    }
+    let pcd = rx.hypot(ry) / total;
+    if pcd < 1e-9 {
+        return (Some(pcd), None);
+    }
+    let pcp_deg = rx.atan2(ry).to_degrees().rem_euclid(360.0);
+    let peak = pcp_deg / 30.0 + 0.5;
+    (Some(pcd), Some(if peak <= 0.5 { peak + 12.0 } else { peak }))
+}
+
+/// Per-season-year PCD/PCP of monthly `count` over the inclusive observed `coverage`
+/// (`(first (year, month), last (year, month))`).
+///
+/// Months inside coverage without a cell count as zero; a season year is `complete` only when all
+/// 12 months are inside coverage, otherwise its metrics are `None`. Angles always follow the
+/// calendar month so PCP is comparable between modes.
+pub fn seasonality(
+    cells: &[CalendarCell],
+    mode: SeasonYear,
+    coverage: ((i32, u32), (i32, u32)),
+) -> Vec<SeasonalityYear> {
+    let (first, last) = coverage;
+    if first > last {
+        return Vec::new();
+    }
+    let counts: HashMap<(i32, u32), u64> =
+        cells.iter().map(|c| ((c.year, c.month), c.count)).collect();
+    let season_of = |(year, month): (i32, u32)| match mode {
+        SeasonYear::Calendar => year,
+        SeasonYear::FireYear if month >= 3 => year,
+        SeasonYear::FireYear => year - 1,
+    };
+    let months_of = |season: i32| -> Vec<(i32, u32)> {
+        match mode {
+            SeasonYear::Calendar => (1..=12).map(|m| (season, m)).collect(),
+            SeasonYear::FireYear => (3..=12)
+                .map(|m| (season, m))
+                .chain((1..=2).map(|m| (season + 1, m)))
+                .collect(),
+        }
+    };
+
+    (season_of(first)..=season_of(last))
+        .map(|year| {
+            let months = months_of(year);
+            let complete = months.iter().all(|&ym| ym >= first && ym <= last);
+            let in_coverage = |ym: &&(i32, u32)| **ym >= first && **ym <= last;
+            let values: Vec<(u32, f64)> = months
+                .iter()
+                .filter(in_coverage)
+                .map(|ym| (ym.1, counts.get(ym).copied().unwrap_or(0) as f64))
+                .collect();
+            let total = months
+                .iter()
+                .filter(in_coverage)
+                .map(|ym| counts.get(ym).copied().unwrap_or(0))
+                .sum();
+            let (pcd, peak_month) = if complete {
+                concentration(&values)
+            } else {
+                (None, None)
+            };
+            SeasonalityYear {
+                year,
+                complete,
+                total,
+                pcd,
+                pcp_deg: peak_month.map(|m| (m - 0.5) * 30.0),
+                peak_month,
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -202,6 +324,195 @@ mod tests {
     use super::*;
     use crate::models::{Confidence, DayNight, HotspotSource, Sensor};
     use chrono::{TimeZone, Utc};
+
+    fn count_cell(year: i32, month: u32, count: u64, norm: Option<f64>) -> CalendarCell {
+        CalendarCell {
+            year,
+            month,
+            count,
+            count_normalized: norm,
+            effort_omega: None,
+            mean_frp: 0.0,
+            mean_frp_raw: 0.0,
+            mean_frp_lower: None,
+            mean_frp_upper: None,
+            total_frp: 0.0,
+            total_frp_lower: None,
+            total_frp_upper: None,
+            frp_per_detection_eq: None,
+            anomaly: None,
+            sfai: None,
+        }
+    }
+
+    fn sfai_cells(values: &[f64]) -> Vec<CalendarCell> {
+        let mut cells: Vec<CalendarCell> = values
+            .iter()
+            .enumerate()
+            .map(|(i, &v)| count_cell(2010 + i as i32, 7, v as u64, Some(v)))
+            .collect();
+        compute_anomalies(&mut cells);
+        cells
+    }
+
+    #[test]
+    fn concentration_single_month_is_fully_concentrated() {
+        let (pcd, peak) = concentration(&[(8, 50.0)]);
+        assert!((pcd.unwrap() - 1.0).abs() < 1e-12);
+        assert!((peak.unwrap() - 8.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn single_month_pcp_is_interval_midpoint() {
+        for m in [1u32, 4, 7, 12] {
+            let cells = full_year_cells(2020, &[(m, 10)]);
+            let out = seasonality(&cells, SeasonYear::Calendar, ((2020, 1), (2020, 12)));
+            assert!((out[0].pcp_deg.unwrap() - (m as f64 - 0.5) * 30.0).abs() < 1e-6);
+            assert!((out[0].peak_month.unwrap() - m as f64).abs() < 1e-9);
+        }
+    }
+
+    #[test]
+    fn concentration_uniform_year_has_zero_pcd_and_no_direction() {
+        let values: Vec<(u32, f64)> = (1..=12).map(|m| (m, 5.0)).collect();
+        let (pcd, peak) = concentration(&values);
+        assert!(pcd.unwrap() < 1e-9);
+        assert_eq!(peak, None);
+    }
+
+    #[test]
+    fn concentration_opposite_months_cancel() {
+        let (pcd, _) = concentration(&[(3, 10.0), (9, 10.0)]);
+        assert!(pcd.unwrap() < 1e-9);
+    }
+
+    #[test]
+    fn concentration_wraps_across_year_end() {
+        let (pcd, peak) = concentration(&[(12, 10.0), (1, 10.0)]);
+        assert!(pcd.unwrap() > 0.9);
+        assert!((peak.unwrap() - 12.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn concentration_zero_total_is_none() {
+        assert_eq!(concentration(&[(1, 0.0), (2, 0.0)]), (None, None));
+        assert_eq!(concentration(&[]), (None, None));
+    }
+
+    fn full_year_cells(year: i32, month_counts: &[(u32, u64)]) -> Vec<CalendarCell> {
+        month_counts
+            .iter()
+            .map(|&(m, c)| count_cell(year, m, c, Some(c as f64)))
+            .collect()
+    }
+
+    #[test]
+    fn seasonality_groups_calendar_and_fire_year_differently() {
+        let mut cells = full_year_cells(2020, &[(1, 5), (7, 100), (12, 3)]);
+        cells.extend(full_year_cells(2021, &[(1, 7), (2, 2), (7, 90)]));
+        let coverage = ((2020, 1), (2022, 2));
+
+        let cal = seasonality(&cells, SeasonYear::Calendar, coverage);
+        assert_eq!(cal.iter().map(|y| y.year).collect::<Vec<_>>(), vec![2020, 2021, 2022]);
+        assert_eq!(cal[0].total, 108);
+        assert!(cal[0].complete && cal[1].complete && !cal[2].complete);
+
+        let fire = seasonality(&cells, SeasonYear::FireYear, coverage);
+        assert_eq!(fire.iter().map(|y| y.year).collect::<Vec<_>>(), vec![2019, 2020, 2021]);
+        assert!(!fire[0].complete);
+        // Fire year 2020 = Mar 2020 .. Feb 2021: Jul 100 + Dec 3 + Jan 7 + Feb 2.
+        assert_eq!(fire[1].total, 112);
+        assert!(fire[1].complete);
+        assert_eq!(fire[2].total, 90);
+        assert!(fire[2].complete);
+    }
+
+    #[test]
+    fn seasonality_counts_missing_months_inside_coverage_as_zero() {
+        let cells = full_year_cells(2020, &[(7, 40)]);
+        let out = seasonality(&cells, SeasonYear::Calendar, ((2020, 1), (2020, 12)));
+        assert_eq!(out.len(), 1);
+        assert!(out[0].complete);
+        assert!((out[0].pcd.unwrap() - 1.0).abs() < 1e-9);
+        assert!((out[0].peak_month.unwrap() - 7.0).abs() < 1e-9);
+        assert!((out[0].pcp_deg.unwrap() - 195.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn seasonality_partial_year_is_incomplete_without_metrics() {
+        let cells = full_year_cells(2020, &[(7, 40), (8, 10)]);
+        let out = seasonality(&cells, SeasonYear::Calendar, ((2020, 3), (2020, 12)));
+        assert_eq!(out.len(), 1);
+        assert!(!out[0].complete);
+        assert_eq!(out[0].total, 50);
+        assert_eq!((out[0].pcd, out[0].pcp_deg, out[0].peak_month), (None, None, None));
+    }
+
+    #[test]
+    fn seasonality_fire_year_past_coverage_end_is_incomplete() {
+        let cells = full_year_cells(2020, &[(7, 40)]);
+        let out = seasonality(&cells, SeasonYear::FireYear, ((2020, 1), (2021, 12)));
+        let last = out.last().unwrap();
+        assert_eq!(last.year, 2021);
+        assert!(!last.complete);
+        assert_eq!(last.pcd, None);
+        assert!(out.iter().find(|y| y.year == 2020).unwrap().complete);
+    }
+
+    #[test]
+    fn seasonality_inverted_coverage_is_empty() {
+        assert!(seasonality(&[], SeasonYear::Calendar, ((2021, 1), (2020, 12))).is_empty());
+    }
+
+    #[test]
+    fn sfai_matches_hand_computed_blended_score() {
+        // median 12, MAD 1, population std = sqrt(1254.16).
+        let cells = sfai_cells(&[10.0, 12.0, 11.0, 13.0, 100.0]);
+        let denom = 0.65 * 1.4826 * 1.0 + 0.35 * 1254.16_f64.sqrt();
+        assert!((cells[4].sfai.unwrap() - 88.0 / denom).abs() < 1e-9);
+        assert!((cells[1].sfai.unwrap()).abs() < 1e-12);
+    }
+
+    #[test]
+    fn sfai_uses_mean_of_middle_pair_for_even_counts() {
+        // median 11.5, MAD 1.0, population std = sqrt(1.25).
+        let cells = sfai_cells(&[10.0, 11.0, 12.0, 13.0]);
+        let denom = 0.65 * 1.4826 + 0.35 * 1.25_f64.sqrt();
+        assert!((cells[3].sfai.unwrap() - 1.5 / denom).abs() < 1e-9);
+    }
+
+    #[test]
+    fn sfai_is_none_for_zero_spread_or_too_few_values() {
+        assert!(sfai_cells(&[5.0, 5.0, 5.0]).iter().all(|c| c.sfai.is_none()));
+        assert!(sfai_cells(&[1.0, 9.0]).iter().all(|c| c.sfai.is_none()));
+    }
+
+    #[test]
+    fn sfai_with_zero_mad_falls_back_to_std_term() {
+        // median 5, MAD 0, population std = sqrt(3).
+        let cells = sfai_cells(&[5.0, 5.0, 5.0, 9.0]);
+        let expected = 4.0 / (0.35 * 3.0_f64.sqrt());
+        assert!((cells[3].sfai.unwrap() - expected).abs() < 1e-9);
+        assert_eq!(cells[0].sfai, Some(0.0));
+    }
+
+    #[test]
+    fn sfai_is_none_when_count_normalized_is_missing() {
+        let mut cells = sfai_cells(&[10.0, 12.0, 11.0, 13.0]);
+        cells.push(count_cell(2020, 7, 4, None));
+        compute_anomalies(&mut cells);
+        assert_eq!(cells[4].sfai, None);
+        assert!(cells[0].sfai.is_some());
+    }
+
+    #[test]
+    fn sfai_flags_outlier_more_strongly_than_z_score() {
+        let cells = sfai_cells(&[10.0, 12.0, 11.0, 13.0, 100.0]);
+        let z = cells[4].anomaly.unwrap();
+        let sfai = cells[4].sfai.unwrap();
+        assert!(z <= 2.0 + 1e-9);
+        assert!(sfai > 3.0 * z);
+    }
 
     fn make_harmonized(
         year: i32,
