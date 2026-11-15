@@ -518,6 +518,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Teknik açıklama slaytları (pipeline diyagramı, VZA correction görseli, H3 grid görseli)
   - Kullanım senaryoları: orman yangını izleme, tarım yanığı tespiti, iklim araştırması
 - **Bitti sayılır:** demo senaryosu yazıldı; canlı demo 3 dakika içinde sorunsuz çalışıyor.
+- **Not (Can → Görkem, 2026-11-15, C11 bulgusu):** Harmonize `total_frp` Ω'ya bölünmediği için filo sıçramasını taşımaya devam ediyor: Çin serisinde ham MODIS FRP'ye oranı 2012'de `+%28`, 2018 NOAA-20 girişinde `+%31` sıçrıyor (aynı dönemde S-NPP/MODIS oranı yalnız `+%6`). Sunumda ve canlı demoda başlık metriği olarak `count_normalized` kullanılmalı; `total_frp` grafikleri bu uyarıyla gösterilmeli. Ayrıntı: `docs/VAKA_CIN_ANIZ.md`, `docs/vaka/china_ban_summary.json`. Pipeline tarafında `total_frp` için efor normalizasyonu ayrı bir görev olarak değerlendirilebilir.
 
 ### [ ] G6 — Final entegrasyon + deployment
 - **Bekler:** G5 · **Açar:** —
