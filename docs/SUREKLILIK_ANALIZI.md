@@ -221,3 +221,37 @@ Hücre biçimi: `ln(after/before)` `(z_benzeri)`; sonundaki `*` işareti `|log_s
 4. **2012 yılının ilk 19 günü:** SNPP 20 Ocak 2012'de başladığı için `2012` yılının ilk 19 günü yalnızca MODIS içerir; güney yarımküre veya tropikal ocak yangınlarında küçük bir kısmi-ay etkisi yaratır (`2011→2013` 2 yıllık dikişi bunu atlamak için birlikte raporlanmıştır).
 5. **Hacim katmanı kapsamı:** Seçilen 10 biyom-çeşitli ülkenin tamamı `>= 1000/yıl` yüksek hacim katmanındadır; `< 100/yıl` gürültü eşiği altındaki küçük ada/çöl ülkelerindeki davranış bu ilk referans çalışmada test edilmemiştir.
 6. **MODIS=0 olan nadir kış ayları:** `Kazakhstan`'da 1 kış ayında MODIS sıfır iken yalnızca VIIRS tespiti olduğu için `Ω = NA` oluşmuştur; yıllık toplamı ihmal edilebilir düzeyde etkilese de aylık çözünürlükte düşük aktiviteli kuzey bölgelerde görülebilen bir uç durumdur.
+
+---
+
+## 6. Final Ölçüm (R10 + K11 sonrası, 2026-11-15)
+
+Kod: `main` @ `a1e53b3` (R10 1 MODIS = N VIIRS toplamı + MODIS ayak izi sınırı, toplam kayıtlarda karesel belirsizlik, K11, K12; çoklu VIIRS FRP cetveli denenip geri alındı). Aynı komut ve aynı 10 ülke, 2000–2025; toplam süre 5489 sn. Ham CSV: `seam_continuity_results.csv` biçiminde yerel çıktı.
+
+Ülkeler arası medyan `|log adım|` ve doğal dalgalanmanın (dikiş dışı yıl çiftlerinin p90'ı) dışına çıkan ülke sayısı:
+
+| Dikiş | Metrik | Medyan `\|log\|` | Medyan yön | `> P90` |
+|---|---|---:|---:|---:|
+| 2012 SNPP (2011→2012) | ham sayım (`raw`) | 1.801 | +1.801 | 8/10 |
+| | `count_normalized` | **0.133** | +0.042 | **1/10** |
+| | `total_frp` | 0.629 | +0.414 | 1/10 |
+| | `F` (`frp_per_detection_eq`) | 0.139 | +0.139 | 4/10 |
+| | `mean_frp_raw` | 0.991 | −0.991 | 10/10 |
+| 2012 SNPP (2011→2013) | ham sayım | 1.386 | +1.386 | 9/10 |
+| | `count_normalized` | **0.249** | −0.222 | **1/10** |
+| | `total_frp` | 0.316 | −0.016 | 3/10 |
+| | `F` | 0.131 | +0.127 | 4/10 |
+| 2018 NOAA-20 (2017→2019) | ham sayım | 0.503 | +0.503 | 5/10 |
+| | `count_normalized` | **0.254** | −0.057 | **0/10** |
+| | `total_frp` | 0.301 | +0.212 | 2/10 |
+| | `F` | 0.163 | +0.163 | 4/10 |
+| 2002 Aqua (2001→2003) | ham sayım | 1.190 | +1.190 | 7/10 |
+| | `count_normalized`, `F` | NA | — | tasarım gereği (Aqua öncesi aylar normalize edilmez) |
+| | `total_frp` | 1.297 | +1.297 | 6/10 |
+
+**Sonuç:**
+- Manşet metrik `count_normalized`, 2012 ve 2018 dikişlerinde 10 ülkenin 9'unda ve 10'unda doğal yıllar arası dalgalanmanın içinde kalır; ham sayımdaki adım (2012'de medyan ×6) ortadan kalkar.
+- `total_frp` büyük ölçüde süreklidir (2012'de 1/10, 2018'de 2/10 ülke p90 dışında); 2012 1 yıllık pencerede medyan yön hâlâ yukarıdır.
+- `F` iki dikişte de 4/10 ülkede p90 dışına çıkar ve yukarı yönlüdür; bu, VIIRS'ın tespit başına daha fazla küçük yangın enerjisi toplamasının kalıntısıdır. Çoklu VIIRS FRP cetveli bunu gidermek için denendi, ancak filo birleştirme aynı yangının S-NPP/NOAA-20 FRP'sinin ortalamasını zaten aldığından 2018 sonrası FRP'yi iki kez düzelttiği (Türkiye Ağustos toplamları yarıya indi, Manavgat sırası 2 → 8) görülüp geri alındı.
+- Önceki referans ölçümle (R10 öncesi: `count_normalized` 0.13, `total_frp` 0.59, `F` 0.14) kıyaslandığında R10 süreklilik metriklerini anlamlı biçimde değiştirmemiştir.
+- Sunumda ve arayüzde manşet metrik `count_normalized` olmalı; `total_frp` şiddet sorularında (bkz. `DOGRULAMA_PAKETI.md` Bölüm D) kullanılmalı, `F` ise kalıntı adım notuyla gösterilmelidir.

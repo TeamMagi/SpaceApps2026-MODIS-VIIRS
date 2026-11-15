@@ -50,6 +50,19 @@ pub fn k_ring_for_radius(radius_km: f64) -> u32 {
     ((radius_km * COVERAGE_MARGIN / MIN_CELL_WIDTH_KM).floor() as u32).saturating_add(RING_SLACK)
 }
 
+/// Widest k-ring the spatial indexes are asked to enumerate (3k(k+1)+1 cells, ~12k at 64). Every
+/// validated radius and real pixel size stays far below it (a 10 km radius needs k = 20); a wider
+/// ring only comes from a corrupt pixel size or an unvalidated radius, where enumerating the disk
+/// would exhaust memory, so such searches fall back to the linear time-window scan instead.
+const MAX_INDEXED_K: u32 = 64;
+
+/// `k_ring_for_radius(radius_km)` plus `extra` safety rings, or `None` when that ring is wider
+/// than [`MAX_INDEXED_K`] and the caller must scan linearly.
+pub(crate) fn indexed_k_ring(radius_km: f64, extra: u32) -> Option<u32> {
+    let k = k_ring_for_radius(radius_km).saturating_add(extra);
+    (k <= MAX_INDEXED_K).then_some(k)
+}
+
 /// Spatial index over point positions, bucketed into H3 cells at resolution 8.
 pub struct H3Index {
     buckets: HashMap<CellIndex, Vec<usize>>,
@@ -508,6 +521,26 @@ mod tests {
         // One ring is never enough: two points arbitrarily close together can still land in cells
         // that only share a corner, which is two grid steps apart.
         assert_eq!(k_ring_for_radius(0.01), 2);
+    }
+
+    #[test]
+    fn indexed_k_ring_covers_every_validated_radius_and_refuses_absurd_ones() {
+        // Largest radius `PipelineConfig::validate` admits, plus the safety ring callers add.
+        assert_eq!(indexed_k_ring(10.0, 1), Some(k_ring_for_radius(10.0) + 1));
+        // Real pixels (<= ~5 km) in the dedup search stay indexed.
+        assert!(indexed_k_ring(5.0, 1).is_some());
+
+        let widest_ok = (0..2_000)
+            .map(|i| f64::from(i) * 0.05)
+            .take_while(|&r| indexed_k_ring(r, 0).is_some())
+            .last()
+            .expect("small radii are indexed");
+        assert!(widest_ok > 30.0, "cap {widest_ok} km must leave headroom above 10 km");
+
+        assert_eq!(indexed_k_ring(1.0e5, 0), None);
+        assert_eq!(indexed_k_ring(1.0e12, 1), None);
+        assert_eq!(indexed_k_ring(f64::MAX, 1), None);
+        assert_eq!(indexed_k_ring(f64::INFINITY, 1), None);
     }
 
     #[test]

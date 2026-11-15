@@ -19,7 +19,7 @@
 | `uncertainty.rs` | Analitik FRP güven aralığı (`frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*`) yayılımı |
 | `conformal.rs` | Mondrian split conformal aralıkları (saf istatistik): `fit_mondrian`, `conformal_interval`, `calibration_fingerprint`; `uncertainty.rs` üzerinden de dışa açılır. Sensör-dışarıda tekrarlanabilirlik bandıdır, gerçek doğruluk değil |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
-| `effort.rs` | Gözlem eforu (EffortFactor) tahmini, ≥ 40 MW şiddet rejimli Ω (`omega_high_intensity`) ve ayrı raporlanan S-NPP/Aqua gündüz oranı |
+| `effort.rs` | Gözlem eforu (EffortFactor) tahmini, ≥ 40 MW şiddet rejimli Ω (`omega_high_intensity`) ve ayrı raporlanan S-NPP/Aqua gündüz oranı; `EffortMonths` aylık toplamları parça parça kurup `merge` ile birleştirir, `omega_for(yıl, ay)` tüm veri üzerinde `estimate_effort` + `omega_for_month` ile aynı Ω'yı verir |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
 | `static_mask.rs` | Kalıcı sıcak hücre (gaz meşalesi/endüstri) maskesi: H3 r7 hücre-yılı, yıl içinde ≥ `min_active_months` (varsayılan 10) farklı ayda tespit |

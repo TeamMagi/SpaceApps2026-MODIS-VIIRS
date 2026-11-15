@@ -219,9 +219,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | [X] |
 | G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | [X] |
 | G10 | Export engine + /api/export | Görkem | G4 | R7, S6 | [X] |
-| G11 | Yeni metriklerin süreklilik analizi | Görkem | R10, K11 | G12 | [ ] |
-| G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [ ] |
-| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1 [X], G12/R12/Y8 bekliyor) |
+| G11 | Yeni metriklerin süreklilik analizi | Görkem | R10, K11 | G12 | [X] |
+| G12 | İç doğrulama paketi | Görkem | G11, S10 | G5, S12, Y10 | [X] |
+| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1, G12, C8, C11, R12, Y8 | G6 | [ ] bekliyor (R5, C8, C11, Y1, G12, R12 [X]; Y8 bekliyor) |
 | G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
 | C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
 | C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
@@ -286,7 +286,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [X] |
 
 **Şu an başlanabilecekler:**
-- **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`G12, R12, Y8`; `R5, C8, C11, Y1` tamamlandı).
+- **Görkem:** G1–G4 ve G7–G12 tamamlandı. Açık: G5 (yalnız `Y8` bekliyor; `R5, C8, C11, Y1, G12, R12` tamamlandı) ve G6 (final precompute + teslim).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
@@ -504,7 +504,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** curl ile `/api/export?format=csv` → geçerli CSV dosyası iniyor; GeoJSON QGIS'te açılıyor; 10,000+ satır sorunsuz.
 - **Durum (2026-11-15):** Sadık tarafından tamamlandı (`cae9664`). CSV ve GeoJSON export, `/api/export`. Belirsizlik (uncertainty) sütunları G9 ile eklenecek.
 
-### [ ] G11 — Yeni metriklerin süreklilik analizi
+### [X] G11 — Yeni metriklerin süreklilik analizi
 - **Bekler:** R10, K11 · **Açar:** G12
 - 238 ülke içinden biyom çeşitliliği ve yangın hacmi dengesi olan ~10 ülkede (düşük `<10/yıl` ve yüksek `≥1000/yıl` hacim katmanlarını ayırarak, `fire-harmony`) `2002-07` (Aqua), `2012-01` (SNPP) ve `2018-04` (NOAA-20) dikiş noktalarındaki adım büyüklüğünü ölçme
 - `crates/core/src/calendar.rs` çıktılarındaki `count_normalized`, `total_frp` ve `frp_per_detection_eq` serilerini ham (`count`, `mean_frp_raw`) seriyle karşılaştırma
@@ -512,8 +512,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ P4, `fire-harmony`)
 - **Bitti sayılır:** ~10 biyom-çeşitli ülkede `2002-07`, `2012-01` ve `2018-04` dikişlerinde ham vs harmonize (`count_normalized`, `total_frp`, `frp_per_detection_eq`) adım büyüklükleri ölçülüp tablo olarak raporlanıyor.
 - **Durum (2026-11-15):** Referans ölçüm yapıldı — araç `crates/firms-client/examples/seam_continuity.rs`, sonuçlar `docs/SUREKLILIK_ANALIZI.md` (10 ülke, 2000–2025). Ülkeler üzerinden medyan |log adım|, 2012 SNPP dikişi (2011→2012): ham sayım 1,77 → `count_normalized` 0,13 (Ω sayım sıçramasının ~%92'sini gideriyor); `total_frp` 0,59 (hâlâ belirgin adım); `frp_per_detection_eq` 0,14 ama 4/10 ülkede doğal dalgalanmanın (p90) dışında; 2018 NOAA-20 dikişinde F 10/10 ülkede yukarı kayıyor (+0,08 ile +0,42). Aqua 2002 dikişi için normalize metrikler Aqua öncesi ay kuralı nedeniyle NA. Görev, bağımlılıkları R10 ve K11 bittikten sonra aynı komutla yeniden ölçülüp karşılaştırılınca kapanacak.
+- **Kapanış (Görkem, 2026-11-15):** R10 (+ MODIS ayak izi sınırı) ve K11 sonrası aynı komut ve aynı 10 ülkeyle yeniden ölçüldü (`main` @ `a1e53b3`, 5489 sn); tablo `docs/SUREKLILIK_ANALIZI.md` Bölüm 6. Medyan `|log adım|` / p90 dışı ülke: 2012 (1 yıl) ham 1,80 (8/10) → `count_normalized` 0,13 (1/10), `total_frp` 0,63 (1/10), F 0,14 (4/10); 2018 ham 0,50 (5/10) → `count_normalized` 0,25 (0/10), `total_frp` 0,30 (2/10), F 0,16 (4/10). R10 süreklilik metriklerini anlamlı değiştirmedi. F'nin yukarı yönlü kalıntı adımı için denenen çoklu VIIRS FRP cetveli, filo birleştirmenin FRP'yi zaten ortaladığı için 2018 sonrası FRP'yi iki kez düzelttiğinden geri alındı. Manşet metrik `count_normalized`.
 
-### [ ] G12 — İç doğrulama paketi
+### [X] G12 — İç doğrulama paketi
 - **Bekler:** G11, S10 · **Açar:** G5, S12, Y10
 - Dikiş yeri Placebo Adım Testi (`fire-harmony`): `2002-07`, `2012-01` ve `2018-04` dikişlerindeki adım büyüklüğünü sıradan aylardaki placebo adım dağılımıyla (`fire-harmony` referansı: `+0.55%` vs placebo SD `%1.2`) kıyaslama ve `<10/yıl` vs `≥1000/yıl` hacim katmanlarını ayırma
 - Yıl-bloklu Leave-One-Year-Out (LOYO, `[24]`, `eg-firetrack`) ve blok bootstrap out-of-sample güven aralığı testi (`flare-chronos` CI dersi: out-of-sample kazanç aralığı sıfırı kesmemeli)
@@ -521,6 +522,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P6 (+ `[24]`, `fire-harmony`, `flare-chronos`, `eg-firetrack`)
 - **Bitti sayılır:** placebo adım testi, yıl-bloklu LOYO ve Model vs Baseline Gate otomatik doğrulama testleri koşuyor; baz çizgiyi yenemeyen bölge/dönemler arayüzde işaretleniyor.
 - **Durum (2026-11-15):** Araç ve referans ölçüm hazır — `crates/firms-client/examples/validation_suite.rs`, sonuçlar `docs/DOGRULAMA_PAKETI.md` (10 ülke, 2000–2025). Placebo (10 ülke birleşik sıra testi): ham sayım üç dikişte de placebo'dan ayrışıyor (pozitif kontrol; Wilcoxon p = 0,002–0,039); `count_normalized` 2012 ve 2018'de placebo'dan ayırt edilemiyor (ortalama sıra 0,49 ve 0,51); `total_frp` 2012'de 0,52; F 2012'de 0,61, 2018'de 0,69 (anlamlı değil ama tropik ülkelerde dağılımın üst ucunda — R10/K11 ile beklenen iyileşme). LOYO: Ω modelinin yıl-dışarıda hatası 0,052, normalizasyonsuz baseline 1,79, kalıcılık baseline'ı 0,41; kapı 10/10 ülkede iki baseline'a karşı da GEÇTİ. Açık kalanlar: testlerin otomatik koşması (CI) ve baseline'ı yenemeyen bölge/dönemlerin arayüzde işaretlenmesi; R10 ve K11 sonrası yeniden ölçüm.
+- **Kapanış (Görkem, 2026-11-15):** (1) Placebo sıra testi, LOYO ve baseline kapısının istatistik fonksiyonları sentetik veriyle 5 birim testine bağlandı; `crates/firms-client/Cargo.toml` içinde `[[example]] validation_suite, test = true` ile `cargo test --workspace` (dolayısıyla CI) her koşuda çalıştırıyor (`69d7bd1`). (2) `validation_suite --gate-json` bölge başına kapı kararını yazıyor; `web/public/validation/gate.json` 10 ülkelik referans koşudan (Bölüm 4.4) dolduruldu ve alt şerit seçili bölge için "iki baseline'ı da yeniyor / belirsiz / yenemiyor, dikkatli okuyun / henüz doğrulanmadı" durumunu gösteriyor. (3) Dış referans olarak "Bilinen Olay Testi" eklendi (`event_recall.rs`, `DOGRULAMA_PAKETI.md` Bölüm D): 9 belgelenmiş aşırı olay-ayının 8'i harmonize FRP'de, 7'si harmonize sayımda ilk iki sırada; 2012 sonrası z ≥ 2 ay payı sayımda %9,7 → %5,2 (FRP'de %10,1 → %8,2). Bağımlılıklar G11 ve S10 kapalı. Sınır: kapı dosyası R10 öncesi referans koşudan; final pipeline ile `validation_suite --gate-json` yeniden üretilebilir.
 
 ### [ ] G5 — Sunum materyali + demo senaryosu
 - **Bekler:** G4, R5, Y1 · **Açar:** G6
@@ -929,14 +931,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Frontend ve grafik component'leri bu veriyle çalışabilir
 - **Bitti sayılır:** `data/sample/` altında en az 3 bölge var; her bölgede MODIS, VIIRS ve harmonized veri mevcut; Yusuf bu veriyle grafik yapabilir.
 
-> **Kapanış notu (Samet, 2026-11-15):**
+> **Kapanış notu (Samet, 2026-11-15; gün sonu denetiminde gerçek dosyalara göre düzeltildi):**
 >
-> - `crates/firms-client/examples/sample_region.rs` eklendi: FIRMS SP arşivinden bbox kırpma + harmonize + JSON yazma pipeline'ı. `--region`, `--out-dir`, `--from`, `--to` parametreleri destekleniyor.
-> - `data/sample/turkey/` (Türkiye tüm ülke, 2020–2025): `modis.csv` 3.574 satır, `viirs.csv` 21.566 satır, `harmonized.json` ~3.6 MB.
-> - `data/sample/california/` (Kaliforniya bbox, 2020–2025): `modis.csv` 2.969 satır, `viirs.csv` 26.788 satır, `harmonized.json` ~4.1 MB.
-> - `data/sample/australia/` (Avustralya bbox, 2020–2025): `modis.csv` 2.020 satır, `viirs.csv` 21.794 satır, `harmonized.json` ~3.6 MB.
-> - `data/sample/README.md` eklendi: kaynak, bbox, yıl aralığı ve sütun açıklamaları belgelendi.
-> - **Y1 ve Y2 başlayabilir:** Yusuf bu üç bölgenin harmonize JSON'larını ve CSV'lerini doğrudan kullanabilir.
+> - `crates/firms-client/examples/sample_region.rs`: çevrimdışı arşivden bbox kırpar, varsayılan `PipelineConfig` ile harmonize eder ve `--out` klasörüne `modis.csv`, `viirs.csv`, `harmonized.json` yazar. Bayraklar: `--out`, `--name`, `--bbox batı,güney,doğu,kuzey`, `--from`, `--to` ve ülke adı. Yardımcı: `csv_rows_in_bbox` (`crates/firms-client/src/archive.rs`, 3 birim test).
+> - **Üç set tam ülke değil, alt bölgedir.** 2020–2025 tam ülke satırları git için fazla büyük (tip-0 satırlar yaklaşık Türkiye 392 bin, Kaliforniya 1,27 milyon, Avustralya 14,3 milyon). Satır örneklemesi yapılmadı, bölge daraltıldı:
+>   - `turkey`: Antalya–Muğla kıyısı, bbox `27,36,32.5,37.5`; MODIS 3.573, VIIRS 21.565 satır; 5,4 MB.
+>   - `california`: Los Angeles havzası ve San Gabriel Dağları, bbox `-119,33.5,-117.5,34.5`; MODIS 2.968, VIIRS 26.787 satır; 6,3 MB.
+>   - `australia`: Sydney havzası ve Blue Mountains, bbox `149,-34.5,151,-33`; MODIS 2.019, VIIRS 21.793 satır; 5,4 MB.
+> - CSV'ler yalnız tip-0 (bitki yangını) satırlarını ve özgün FIRMS başlıklarını taşır; `viirs.csv` S-NPP ile NOAA-20'yi birleştirir (NOAA-21 arşivde yok). `harmonized.json`, `/api/harmonize` ile aynı üst düzey şekle ek bir `meta` bloğu ekler; `raw.hotspots` ve `uncertainty` yoktur. Küçük bbox'ta MODIS tespiti olmayan aylar yalnız-VIIRS sayıldığından bazı takvim hücrelerinde `effort_omega`, `count_normalized` ve `anomaly` `null`'dır. Ayrıntı ve yeniden üretim komutları: `data/sample/README.md`.
 
 ### [ ] S5 — GitHub Actions CI/CD kurulumu
 - **Bekler:** S1 · **Açar:** —
@@ -976,15 +978,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #10 (+ `fire-harmony`)
 - **Bitti sayılır:** `uncertainty.rs` ve `calendar.rs` ülke/ay toplamlarında büyüklük bölmeli Mondrian split conformal `%68`/`%90` aralıkları üretiyor ve out-of-sample kapsama testi geçiyor.
 
-> **Kapanış notu (Samet, 2026-11-15):**
+> **Kapanış notu (Samet, 2026-11-15; gün sonu denetiminde kodla karşılaştırılarak düzeltildi):**
 >
-> - **Çekirdek (`crates/core/src/conformal.rs`):** `fit_mondrian()` → era × büyüklük-bölmesi `ConformalTable`; `conformal_interval()` uygulucu; `calibration_fingerprint()` eşleştirme parametrelerini hash'ler (sigma'ları hariç tutar, kapsam değişmez). `ConformalEra::{PreViirs, Viirs}`, `MAX_BINS = 6`, `TARGET_BIN_SIZE = 100`, `MIN_BIN_SIZE = 40`.
-> - **Sentez testleri (3+):** `coverage_on_exchangeable_data` — değiştirilebilir 1 000 örnek üzerinde `%68 ± 3%` ve `%90 ± 3%` kapsam (her bin ≥ 0.63 / ≥ 0.85); `analytic_intervals_undercover` — `1/√n` parametrik bantın `< %60` kapsamda kaldığını doğrular; `leave_one_year_out_coverage` — LOYO `%68 ≥ 0.64`, `%90 ≥ 0.84`; artı ekstrapolasyon/kenar/JSON round-trip/parmak izi testleri.
-> - **Takvim entegrasyonu (`crates/core/src/calendar.rs`):** `CalendarCell` ve `CalendarYear` için `conformal_p68`/`conformal_p90` alt/üst alanları eklendi; `build_calendar_with` tablo alıp her hücreye `conformal_interval` uygular.
-> - **Sunucu entegrasyonu (`crates/server/src/main.rs`):** Başlangıçta `CONFORMAL_TABLE_PATH` env var'ından JSON tablosu yüklenir; `GET /api/calendar` yanıtına `conformal_p68`/`conformal_p90` alanları eklenir; tablo yüklü değilse `null`.
-> - **Dokümantasyon:** `docs/API.md` `conformal_p68`/`conformal_p90` alan açıklamaları eklendi; `crates/core/CLAUDE.md` ve `crates/server/CLAUDE.md` conformal kuralları güncellendi.
-> - **Kalibrasyon aracı:** `crates/firms-client/examples/conformal_calibration.rs` — iki aşamalı (`extract` / `fit`) FIRMS arşivi üzerinde çalışan LOYO/LOCO kapsam ölçümü + yıl-blok bootstrap + tablo üretimi.
-> - **G12 başlayabilir:** `ConformalTable` JSON sunucuya beslendiğinde takvim hücreleri %68/%90 bandını taşır.
+> - **Çekirdek:** `crates/core/src/conformal.rs`. `fit_mondrian()` dönem (`PreViirs`, `Viirs`) × büyüklük kutusu başına işaretli, eşit kuyruklu %68 ve %90 kantilleri çıkarır (`MAX_BINS = 6`, hedef 100, en az 40 örnek, dönemler ayrı kalibre edilir). Ayrıca `conformal_interval()`, `conformal_indices()` (`l = ⌊(n+1)α/2⌋`, `u = ⌈(n+1)(1−α/2)⌉`) ve `calibration_fingerprint()` (merkez değeri etkileyen config bölümlerinin özeti, `uncertainty` sigmaları hariç).
+> - **Testler (sentetik, hızlı):** `index_rule_table`, `coverage_on_exchangeable_data`, `year_shocks_break_the_analytic_band_but_not_leave_one_year_out_conformal`, `small_bins_are_merged_and_small_eras_dropped`, `invalid_samples_are_ignored_and_eras_are_not_pooled`, `interval_edges_extrapolation_and_clamping`, `table_json_round_trips_with_open_edges`, `fingerprint_tracks_centre_config_but_not_sigmas`.
+> - **Takvim:** `CalendarCell.conformal: Option<ConformalBand>` (tek iç içe alan; `None` ise yanıtta yer almaz) ve `build_calendar_with_conformal(...)`. Terra-yalnız aylar (2002-07 öncesi) bant almaz.
+> - **Sunucu:** `CONFORMAL_TABLE` ortam değişkeni (varsayılan `data/conformal.json`). Dosya yoksa, bozuksa, şema sürümü yanlışsa ya da parmak izi uyuşmuyorsa özellik kapalı kalır ve yanıt baytları değişmez. Bant yalnız bbox'sız ve `min_confidence=low` olan `/api/calendar` isteklerine eklenir. `docs/API.md`'de belgelendi; bu bir "sensör tekrarlanabilirliği" bandıdır, yer gerçeği doğruluğu değildir.
+> - **Araç:** `crates/firms-client/examples/conformal_calibration.rs` (`extract` ve `fit` alt komutları; LOYO/LOCO ve yıl-blok bootstrap).
+> - **AÇIK KALAN:** `data/conformal.json` ve `docs/KONFORMAL_KAPSAMA.md` **üretilmedi.** Arşiv çıkarım koşusu 70 ülkeden yaklaşık 64'ünde süreç `Killed` ile sonlandı (büyük olasılıkla bellek) ve `fit` aşaması hiç çalıştırılmadı. Üstelik R10 `total_frp` merkezini değiştirdiğinden eski çiftler geçersiz; tablo son pipeline ile yeniden çıkarılıp uydurulmalı (ağır ülkeler için bellek sınırı gerekir). Tablo olmadığından bant şu an çalışan sistemde **kapalıdır**. Önceki not `conformal_p68`/`conformal_p90` alanlarını, `CONFORMAL_TABLE_PATH` değişkenini, `CalendarYear` değişikliğini ve kodda bulunmayan iki test adını anıyordu; bu not kodla karşılaştırılarak yazıldı.
 
 ### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
@@ -1032,13 +1033,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** Strateji 1.1 — "Türkiye ve Akdeniz havzası özel case study — jüri için farklı ve dikkat çekici"
 - **Bitti sayılır:** `data/case-study/turkey/` altında en az 3 yıl veri var; 2021 Akdeniz yangınları anomali olarak belirgin; JSON formatı frontend'le uyumlu.
 
-> **Kapanış notu (Samet, 2026-11-15):**
+> **Kapanış notu (Samet, 2026-11-15; denetimde `data/case-study/turkey/stats.json` dosyasına göre düzeltildi):**
 >
-> - `crates/firms-client/examples/turkey_case_study.rs` eklendi: FIRMS SP ülke arşivinden 4 bölge (türkiye, akdeniz, muğla, antalya) için 2012–2025 aylık takvim ve istatistik pipeline'ı.
-> - `data/case-study/turkey/calendar/turkey.json`, `mediterranean.json`, `mugla.json`, `antalya.json`: `/api/calendar` şemasında, effort-normalise edilmiş `count_normalized` + `anomaly` z-skoru ile 2012–2025 aylık hücreleri. Yıl başına `complete`, `swath_gap_pct`, `sfai` alanları mevcut.
-> - `data/case-study/turkey/stats.json`: bölge başına toplam tespit sayısı, pik ay/yıl, 2021 anomali kanıtı (Antalya Ağustos z=3.60, 1.759 tespit; Muğla Ağustos z=3.95, 1.503 tespit), `same_fleet_from=2018` ham sayı sıralaması, 2012–2025 yıllık trend.
-> - **2021 Akdeniz anomalisi belirgin:** Antalya Temmuz z=3.60, Ağustos z=3.60; Muğla Ağustos z=3.95; Akdeniz Temmuz z=3.72, Ağustos z=3.98 — tüm bölgelerde rank=1 veya rank=2 (152 aylık seri içinde).
-> - **R7 başlayabilir:** `calendar/*.json` ve `stats.json` doğrudan frontend brifingi component'i için hazır.
+> - `crates/firms-client/examples/turkey_case_study.rs`: arşivden 4 bölge (`turkey`, `mediterranean`, `mugla`, `antalya`) için 2012–2025 aylık takvim ve istatistik üretir. Çıktılar: `data/case-study/turkey/calendar/{turkey,mediterranean,mugla,antalya}.json` (`/api/calendar` şeması, Ω ile normalize `count_normalized` ve `anomaly`) ve `stats.json`.
+> - **Yöntem:** çekirdek takvim yolu; baz çizgisi aynı takvim ayının 2012–2025 değerleri, hücrenin kendisi dahil, popülasyon standart sapması. `/api/series` anomalileri bilerek kullanılmadı (Ω ile normalize değil, bilinen hata).
+> - **2021, Akdeniz alt bölgelerinde belirgin (dosya değerleri):** tespit sayıları Antalya Temmuz 2.376 / Ağustos 1.759, Muğla Temmuz 698 / Ağustos 3.129, Akdeniz Temmuz 3.074 / Ağustos 4.888. Diğer yılların aynı ay medyanına oran 28×–89× (Antalya 59× / 39×, Muğla 28× / 89×, Akdeniz 45× / 69×). Aynı ay içinde sıra hepsinde 1., tüm aylar içinde 1.–2.; `z_leave_one_out` 28–115; 2018–2025 aynı filo ham sayısında da hepsi 1. sırada.
+> - **Düz z-skoru tavana yapışıktır, büyüklük göstermez:** baz çizgisi hücrenin kendisini içerdiğinden z en fazla `√(n−1)` olabilir (14 yıl için 3,606; Muğla Ağustos 13 yıl için 3,464; Muğla Temmuz 11 yıl için 3,162). Dosyadaki z değerleri (Antalya 3,60 / 3,60, Akdeniz 3,60 / 3,60, Muğla 3,14 / 3,46) bu tavandadır ve yalnızca "diğer tüm yıllardan daha uç" demektir; büyüklüğü `z_leave_one_out` ile medyana oran gösterir. Önceki nottaki 3,72 / 3,95 / 3,98 ve Muğla 1.503 tespit değerleri dosyayla uyuşmuyordu (3,606 tavanını da aşıyordu), kaldırıldı.
+> - **Ülke ölçeğinde görünmez:** tüm Türkiye serisinde 2021 anomali değildir (Temmuz z = 0,94, 37./168; Ağustos z = 0,16, 28./168). Bölgesel megayangınlar ulusal toplamda seyrelir; vaka çalışması bu yüzden alt bölgeleri öne çıkarır.
 
 ### [X] S8 — Bilimsel referans ve disclaimer içerik
 - **Bekler:** C5 · **Açar:** —
@@ -1241,6 +1242,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, Yol Haritası #9 (+ `[15, Şek. 6], [23, Eq. 3–6]`, `fire-harmony`)
 - **Bitti sayılır:** `calibration.rs` ay × biyom × gündüz/gece tablosu ve güç-yasası küçük yangın bütçesi ile savan/orman/tarım ayrımı yapıyor; mevcut testler fallback ile geçiyor.
 - **Veri kararı (Serhat, 2026-11-15):** Arazi örtüsü katmanı depoya eklendi; görevin asıl mantığı (ay × biyom × gündüz/gece tablosu, güç yasası) Sadık'ta, kutu açık. **Veri:** ham MCD12Q1 (500 m, yılda yüzlerce HDF karosu, Earthdata girişi) yerine ondan türetilmiş, girişsiz inen WRF/WPS `modis_landuse_20class_5m_with_lakes` (MODIS IGBP, 20 sınıf + göller, 5 yay dakikası, 8 MB). K14 piksel bazında arazi örtüsü değil, hücre/bölge başına tek biyom etiketi istiyor. **Çözünürlük:** depoda 0,25° (1440 × 720) çoğunluk ızgarası, `data/landcover/biome_0p25.rle` (126 KB) ve kaynak notu `data/landcover/SOURCE.md`. Üretim: `python3 tools/build_biome_grid.py --download` (deterministik). **Gruplar:** `non_burnable` (IGBP 13, 15, 16, 17, 21), `forest` (1–5), `shrubland` (6–7), `savanna` (8–9), `grassland` (10), `cropland` (12, 14), `wetland` (11), `tundra` (18–20). Yanabilir sınıf içeren hücrede çoğunluk yalnız yanabilir sınıflar arasında alınıyor (kıyı hücreleri suya kaybedilmiyor). **Kullanım:** `crates/core/src/biome.rs` — `biome_at(lat, lon)`, `dominant_biome(noktalar)`, `Biome::is_burnable`. Izgara `include_bytes!` ile gömülü; çalışma anında dosya yolu ve config alanı yok, `PipelineConfig` özeti değişmiyor. `calibration.rs`, `calendar.rs`, `effort.rs` ve `DERIVED_SCHEMA_VERSION`'a dokunulmadı. **Kontrol:** Amazon orman, Sahra yanmaz, Ukrayna ve Pencap tarım, Cerrado ve Kuzey Avustralya savan, Sibirya orman. Türkiye bbox kara hücreleri: otlak %33,6, tarım %31,7, çalılık %19,3, orman %14,5; Antalya ve Muğla kıyıları orman. **Sınırlar:** tek dönemlik statik harita, yıllık değişimi (ormansızlaşma) izlemiyor; kaynak hangi MODIS koleksiyonu/yıllarından türetildiğini belirtmiyor; lisans koşulları kaynak sayfasında doğrulanmadı; Konya ovası çalılık çıkıyor (kaynak veri öyle); sulak alan dünya genelinde yalnız 153 hücre; Dockerfile'a ızgarayı kopyalayan satır eklendi ama `docker build` denenmedi.
+- **Teslim kararı (Görkem, 2026-11-15, konsey: Argon, GPT-6-Astra, Opus oybirliği):** K14'ün sayısal kısmı (ay × biyom × gündüz/gece `k_c` tablosu, güç yasası küçük yangın bütçesi) bu teslimin kapsamı dışında; freeze'den önce ölçülüp hold-out ile doğrulanamaz ve mevcut enlem bandlı `k_c` (2019 fit / 2020 hold-out, fark %4–9) ile yapılan G11 ve bilinen olay doğrulamalarını geçersiz kılar. Biyom etiketi arayüzde de gösterilmiyor: aynı enlemdeki savan ve ormana aynı `k_c` uygulanırken etiket göstermek tutarsız olur. Biyom ızgarası ve `biome.rs` hazır altyapı olarak kalıyor; gelecek çalışma olarak belgelenir. Kutu `[ ]` kalır.
 
 ### [X] K12 — Aqua öncesi dönem kurtarımı ve kesinti etiketleri
 - **Bekler:** — · **Açar:** —

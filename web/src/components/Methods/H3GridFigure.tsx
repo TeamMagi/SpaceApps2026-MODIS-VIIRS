@@ -6,16 +6,12 @@
  */
 
 import { useCopy } from "../../hooks/useCopy";
+import { kRingForRadius } from "./h3Ring";
 import styles from "./Figures.module.css";
 
 const SIZE = 30;
 const CENTER = { x: 160, y: 120 };
 const RINGS = 2;
-
-/** Mirrors `k_ring_for_radius` in crates/core/src/h3index.rs (cell apothem 0.40 km, 1.25 safety factor). */
-function kRingForRadius(radiusKm: number): number {
-  return Math.max(1, Math.ceil(((radiusKm * 1.25) / 0.4 - 1) / 2));
-}
 
 interface Hex {
   key: string;

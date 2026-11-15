@@ -654,6 +654,52 @@ async fn one_failing_source_degrades_to_200_with_warning() {
 }
 
 #[tokio::test]
+async fn degraded_responses_are_not_cached_so_a_recovered_source_is_retried() {
+    let firms = healthy_firms().await;
+    Mock::given(method("GET"))
+        .and(path_regex(format!(
+            "^/api/area/csv/{KEY}/VIIRS_NOAA20_NRT/"
+        )))
+        .respond_with(ResponseTemplate::new(200).set_body_string("Invalid MAP_KEY."))
+        .with_priority(1)
+        .mount(&firms)
+        .await;
+
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    for route in ["harmonize", "export"] {
+        let uri = format!("/api/{route}?{BBOX}&days=1");
+        let first = call(&app, &uri).await;
+        let second = call(&app, &uri).await;
+        assert_eq!(first.status, StatusCode::OK, "{route}: {}", first.body);
+        assert_eq!(first.x_cache.as_deref(), Some("MISS"), "{route}");
+        assert_eq!(second.status, StatusCode::OK, "{route}: {}", second.body);
+        assert_eq!(
+            second.x_cache.as_deref(),
+            Some("MISS"),
+            "{route}: a response missing a failed source must not be served from cache"
+        );
+    }
+    // Both routes asked the failing source on both calls; none of the four was a cache hit.
+    assert_eq!(area_requests(&firms, "VIIRS_NOAA20_NRT").await, 4);
+
+    // The healthy pipeline keeps its cache behaviour (covered in depth by
+    // `identical_request_is_served_from_cache_without_new_upstream_calls`).
+    let healthy = healthy_firms().await;
+    let healthy_app = self::app(
+        Some(firms_client(&healthy)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let uri = format!("/api/export?{BBOX}&days=1");
+    assert_eq!(call(&healthy_app, &uri).await.x_cache.as_deref(), Some("MISS"));
+    assert_eq!(call(&healthy_app, &uri).await.x_cache.as_deref(), Some("HIT"));
+}
+
+#[tokio::test]
 async fn availability_failure_maps_to_502() {
     let firms = MockServer::start().await;
     Mock::given(method("GET"))

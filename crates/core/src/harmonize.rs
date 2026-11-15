@@ -1,7 +1,7 @@
 use crate::config::{MatchingConfig, PipelineConfig, VzaConfig};
 use crate::dedup::{haversine_km, remove_interscan_duplicates_indexed_with};
 use crate::fleet::{self, FleetObservation};
-use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
+use crate::h3index::{TimedH3Index, indexed_k_ring, shift_time_clamped};
 use crate::models::*;
 use crate::sama;
 use crate::static_mask::StaticMask;
@@ -141,8 +141,15 @@ pub fn harmonize_with_links_masked(
         (modis.len() - modis_fleet.len()) + (viirs.len() - viirs_fleet.len());
 
     // Step 3 & 4: Match and fuse using time-sliced H3 spatial index candidate lookup
-    let use_spatial = config.matching.radius_km.is_finite();
-    let index = use_spatial.then(|| {
+    // A radius that is not finite, or so wide that the ring would exhaust memory (only reachable
+    // with an unvalidated config), scans every VIIRS observation instead of using the index.
+    let search_k = config
+        .matching
+        .radius_km
+        .is_finite()
+        .then(|| indexed_k_ring(config.matching.radius_km, 0))
+        .flatten();
+    let index = search_k.map(|_| {
         TimedH3Index::build(
             viirs_fleet
                 .iter()
@@ -155,11 +162,6 @@ pub fn harmonize_with_links_masked(
     let mut matched_pairs = 0usize;
     let mut viirs_aggregated = 0usize;
     let mut simultaneous_result_idx = Vec::new();
-    let search_k = if use_spatial {
-        k_ring_for_radius(config.matching.radius_km)
-    } else {
-        0
-    };
     let pad = config.matching.window_secs.saturating_add(1);
     let mut candidates = Vec::new();
 
@@ -170,8 +172,8 @@ pub fn harmonize_with_links_masked(
         let mh = &m.hotspot;
         let t_min = shift_time_clamped(mh.acquired, pad.saturating_neg());
         let t_max = shift_time_clamped(mh.acquired, pad);
-        let used_index = index.as_ref().is_some_and(|idx| {
-            idx.candidates_within_into(mh.lat, mh.lon, search_k, t_min, t_max, &mut candidates)
+        let used_index = index.as_ref().zip(search_k).is_some_and(|(idx, k)| {
+            idx.candidates_within_into(mh.lat, mh.lon, k, t_min, t_max, &mut candidates)
         });
 
         let mut consider = |j: usize| {
@@ -1471,6 +1473,22 @@ mod tests {
         let out = harmonize_with_config(modis, viirs, &config);
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].source, HotspotSource::Matched);
+    }
+
+    #[test]
+    fn unvalidated_huge_match_radius_matches_by_linear_scan() {
+        // `validate` caps the radius at 10 km, but the function accepts any finite value, and a
+        // k-ring that wide (~10^9 cells at 10^4 km) must not be enumerated.
+        let modis = vec![make_hotspot(Sensor::ModisTerra, 39.0, 32.0, 0, 50.0, Confidence::Nominal)];
+        let viirs = vec![make_hotspot(Sensor::ViirsSNPP, 39.045, 32.0, 0, 40.0, Confidence::High)];
+
+        for radius_km in [1.0e4, 1.0e12] {
+            let mut config = PipelineConfig::default();
+            config.matching.radius_km = radius_km;
+            let out = harmonize_with_config(modis.clone(), viirs.clone(), &config);
+            assert_eq!(out.len(), 1, "radius_km={radius_km}");
+            assert_eq!(out[0].source, HotspotSource::Matched, "radius_km={radius_km}");
+        }
     }
 
     #[test]
