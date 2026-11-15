@@ -16,6 +16,10 @@
 | `UX_YAZIM.md` | Ses tonu, mikro metin kuralları, EN/TR metin tablosu ve biçim standartları |
 | `FRONTEND_STACK_ONERISI.md` | Frontend teknoloji yığını kararları, uygulanan prototip seçimi ve API sözleşmesi |
 | `REFERANS_ANALIZI.md` | 32 makale + 6 referans projenin sentezi: açık sorunlara (P1–P7) göre bulgular, önceliklendirilmiş yol haritası, makale envanteri |
+| `TASARIM_METHODS.md` | Methods sayfası/çekmecesi, 7 aşamalı pipeline görseli, VZA ve H3 görselleri, referans formatı, disclaimer banner'ı (C5) |
+| `TASARIM_EXPORT_BRIFING.md` | Export butonu ve format seçimi, acil müdahale brifingi metrikleri, yazdırma görünümü (C6) |
+| `TASARIM_BELIRSIZLIK_RENK.md` | Grafik türüne göre belirsizlik gösterimi, erişilebilir renk skalaları, palet seçici (C7) |
+| `RENK_DENETIMI.md` | `tools/cvd_check.py` ile üretilen renk körlüğü / kontrast denetim raporu (elle düzenlenmez) |
 
 ## Doküman Ekleme Kuralları
 

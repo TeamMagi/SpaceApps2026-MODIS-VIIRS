@@ -231,9 +231,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | C10 | Tropikal swath boşluğu bayrağı | Can | — | — | [ ] |
 | C12 | Opsiyonel düşük güven filtresi ve duman/atmosfer belirsizlik notu | Can | — | — | [ ] |
 | C8 | Footprint Lens | Can | — | R12, G5 | [ ] |
-| C5 | Methods sayfası + disclaimer tasarımı | Can | C1 | R6, S8 | [ ] bekliyor |
-| C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | C1 | K3, K4 | [ ] bekliyor |
-| C6 | Export UI + brifingi tasarımı | Can | C1 | R7 | [ ] bekliyor |
+| C5 | Methods sayfası + disclaimer tasarımı | Can | C1 | R6, S8 | [X] |
+| C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | C1 | K3, K4 | [X] |
+| C6 | Export UI + brifingi tasarımı | Can | C1 | R7 | [X] |
 | C11 | Vaka çalışması: Çin anız yakma yasağı paradoksu | Can | C9 | G5 | [ ] |
 | R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | [X] |
 | R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | [X] |
@@ -287,11 +287,11 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, C8, C11, R12, Y8`).
-- **Can:** C1–C4 tamamlandı. Açık görevlerden şu an başlanabilecekler: C5, C6, C7 (C1 bitti), C8, C9, C10, C12 (`Bekler: —`). (`C11` ise `C9`'u bekliyor.)
-- **Serhat:** R1–R5 tamamlandı. Açık görevlerden şu an başlanabilecekler: R9, R10, R11 (`Bekler: —`). (`R6` C5'i, `R7` C6+S7'yi, `R8` K1'i, `R12` R9+C8'i bekliyor.)
+- **Can:** C1–C7 tamamlandı. Açık görevlerden şu an başlanabilecekler: C8, C9, C10, C12 (`Bekler: —`). (`C11` ise `C9`'u bekliyor.)
+- **Serhat:** R1–R5 tamamlandı. Açık görevlerden şu an başlanabilecekler: R9, R10, R11 (`Bekler: —`). (`R6` artık başlayabilir (C5 bitti); `R7` S7'yi, `R8` K1'i, `R12` R9+C8'i bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
-- **Sadık:** Şu an başlanabilecekler: K1 (R4 bitti), K2 (G7, R1 bitti), K5, K8, K9, K10, K12, K13 (`Bekler: —`). (`K3, K4` C7'yi; `K6, K7` K5'i; `K11` K10'u; `K14` K13'ü bekliyor.)
+- **Sadık:** Şu an başlanabilecekler: K1 (R4 bitti), K2 (G7, R1 bitti), K5, K8, K9, K10, K12, K13 (`Bekler: —`). (`K3, K4` artık başlayabilir (C7 bitti); `K6, K7` K5'i; `K11` K10'u; `K14` K13'ü bekliyor.)
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -614,7 +614,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P3, P7 (+ `[01, 09, 16]`, `flare-chronos`)
 - **Bitti sayılır:** harita üzerinde MODIS ayak izi içindeki 375 m VIIRS piksellerini, alan oranını (`74×`) ve tespit eşiği farkını (`5.7→40 MW` vs `0.7→3.7 MW`) gösteren mercek bileşeni çalışıyor.
 
-### [ ] C5 — Methods sayfası + bilimsel disclaimer tasarımı
+### [X] C5 — Methods sayfası + bilimsel disclaimer tasarımı
 - **Bekler:** C1 · **Açar:** R6, S8
 - Pipeline'ın nasıl çalıştığını açıklayan sayfa tasarımı:
   - 7 aşamalı pipeline diyagramı (görsel akış)
@@ -624,8 +624,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Bilimsel referans listesi formatı (akademik makalelere atıf)
   - Disclaimer banner tasarımı: "Bu değerler model tahminidir" uyarısı
 - **Bitti sayılır:** wireframe'de Methods sayfası var; pipeline görseli okunabilir; disclaimer yerleşimi belirgin ama rahatsız edici değil.
+- **Çıktı (Can, 2026-11-15):** `docs/TASARIM_METHODS.md` — çekmece + `/methods` tam sayfa ortak bileşen kararı, Mermaid + masaüstü/mobil pipeline wireframe'i, aşama başına parametre tablosu (koddaki varsayılanlarla), VZA grafiği ve örnek değer tablosu, H3 res 8 görseli, APA 7 referans ↔ aşama eşleme formatı, disclaimer banner'ı, R6 ve S8 devir listeleri.
+- **Bulgu:** `MIMARI.md` eşleştirme penceresini 5 dk yazıyor; kodda `MATCH_WINDOW_SECS = 10_800` (180 dk).
 
-### [ ] C7 — Belirsizlik gösterimi + erişilebilir renk skalası tasarımı
+### [X] C7 — Belirsizlik gösterimi + erişilebilir renk skalası tasarımı
 - **Bekler:** C1 · **Açar:** K3, K4
 - Bilimsel verilerin doğru görselleştirilmesi:
   - **Belirsizlik:** error bar / confidence band / shaded area — hangi yöntem hangi chart'ta
@@ -636,8 +638,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Light/dark mode'da renk kontrastı
 - **Kaynak:** Yarışma gereksinimleri — "Color ramps"; fire-harmony — belirsizlik gösterimi
 - **Bitti sayılır:** renk paleti renk körlüğü simülatörüyle test edilmiş; belirsizlik gösterimi her chart tipi için tanımlanmış.
+- **Çıktı (Can, 2026-11-15):** `docs/TASARIM_BELIRSIZLIK_RENK.md` — grafik türüne göre belirsizlik karar tablosu (bant, hata çubuğu, takvimde kesikli kenar, haritada opaklık, tooltip biçimi), sıralı/sapma/kategorik roller, viridis/cividis alternatifleri, quantile kararı + lejant wireframe'i, palet seçici, K3/K4 devir listeleri.
+- **Simülatör:** `tools/cvd_check.py` (Machado 2009 + CIEDE2000 + WCAG) → `docs/RENK_DENETIMI.md`. Mevcut token'larda 7 FAIL / 5 WARN; önerilen düzeltmelerle 2 FAIL (düşük FRP adımlarının zemin kontrastı, hale ile çözülür, bilinçli kabul). Yeniden üretme: `python tools/cvd_check.py --out docs/RENK_DENETIMI.md`.
 
-### [ ] C6 — Export UI + acil müdahale brifingi tasarımı
+### [X] C6 — Export UI + acil müdahale brifingi tasarımı
 - **Bekler:** C1 · **Açar:** R7
 - İki ilişkili özelliğin tasarımı:
   - **Export:** indirme butonu konumu, format seçimi (CSV/GeoJSON), dosya adı gösterimi
@@ -646,6 +650,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Print-friendly layout (jüri basabilir)
 - **Kaynak:** Strateji 1.1 — "Acil müdahale brifingi — tek tıkla bölge raporu"
 - **Bitti sayılır:** export butonu ve brifingi paneli wireframe'de; brifingi içeriği (hangi metrikler, hangi sırada) belirlenmiş.
+- **Çıktı (Can, 2026-11-15):** `docs/TASARIM_EXPORT_BRIFING.md` — export butonu yerleşimi ve CSV/GeoJSON seçimi, export durumları, mevcut `BriefingDrawer`'ın korunması kararı, veri kaynağıyla eşlenmiş 9 sıralı metrik, masaüstü/mobil/durum wireframe'leri, A4 yazdırma görünümü, R7 devir listesi.
+- **Bulgular (R7/Görkem için):** sunucu export dosya adı `pyrosync_{west}_{south}_{east}_{north}_{YYYYMMDD}`, frontend `pyrosync_{region}_{date}`; `days` `1..=5` ile sınırlı ("son 7 gün" metriği için pencere uyumu gerekir).
 
 ### [ ] C11 — Vaka çalışması: Çin anız yakma yasağı paradoksu
 - **Bekler:** C9 · **Açar:** G5
