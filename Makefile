@@ -111,7 +111,7 @@ precompute-local: ## Precompute /api/series disk cache locally without Docker
 	mkdir -p $(DERIVED_CACHE_HOST_DIR)
 	ARCHIVE_CACHE_DIR=$(ARCHIVE_CACHE_HOST_DIR) DERIVED_CACHE_DIR=$(DERIVED_CACHE_HOST_DIR) cargo run --release -p pyrosync-server -- precompute
 
-bundle-derived: ## Copy precomputed /api/series cache into data/derived/series for git sharing
+bundle-derived: ## Copy precomputed /api/series and coverage cache into data/derived for git sharing
 	@if [ ! -d "$(DERIVED_CACHE_HOST_DIR)/series" ]; then \
 		echo "Error: $(DERIVED_CACHE_HOST_DIR)/series not found. Run 'make precompute' or 'make precompute-local' first."; \
 		exit 1; \
@@ -124,7 +124,13 @@ bundle-derived: ## Copy precomputed /api/series cache into data/derived/series f
 		cp "$$f" data/derived/series/; \
 		count=$$((count + 1)); \
 	done; \
-	echo "Copied $$count file(s) to data/derived/series/."; \
+	cov_count=0; \
+	for f in "$(DERIVED_CACHE_HOST_DIR)/coverage.json" "$(DERIVED_CACHE_HOST_DIR)/coverage.meta.json"; do \
+		[ -f "$$f" ] || continue; \
+		cp "$$f" data/derived/; \
+		cov_count=$$((cov_count + 1)); \
+	done; \
+	echo "Copied $$count series file(s) to data/derived/series/ and $$cov_count coverage file(s) to data/derived/."; \
 	echo "Commit data/derived to share precomputed results with the team."
 
 fetch-sample: ## Fetch sample data from FIRMS API (requires FIRMS_API_KEY)

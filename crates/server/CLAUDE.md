@@ -49,5 +49,7 @@
 - `/api/harmonize`, `/api/compare` ve `/api/stats` yanıtları bellek bütçeli response cache kullanır ve `X-Cache: HIT` / `MISS` header'ı döner.
 - Response cache iki seviyeli TTL uygular: `days` (NRT) istekleri 600 sn, `start`/`end` (arşiv) istekleri 21600 sn (6 saat).
 - `/api/calendar` FIRMS ülke arşivini kullanır, transaction harcamaz ve `FIRMS_API_KEY` gerektirmez; buna karşılık arşiv NOAA-21 taşımadığı için (NOAA-20 `viirs-jpss1` olarak arşivde var) NRT endpoint'lerinden daha küçük bir filo kapsar.
+- Global sensör kapsamı (`coverage.json` + `coverage.meta.json`) bellek → `DERIVED_CACHE_DIR` → `BUNDLED_DERIVED_DIR` → arşiv taraması sırasıyla önbelleklenir; damga `DERIVED_SCHEMA_VERSION` ve tüm arşiv dosyalarının sıralı `(path, bytes)` özetidir (`PipelineConfig`'e bağlı değildir).
+- `pyrosync-server precompute` bölgelerden önce kapsamı da yazılabilir diske yazar; `make bundle-derived` bunu `data/derived/` altına kopyalar.
 - Docker'da `STATIC_DIR=/app/static` olarak ayarlanır.
 - Port 3001 üzerinde `0.0.0.0` dinler (container erişimi için).

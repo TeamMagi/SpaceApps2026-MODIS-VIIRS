@@ -31,7 +31,7 @@ use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_slug, scan_lo
 use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
 
-use crate::derived_cache::{ArchiveFileStamp, DerivedCache, SeriesStamp};
+use crate::derived_cache::{ArchiveFileStamp, CoverageStamp, DerivedCache, SeriesStamp};
 
 const X_SERIES_SOURCE_HEADER: HeaderName = HeaderName::from_static("x-series-source");
 pub const DEFAULT_PRECOMPUTE_CONCURRENCY: usize = 2;
@@ -86,6 +86,8 @@ pub struct ArchiveState {
     bundled_cache: Arc<DerivedCache>,
     index: OnceCell<Arc<ArchiveIndex>>,
     coverage: OnceCell<Arc<Coverage>>,
+    #[cfg(test)]
+    coverage_scans: std::sync::atomic::AtomicUsize,
     series: Mutex<HashMap<String, Arc<OnceCell<Bytes>>>>,
     years: Mutex<YearCache>,
     /// Each slot holds one parsed year plus its harmonize working set until its stats are
@@ -104,6 +106,8 @@ impl ArchiveState {
             bundled_cache: Arc::new(DerivedCache::bundled_from_env()),
             index: OnceCell::new(),
             coverage: OnceCell::new(),
+            #[cfg(test)]
+            coverage_scans: std::sync::atomic::AtomicUsize::new(0),
             series: Mutex::new(HashMap::new()),
             years: Mutex::new(YearCache::default()),
             load_slots: Arc::new(Semaphore::new((cpus / 2).clamp(2, 8))),
@@ -120,6 +124,11 @@ impl ArchiveState {
     pub fn with_bundled_cache_dir(mut self, dir: PathBuf) -> Self {
         self.bundled_cache = Arc::new(DerivedCache::read_only(dir));
         self
+    }
+
+    #[cfg(test)]
+    pub fn coverage_scans(&self) -> usize {
+        self.coverage_scans.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub fn with_year_concurrency(mut self, concurrency: usize) -> Self {
@@ -378,6 +387,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
     state
         .index
         .get_or_try_init(|| async {
+            let started = Instant::now();
             let dir = state.dir().to_path_buf();
             let index = tokio::task::spawn_blocking(move || build_index(&dir))
                 .await
@@ -391,6 +401,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
             tracing::info!(
                 regions = index.regions.len(),
                 dir = %state.dir().display(),
+                elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
                 "scanned FIRMS archive"
             );
             Ok(Arc::new(index))
@@ -399,7 +410,7 @@ async fn load_index(state: &ArchiveState) -> Result<Arc<ArchiveIndex>, ApiError>
         .cloned()
 }
 
-#[derive(Serialize, Clone, Copy, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 struct DateSpan {
     first: NaiveDate,
     last: NaiveDate,
@@ -541,21 +552,117 @@ fn file_date_span(path: &Path) -> std::io::Result<Option<DateSpan>> {
     }))
 }
 
+/// Persistent disk representation of [`Coverage`], preserving `snpp` and `noaa20` which are
+/// skipped in `/api/series` JSON responses.
+#[derive(Serialize, Deserialize)]
+struct CachedCoverage {
+    modis: Option<DateSpan>,
+    viirs: Option<DateSpan>,
+    snpp: Option<DateSpan>,
+    noaa20: Option<DateSpan>,
+}
+
+impl From<&Coverage> for CachedCoverage {
+    fn from(c: &Coverage) -> Self {
+        Self {
+            modis: c.modis,
+            viirs: c.viirs,
+            snpp: c.snpp,
+            noaa20: c.noaa20,
+        }
+    }
+}
+
+impl From<CachedCoverage> for Coverage {
+    fn from(c: CachedCoverage) -> Self {
+        Self {
+            modis: c.modis,
+            viirs: c.viirs,
+            snpp: c.snpp,
+            noaa20: c.noaa20,
+        }
+    }
+}
+
+fn coverage_stamp(index: &ArchiveIndex) -> CoverageStamp {
+    CoverageStamp::from_files(index.regions.values().flat_map(|r| r.files.iter()))
+}
+
+fn serialize_coverage(coverage: &Coverage) -> Vec<u8> {
+    serde_json::to_vec_pretty(&CachedCoverage::from(coverage))
+        .expect("Coverage serialization cannot fail")
+}
+
+fn deserialize_coverage(bytes: &[u8], source: &str) -> Option<Coverage> {
+    match serde_json::from_slice::<CachedCoverage>(bytes) {
+        Ok(cached) => Some(Coverage::from(cached)),
+        Err(err) => {
+            tracing::warn!(
+                source,
+                error = %err,
+                "corrupt derived coverage JSON; ignoring cache"
+            );
+            None
+        }
+    }
+}
+
 async fn load_coverage(state: &ArchiveState) -> Result<Arc<Coverage>, ApiError> {
     let index = load_index(state).await?;
     state
         .coverage
         .get_or_try_init(|| async move {
             let started = Instant::now();
-            let coverage = tokio::task::spawn_blocking(move || scan_coverage(&index))
-                .await
-                .map_err(join_error)?
-                .map_err(|err| {
-                    ApiError::new(
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("failed to read sensor coverage from the archive: {err}"),
-                    )
-                })?;
+            let stamp = coverage_stamp(&index);
+            let cache = state.derived_cache.clone();
+            let bundled = state.bundled_cache.clone();
+            let check_stamp = stamp.clone();
+
+            if let Some((coverage, source)) = tokio::task::spawn_blocking(move || {
+                if let Some(bytes) = cache.read_coverage(&check_stamp)
+                    && let Some(coverage) = deserialize_coverage(&bytes, "disk")
+                {
+                    return Some((coverage, "disk"));
+                }
+                if let Some(bytes) = bundled.read_coverage(&check_stamp)
+                    && let Some(coverage) = deserialize_coverage(&bytes, "bundled")
+                {
+                    return Some((coverage, "bundled"));
+                }
+                None
+            })
+            .await
+            .map_err(join_error)?
+            {
+                tracing::info!(
+                    ?coverage,
+                    source,
+                    elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+                    "loaded sensor coverage from cache"
+                );
+                return Ok(Arc::new(coverage));
+            }
+
+            #[cfg(test)]
+            state
+                .coverage_scans
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
+            let cache = state.derived_cache.clone();
+            let coverage = tokio::task::spawn_blocking(move || {
+                let coverage = scan_coverage(&index)?;
+                let bytes = serialize_coverage(&coverage);
+                let _ = cache.write_coverage(&stamp, &bytes);
+                Ok::<_, std::io::Error>(coverage)
+            })
+            .await
+            .map_err(join_error)?
+            .map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to read sensor coverage from the archive: {err}"),
+                )
+            })?;
             tracing::info!(
                 ?coverage,
                 elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
@@ -1311,7 +1418,43 @@ pub async fn precompute_series(
 ) -> Result<PrecomputeReport, ApiError> {
     let total_started = Instant::now();
     let index = load_index(&state).await?;
-    let coverage = load_coverage(&state).await?;
+    let coverage = if opts.force {
+        let started = Instant::now();
+        #[cfg(test)]
+        state
+            .coverage_scans
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let stamp = coverage_stamp(&index);
+        let scan_index = index.clone();
+        let cache = state.derived_cache.clone();
+        let coverage = tokio::task::spawn_blocking(move || {
+            let coverage = scan_coverage(&scan_index).map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to read sensor coverage from the archive: {err}"),
+                )
+            })?;
+            let bytes = serialize_coverage(&coverage);
+            cache.write_coverage(&stamp, &bytes).map_err(|err| {
+                ApiError::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("failed to write derived coverage cache: {err}"),
+                )
+            })?;
+            Ok::<_, ApiError>(Arc::new(coverage))
+        })
+        .await
+        .map_err(join_error)??;
+        let _ = state.coverage.set(coverage.clone());
+        tracing::info!(
+            ?coverage,
+            elapsed_ms = started.elapsed().as_secs_f64() * 1000.0,
+            "computed sensor coverage from the archive"
+        );
+        coverage
+    } else {
+        load_coverage(&state).await?
+    };
 
     let targets: Vec<String> = if opts.regions.is_empty() {
         index.regions.keys().cloned().collect()
@@ -3081,6 +3224,14 @@ mod tests {
         let _ = std::fs::remove_dir_all(dir);
     }
 
+    /// Copies `coverage.{json,meta.json}` from `src` to `dst`.
+    fn copy_coverage_files(src: &Path, dst: &Path) {
+        std::fs::create_dir_all(dst).unwrap();
+        for name in ["coverage.json", "coverage.meta.json"] {
+            std::fs::copy(src.join(name), dst.join(name)).unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn precompute_skips_valid_bundled_region_and_force_writes_to_disk() {
         let dir = temp_archive("precompute-bundled");
@@ -3108,6 +3259,7 @@ mod tests {
         .unwrap();
         assert_eq!(r_stage.computed(), 1);
         copy_series_files(&staging_dir, &bundled_dir, "Samos");
+        copy_coverage_files(&staging_dir, &bundled_dir);
 
         let r_skip = precompute_series(
             state_with_caches(
@@ -3149,6 +3301,8 @@ mod tests {
         assert_eq!(r_force.computed(), 1);
         assert_eq!(r_force.skipped(), 0);
         assert_eq!(r_force.failed(), 0);
+        assert!(writable_dir.join("coverage.json").is_file());
+        assert!(writable_dir.join("coverage.meta.json").is_file());
         assert!(writable_dir.join("series/Samos.json").is_file());
         assert!(writable_dir.join("series/Samos.meta.json").is_file());
 
@@ -3391,5 +3545,214 @@ mod tests {
         let logs = String::from_utf8(buf.0.lock().unwrap().clone()).unwrap();
         assert!(logs.contains("/api/slow"), "missing path in logs: {logs}");
         assert!(logs.contains("WARN"), "missing WARN level in logs: {logs}");
+    }
+
+    #[tokio::test]
+    async fn coverage_disk_cache_roundtrip_avoids_rescan_and_preserves_all_sensors() {
+        let dir = temp_archive("coverage-disk-roundtrip");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        write_file(&dir, "viirs-snpp", 2021, "Malta", &[(35.9, "2021-07-02", 0)]);
+        write_file(
+            &dir,
+            "viirs-jpss1",
+            2021,
+            "Malta",
+            &[(36.0, "2021-07-05", 0)],
+        );
+
+        let s1 = state_with_config(dir.clone(), derived.clone(), u64::MAX, PipelineConfig::default());
+        let cov1 = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+        assert!(derived.join("coverage.json").is_file());
+        assert!(derived.join("coverage.meta.json").is_file());
+        assert_eq!(
+            cov1.snpp,
+            Some(DateSpan {
+                first: d(2021, 7, 2),
+                last: d(2021, 7, 2),
+            })
+        );
+        assert_eq!(
+            cov1.noaa20,
+            Some(DateSpan {
+                first: d(2021, 7, 5),
+                last: d(2021, 7, 5),
+            })
+        );
+
+        // Fresh state simulates a restart: must read coverage from disk without rescanning.
+        let s2 = state_with_config(dir.clone(), derived.clone(), u64::MAX, PipelineConfig::default());
+        let cov2 = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+        assert_eq!(cov2, cov1);
+
+        // /api/points must also work with the cached coverage (including snpp/noaa20 spans).
+        let Json(pts) = points(
+            State(s2.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                month: Some("7".into()),
+                limit: None,
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+        assert!(!pts.no_detection_days.is_empty());
+
+        // Coverage does not depend on PipelineConfig, so changing config must keep the cache valid.
+        let mut alt_cfg = PipelineConfig::default();
+        alt_cfg.matching.window_secs += 60;
+        let s3 = state_with_config(dir.clone(), derived, u64::MAX, alt_cfg);
+        let cov3 = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(cov3, cov1);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_reads_from_bundled_without_writing_writable_dir() {
+        let dir = temp_archive("coverage-bundled");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+        write_file(&dir, "viirs-snpp", 2020, "Cyprus", &[(35.1, "2020-07-10", 0)]);
+
+        let staging_dir = dir.join("_staging");
+        let bundled_dir = dir.join("_bundled");
+        let writable_dir = dir.join("_writable");
+
+        let staging_state = state_with_caches(
+            dir.clone(),
+            staging_dir.clone(),
+            dir.join("_unused_bundled"),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let expected = load_coverage(&staging_state).await.ok().unwrap();
+        assert_eq!(staging_state.coverage_scans(), 1);
+        copy_coverage_files(&staging_dir, &bundled_dir);
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let loaded = load_coverage(&s).await.ok().unwrap();
+        assert_eq!(s.coverage_scans(), 0);
+        assert_eq!(loaded, expected);
+        assert!(
+            !writable_dir.exists(),
+            "reading coverage from bundled must not create or write to the writable cache"
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_disk_cache_invalidates_on_file_size_change_and_survives_mtime() {
+        let dir = temp_archive("coverage-invalidate");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let cov1 = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+        assert_eq!(cov1.modis.unwrap().last, d(2020, 7, 1));
+
+        // Changing mtime without changing size keeps the stamp valid.
+        let csv_path = dir.join("modis/2020/modis_2020_Cyprus.csv");
+        let past = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000_000);
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&csv_path)
+            .unwrap()
+            .set_modified(past)
+            .unwrap();
+        let s_mtime = state(dir.clone(), u64::MAX);
+        let _ = load_coverage(&s_mtime).await.ok().unwrap();
+        assert_eq!(s_mtime.coverage_scans(), 0);
+
+        // Changing file byte size invalidates the stamp and triggers a rescan.
+        let mut contents = std::fs::read_to_string(&csv_path).unwrap();
+        contents.push_str("35.2,32.0,320,0.5,0.5,2020-08-15,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n");
+        std::fs::write(&csv_path, contents).unwrap();
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let cov2 = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 1);
+        assert_eq!(cov2.modis.unwrap().last, d(2020, 8, 15));
+
+        // Subsequent restart reads the updated cache without rescanning.
+        let s3 = state(dir.clone(), u64::MAX);
+        let cov3 = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(cov3, cov2);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn coverage_ignores_corrupt_files_and_rescans_without_error() {
+        let dir = temp_archive("coverage-corrupt");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let expected = load_coverage(&s1).await.ok().unwrap();
+        assert_eq!(s1.coverage_scans(), 1);
+
+        // Corrupt coverage.json -> must fall back to scan with no error and repair disk cache.
+        std::fs::write(derived.join("coverage.json"), b"{corrupt").unwrap();
+        let s2 = state(dir.clone(), u64::MAX);
+        let repaired = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 1);
+        assert_eq!(repaired, expected);
+
+        let s3 = state(dir.clone(), u64::MAX);
+        let after_repair = load_coverage(&s3).await.ok().unwrap();
+        assert_eq!(s3.coverage_scans(), 0);
+        assert_eq!(after_repair, expected);
+
+        // Corrupt coverage.meta.json -> must also fall back to scan with no error.
+        std::fs::write(derived.join("coverage.meta.json"), b"not-json").unwrap();
+        let s4 = state(dir.clone(), u64::MAX);
+        let after_meta_corrupt = load_coverage(&s4).await.ok().unwrap();
+        assert_eq!(s4.coverage_scans(), 1);
+        assert_eq!(after_meta_corrupt, expected);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn precompute_persists_coverage_to_writable_disk() {
+        let dir = temp_archive("precompute-coverage");
+        let derived = dir.join("_derived_cache");
+        write_file(&dir, "modis", 2020, "Cyprus", &[(35.0, "2020-07-01", 0)]);
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let report = precompute_series(
+            s1.clone(),
+            &PrecomputeOptions {
+                regions: vec!["Cyprus".to_string()],
+                force: false,
+            },
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert_eq!(report.computed(), 1);
+        assert_eq!(s1.coverage_scans(), 1);
+        assert!(derived.join("coverage.json").is_file());
+        assert!(derived.join("coverage.meta.json").is_file());
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let _ = load_coverage(&s2).await.ok().unwrap();
+        assert_eq!(s2.coverage_scans(), 0);
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

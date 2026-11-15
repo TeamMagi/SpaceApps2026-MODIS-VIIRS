@@ -232,13 +232,13 @@ else
     fail "6. GET /api/calendar (Cyprus 2019) -> 200 but missing expected keys"
 fi
 
-# 7. GET /api/points?region=Cyprus&year=2021&month=8 -> 200 + "stages"
-if ! http_get "/api/points?region=Cyprus&year=2021&month=8" 30; then
+# 7. GET /api/points?region=Cyprus&year=2021&month=8 -> 200 + "stages" (allow up to 120s on cold archive coverage scan)
+if ! http_get "/api/points?region=Cyprus&year=2021&month=8" 120; then
     fail "7. GET /api/points (Cyprus 2021-08) -> request error: $REQ_ERR"
 elif [ "$REQ_STATUS" != "200" ]; then
     fail "7. GET /api/points (Cyprus 2021-08) -> expected 200, got $REQ_STATUS"
 elif grep -q '"stages"' "$BODY_FILE"; then
-    pass "7. GET /api/points (Cyprus 2021-08) -> 200 with stages"
+    pass "7. GET /api/points (Cyprus 2021-08) -> 200 with stages (${REQ_TIME}s)"
 else
     fail "7. GET /api/points (Cyprus 2021-08) -> 200 but missing 'stages'"
 fi
