@@ -1,20 +1,21 @@
 # Görev Dağılımı — PyroSync
 
+> **İşaretleme kuralı:** Her görev başlığının başında bir onay kutusu vardır. `[ ]` = yapılmadı, `[X]` = tamamlandı. Görevi bitiren kişi, "Bitti sayılır" şartı sağlandığında kendi görevinin kutusunu `[X]` yapar (özet tablosundaki kutuyu da). Şart sağlanmadan `[X]` konmaz. Bu dosya projenin TEK görev listesidir; ayrı görev dosyası açılmaz.
+
 Proje bağlamı: [README.md](README.md). Strateji: STRATEGY.md (yerel, gitignore'da).
 
 > [!NOTE]
-> 2026-11-13'te oluşturuldu. Tek branch (`main`) üzerinden sırayla commit atılır; herkes kendi görevini bitirince commit atar, çakışma olmaması için aynı dosyalara aynı anda dokunulmaz.
+> 2026-11-13'te oluşturuldu. Tek branch (`main`) üzerinden sırayla commit atılır; herkes kendi görevini bitirince commit atar, çakışma olmaması için aynı dosyalara aynı anda dokunılmaz.
 
 ## Nasıl okunur
 
-- **Kimlik:** `G` Görkem'in, `C` Can'ın, `R` Serhat'ın, `S` Samet'in, `Y` Yusuf'un, `K` Sadık'ın görevleri. Örnek: `R3` Serhat'ın 3. görevi. Commit mesajlarında bu kimlikler kullanılır (`[G2] VZA correction katsayıları kalibre edildi`).
+- **Kimlik:** `G` Görkem'in, `C` Can'ın, `R` Serhat'ın, `S` Samet'in, `Y` Yusuf'un, `K` Sadık'ın görevleri. Örnek: `R3` Serhat'ın 3. görevi, `K2` Sadık'ın 2. görevi. Commit mesajlarında bu kimlikler kullanılır (`[G2] VZA correction katsayıları kalibre edildi`, `[K1] fallback modu eklendi`). Görev kimlikleri tüm dosyada tekildir.
 - **Bekler:** başlamadan önce bitmiş olması gereken görevler. Bunlar bitmeden başlanırsa iş ya yapılamaz ya da tekrar yapılır.
-- **Çapraz dosya atıfları:** `GOREVLER2.md`'deki görevlere `v2:` prefix'iyle atıf yapılır (örnek `v2:C5`). GOREVLER2.md de bu dosyaya `v1:` prefix'iyle atıf yapar.
 - **Açar:** bu görev bitince başlayabilecek görevler.
-- **Bitti sayılır:** görevin kapanma şartı. Şart sağlanmadan ✅ konmaz.
-- **Durum:** ✅ bitti · 🔄 sürüyor · ⬜ başlayabilir · ⏸ bekliyor (bir bağımlılık bitmedi)
+- **Bitti sayılır:** görevin kapanma şartı. Şart sağlanmadan `[X]` konmaz.
+- **Durum:** `[X]` bitti · `[ ]` yapılmadı (özet tablosunda ayrıca `sürüyor` veya `bekliyor` — bir bağımlılık bitmedi — notu yer alabilir)
 
-Bir görevi bitiren kişi durumunu ✅ yapar ve "Açar" satırındaki görevlerin sahiplerine haber verir.
+Bir görevi bitiren kişi durumunu `[X]` yapar ve "Açar" satırındaki görevlerin sahiplerine haber verir.
 
 ---
 
@@ -27,6 +28,7 @@ flowchart LR
     classDef serhat fill:#d1fae5,stroke:#059669,color:#064e3b
     classDef samet fill:#fef3c7,stroke:#b45309,color:#78350f
     classDef yusuf fill:#e0e7ff,stroke:#4338ca,color:#312e81
+    classDef sadik fill:#fde68a,stroke:#92400e,color:#451a03
 
     G1[G1 FIRMS API entegrasyonu]:::gorkem
     G2[G2 Harmonizasyon pipeline]:::gorkem
@@ -34,29 +36,52 @@ flowchart LR
     G4[G4 Server API tamamlama]:::gorkem
     G5[G5 Sunum + demo]:::gorkem
     G6[G6 Final entegrasyon]:::gorkem
+    G7[G7 Config-driven pipeline]:::gorkem
+    G8[G8 Bölgesel kalibrasyon]:::gorkem
+    G9[G9 Belirsizlik aralıkları]:::gorkem
+    G10[G10 Export engine + API]:::gorkem
 
     C1[C1 UI/UX konsept]:::can
     C2[C2 Tasarım sistemi]:::can
     C3[C3 Harita + takvim tasarımı]:::can
     C4[C4 Raw↔Harmonized tasarımı]:::can
+    C5[C5 Methods + disclaimer tasarımı]:::can
+    C6[C6 Export + brifingi tasarımı]:::can
+    C7[C7 Belirsizlik + renk skalası tasarımı]:::can
 
     R1[R1 Component mimarisi]:::serhat
     R2[R2 İnteraktif harita]:::serhat
     R3[R3 Burning calendar]:::serhat
     R4[R4 API bağlantısı]:::serhat
     R5[R5 Raw↔Harmonized toggle]:::serhat
+    R6[R6 Methods sayfası impl]:::serhat
+    R7[R7 Export + brifingi impl]:::serhat
+    R8[R8 Model seçimi toggle]:::serhat
 
     S1[S1 Core unit testler]:::samet
     S2[S2 Integration testler]:::samet
     S3[S3 API dokümantasyonu]:::samet
     S4[S4 Sample veri pipeline]:::samet
     S5[S5 CI/CD kurulumu]:::samet
+    S6[S6 Yeni modül testleri]:::samet
+    S7[S7 Case study veri seti]:::samet
+    S8[S8 Bilimsel referans sistemi]:::samet
 
     Y1[Y1 FRP zaman serisi]:::yusuf
     Y2[Y2 Sensör karşılaştırma]:::yusuf
     Y3[Y3 Yangın heatmap]:::yusuf
     Y4[Y4 İstatistik kartları]:::yusuf
     Y5[Y5 Mock veri hazırlığı]:::yusuf
+
+    K1[K1 Live/demo/fallback modu]:::sadik
+    K2[K2 Config ayarları paneli]:::sadik
+    K3[K3 Belirsizlik görselleştirme]:::sadik
+    K4[K4 Erişilebilir renk skalası]:::sadik
+    K5[K5 Area API disk cache]:::sadik
+    K6[K6 2023 NOAA-21 efor geçişi]:::sadik
+    K7[K7 Tam filo 2000-present trend]:::sadik
+    K8[K8 MODIS içi efor geçişi 2002]:::sadik
+    K9[K9 SPA fallback düzeltme]:::sadik
 
     G1 --> G2
     G2 --> G3
@@ -66,10 +91,17 @@ flowchart LR
     R5 --> G5
     Y1 --> G5
     G5 --> G6
+    G2 --> G7
+    G7 --> G8
+    G8 --> G9
+    G4 --> G10
 
     C1 --> C2
     C1 --> C3
     C1 --> C4
+    C1 --> C5
+    C1 --> C6
+    C1 --> C7
 
     C2 --> R1
     C3 --> R2
@@ -82,12 +114,25 @@ flowchart LR
     R2 --> R5
     R3 --> R5
     R4 --> R5
+    C5 --> R6
+    R1 --> R6
+    G10 --> R7
+    C6 --> R7
+    S7 --> R7
+    G7 --> R8
+    K1 --> R8
+    R1 --> R8
 
     G2 --> S1
     G4 --> S2
     G4 --> S3
     G1 --> S4
     S1 --> S5
+    G7 --> S6
+    G9 --> S6
+    G10 --> S6
+    G1 --> S7
+    C5 --> S8
 
     R1 --> Y1
     R1 --> Y2
@@ -99,9 +144,21 @@ flowchart LR
     Y5 --> Y4
     S4 --> Y1
     S4 --> Y2
+
+    R4 --> K1
+    G7 --> K2
+    R1 --> K2
+    G9 --> K3
+    C7 --> K3
+    R1 --> K3
+    C7 --> K4
+    R1 --> K4
+    K5 --> K6
+    K5 --> K7
+    K9 --> R1
 ```
 
-Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Oklar "önce bu biter, sonra şu başlar" demek.
+Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · Turuncu: Sadık. Oklar "önce bu biter, sonra şu başlar" demek.
 
 ---
 
@@ -109,75 +166,96 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
 | Kimlik | Görev | Sahip | Bekler | Açar | Durum |
 |--------|-------|-------|--------|------|-------|
-| G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | ✅ |
-| G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | ✅ |
-| G3 | Effort normalization (Ω) | Görkem | G2 | G4 | ✅ |
-| G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | ✅ |
-| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | ⏸ (R5 ✅, Y1 bekliyor) |
-| G6 | Final entegrasyon + deployment | Görkem | G5 | — | ⏸ |
-| C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | ✅ |
-| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | ✅ |
-| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | ✅ |
-| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | ✅ |
-| R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | ✅ |
-| R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | ✅ |
-| R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | ✅ |
-| R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | ✅ |
-| R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | ✅ |
-| S1 | Core crate unit testleri | Samet | G2 | S5 | ✅ |
-| S2 | Server + FIRMS client integration testleri | Samet | G4 | — | ✅ |
-| S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | ✅ |
-| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | ⬜ |
-| S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | ⬜ |
-| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | ⏸ |
-| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | ⏸ |
-| Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5 | — | ⏸ |
-| Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | ⏸ |
-| Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | ⬜ |
-| K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | ⬜ |
-| K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | ⬜ |
-| K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | ⬜ |
-| K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | ⬜ |
-| K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | ⬜ |
+| G1 | FIRMS API gerçek veri entegrasyonu | Görkem | — | G2, S4 | [X] |
+| G2 | Harmonizasyon pipeline tamamlama | Görkem | G1 | G3, G4, S1 | [X] |
+| G3 | Effort normalization (Ω) | Görkem | G2 | G4 | [X] |
+| G4 | Server API endpoint'leri tamamlama | Görkem | G2, G3 | G5, R4, S2, S3 | [X] |
+| G5 | Sunum materyali + demo senaryosu | Görkem | G4, R5, Y1 | G6 | [ ] bekliyor (R5 [X], Y1 bekliyor) |
+| G6 | Final entegrasyon + deployment | Görkem | G5 | — | [ ] bekliyor |
+| G7 | Config-driven pipeline | Görkem | G2 | G8, R8, K2, S6 | [X] |
+| G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | [X] |
+| G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | [X] |
+| G10 | Export engine + /api/export | Görkem | G4 | R7, S6 | [X] |
+| C1 | UI/UX genel konsept + wireframe | Can | — | C2, C3, C4 | [X] |
+| C2 | Tasarım sistemi (renkler, tipografi, spacing) | Can | C1 | R1 | [X] |
+| C3 | Harita + takvim detay tasarımı | Can | C1 | R2, R3 | [X] |
+| C4 | Raw ↔ Harmonized karşılaştırma tasarımı | Can | C1 | R5 | [X] |
+| C5 | Methods sayfası + disclaimer tasarımı | Can | C1 | R6, S8 | [ ] bekliyor |
+| C6 | Export UI + brifingi tasarımı | Can | C1 | R7 | [ ] bekliyor |
+| C7 | Belirsizlik gösterimi + renk skalası tasarımı | Can | C1 | K3, K4 | [ ] bekliyor |
+| R1 | React component mimarisi + layout | Serhat | C2 | R2, R3, R4, Y1–Y4 | [X] |
+| R2 | İnteraktif harita entegrasyonu | Serhat | C3, R1 | R5 | [X] |
+| R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
+| R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
+| R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
+| R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [ ] bekliyor |
+| R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
+| R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
+| S1 | Core crate unit testleri | Samet | G2 | S5 | [X] |
+| S2 | Server + FIRMS client integration testleri | Samet | G4 | — | [X] |
+| S3 | API dokümantasyonu (OpenAPI) | Samet | G4 | — | [X] |
+| S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [ ] |
+| S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
+| S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [ ] bekliyor |
+| S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
+| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [ ] bekliyor |
+| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] bekliyor |
+| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] bekliyor |
+| Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5 | — | [ ] bekliyor |
+| Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
+| Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [ ] |
+| K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [ ] bekliyor |
+| K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [ ] bekliyor |
+| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] bekliyor |
+| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [ ] bekliyor |
+| K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [ ] |
+| K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
+| K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [ ] |
+| K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | [ ] |
+| K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [ ] |
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G5 — Sunum materyali + demo senaryosu (Y1 bekliyor). R5 bitti, G4 bitti.
-- **Can:** C1 ✅, C2 ✅, C3 ✅, C4 ✅. İlk faz UI/UX tasarım ve çalışan React prototipi (`web/src`) görevleri tamamlandı (sıradaki işler `GOREVLER2.md` içinde C5–C7).
-- **Serhat:** R1 ✅, R2 ✅, R3 ✅, R4 ✅, R5 ✅. Tüm frontend görevleri tamamlandı.
-- **Samet:** S5 — CI/CD (S1 bitti), S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti).
+- **Can:** C1 [X], C2 [X], C3 [X], C4 [X]. İlk faz UI/UX tasarım ve çalışan React prototipi (`web/src`) görevleri tamamlandı (sıradaki işler bu dosyada C5–C7; C1 bitmiş olduğundan hepsine başlayabilir).
+- **Serhat:** R1 [X], R2 [X], R3 [X], R4 [X], R5 [X]. Tüm frontend görevleri tamamlandı.
+- **Samet:** S5 — CI/CD (S1 bitti), S3 — OpenAPI dokümantasyonu (G4 bitti), S4 (G1 bitti); S7 — G1 (FIRMS API) bitmiş olduğundan Türkiye verisi çekmeye başlayabilir.
 - **Yusuf:** Y5 — Mock veri JSON dosyaları, hiçbir şeye bağımlı değil. R1 bitti, Y5 bitince Y1–Y4 açılır.
 
 **Birbirini bekleyen kritik yollar:**
-1. ~~**G1 → G2 → G4 → R4 → R5:**~~ ✅ Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
-2. ~~**C1 → C2 → R1:**~~ ✅ Tamamlandı. Component mimarisi ve tasarım sistemi entegre.
+1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
+2. ~~**C1 → C2 → R1:**~~ [X] Tamamlandı. Component mimarisi ve tasarım sistemi entegre.
 3. **G2 → S1 → S5:** Samet'in CI/CD'si S1'e bağlı, S1 bitti. S5 başlayabilir.
 4. **R1 + Y5 → Y1–Y4:** Yusuf'un grafikleri Y5 (mock veri) bekliyor. R1 bitti.
 5. **R5 → G5:** Serhat'ın frontend zinciri tamamlandı. G5 artık yalnızca Y1'i bekliyor.
+6. **G2 → G7 → G8 → G9 → K3:** Config ve kalibrasyon tamamlanmadan belirsizlik hesaplanamaz ve görselleştirilemez.
+7. **G4 → G10 → R7:** Export backend hazır olmadan frontend export UI yapılamaz. S7 (case study) de R7'yi besler.
+8. **C5 → R6 + S8:** Methods sayfası hem frontend implementasyon hem içerik için tasarımı bekler.
+9. **R4 → K1 → R8:** Fallback modu API bağlantısına bağlı; model seçimi de fallback'e bağlı.
 
 ---
 
 ## Görkem'in görevleri
 
-### G1 — FIRMS API gerçek veri entegrasyonu ✅
+### [X] G1 — FIRMS API gerçek veri entegrasyonu
 - **Bekler:** — · **Açar:** G2, S4
 - `pyrosync-firms` crate'i iskelet olarak hazır. Yapılacaklar:
-  - ✅ NASA FIRMS API key ile gerçek veri çekme testi — `examples/nrt_check.rs`
-  - ✅ Rate limiting ve retry mekanizması (API 429/503 dönebilir) — `limiter.rs`, `Retry-After` destekli exponential backoff
-  - ✅ Tarihsel veri desteği (NRT + SP + archive kaynaklarına göre endpoint seçimi) — `source.rs`, `availability.rs`, `archive.rs`
-  - ✅ CSV parse'ın gerçek FIRMS çıktısıyla doğrulanması (MODIS ve VIIRS formatları farklı sütun isimleri kullanabiliyor)
-  - ✅ `data/sample/` altına birkaç günlük örnek veri kaydetme (offline geliştirme için) — 5 format
+  - [X] NASA FIRMS API key ile gerçek veri çekme testi — `examples/nrt_check.rs`
+  - [X] Rate limiting ve retry mekanizması (API 429/503 dönebilir) — `limiter.rs`, `Retry-After` destekli exponential backoff
+  - [X] Tarihsel veri desteği (NRT + SP + archive kaynaklarına göre endpoint seçimi) — `source.rs`, `availability.rs`, `archive.rs`
+  - [X] CSV parse'ın gerçek FIRMS çıktısıyla doğrulanması (MODIS ve VIIRS formatları farklı sütun isimleri kullanabiliyor)
+  - [X] `data/sample/` altına birkaç günlük örnek veri kaydetme (offline geliştirme için) — 5 format
 - **Bitti sayılır:** `cargo test -p pyrosync-firms` geçiyor; gerçek API key ile en az 3 farklı kaynak (MODIS_NRT, VIIRS_SNPP_NRT, VIIRS_NOAA20_NRT) üzerinden veri çekilip parse ediliyor; `data/sample/` altında örnek CSV var.
 - **Doğrulama (2026-11-14):** 43 test geçiyor, clippy temiz. Canlı API `--bbox 15,-15,30,0` ile: MODIS_NRT 21, VIIRS_SNPP_NRT 2300, VIIRS_NOAA20_NRT 348 hotspot parse edildi.
 - **Not:** Canlı doğrulama `acq_time` parse hatasını ortaya çıkardı — FIRMS baştaki sıfırları atıyor (`614` = 06:14), eski kod yalnızca 4 karakterlik değer kabul ediyordu. MODIS_NRT çekimi tümüyle başarısız oluyordu; `data/sample/` altındaki üç NRT dosyası da aynı sebeple offline parse edilemiyordu. `parse_hhmm` 1–4 haneli değerleri kabul edecek şekilde düzeltildi, 6 regresyon testi eklendi.
 
-### G2 — Harmonizasyon pipeline tamamlama ✅
+### [X] G2 — Harmonizasyon pipeline tamamlama
 - **Bekler:** G1 · **Açar:** G3, G4, S1
 - Pipeline iskeletleri mevcut (dedup, VZA, matching, calendar). Yapılacaklar:
-  - ✅ H3 hexagonal grid entegrasyonu — `h3o` 0.11, Resolution 8 (hücre 0,74 km², MODIS 1 km ayak izine en yakın ölçek), k-ring 3 ile aday arama (~2,8 km garantili kapsama; k=2 tam 2,0 km'de sınırda kalıp eşleşme kaçırıyordu). `crates/core/src/h3index.rs`
+  - [X] H3 hexagonal grid entegrasyonu — `h3o` 0.11, Resolution 8 (hücre 0,74 km², MODIS 1 km ayak izine en yakın ölçek), k-ring 3 ile aday arama (~2,8 km garantili kapsama; k=2 tam 2,0 km'de sınırda kalıp eşleşme kaçırıyordu). `crates/core/src/h3index.rs`
   - ⛔ VZA polinom katsayılarını gerçek overlap-period verisinden hesaplama — **FIRMS ile yapılamaz**, bkz. aşağıdaki not. Katsayılar placeholder kaldı.
-  - ✅ Cross-sensor matching optimizasyonu — BallTree yerine H3 kullanıldı. Rust'ta olgun BallTree crate'i yok ve H3 zaten gerekiyordu; iki indeks yerine tek indeks hem agregasyon hem aday arama için kullanılıyor.
-  - ✅ Fleet rule — `crates/core/src/fleet.rs`, ayrı aşama olarak sensör-içi dedup'tan sonra ve MODIS eşleştirmesinden önce çalışıyor.
-  - ✅ Gerçek FIRMS verisiyle uçtan uca pipeline testi — `/api/harmonize` üzerinden koşuldu.
+  - [X] Cross-sensor matching optimizasyonu — BallTree yerine H3 kullanıldı. Rust'ta olgun BallTree crate'i yok ve H3 zaten gerekiyordu; iki indeks yerine tek indeks hem agregasyon hem aday arama için kullanılıyor.
+  - [X] Fleet rule — `crates/core/src/fleet.rs`, ayrı aşama olarak sensör-içi dedup'tan sonra ve MODIS eşleştirmesinden önce çalışıyor.
+  - [X] Gerçek FIRMS verisiyle uçtan uca pipeline testi — `/api/harmonize` üzerinden koşuldu.
 - **Bitti sayılır (2026-11-14'te ölçüme dayalı olarak revize edildi):**
   1. `cargo test -p pyrosync-core` geçiyor ve `cargo clippy --workspace --all-targets` temiz.
   2. Gerçek FIRMS verisiyle MODIS+VIIRS → harmonized → calendar akışı en az üç farklı bölgede çalışıyor, `Matched` kategorisi kayıt üretiyor.
@@ -211,12 +289,12 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **VZA katsayı kalibrasyonu ve R² — FIRMS verisiyle yapılamaz, G2 kapsamı dışına alındı.** Mekanizma çalışıyor: VZA `scan` piksel boyutundan türetiliyor, gerçek veride 20/20 MODIS kaydında tetikleniyor, en büyük düzeltme %42,4 (33,8 → 19,48 MW). Ancak `correction_ratio` polinomunun katsayıları (A=0,85 B=0,12 C=1,0) placeholder ve kalibre edilmeleri eşzamanlı MODIS/VIIRS gözlem çifti gerektiriyor; yukarıdaki ölçüm bu çiftlerin FIRMS'te bulunmadığını gösterdi (minimum 34 dk). İki yol var: (a) literatürden hazır katsayı girilip kaynak gösterilir, (b) granül/arşiv seviyesi veri sağlanır. S7 (case study veri seti) ile birlikte planlanmalı. **Katsayılar girilene kadar harmonize FRP değerleri gösterge niteliğindedir ve methods sayfasında (C5/R6) bu açıkça belirtilmeli.**
 - **Yan bulgu:** `VIIRS_SNPP_NRT` beslemesi 2026-11-02'de duruyor, diğer NRT kaynakları günceldir. `availability.rs` bunu doğru yönetiyor (SNPP sorgularını kendi aralığına kırpıyor), ama kısa pencereli isteklerde SNPP hiç katkı vermiyor; bu yüzden filo grupları o tarihlerde en fazla 2 platform içeriyor.
 
-### G3 — Effort normalization (Ω) ✅
+### [X] G3 — Effort normalization (Ω)
 - **Bekler:** G2 · **Açar:** G4
 - Uydu sayısı arttıkça aynı bölgede daha fazla detection olur — bu yapay artışı düzeltmek gerekiyor.
-  - ✅ Her ay/bölge için effective observation count hesaplama — `crates/core/src/effort.rs`
-  - ✅ MODIS-only dönemine normalize etme — taban dönemde Ω tanım gereği 1,0 çıkıyor
-  - ✅ Takvim çıktısına anomaly z-score'ları ekleme — anomali artık normalize seri üzerinden hesaplanıyor
+  - [X] Her ay/bölge için effective observation count hesaplama — `crates/core/src/effort.rs`
+  - [X] MODIS-only dönemine normalize etme — taban dönemde Ω tanım gereği 1,0 çıkıyor
+  - [X] Takvim çıktısına anomaly z-score'ları ekleme — anomali artık normalize seri üzerinden hesaplanıyor
 - **Bitti sayılır:** 2000–present boyunca monoton artan trend kalkıyor; 2012 ve 2017'deki uydu geçişlerinde yapay sıçrama yok.
 - **Görev tanımındaki iki hata düzeltildi (arşiv verisinden ölçüldü):**
   - Görev "2017+ MODIS + 2 VIIRS" diyor; NOAA-20 verisi FIRMS'te **2018-04**'te başlıyor, 2017'de değil.
@@ -257,14 +335,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Ω, MODIS referans kanalının kendi içindeki geçişi düzeltemez.** 2002-07'de Aqua eklenmesi tespitleri artırdı (arşivde 2001 Terra 5162 → 2002 Terra 4474 + Aqua 2412), ama Aqua `modis_observable`'ın parçası olduğu için Ω 1,000 kalıyor ve bu sıçrama düzeltilmiyor. Havuzlama anahtarı MODIS alt bileşimine duyarsız olduğundan Terra-only ve Terra+Aqua dönemleri tek havuzda birleşiyor (134 ay, Ω 1,000). Bitiş şartı yalnızca 2012 ve 2017'yi istediği için şart ihlal edilmiyor, ama 2000-2002 taban dönemi efor açısından sonrasıyla tam kıyaslanabilir DEĞİL. Çözüm gerekirse MODIS içi normalizasyon ayrı bir referans (örn. Terra-only alt kanalı) gerektirir.
 - **Açık risk: fetch hatası Ω'yı sessizce bozuyor.** Ara bir doğrulama koşusunda 36 istek başarısız oldu ve NOAA-20 verisi eksik geldiği için 2018-08..12 ayları "NOAA-20 yok" konfigürasyonuna düşüp yanlış Ω (6,810 yerine 4,724) aldı. Yani bir kaynağın çekimi başarısız olursa efor normalizasyonu sessizce yanlış düzeltme uygular. **G4'te ele alınmalı:** `report.failures` boş değilse Ω güvenilmez sayılmalı ve API bunu açıkça bildirmeli.
 
-### G4 — Server API endpoint'leri tamamlama ✅
+### [X] G4 — Server API endpoint'leri tamamlama
 - **Bekler:** G2, G3 · **Açar:** G5, R4, S2, S3
 - Mevcut: `/api/health`, `/api/harmonize` (bbox + days). Yapılacaklar:
-  - ✅ `/api/calendar` — arşivden tarihsel aylık takvim (`country`, `from`, `to`, opsiyonel bbox)
-  - ✅ `/api/compare` — raw vs harmonized karşılaştırma istatistikleri
-  - ✅ `/api/stats` — genel istatistikler, sensör kırılımı, pipeline metrikleri
-  - ✅ Response caching — bellek bütçeli, iki seviyeli TTL, `X-Cache: HIT|MISS` header'ı
-  - ✅ CORS ve error handling son hali — `CORS_ALLOWED_ORIGINS`, `/api/*` için JSON 404, `REQUEST_TIMEOUT_SECS`
+  - [X] `/api/calendar` — arşivden tarihsel aylık takvim (`country`, `from`, `to`, opsiyonel bbox)
+  - [X] `/api/compare` — raw vs harmonized karşılaştırma istatistikleri
+  - [X] `/api/stats` — genel istatistikler, sensör kırılımı, pipeline metrikleri
+  - [X] Response caching — bellek bütçeli, iki seviyeli TTL, `X-Cache: HIT|MISS` header'ı
+  - [X] CORS ve error handling son hali — `CORS_ALLOWED_ORIGINS`, `/api/*` için JSON 404, `REQUEST_TIMEOUT_SECS`
 - **Bitti sayılır:** tüm endpoint'ler Postman/curl ile test edildi; frontend proxy üzerinden veri alıyor; 10 saniyelik timeout dahilinde yanıt geliyor.
 - **Doğrulama (2026-11-14):** 21 server testi geçiyor (önceden hiç test yoktu), toplam 144 test, clippy temiz.
 
@@ -282,12 +360,12 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 
   Frontend proxy doğrulandı: `npm install` + `npm run dev` ile Vite 5173 ayağa kaldırıldı, `/api/health` ve `/api/harmonize` istekleri backend'e düştü ve doğru payload döndü. `npm run build` ve `npx tsc --noEmit` temiz geçiyor.
 - **Şartın "10 saniye" maddesine dair sınır:** `days` tipi istekler için fazlasıyla sağlanıyor (en yavaş 1,36 s). Ancak `start`/`end` ile verilen uzun tarih aralıkları doğası gereği dakikalar sürüyor — 18 aylık bir aralık 1373 FIRMS isteği demek. Sabit 10 saniyelik timeout bu istekleri kullanılamaz yapardı, bu yüzden `REQUEST_TIMEOUT_SECS` yapılandırılabilir (varsayılan 300 s) ve zaman aşımı mesajı sebebini açıklıyor. Uzun aralıkların 10 saniyeye inmesi asenkron iş semantiği gerektirir, G4 kapsamı dışıdır.
-- **`/api/calendar` kapsam sınırı:** area API ile 2000-present imkansız (26 yıl on binlerce transaction), bu yüzden endpoint FIRMS ülke arşivini kullanıyor — transaction harcamıyor ve `FIRMS_API_KEY` gerektirmiyor. Bedeli: arşiv NOAA-21 taşımıyor, dolayısıyla tarihsel takvim MODIS + SNPP + NOAA-20 kapsıyor ve 2023 sonrasında NRT endpoint'lerinden daha küçük bir filo gösteriyor. Yanıt bunu `coverage` bölümünde ve `warnings` dizisinde açıkça bildiriyor. Tam filo serisi için bkz. GOREVLER2 G13.
+- **`/api/calendar` kapsam sınırı:** area API ile 2000-present imkansız (26 yıl on binlerce transaction), bu yüzden endpoint FIRMS ülke arşivini kullanıyor — transaction harcamıyor ve `FIRMS_API_KEY` gerektirmiyor. Bedeli: arşiv NOAA-21 taşımıyor, dolayısıyla tarihsel takvim MODIS + SNPP + NOAA-20 kapsıyor ve 2023 sonrasında NRT endpoint'lerinden daha küçük bir filo gösteriyor. Yanıt bunu `coverage` bölümünde ve `warnings` dizisinde açıkça bildiriyor. Tam filo serisi için bkz. K7.
 - **G3'ten devralınan risk kapatıldı:** `report.failures` boş değilse yanıt `effort.reliable: false` ve sebebini taşıyor, ayrıca üst seviye `warnings` dizisi var. Ω değerleri null'lanmıyor — veri kaybı frontend'i kırar, uyarıyla işaretlemek yeterli.
-- **Açık bulgu:** SPA fallback dokümante edildiği gibi çalışmıyor (`/harita` → 404). G4'ün bitiş şartının parçası değil, GOREVLER2 G15 olarak kuyruğa alındı.
+- **Açık bulgu:** SPA fallback dokümante edildiği gibi çalışmıyor (`/harita` → 404). G4'ün bitiş şartının parçası değil, bu dosyada K9 olarak kuyruğa alındı.
 - **R4 için not:** `web/src/services/api.ts` ve `web/src/types/index.ts` yeni endpoint'leri (`/api/compare`, `/api/stats`, `/api/calendar`) ve yeni alanları (`count_normalized`, `effort_omega`, `vza_factor`, `n_obs`, `platforms`, `mean_frp_raw`, `effort`, `warnings`) henüz kapsamıyor. Tip kontrolü hata vermiyor çünkü fazladan JSON alanları çelişki yaratmıyor; eksiklik R4 kapsamında giderilmeli.
 
-### G5 — Sunum materyali + demo senaryosu ⏸
+### [ ] G5 — Sunum materyali + demo senaryosu
 - **Bekler:** G4, R5, Y1 · **Açar:** G6
 - NASA Space Apps jüri kriterleri (Impact, Creativity, Validity, Relevance, Presentation) doğrultusunda:
   - 3 dakikalık demo videosu senaryosu
@@ -296,7 +374,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Kullanım senaryoları: orman yangını izleme, tarım yanığı tespiti, iklim araştırması
 - **Bitti sayılır:** demo senaryosu yazıldı; canlı demo 3 dakika içinde sorunsuz çalışıyor.
 
-### G6 — Final entegrasyon + deployment ⏸
+### [ ] G6 — Final entegrasyon + deployment
 - **Bekler:** G5 · **Açar:** —
 - Tüm parçaların bir araya gelmesi:
   - Frontend build (`npm run build`) → Axum static file serving
@@ -306,17 +384,71 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Submission paketleme
 - **Bitti sayılır:** `cargo run -p pyrosync-server` ile backend + frontend tek process'te ayağa kalkıyor; jüri demo'yu sorunsuz görebilir.
 
+### [X] G7 — Config-driven pipeline
+- **Bekler:** G2 · **Açar:** G8, R8, K2, S6
+- Pipeline'daki tüm sabit eşikleri yapılandırılabilir hale getirmek (EG FireTrack'ten ilham):
+  - `config.rs` modülü: `PipelineConfig` struct'ı ile tüm parametreler
+  - Dedup eşikleri: zaman penceresi (varsayılan 8s), örtüşme oranı (varsayılan %30)
+  - VZA düzeltme katsayıları: polinom coefficients (a, b, c)
+  - Cross-sensor matching: mesafe (varsayılan 2 km), zaman (varsayılan 5 dk)
+  - TOML dosyasından yükleme (`pyrosync.toml`) + env var override
+  - Varsayılan config ile mevcut davranış aynı kalmalı (backward compatible)
+- **Kaynak:** EG FireTrack — "Config-driven tasarım: tüm eşikler yapılandırılabilir, bilimsel şeffaflık"
+- **Bitti sayılır:** `PipelineConfig::default()` ile mevcut testler hâlâ geçiyor; TOML'dan farklı config yüklenince pipeline davranışı değişiyor; `pyrosync.example.toml` depoda.
+- **Durum (2026-11-15):** Sadık tarafından tamamlandı (`4f3e23d`). `PipelineConfig`, `pyrosync.toml` yükleme ve `pyrosync.example.toml` depoda.
+
+### [X] G8 — Bölgesel/biyom kalibrasyon modülü
+- **Bekler:** G7 · **Açar:** G9
+- Tek global FRP oranı yerine bölgesel katsayılar (Li et al. 2018):
+  - `calibration.rs` modülü: biyom tipine göre MODIS/VIIRS FRP kalibrasyon oranları
+  - Tropik: VIIRS ~%16 büyük (k=1.16)
+  - Boreal: MODIS ~%47 büyük (k=1.47)
+  - Savan: ~%1 fark (k≈1.0)
+  - Biyom lookup: lat/lon → biyom → kalibrasyon katsayısı
+  - Config'den override edilebilir (`PipelineConfig.calibration`)
+- **Kaynak:** Li et al. 2018 — "Tek global katsayı yetersiz — savan %1 fark, boreal %47 fark"
+- **Bitti sayılır:** farklı bölgelerde (tropik, boreal, savan) farklı kalibrasyon uygulanıyor; test: Türkiye (Akdeniz) ve Sibirya (boreal) verileriyle FRP oranları beklenen aralıkta.
+- **Durum (2026-11-15):** Kod tamamlandı (`a883a82`, `c82641d`), bitti şartı SAĞLANMADI. Li et al. 2018 katsayıları 750 m VIIRS ürününden; FIRMS verisi 375 m. Aqua–SNPP 1° ızgara ölçümü: tropik 1,21–1,22 (model 1,16), Türkiye 1,33 (model 0,97), boreal 1,34–1,40 (model 0,82). Literatür 375 m için bu ölçümü doğruluyor (Li 2020: Afrika'da MODIS toplam FRP ~%26 düşük; GMD 2026: küresel %38). Katsayılar 375 m ölçeğine göre güncellenmeli (bkz. `docs/REFERANS_ANALIZI.md` P1).
+- **Karar ve kapanış (2026-11-15, `a387ba1`):** Üçlü konsey (Opus, Argon, DeepSeek) kararıyla kapsam yeniden tanımlandı. Izgara toplamı oranları MODIS'in tespit edemediği küçük yangınlardan (tamlık) geldiği için tespit başına enlem çarpanı KALDIRILDI; bölgesel fark artık VIIRS öncesi dönemde hücre toplam FRP'sine uygulanan ölçülmüş tamlık katsayısı k_c ile taşınıyor. k_c kendi verimizden ölçüldü (Aqua–SNPP, ≤20 dk, 1° hücre-gün, normalize VZA eğrisine göre; 2019 fit, 2020 hold-out): tropik 1,11 ± 0,08, orta enlem 1,18 ± 0,15, boreal 1,28 ± 0,11 (hold-out farkları %4–9, σ içinde). VZA düzeltmesi de kaynağa (Zheng 2026, Denk. 9) uygun olarak çarpmaya çevrildi. Takvime `total_frp` ve MODIS-eşdeğeri `frp_per_detection_eq` eklendi. Açık: savan/orman ayrımı enlem bandıyla yapılamıyor (biyom haritası gerekir); orta enlem bandı az örneklemli.
+
+### [X] G9 — Belirsizlik aralıkları hesaplama
+- **Bekler:** G8 · **Açar:** K3, S6
+- Her harmonize FRP değerine güven aralığı eklemek (fire-harmony'den ilham):
+  - `uncertainty.rs` modülü: `UncertaintyEstimate { lower: f64, upper: f64, confidence: f64 }`
+  - Kaynaklar: VZA düzeltme hatası, kalibrasyon oranı varyansı, sensör gürültüsü
+  - Bootstrap veya analitik propagasyon (basit: ±1σ)
+  - `HarmonizedHotspot` struct'ına `frp_lower`, `frp_upper` alanları
+  - Calendar hücrelerine de toplam belirsizlik
+  - Bilimsel disclaimer metni: "Harmonize değerler model tahminidir, ground truth değil"
+- **Kaynak:** fire-harmony — belirsizlik aralıkları; tüm akademik makaleler — model sınırları
+- **Bitti sayılır:** her harmonize değerin lower/upper aralığı var; aralık VZA arttıkça genişliyor (beklenen); API response'unda uncertainty alanları mevcut.
+- **Durum (2026-11-15):** Tamamlandı (`3213e11`, `9c6a718`) ve bağımsız denetimle doğrulandı: Türkiye 2019-08 (5483) ve Angola 2019-04 (10386) kayıtta `lower <= frp_corrected <= upper` ihlali 0; ModisOnly aralık genişliği VZA kovalarında monoton artıyor; `/api/calendar` yanıtında `uncertainty` nesnesi ve hücrelerde `mean_frp_lower/upper` var. Açık kalanlar: Matched kayıtlarda rastgele bileşen MODIS üyelerini de sayarak fazla daralıyor; sensör gürültüsü ve VZA parametreleri hâlâ varsayım (bkz. `docs/REFERANS_ANALIZI.md` P3).
+
+### [X] G10 — Export engine + /api/export endpoint
+- **Bekler:** G4 · **Açar:** R7, S6
+- Harmonize veriyi indirilebilir formatlara dönüştürme:
+  - `export.rs` modülü: `to_csv()`, `to_geojson()` fonksiyonları
+  - `/api/export?format=csv&west=...&south=...&east=...&north=...` endpoint'i
+  - `/api/export?format=geojson&...` alternatifi
+  - CSV: tüm alanlar + uncertainty + kaynak sensör
+  - GeoJSON: FeatureCollection, her hotspot bir Feature (point geometry + properties)
+  - Streaming response (büyük veri setleri için bellek dostu)
+  - Content-Disposition header ile doğrudan dosya indirme
+- **Kaynak:** Strateji 1.4 (Relevance) — "CSV export ile gerçek iş akışlarına entegrasyon"
+- **Bitti sayılır:** curl ile `/api/export?format=csv` → geçerli CSV dosyası iniyor; GeoJSON QGIS'te açılıyor; 10,000+ satır sorunsuz.
+- **Durum (2026-11-15):** Sadık tarafından tamamlandı (`cae9664`). CSV ve GeoJSON export, `/api/export`. Belirsizlik (uncertainty) sütunları G9 ile eklenecek.
+
 ---
 
 ## Can'ın görevleri
 
-### C1 — UI/UX genel konsept + wireframe ✅
+### [X] C1 — UI/UX genel konsept + wireframe
 - **Bekler:** — · **Açar:** C2, C3, C4
 - Projenin görsel kimliğini belirleyen ilk tasarım:
-  - ✅ Ana sayfa layout'u: harita, takvim, kontroller nerede duracak
-  - ✅ Kullanıcı akışı: bölge seçimi → veri yükleme → Raw/Harmonized geçişi → detay inceleme
-  - ✅ Wireframe — tüm sayfalar/paneller (ASCII, Figma yerine)
-  - ✅ Mobil responsive düşünülmeli (jüri telefonda bakabilir)
+  - [X] Ana sayfa layout'u: harita, takvim, kontroller nerede duracak
+  - [X] Kullanıcı akışı: bölge seçimi → veri yükleme → Raw/Harmonized geçişi → detay inceleme
+  - [X] Wireframe — tüm sayfalar/paneller (ASCII, Figma yerine)
+  - [X] Mobil responsive düşünülmeli (jüri telefonda bakabilir)
 - **Referans:** `STRATEGY.md`'deki "Raw ↔ Harmonised toggle" ve "Sensor Cliff" kavramları tasarımın merkezinde olmalı.
 - **Bitti sayılır:** wireframe tüm ekiplere paylaşıldı ve onaylandı; ana sayfa, harita görünümü, takvim görünümü, karşılaştırma paneli var.
 - **Çıktı (2026-11-14):** `docs/UI-UX-KONSEPT.md` — tasarım ilkeleri, desktop layout, kullanıcı akışı + loading/empty/error state'leri, 4 ekran wireframe'i (dashboard, harita + hotspot popover, yıl×ay takvim ısı matrisi, Raw↔Harmonised karşılaştırma + Sensor Cliff grafiği), mobil wireframe + breakpoint'ler, bileşen ağacı + state sahipliği tablosu, C2/C3/C4 devir notları.
@@ -324,42 +456,75 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Doğrulama (2026-11-15):** Tüm tasarım dokümanları, responsive layout (`AppShell.module.css`) ve prototip bileşenleri depoda; alt görevler `R1`–`R5` ekip/Serhat tarafından doğrulanıp `✅` kapatılarak onaylandı. `/api/harmonize` ham nokta ihtiyacı da G4+R4 kapsamında `include_raw=true` ile çözüldü.
 - **Bulgu:** `HarmonizeResponse.raw` varsayılan olarak yalnızca sayaç döndürüyor (`modis_count`, `viirs_count`, `total_raw`); ham noktalar gerektiğinde `include_raw=true` parametresiyle alınıyor.
 
-### C2 — Tasarım sistemi ✅
+### [X] C2 — Tasarım sistemi
 - **Bekler:** C1 · **Açar:** R1
 - Serhat'ın kodlayacağı component'ler için görsel standartlar:
-  - ✅ Renk paleti (primary, secondary, accent; MODIS, VIIRS ve harmonized FRP/anomali skalaları CSS token olarak tanımlı)
-  - ✅ Tipografi (font family, size scale, weight)
-  - ✅ Spacing sistemi (8px grid)
-  - ✅ Button, card, panel, tooltip component tasarımları (`web/src/components/**/*.module.css` içinde çalışır durumda)
-  - ✅ Dark mode desteği (`[data-theme="dark"]` varsayılan + `[data-theme="light"]`)
+  - [X] Renk paleti (primary, secondary, accent; MODIS, VIIRS ve harmonized FRP/anomali skalaları CSS token olarak tanımlı)
+  - [X] Tipografi (font family, size scale, weight)
+  - [X] Spacing sistemi (8px grid)
+  - [X] Button, card, panel, tooltip component tasarımları (`web/src/components/**/*.module.css` içinde çalışır durumda)
+  - [X] Dark mode desteği (`[data-theme="dark"]` varsayılan + `[data-theme="light"]`)
 - **Çıktı (Can, 2026-11-14):** `web/src/styles/tokens.css`, `web/src/styles/global.css` ve CSS Modules bileşen stilleri içinde tüm CSS variable isimleri ve tema paletleri belirlendi.
 - **Çıktı (2026-11-14):** `docs/TASARIM_SISTEMI.md` — token referansı (dark/light renk tabloları, sensör + FRP/anomali skalaları, tipografi, 8px spacing, radius/motion, bileşen kalıpları, yapılmaması gerekenler).
 - **Doğrulama (2026-11-15):** `tokens.css`, `global.css` ve `docs/TASARIM_SISTEMI.md` birebir uyumlu; `R1` tamamlanıp `✅` işaretlendiği için onay şartı sağlandı.
 - **Bitti sayılır:** Serhat bu dökümanla component'leri birebir kodlayabilir; renk ve spacing soruları kalmamış.
 
-### C3 — Harita + takvim detay tasarımı ✅
+### [X] C3 — Harita + takvim detay tasarımı
 - **Bekler:** C1 · **Açar:** R2, R3
 - İki ana görselleştirme panelinin detaylı tasarımı:
-  - ✅ **Harita:** hotspot noktaları nasıl gösterilecek (FRP ve confidence'a göre renk/boyut/şekil, Canvas 2D örnekleme ve `PointDetail` popup/detay içeriği, boş/yükleniyor/hata/veri durumları)
-  - ✅ **Takvim:** aylık hücrelerin renk skalası (PuOr anomali skalasına göre), yıl ve ay eksenleri, hover detayı (`CalendarTooltip`)
-  - ✅ İkisi arasındaki etkileşim: takvimde bir aya tıklayınca haritada o ayın verileri
+  - [X] **Harita:** hotspot noktaları nasıl gösterilecek (FRP ve confidence'a göre renk/boyut/şekil, Canvas 2D örnekleme ve `PointDetail` popup/detay içeriği, boş/yükleniyor/hata/veri durumları)
+  - [X] **Takvim:** aylık hücrelerin renk skalası (PuOr anomali skalasına göre), yıl ve ay eksenleri, hover detayı (`CalendarTooltip`)
+  - [X] İkisi arasındaki etkileşim: takvimde bir aya tıklayınca haritada o ayın verileri
 - **Çıktı (Can, 2026-11-14):** `web/src/components/Map/HotspotMap.tsx` (+ `engine/`, `PointDetail.tsx`, `MapStateOverlay.tsx`) ve `web/src/components/Calendar/BurnCalendar.tsx` (+ `CalendarTooltip.tsx`) içinde çalışır şekilde uygulandı.
 - **Güncelleme (cddf0ec):** takvim ısı matrisi radyal yıl saati + yıllık histogram ile değiştirildi.
 - **Doğrulama (2026-11-15):** Harita ve takvimin tüm veri/boş/yükleniyor/hata durumları çalışır durumda; ülke seçimi yaklaşımı ve canlı `G4` API uyumu `R2`, `R3` ve `R4` (`✅`) ile doğrulandı, `CliffChart`–`BurnCalendar` yıl state senkronizasyonu eklendi.
 - **Bitti sayılır:** harita ve takvim component'lerinin her durumu (boş, yükleniyor, veri var, hata) tasarlanmış.
 
-### C4 — Raw ↔ Harmonized karşılaştırma tasarımı ✅
+### [X] C4 — Raw ↔ Harmonized karşılaştırma tasarımı
 - **Bekler:** C1 · **Açar:** R5
 - Projenin **en önemli demo anı:** toggle ile Raw ve Harmonized arasında geçiş.
-  - ✅ Toggle/switch UI tasarımı (belirgin, anlaşılır; `ViewToggle.tsx`)
-  - ✅ Raw modda sensör ayrımı ve sensor cliff görünümü (`TASARIM_KONSEPT.md`: renk körü güvenliği için kırmızı/yeşil yerine MODIS içi boş daire + VIIRS dolu kare ayrımı; `CliffChart.tsx`)
-  - ✅ Harmonized modda tek renk skalası (fused data / inferno FRP skalası)
-  - ✅ Geçiş animasyonu: noktaların birleşmesi, duplikasyonların kaybolması (3 vuruşlu koreografi: `useHarmonizeTransition.ts`, 1400/500/150 ms)
-  - ✅ İstatistik paneli ve düzeltme fişi (`CountDelta.tsx`, `Receipt.tsx`)
+  - [X] Toggle/switch UI tasarımı (belirgin, anlaşılır; `ViewToggle.tsx`)
+  - [X] Raw modda sensör ayrımı ve sensor cliff görünümü (`TASARIM_KONSEPT.md`: renk körü güvenliği için kırmızı/yeşil yerine MODIS içi boş daire + VIIRS dolu kare ayrımı; `CliffChart.tsx`)
+  - [X] Harmonized modda tek renk skalası (fused data / inferno FRP skalası)
+  - [X] Geçiş animasyonu: noktaların birleşmesi, duplikasyonların kaybolması (3 vuruşlu koreografi: `useHarmonizeTransition.ts`, 1400/500/150 ms)
+  - [X] İstatistik paneli ve düzeltme fişi (`CountDelta.tsx`, `Receipt.tsx`)
 - **Çıktı (Can, 2026-11-14):** `ViewToggle.tsx`, `useHarmonizeTransition.ts`, `CliffChart.tsx`, `CountDelta.tsx`, `Receipt.tsx` ve `docs/TASARIM_KONSEPT.md`.
 - **Çıktı (2026-11-14):** `fleet_merged` arşiv API'sine (`/api/series` yıllık + `/api/points` stages) eklendi; `Receipt` ve `PipelineStrip` artık filo birleştirme adımını gösteriyor, sayılar `ham − interscan − filo − eşleşen = harmonize` olarak tutuyor.
 - **Doğrulama (2026-11-15):** Her iki mod, 3 vuruşlu geçiş koreografisi ve istatistik fişi `R5` (`✅`) ile doğrulandı. (Not: 7 düğümlü pipeline şeridinde ayrı bir "filo" düğümü yok; `useHarmonizeTransition.ts` koreografisine dokunmamak için filo sayısı bölünme metninde gösteriliyor.)
 - **Bitti sayılır:** toggle'ın her iki durumu ve geçiş animasyonunun tasarımı tamamlanmış; Serhat implementasyon için hazır.
+
+### [ ] C5 — Methods sayfası + bilimsel disclaimer tasarımı
+- **Bekler:** C1 · **Açar:** R6, S8
+- Pipeline'ın nasıl çalıştığını açıklayan sayfa tasarımı:
+  - 7 aşamalı pipeline diyagramı (görsel akış)
+  - Her aşama için: ne yapılıyor, neden, hangi parametre kullanılıyor
+  - VZA düzeltme formülü görseli (θ → FRP düzeltmesi grafiği)
+  - H3 grid açıklaması (hexagon görseli)
+  - Bilimsel referans listesi formatı (akademik makalelere atıf)
+  - Disclaimer banner tasarımı: "Bu değerler model tahminidir" uyarısı
+- **Bitti sayılır:** wireframe'de Methods sayfası var; pipeline görseli okunabilir; disclaimer yerleşimi belirgin ama rahatsız edici değil.
+
+### [ ] C6 — Export UI + acil müdahale brifingi tasarımı
+- **Bekler:** C1 · **Açar:** R7
+- İki ilişkili özelliğin tasarımı:
+  - **Export:** indirme butonu konumu, format seçimi (CSV/GeoJSON), dosya adı gösterimi
+  - **Acil müdahale brifingi:** tek tıkla bölge raporu — tarihsel ortalama vs şu an, anomali durumu, en yoğun aylar, aktif sensörler
+  - Brifingi modal/panel olarak mı sidebar olarak mı gösterelim
+  - Print-friendly layout (jüri basabilir)
+- **Kaynak:** Strateji 1.1 — "Acil müdahale brifingi — tek tıkla bölge raporu"
+- **Bitti sayılır:** export butonu ve brifingi paneli wireframe'de; brifingi içeriği (hangi metrikler, hangi sırada) belirlenmiş.
+
+### [ ] C7 — Belirsizlik gösterimi + erişilebilir renk skalası tasarımı
+- **Bekler:** C1 · **Açar:** K3, K4
+- Bilimsel verilerin doğru görselleştirilmesi:
+  - **Belirsizlik:** error bar / confidence band / shaded area — hangi yöntem hangi chart'ta
+  - Haritada belirsizlik gösterimi (opaklık veya halo boyutu)
+  - **Renk skalası:** erişilebilir paletler (renk körlüğü uyumlu — viridis, cividis tarzı)
+  - MODIS rengi, VIIRS rengi, harmonized rengi, anomaly skalası
+  - Quantile vs eşit aralık renk dağılımı seçimi
+  - Light/dark mode'da renk kontrastı
+- **Kaynak:** Yarışma gereksinimleri — "Color ramps"; fire-harmony — belirsizlik gösterimi
+- **Bitti sayılır:** renk paleti renk körlüğü simülatörüyle test edilmiş; belirsizlik gösterimi her chart tipi için tanımlanmış.
 
 ---
 
@@ -370,9 +535,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 > - **Yeni alan:** `vza.mean_frp_adjustment_pct` (pozitif = artış). Frontend bu alana geçmeli ve metin "azaltım" yerine "düzeltme/artış" olarak güncellenmeli. Kullanım yerleri: `web/src/services/api.ts:861` (`meanFrpReductionPct`), `web/src/types/index.ts:382`.
 > - **Kaldırılan alan:** hotspot'lardaki `calibration_ratio` (ve CSV/GeoJSON export sütunu). Frontend kullanmıyordu.
 > - **Takvim hücrelerine eklenen alanlar (`/api/calendar`):** `total_frp`, `total_frp_lower`, `total_frp_upper`, `frp_per_detection_eq` (MODIS-eşdeğeri tespit başına FRP; sensör geçişinde süreklilik için önerilen metrik), `mean_frp_lower`, `mean_frp_upper`. `mean_frp` korunuyor ama artık "native-pixel" ortalama; 2012 VIIRS geçişinde piksel boyutu yüzünden düşüş gösterir, takvimde manşet metrik olarak kullanılmamalı.
-> - Ayrıntı: `crates/server/CLAUDE.md`, `docs/REFERANS_ANALIZI.md` (P1–P2) ve `GOREVLER2.md` G8.
+> - Ayrıntı: `crates/server/CLAUDE.md`, `docs/REFERANS_ANALIZI.md` (P1–P2) ve bu dosyadaki G8.
 
-### R1 — React component mimarisi + layout ✅
+### [X] R1 — React component mimarisi + layout
 - **Bekler:** C2 · **Açar:** R2, R3, R4, Y1–Y4
 - Frontend'in iskeletini kurmak (mevcut `web/` dizini üzerinde):
   - Can'ın tasarım sistemini CSS variables olarak implement etme
@@ -385,32 +550,32 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Bitti sayılır:** `npm run dev` hatasız çalışıyor; layout Can'ın wireframe'ine uyuyor; boş paneller doğru yerde; mobile'da düzgün görünüyor.
 - **Doğrulama (2026-11-14):** Can'ın C1 prototipi R1 kapsamının ~%90'ını karşılıyordu. Kalan: `types/index.ts` NRT tip tanımları, `api.ts` wire type hizalaması (`WireYearSpan` string/number parse, `WireSeriesCliff` nullable alanlar, `WireHarmonizedPoint` yeni alanlar), `Headline.tsx` null guard'ları. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R2 — İnteraktif harita entegrasyonu ✅
+### [X] R2 — İnteraktif harita entegrasyonu
 - **Bekler:** C3, R1 · **Açar:** R5
 - Yangın hotspot'larını harita üzerinde gösteren component:
-  - ✅ Leaflet/Mapbox yerine custom Canvas 2D engine tercih edildi — GeoJSON projection, Douglas-Peucker LOD, DPR-aware rendering. Binlerce noktayı 60 fps'te çiziyor.
-  - ✅ Hotspot noktalarını FRP'ye göre boyut ve renk ile gösterme — `engine/renderer.ts` inferno FRP skalası + confidence şekil ayrımı
-  - ✅ LOD engine zoom seviyesine göre polygon simplification yapıyor; Canvas doğası gereği binlerce noktayı sorunsuz render ediyor
-  - ✅ Bölge seçimi: ülke polygonlarına tıklama ile önceden tanımlı bölge seçimi (bbox çizme yerine; görev tanımı "veya" ile iki seçenek sunuyordu)
-  - ✅ Popup: `PointDetail.tsx` ile sensor, FRP, confidence, tarih, VZA faktörü, kaynak platform detayı
+  - [X] Leaflet/Mapbox yerine custom Canvas 2D engine tercih edildi — GeoJSON projection, Douglas-Peucker LOD, DPR-aware rendering. Binlerce noktayı 60 fps'te çiziyor.
+  - [X] Hotspot noktalarını FRP'ye göre boyut ve renk ile gösterme — `engine/renderer.ts` inferno FRP skalası + confidence şekil ayrımı
+  - [X] LOD engine zoom seviyesine göre polygon simplification yapıyor; Canvas doğası gereği binlerce noktayı sorunsuz render ediyor
+  - [X] Bölge seçimi: ülke polygonlarına tıklama ile önceden tanımlı bölge seçimi (bbox çizme yerine; görev tanımı "veya" ile iki seçenek sunuyordu)
+  - [X] Popup: `PointDetail.tsx` ile sensor, FRP, confidence, tarih, VZA faktörü, kaynak platform detayı
 - **Ek özellikler (C3 prototipi):** MapStatusBar (nokta sayısı, bölge adı), MapLegend (sensör filtresi MODIS/VIIRS), MapLabels (ülke etiketleri), MapCountryTooltip, MapControls (zoom in/out/reset), keyboard navigation (N/P ile nokta gezinme), MapStateOverlay (loading/error/empty)
 - **Bitti sayılır:** mock veriyle harita render oluyor; zoom/pan akıcı; noktalar FRP'ye göre farklılaşıyor; bbox seçimi çalışıyor.
 - **Doğrulama (2026-11-15):** Can'ın C3 prototipi R2 kapsamının tamamını kapsıyordu. `HotspotMap.tsx` (1173 satır) + `engine/` dizini (renderer, viewport, pointIndex, featureHit, lod, types) + PointDetail, MapControls, MapLegend, MapLabels, MapStatusBar, MapStateOverlay, MapCountryTooltip bileşenleri tam çalışır durumda. Gerçek arşiv verisinden (`useMapPoints`) harita render ediliyor, mock veriye gerek kalmadı. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R3 — Burning activity calendar componenti ✅
+### [X] R3 — Burning activity calendar componenti
 - **Bekler:** C3, R1 · **Açar:** R5
 - Aylık yangın aktivitesi görselleştirmesi (GitHub contribution graph yerine radyal yıl saati tercih edildi):
-  - ✅ 12 aylık radyal dilimler, her dilimin yarıçapı detection count'a orantılı — yıl stepper (◀ ▶) ile 2000-present arası tüm yıllar gezinilebiliyor
-  - ✅ Dilim rengi: anomali skoru tabanlı (PuOr paleti CSS variable'larla), normalin altı/üstü görsel olarak belirgin
-  - ✅ Normal baseline: kesikli çizgi arc ile her ayın uzun vadeli ortalaması gösteriliyor
-  - ✅ Hover: `CalendarTooltip` ile count, anomali z-skoru, ham vs harmonize karşılaştırması
-  - ✅ Tıklama: `toggleMonth()` ile haritayı o ay/yıla filtreliyor
-  - ✅ Yıl oynatma: ▶ butonu ile yıllar arası otomatik geçiş animasyonu
-  - ✅ Keyboard navigation: ok tuşları ile ay gezinme, PageUp/PageDown ile yıl atlama, Enter/Space ile seçim
+  - [X] 12 aylık radyal dilimler, her dilimin yarıçapı detection count'a orantılı — yıl stepper (◀ ▶) ile 2000-present arası tüm yıllar gezinilebiliyor
+  - [X] Dilim rengi: anomali skoru tabanlı (PuOr paleti CSS variable'larla), normalin altı/üstü görsel olarak belirgin
+  - [X] Normal baseline: kesikli çizgi arc ile her ayın uzun vadeli ortalaması gösteriliyor
+  - [X] Hover: `CalendarTooltip` ile count, anomali z-skoru, ham vs harmonize karşılaştırması
+  - [X] Tıklama: `toggleMonth()` ile haritayı o ay/yıla filtreliyor
+  - [X] Yıl oynatma: ▶ butonu ile yıllar arası otomatik geçiş animasyonu
+  - [X] Keyboard navigation: ok tuşları ile ay gezinme, PageUp/PageDown ile yıl atlama, Enter/Space ile seçim
 - **Bitti sayılır:** mock veriyle takvim render oluyor; 2000–2026 arası tüm aylar görünüyor; renk skalası anlamlı; hover tooltip çalışıyor.
 - **Doğrulama (2026-11-15):** Can'ın C3 prototipi R3 kapsamının tamamını kapsıyordu. `BurnCalendar.tsx` (675 satır) + `CalendarTooltip.tsx` + `lib/radialCalendar.ts` (hesaplama yardımcıları) tam çalışır durumda. Gerçek arşiv verisinden (`useRegionData`) takvim render ediliyor. Görev tanımındaki "GitHub contribution graph" formatı yerine radyal yıl saati seçildi (cddf0ec commit'iyle güncellendi) — aynı veriyi daha kompakt gösteriyor ve yıl oynatma özelliği ekleniyor. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R4 — Backend API bağlantısı + state management ✅
+### [X] R4 — Backend API bağlantısı + state management
 - **Bekler:** G4, R1 · **Açar:** R5
 - Frontend'i gerçek backend'e bağlayan katman:
   - API client modülü (`api.ts`): `/api/harmonize`, `/api/calendar`, `/api/compare`, `/api/stats`
@@ -421,33 +586,69 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Bitti sayılır:** gerçek backend çalışırken frontend veri çekip gösteriyor; loading spinner var; API hatası kullanıcıya mesaj olarak dönüyor.
 - **Doğrulama (2026-11-14):** `api.ts`'e 4 NRT fetch fonksiyonu (fetchHarmonize, fetchCompare, fetchStats, fetchCalendar) + wire types + adapters eklendi (~477 satır). `useNrtData(bbox)` hook'u useSyncExternalStore pattern ile 3 paralel NRT fetch yönetiyor. Store'a `nrtDays` (1-5, varsayılan 2) eklendi. CountDelta ve PipelineStrip'e NRT veri gösterimi entegre edildi. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### R5 — Raw ↔ Harmonized toggle implementasyonu ✅
+### [X] R5 — Raw ↔ Harmonized toggle implementasyonu
 - **Bekler:** R2, R3, R4, C4 · **Açar:** G5
 - Projenin imza özelliği:
-  - ✅ Toggle/switch: `ViewToggle.tsx` — spring animasyonlu thumb, aria-checked, H kısayol tuşu
-  - ✅ Raw modda: MODIS (boş daire) ve VIIRS (dolu kare) ayrı şekillerle, renk körü güvenli; sensör filtresi (MapLegend) ile tek sensör izole edilebiliyor; duplikasyonlar halkalı gösteriliyor (`showDuplicateRings`)
-  - ✅ Harmonized modda: fused data, inferno FRP skalası, tek renk; duplikat halkaları yok
-  - ✅ Geçiş animasyonu: 3 vuruşlu koreografi (`useHarmonizeTransition.ts`) — detect (400ms) → merge (600ms) → settle (400ms); `geometryHarmonized` harita noktalarını geçişin ortasında değiştiriyor, `revealAnswer` sondaki sayısal cevabı açıyor
-  - ✅ İstatistik paneli: `CountDelta.tsx` raw → harmonized sayı animasyonu + `Receipt.tsx` düzeltme fişi (interscan dedup, filo birleştirme, cross-sensor eşleşme kırılımı)
-  - ✅ Harita ve takvim aynı anda güncelleniyor: `useHarmonizeTransition` tek saat olarak çalışıyor, `HotspotMap` ve `BurnCalendar` aynı state'e subscribe
-  - ✅ Sensor cliff: `CliffChart.tsx` yıllık ham tespit serisini sensör bazlı yığılmış alan grafiği olarak gösteriyor; 2012 SNPP ve 2018 NOAA-20 sıçramaları görsel olarak belirgin
-  - ✅ Pipeline şeridi: `PipelineStrip.tsx` 6 adımlı harmonizasyon aşamasını sırayla yakarak gösteriyor, toplam çıkarılan duplikat sayısını raporluyor
+  - [X] Toggle/switch: `ViewToggle.tsx` — spring animasyonlu thumb, aria-checked, H kısayol tuşu
+  - [X] Raw modda: MODIS (boş daire) ve VIIRS (dolu kare) ayrı şekillerle, renk körü güvenli; sensör filtresi (MapLegend) ile tek sensör izole edilebiliyor; duplikasyonlar halkalı gösteriliyor (`showDuplicateRings`)
+  - [X] Harmonized modda: fused data, inferno FRP skalası, tek renk; duplikat halkaları yok
+  - [X] Geçiş animasyonu: 3 vuruşlu koreografi (`useHarmonizeTransition.ts`) — detect (400ms) → merge (600ms) → settle (400ms); `geometryHarmonized` harita noktalarını geçişin ortasında değiştiriyor, `revealAnswer` sondaki sayısal cevabı açıyor
+  - [X] İstatistik paneli: `CountDelta.tsx` raw → harmonized sayı animasyonu + `Receipt.tsx` düzeltme fişi (interscan dedup, filo birleştirme, cross-sensor eşleşme kırılımı)
+  - [X] Harita ve takvim aynı anda güncelleniyor: `useHarmonizeTransition` tek saat olarak çalışıyor, `HotspotMap` ve `BurnCalendar` aynı state'e subscribe
+  - [X] Sensor cliff: `CliffChart.tsx` yıllık ham tespit serisini sensör bazlı yığılmış alan grafiği olarak gösteriyor; 2012 SNPP ve 2018 NOAA-20 sıçramaları görsel olarak belirgin
+  - [X] Pipeline şeridi: `PipelineStrip.tsx` 6 adımlı harmonizasyon aşamasını sırayla yakarak gösteriyor, toplam çıkarılan duplikat sayısını raporluyor
 - **Bitti sayılır:** toggle sorunsuz çalışıyor; Raw'dan Harmonized'a geçiş "sensor cliff" problemini açıkça gösteriyor; animasyon akıcı; jüri bu toggle'ı görünce farkı anlıyor.
 - **Doğrulama (2026-11-15):** Can'ın C4 prototipi R5 kapsamının tamamını kapsıyordu. `ViewToggle.tsx` (61 satır), `useHarmonizeTransition.ts` (3 vuruşlu koreografi motoru), `CliffChart.tsx`, `CountDelta.tsx`, `Receipt.tsx`, `PipelineStrip.tsx` hepsi `App.tsx`'te compose edilmiş ve çalışır durumda. Toggle'ın harita ve takvimi aynı anda güncellediği `useHarmonizeTransition` abonelik mekanizmasıyla doğrulandı. NRT veri entegrasyonu (R4'ten) CountDelta ve PipelineStrip'te canlı veri gösteriyor. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
+
+### [ ] R6 — Methods/About sayfası implementasyonu
+- **Bekler:** C5, R1 · **Açar:** —
+- Can'ın C5 tasarımını koda dökmek:
+  - `/methods` route (React Router veya conditional render)
+  - Pipeline diyagramı: SVG veya step-by-step component
+  - Her aşamaya tıkla → detay accordion
+  - Bilimsel referans listesi (Samet S8 ile koordineli — içerik Samet, görünüm Serhat)
+  - Disclaimer banner component'i (sayfa altı veya header'da)
+  - Responsive: mobilde de okunabilir
+- **Bitti sayılır:** `/methods` sayfası açılıyor; 7 pipeline aşaması görsel olarak anlaşılıyor; referanslar listelenmiş; disclaimer görünür.
+
+### [ ] R7 — CSV/GeoJSON export + acil müdahale brifingi
+- **Bekler:** G10, C6, S7 · **Açar:** —
+- İki özelliğin frontend implementasyonu:
+  - **Export:** indirme butonu → format seçimi → `/api/export` çağrısı → blob download
+  - Dosya adı: `pyrosync_{region}_{date}.csv` formatında
+  - Loading state (büyük dosyalarda)
+  - **Brifingi:** seçili bölge için özet panel/modal
+  - Metrikler: son 7 gün detection, tarihsel ortalamadan sapma, en yoğun sensör, trend (artış/azalış)
+  - Print butonu (window.print ile)
+  - Case study verileri (S7) ile demo senaryosu
+- **Bitti sayılır:** CSV indiriliyor ve Excel'de açılıyor; GeoJSON indiriliyor; brifingi paneli en az 5 metrik gösteriyor; Türkiye verisiyle demo çalışıyor.
+
+### [ ] R8 — Çoklu harmonizasyon model seçimi
+- **Bekler:** G7, K1, R1 · **Açar:** —
+- Kullanıcının farklı harmonizasyon yaklaşımlarını karşılaştırabilmesi:
+  - Dropdown/toggle: "Standard" (VIIRS-preferred) vs "Equal-weight" vs "MODIS-calibrated"
+  - Seçim backend'e config olarak gönderilir (G7'nin config yapısıyla)
+  - Sonuçlar anlık güncellenir (harita + takvim + stats)
+  - Farklılık istatistiği: "Bu model %X daha fazla/az detection üretiyor"
+  - Fallback modunda (K1) da çalışmalı
+- **Kaynak:** Strateji 1.2 — "Çoklu harmonizasyon modeli seçimi — kullanıcı yöntemi seçip farkı görebilecek"
+- **Bitti sayılır:** en az 2 farklı model arasında geçiş yapılabiliyor; sonuçlar gözle görülür şekilde farklı; istatistik farkı gösteriliyor.
 
 ---
 
 ## Samet'in görevleri
 
-### S1 — Core crate unit testleri ✅
+> **Not (2026-11-15):** `docs/API.md` içinde `vza.mean_frp_reduction_pct` alanı hâlâ "ortalama VZA-only FRP azalması" olarak tarif ediliyor. VZA düzeltmesi artık çarpma olduğu için bu alan negatif değer döner (negatif = artış); açıklama buna göre güncellenmeli ve yeni `vza.mean_frp_adjustment_pct` alanının (pozitif = artış) tercih edildiği belirtilmeli.
+
+### [X] S1 — Core crate unit testleri
 - **Bekler:** G2 · **Açar:** S5
 - `pyrosync-core` crate'indeki harmonizasyon pipeline'ı için kapsamlı testler:
-  - ✅ **dedup:** bilinen duplikat seti verin → FRP azalması beklenen (revize, bkz. aşağıda); ayrıca haversine (sıfır mesafe, 1° enlem, simetri, antimeridyen), %30 örtüşme eşiği ve 8 sn penceresi
-  - ✅ **VZA:** nadir'de correction = 1.0, 60° VZA'da > 1.0; simetri yerine negatif VZA üretmeme ve kenara doğru azalmama (revize, bkz. aşağıda)
-  - ✅ **matching:** 2 km ve **180 dk** içindeki MODIS/VIIRS çiftleri eşleşmeli, dışındakiler eşleşmemeli (revize: G2'de pencere 5 dk'dan 180 dk'ya çıktı)
-  - ✅ **calendar:** 24 aylık veri → 24 hücre; anomaly hesabı en az 3 yıl verisi gerektirir; std = 0'da anomali yok; z-skoru formülü; UTC ay sınırı
-  - ✅ Edge case'ler: boş veri, tek sensör, tüm deteksiyonlar eşleşen, hiçbiri eşleşmeyen
-  - ✅ Ek: önceden testsiz public yardımcılar (`Sensor::is_modis/is_viirs/firms_source`, `BBox::to_firms_string`, `Confidence` sıralaması)
+  - [X] **dedup:** bilinen duplikat seti verin → FRP azalması beklenen (revize, bkz. aşağıda); ayrıca haversine (sıfır mesafe, 1° enlem, simetri, antimeridyen), %30 örtüşme eşiği ve 8 sn penceresi
+  - [X] **VZA:** nadir'de correction = 1.0, 60° VZA'da > 1.0; simetri yerine negatif VZA üretmeme ve kenara doğru azalmama (revize, bkz. aşağıda)
+  - [X] **matching:** 2 km ve **180 dk** içindeki MODIS/VIIRS çiftleri eşleşmeli, dışındakiler eşleşmemeli (revize: G2'de pencere 5 dk'dan 180 dk'ya çıktı)
+  - [X] **calendar:** 24 aylık veri → 24 hücre; anomaly hesabı en az 3 yıl verisi gerektirir; std = 0'da anomali yok; z-skoru formülü; UTC ay sınırı
+  - [X] Edge case'ler: boş veri, tek sensör, tüm deteksiyonlar eşleşen, hiçbiri eşleşmeyen
+  - [X] Ek: önceden testsiz public yardımcılar (`Sensor::is_modis/is_viirs/firms_source`, `BBox::to_firms_string`, `Confidence` sıralaması)
 - **Bitti sayılır:** `cargo test -p pyrosync-core` en az 20 test geçiyor; her modül (dedup, vza, harmonize, calendar) için en az 3 test var.
 - **Revizyon gerekçesi (2026-11-14):** Üç madde koda göre eskimişti.
   - "%18.3" gerçek veriden gelen bir literatür ortalaması, algoritmanın sabit bir özelliği değil; G2 de aynı bandı bıraktı. Yerine sonucu elle hesaplanan bir küme kullanıldı: 4 tespit → 3, toplam FRP 200 → 160 MW, azalma tam %20.
@@ -458,16 +659,16 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - `calendar.rs`: tespit olmayan aylar hücre olarak üretilmiyor, bu yüzden anomali baseline'ı yalnız tespit olan yıllardan hesaplanıyor. Ortalama olduğundan yüksek çıkar ve yangınsız yıllar takvimde hiç görünmez.
   - `dedup.rs`: yorum "|Δt| < 8 s" diyor ama kod 8 sn'yi de duplikat sayıyor (`dt > 8` ise kesiyor). Hangisinin doğru olduğu karar istiyor; sınır bu yüzden testle sabitlenmedi.
 
-### S2 — Server + FIRMS client integration testleri ✅
+### [X] S2 — Server + FIRMS client integration testleri
 - **Bekler:** G4 · **Açar:** —
 - Uçtan uca API testleri:
-  - ✅ `/api/health` → 200 OK
-  - ✅ `/api/harmonize?west=...&south=...&east=...&north=...&days=1` → geçerli JSON, `harmonized.count > 0`
-  - ✅ `/api/calendar` → yıl/ay sıralı, anomaly hesabı tutarlı
-  - ✅ `/api/compare` → raw count > harmonized count
-  - ✅ Hatalı parametrelerde uygun HTTP status kodu
-  - ✅ FIRMS API key eksikse 500 + anlamlı hata mesajı
-  - ✅ Ek: `/api/stats` ve `/api/availability`, response cache (`X-Cache` HIT/MISS), FIRMS hata yolları (geçersiz anahtar → 502, tek kaynak hatası → 200 + uyarı, 503 → tekrar deneme, zaman aşımı → 504), kapsanmayan tarih aralığı raporu, eksik arşiv yılı
+  - [X] `/api/health` → 200 OK
+  - [X] `/api/harmonize?west=...&south=...&east=...&north=...&days=1` → geçerli JSON, `harmonized.count > 0`
+  - [X] `/api/calendar` → yıl/ay sıralı, anomaly hesabı tutarlı
+  - [X] `/api/compare` → raw count > harmonized count
+  - [X] Hatalı parametrelerde uygun HTTP status kodu
+  - [X] FIRMS API key eksikse 500 + anlamlı hata mesajı
+  - [X] Ek: `/api/stats` ve `/api/availability`, response cache (`X-Cache` HIT/MISS), FIRMS hata yolları (geçersiz anahtar → 502, tek kaynak hatası → 200 + uyarı, 503 → tekrar deneme, zaman aşımı → 504), kapsanmayan tarih aralığı raporu, eksik arşiv yılı
 - **Bitti sayılır:** `cargo test -p pyrosync-server` en az 10 test geçiyor; mock FIRMS verisine karşı uçtan uca test çalışıyor.
 - **Yaklaşım:** `crates/server/src/integration_tests.rs` gerçek router'ı (`build_router`) ve gerçek `FirmsClient`'ı wiremock ile kurulan sahte bir FIRMS sunucusuna karşı çalıştırır. Takvim, geçici bir dizindeki çevrimdışı arşive karşı çalışır. Sınır değer ve denklik sınıfı vakaları (days, bbox, tarih penceresi) rstest ile parametreli.
 - **FIRMS istemcisinde ek değişiklik (geriye uyumlu):** Testlerin sahte sunucuya yönlenebilmesi için `FirmsClient::with_api_root(..)` eklendi. Varsayılan host değişmedi (`FIRMS_API_ROOT`), `Availability::fetch` artık host'u parametre olarak alıyor.
@@ -477,13 +678,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Satır kapsamı: `firms-client/client.rs` %36,7 → %55,3, `server/main.rs` %80,6 → %87,8, workspace toplamı %82,2 → %84,3.
 - **Yan bulgu (Görkem için):** Eksik query parametresinde (ör. `south` yok) 400 yanıtı JSON değil düz metin dönüyor; diğer doğrulama hataları `{"error": ...}` döndürüyor. Test bu yüzden şimdilik yalnız status kodunu doğruluyor.
 
-### S3 — API dokümantasyonu ✅
+### [X] S3 — API dokümantasyonu
 - **Bekler:** G4 · **Açar:** —
 - Tüm API endpoint'lerinin dökümanı:
-  - ✅ Her endpoint: URL, method, parametreler, örnek request/response
-  - ✅ Hata kodları ve anlamları
-  - ✅ Örnek curl komutları
-  - ✅ `docs/API.md` olarak depoya
+  - [X] Her endpoint: URL, method, parametreler, örnek request/response
+  - [X] Hata kodları ve anlamları
+  - [X] Örnek curl komutları
+  - [X] `docs/API.md` olarak depoya
 - **Bitti sayılır:** `docs/API.md` depoda; her endpoint için en az bir örnek var; takım bu dökümanla frontend geliştirme yapabilir.
 - **Kapsam:** 11 endpoint (`health`, `config`, `availability`, `harmonize`, `compare`, `stats`, `export`, `calendar`, `regions`, `series`, `points`). Her biri için parametre tablosu, örnek istek ve yanıt, alan açıklamaları ve hata kodları var. Ayrıca ortak kavramlar (bbox, zaman penceresi, enum'lar, ortak nesneler), genel hata kodu tablosu, API'yi etkileyen ortam değişkenleri ve bilinen sorunlar bölümleri bulunuyor.
 - **Örneklerin kaynağı:** Arşiv endpoint'lerinin örnekleri, yerel FIRMS arşiviyle çalışan sunucudan yakalanan gerçek Türkiye verisidir. FIRMS anahtarı gerektiren endpoint'lerin örnekleri ise S2'deki sahte FIRMS düzeneğinden alındı: yapı gerçek, sayılar sentetik ve doküman bunu belirtiyor.
@@ -497,7 +698,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - FIRMS availability tablosu süreç başına bir kez çekiliyor (`OnceCell`). Uzun çalışan sunucuda en yeni günler "kapsanmıyor" sayılabilir.
   - `.env.example` dosyasındaki yorum anahtar yokken hâlâ "500" diyor; kod 503 dönüyor.
 
-### S4 — Sample/demo veri pipeline'ı ⏸
+### [ ] S4 — Sample/demo veri pipeline'ı
 - **Bekler:** G1 · **Açar:** Y1, Y2
 - Offline geliştirme ve demo için hazır veri seti:
   - FIRMS API'den birkaç bölge (Türkiye, Kaliforniya, Avustralya) için 2020–2025 verisi çekme
@@ -507,7 +708,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Frontend ve grafik component'leri bu veriyle çalışabilir
 - **Bitti sayılır:** `data/sample/` altında en az 3 bölge var; her bölgede MODIS, VIIRS ve harmonized veri mevcut; Yusuf bu veriyle grafik yapabilir.
 
-### S5 — GitHub Actions CI/CD kurulumu ⬜
+### [ ] S5 — GitHub Actions CI/CD kurulumu
 - **Bekler:** S1 · **Açar:** —
 - Her push'ta otomatik kontrol:
   - `cargo check` — derleme hatası yok
@@ -517,21 +718,43 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Dosya:** `.github/workflows/ci.yml`
 - **Bitti sayılır:** main branch'e push yapınca Actions yeşil tik gösteriyor; başarısız build'de hata mesajı görünüyor.
 
+### [ ] S6 — Config + calibration + export testleri
+- **Bekler:** G7, G9, G10 · **Açar:** —
+- Yeni modüller için kapsamlı testler:
+  - **config:** TOML parse testi, varsayılan değerlerin doğruluğu, env var override, hatalı config'de anlamlı hata
+  - **calibration:** tropik/boreal/savan bölgeler için doğru katsayı, bilinmeyen bölge → default fallback
+  - **uncertainty:** nadir'de dar aralık, kenar'da geniş aralık; lower < frp < upper her zaman
+  - **export:** CSV çıktısı doğru sütun sayısı ve header; GeoJSON valid FeatureCollection; boş veri → boş dosya (hata değil)
+  - Edge case: sıfır detection, tek sensör, tüm güvenlik düşük
+- **Bitti sayılır:** `cargo test` ile en az 15 yeni test geçiyor; her modül (config, calibration, uncertainty, export) için en az 3 test.
+
+### [ ] S7 — Türkiye/Akdeniz case study veri seti
+- **Bekler:** G1 · **Açar:** R7
+- Demo ve sunum için hazır Türkiye yangın verisi:
+  - FIRMS API'den Türkiye bbox (26°–45° E, 36°–42° N) için 2020–2025 verisi
+  - Akdeniz bölgesi özel alt-set (Antalya, Muğla — 2021 yangınları dahil)
+  - MODIS + VIIRS ayrı CSV'ler + harmonize edilmiş JSON
+  - `data/case-study/turkey/` altında organize
+  - İstatistik özet: toplam detection, pik aylar, yıllar arası trend
+  - Brifingi component'i (R7) bu veriyle demo yapacak
+- **Kaynak:** Strateji 1.1 — "Türkiye ve Akdeniz havzası özel case study — jüri için farklı ve dikkat çekici"
+- **Bitti sayılır:** `data/case-study/turkey/` altında en az 3 yıl veri var; 2021 Akdeniz yangınları anomali olarak belirgin; JSON formatı frontend'le uyumlu.
+
+### [ ] S8 — Bilimsel referans ve disclaimer içerik
+- **Bekler:** C5 · **Açar:** —
+- Methods sayfası için bilimsel içerik hazırlığı:
+  - Her pipeline aşaması için 2–3 cümle açıklama (teknik ama anlaşılır)
+  - Kullanılan akademik makalelerin referans listesi (APA formatı)
+  - Referans–pipeline aşaması eşlemesi: hangi makale hangi aşamayı destekliyor
+  - Disclaimer metni: sınırlamalar, model varsayımları, veri kaynağı güvenilirliği
+  - `docs/REFERENCES.md` dosyası olarak depoya
+- **Bitti sayılır:** `docs/REFERENCES.md` depoda; en az 5 makale referanslanmış; her pipeline aşaması en az bir referansla desteklenmiş; disclaimer metni net ve dürüst.
+
 ---
 
 ## Yusuf'un görevleri
 
-### Y5 — Mock veri hazırlığı (frontend için) ⬜
-- **Bekler:** — · **Açar:** Y1, Y2, Y3, Y4
-- Frontend component'leri backend hazır olmadan geliştirilebilsin:
-  - `web/src/mocks/hotspots.json` — 500-1000 arası hotspot (lat, lon, frp, confidence, sensor, date)
-  - `web/src/mocks/calendar.json` — 2000–2025 arası aylık hücre verisi (count, mean_frp, anomaly)
-  - `web/src/mocks/stats.json` — genel istatistikler (raw vs harmonized count, pipeline metrics)
-  - Veriler gerçekçi olmalı: FRP aralığı 1–500 MW, mevsimsellik var (yaz ayları yoğun), 2012'de VIIRS geçişi belirgin
-  - `web/src/mocks/index.ts` ile export
-- **Bitti sayılır:** mock dosyaları `web/src/mocks/` altında; TypeScript hatasız import ediliyor; sensor cliff 2012'de görünüyor.
-
-### Y1 — FRP zaman serisi grafiği ⏸
+### [ ] Y1 — FRP zaman serisi grafiği
 - **Bekler:** R1, Y5, S4 · **Açar:** G5
 - Recharts ile aylık ortalama FRP trendi:
   - X ekseni: zaman (2000–present), Y ekseni: ortalama FRP (MW)
@@ -542,7 +765,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
 - **Bu grafik sunum için kritik — "sensor cliff" problemini tek bakışta gösterir.**
 - **Bitti sayılır:** mock veriyle grafik render oluyor; sensor cliff Raw modda görünüyor, Harmonized modda kaybolıyor; tooltip çalışıyor.
 
-### Y2 — Sensör karşılaştırma grafikleri ⏸
+### [ ] Y2 — Sensör karşılaştırma grafikleri
 - **Bekler:** R1, Y5, S4 · **Açar:** —
 - MODIS vs VIIRS ayrıntılı karşılaştırma:
   - Bar chart: aylık detection count by sensor
@@ -550,7 +773,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Pie/donut: sensor breakdown (MODIS-only, VIIRS-only, Matched)
 - **Bitti sayılır:** en az 2 farklı chart tipi çalışıyor; sensörler arası fark görsel olarak açık.
 
-### Y3 — Aylık yangın yoğunluk heatmap'i ⏸
+### [ ] Y3 — Aylık yangın yoğunluk heatmap'i
 - **Bekler:** R1, Y5 · **Açar:** —
 - Serhat'ın R3'ünden farklı olarak bu bir bölgesel yoğunluk haritası:
   - Grid tabanlı renk haritası (hexbin veya kare grid)
@@ -559,7 +782,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Raw vs Harmonized modda farklı dağılım
 - **Bitti sayılır:** mock veriyle heatmap render oluyor; zaman slider'ı çalışıyor; renk skalası anlamlı.
 
-### Y4 — İstatistik dashboard kartları ⏸
+### [ ] Y4 — İstatistik dashboard kartları
 - **Bekler:** R1, Y5 · **Açar:** —
 - Üst kısımda summary bilgiler:
   - Toplam detection sayısı (raw vs harmonized)
@@ -570,14 +793,70 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Kart tasarımı: büyük sayı + trend ok (▲▼) + mini sparkline
 - **Bitti sayılır:** en az 4 istatistik kartı mock veriyle render oluyor; raw/harmonized geçişinde sayılar değişiyor.
 
+### [ ] Y5 — Mock veri hazırlığı (frontend için)
+- **Bekler:** — · **Açar:** Y1, Y2, Y3, Y4
+- Frontend component'leri backend hazır olmadan geliştirilebilsin:
+  - `web/src/mocks/hotspots.json` — 500-1000 arası hotspot (lat, lon, frp, confidence, sensor, date)
+  - `web/src/mocks/calendar.json` — 2000–2025 arası aylık hücre verisi (count, mean_frp, anomaly)
+  - `web/src/mocks/stats.json` — genel istatistikler (raw vs harmonized count, pipeline metrics)
+  - Veriler gerçekçi olmalı: FRP aralığı 1–500 MW, mevsimsellik var (yaz ayları yoğun), 2012'de VIIRS geçişi belirgin
+  - `web/src/mocks/index.ts` ile export
+- **Bitti sayılır:** mock dosyaları `web/src/mocks/` altında; TypeScript hatasız import ediliyor; sensor cliff 2012'de görünüyor.
+
 ---
 
 ## Sadık'ın görevleri
 
-> [!NOTE]
-> Bu görevler 2026-11-14'te GOREVLER2.md'den (G11–G15) taşındı ve Sadık'a atandı. İçerik aynen korunmuştur; yalnız kimlikler K5–K9 olarak yeniden numaralandı. GOREVLER2.md'deki K1–K4 ile çakışma yok.
+### [ ] K1 — Live/demo/fallback modu
+- **Bekler:** R4 · **Açar:** R8
+- FIRMS API çalışmadığında uygulamanın hâlâ demo yapılabilmesi (FireHarmonize'dan ilham):
+  - API bağlantısı kontrol mekanizması (health check → timeout → fallback)
+  - Demo modu: `web/src/mocks/` altındaki örnek veriyi otomatik yükleme
+  - UI'da mod göstergesi: "🟢 Live Data" vs "🟡 Demo Mode"
+  - Kullanıcı manuel geçiş yapabilmeli (demo verisiyle hızlı keşif)
+  - Geçiş sırasında state sıfırlanmadan smooth transition
+  - Jüri demo anında API çökerse sunum kesilmesin
+- **Kaynak:** FireHarmonize — "Live/demo/fallback modu: API çalışmazsa demo verisiyle devam"
+- **Bitti sayılır:** API key olmadan uygulama demo modunda açılıyor; API varken otomatik live'a geçiyor; mod göstergesi doğru; jüri demo'su API olmadan sorunsuz çalışıyor.
 
-### K5 — Area API sonuçlarını diske cache'leme ⬜
+### [ ] K2 — Config ayarları frontend paneli
+- **Bekler:** G7, R1 · **Açar:** —
+- Pipeline parametrelerini UI'dan ayarlayabilme (EG FireTrack tarzı şeffaflık):
+  - Settings panel/drawer: slider ve input alanlarıyla parametre düzenleme
+  - Dedup eşikleri: zaman penceresi (1–30s), örtüşme oranı (%10–%80)
+  - Matching eşikleri: mesafe (0.5–10 km), zaman (1–30 dk)
+  - Değişiklik yapıldığında sonuçlar yeniden hesaplansın (debounced API call)
+  - "Varsayılana dön" butonu
+  - Ayarların URL query string'ine yansıması (paylaşılabilir link)
+- **Bitti sayılır:** en az 3 parametre UI'dan değiştirilebiliyor; sonuçlar değişiyor; varsayılan butonuyla geri dönülebiliyor; link paylaşılınca aynı ayarlarla açılıyor.
+
+### [ ] K3 — Belirsizlik aralıkları görselleştirme
+- **Bekler:** G9, C7, R1 · **Açar:** —
+- Belirsizlik verilerinin chart'larda gösterimi (Recharts ile):
+  - FRP zaman serisi: shaded confidence band (mean ± uncertainty)
+  - Haritada: hotspot dairesinin boyutu veya opaklığı belirsizlik ile orantılı
+  - Calendar hücresinde: belirsizlik yüksekse hücre kenarlığı farklı (hatched/dashed)
+  - Tooltip'te: "FRP: 45.2 MW (38.7–51.8)" formatında
+  - Belirsizlik açıklaması: "Geniş aralık = sensör açısı büyük veya kalibrasyon verisi az"
+- **Kaynak:** fire-harmony — belirsizlik gösterimi; Can'ın C7 tasarımına uygun
+- **Bitti sayılır:** en az 2 chart tipinde belirsizlik görünüyor; tooltip'te aralık var; yüksek VZA'lı noktalar geniş aralıklı (görsel olarak ayırt edilebilir).
+
+### [ ] K4 — Erişilebilir renk skalası sistemi
+- **Bekler:** C7, R1 · **Açar:** —
+- Yarışma gereksinimlerinden "color ramps" + erişilebilirlik:
+  - Renk skalası modülü: sequential (FRP), diverging (anomaly), categorical (sensör)
+  - En az 2 palet seçeneği: varsayılan + renk körlüğü dostu (viridis/cividis)
+  - Kullanıcı palet değiştirebilmeli (dropdown)
+  - CSS custom properties ile tema entegrasyonu
+  - Legend component: sürekli skala + eşik değerleri
+  - Quantile-based renk atama (outlier'lar skalayı bozmasın)
+- **Kaynak:** Yarışma gereksinimleri — "Color ramps"; erişilebilirlik en iyi pratikleri
+- **Bitti sayılır:** en az 2 palet var; renk körlüğü simülatörüyle kontrol edilmiş; legend'da değer aralıkları görünüyor; palet değiştirince tüm chart'lar güncelleniyor.
+
+> [!NOTE]
+> K5–K9 görevleri 2026-11-14'te Sadık'a atandı (eski G11–G15 kimliklerinden bu dosyada K5–K9 olarak yeniden numaralandı; K1–K4 ile çakışma yok).
+
+### [ ] K5 — Area API sonuçlarını diske cache'leme
 - **Bekler:** — · **Açar:** K6, K7
 - **Neden:** G3 doğrulamasında FIRMS transaction limitine dayandık. 18 aylık tek bir aralık 1373 transaction harcıyor ve limit aşıldığında istekler `HTTP 400 Exceeding allowed transaction limit` dönüyor. Aynı aralığı tekrar sorgulamak baştan harcama demek, bu yüzden uzun zaman serisi doğrulamaları yapılamıyor.
 - `crates/firms-client/src/archive.rs` içindeki `ArchiveClient` ülke-yıl dosyalarını zaten diske cache'liyor ve bu yaklaşım çalışıyor (`.cache/firms-archive`, 2,4 GB, MODIS 2000-2025 + VIIRS SNPP 2012-2025). Aynı mantık area API sorguları için kurulacak.
@@ -587,7 +866,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - `.cache/` dizini gitignore'da olmalı.
 - **Bitti sayılır:** aynı aralık ikinci kez istendiğinde `transactions_spent` 0 dönüyor; cache'li bir aralık ağ bağlantısı olmadan da çalışıyor.
 
-### K6 — 2023 (NOAA-21) efor geçişini ölçme ⬜
+### [ ] K6 — 2023 (NOAA-21) efor geçişini ölçme
 - **Bekler:** K5 · **Açar:** —
 - **Neden:** G3'ün Ω mekanizması 2012 (SNPP) ve 2018 (NOAA-20) geçişlerinde doğrulandı, ama **2023 (NOAA-21) geçişi ölçülmedi.** Mekanizma platform kümesinden bağımsız çalıştığı için aynı davranması bekleniyor, ancak bu bir beklenti; ölçüm değil.
 - Ülke arşivi NOAA-21'i taşımıyor (`viirs-jpss2` tüm yıllarda HTTP 404; NOAA-20 ise `viirs-jpss1` olarak arşivde var), bu yüzden bu geçiş yalnız area API ile ölçülebilir ve K5'in cache'ine ihtiyaç duyar.
@@ -596,13 +875,13 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - Ω'nın her iki konfigürasyon için de hesaplanabilmesi için her yanda en az 3 ay gerekiyor (`MIN_MONTHS_PER_CONFIG`).
 - **Bitti sayılır:** `|log(normalize kayma)| < |log(ham kayma)| / 2` ölçütü 2023 geçişi için de sağlanıyor ve sonuç GOREVLER.md'deki G3 doğrulama tablosuna ekleniyor.
 
-### K7 — Tam filo 2000-present trend serisi ⬜
+### [ ] K7 — Tam filo 2000-present trend serisi
 - **Bekler:** K5 · **Açar:** —
 - **Neden:** G3'ün "monoton artan trend kalkıyor" şartı Spearman ρ +0,785 → +0,087 ile doğrulandı, **ama o seri yalnızca MODIS + SNPP içeriyor.** O ölçüm sırasında NOAA-20 arşivde yok sanılıyordu, bu yüzden dört efor geçişinden ikisi (2018, 2023) trend testinde hiç yok. Trend, 2012 geçişini içeren uzun seride düz; 2018 ayrı ve kısa bir veri setinde doğrulandı; ikisi tek sürekli seride birlikte sınanmadı.
 - Güncel durum (2026-11-15): yerel arşiv (`make data`) MODIS + SNPP + NOAA-20'yi 2000-2025 boyunca içeriyor, yani seri 2018 geçişi dahil doğrudan arşivden kurulabilir. Area API (K5 cache'i) yalnız 2023 sonrası NOAA-21 katkısı için gerekiyor. Sonra `archive_ingest` örneğinin sıçrama kontrolü tam filo serisi üzerinde koşturulacak.
 - **Bitti sayılır:** 2000-present tam filo serisinde normalize Spearman ρ'nun mutlak değeri ham ρ'nun yarısından küçük; 2012, 2018 ve 2023 geçişlerinin üçünde de seviye kayması ölçütü sağlanıyor.
 
-### K8 — MODIS içi efor geçişi (2002 Aqua) ⬜
+### [ ] K8 — MODIS içi efor geçişi (2002 Aqua)
 - **Bekler:** — · **Açar:** —
 - **Neden:** Ω tanım gereği `total / modis_observable` oranı olduğu için **MODIS referans kanalının kendi içindeki değişimi göremiyor.** 2002-07'de Aqua devreye girdiğinde tespitler arttı (arşiv, Türkiye: 2001 Terra 5162 → 2002 Terra 4474 + Aqua 2412) ama Aqua `modis_observable`'ın parçası olduğu için Ω 1,000 kalıyor ve bu sıçrama düzeltilmiyor.
 - MODIS filo birleştirmesi (bkz. `crates/core/src/fleet.rs`, 180 dk pencere) aynı yangının Terra/Aqua çift sayımını temizliyor, ama ölçüme göre Aqua tespitlerinin yalnız %18-21'i Terra ile eşleşiyor. Kalanı Terra'nın gerçekten görmediği yangınlar (sabah geçişinden sonra başlayanlar) ve bu gerçek bir efor artışı.
@@ -611,9 +890,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   1. Ω'nın referansını "herhangi bir MODIS" yerine Terra-only alt kanalı yapmak. **Dikkat:** Terra'nın yörüngesi 2020 sonrası kaydı ve geçiş saati değişti, yani kararsız bir cetvel olur ve 2020-2026 için YENİ bir artefakt üretebilir. Bu yol seçilirse Terra kaymasının etkisi önce ölçülmeli.
   2. 2000-11 … 2002-06 arası 20 ayı `count_normalized: None` ile "kıyaslanabilir değil" işaretlemek. Veri kaybı 26 yılın küçük bir kısmı ve o dönem MODIS misyonunun en az güvenilir evresi. Daha dürüst ve risksiz.
 - **Not:** G3'ün bitiş şartı yalnızca 2012 ve 2017 geçişlerini istediği için bu madde şartı ihlal etmiyor; 2000-2002 taban döneminin sonrasıyla tam kıyaslanabilir olmaması bilinen ve kayıtlı bir sınır.
-- **Bitti sayılır:** 2000-2002 dönemi ya düzeltiliyor ya da açıkça kıyaslanamaz işaretleniyor; methods sayfasında (`v2:C5` / `v2:R6`) hangisinin seçildiği belirtiliyor.
+- **Bitti sayılır:** 2000-2002 dönemi ya düzeltiliyor ya da açıkça kıyaslanamaz işaretleniyor; methods sayfasında (`C5` / `R6`) hangisinin seçildiği belirtiliyor.
 
-### K9 — SPA fallback gerçekten çalışmıyor ⬜
+### [ ] K9 — SPA fallback gerçekten çalışmıyor
 - **Bekler:** — · **Açar:** R1 (routing eklenince kritik olur)
 - **Neden:** `crates/server/CLAUDE.md` "Teknik Notlar" bölümünde *"`tower_http::services::ServeDir` ile SPA fallback sağlanır"* yazıyor, ama bu DOĞRU DEĞİL. Düz `ServeDir` bilinmeyen bir yolda `index.html` döndürmez, 404 döner.
 - **Ölçüm (2026-11-14, `web/dist` build edilmiş durumda, backend :3001):**
@@ -631,3 +910,15 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf. Okl
   - `STATIC_DIR` dizini veya `index.html` yoksa sunucu panik etmemeli; fallback kurulamazsa mevcut davranışa düşüp uyarı loglanmalı (Docker'da `STATIC_DIR=/app/static`, geliştirmede `web/dist` ve build edilmemiş olabilir).
   - `crates/server/CLAUDE.md`'deki yanlış iddia düzeltilmeli.
 - **Bitti sayılır:** `web/dist` build edilmiş haldeyken `/harita` isteği HTTP 200 ve `index.html` dönüyor; `/api/olmayanbirsey` hâlâ JSON 404 dönüyor; `STATIC_DIR` boşken sunucu ayağa kalkmaya devam ediyor.
+
+---
+
+## Kişi başı yük özeti
+
+| Kişi | Görev sayısı | Ağırlık | Odak |
+|------|-------------|---------|------|
+| Görkem | 4 (G7–G10) | Ağır | Backend core: config, kalibrasyon, belirsizlik, export |
+| Can | 3 (C5–C7) | Orta | Tasarım: methods, export/brifingi, belirsizlik/renk |
+| Serhat | 3 (R6–R8) | Orta-ağır | Frontend impl: methods, export+brifingi, model seçimi |
+| Samet | 3 (S6–S8) | Orta | Test, veri, referans: yeni modül testleri, case study, bilimsel içerik |
+| Sadık | 4 (K1–K4) | Orta | Frontend infra: fallback, config paneli, belirsizlik viz, renk skalası |
