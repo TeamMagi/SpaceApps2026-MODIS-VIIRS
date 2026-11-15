@@ -255,7 +255,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
 | S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [X] |
 | S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [ ] |
-| S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [ ] |
+| S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [X] |
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [ ] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [ ] bekliyor |
@@ -945,12 +945,18 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #10 (+ `fire-harmony`)
 - **Bitti sayılır:** `uncertainty.rs` ve `calendar.rs` ülke/ay toplamlarında büyüklük bölmeli Mondrian split conformal `%68`/`%90` aralıkları üretiyor ve out-of-sample kapsama testi geçiyor.
 
-### [ ] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
+### [X] S11 — VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si
 - **Bekler:** — · **Açar:** —
 - `crates/core/src/dedup.rs` için VIIRS 3-zonlu kümeleme ve bow-tie silme sınırlarına (`±31.72°` Bölge 2: 3→1, 4 dış satır silme; `±44.86°` Bölge 3: 2→1, 8 dış satır silme; `56.28°` kenar `[09, Bölüm 2; 13, Şek. 5]`) yönelik doğrulama testleri ekleme
 - `crates/server` içine `FireHarmonize` tarzı interaktif `radius_km` / `window_min` eşleşme duyarlılık önizleme endpoint'i ve entegrasyon testi ekleme
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P2, P5, Yol Haritası #13 (+ `[09, 13]`, `FireHarmonize`)
 - **Bitti sayılır:** Bölge 2/3 sınır testleri `pyrosync-core`'da geçiyor ve sunucuda `radius_km` / `window_min` duyarlılık önizleme endpoint'i entegrasyon testiyle doğrulanıyor.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - **Çekirdek:** `crates/core/src/dedup.rs` içine `viirs_zone()` ve `viirs_zone_layout()` eklendi; sınırlar `±31.72°` (Bölge 2: 3→1, 4 dış satır), `±44.86°` (Bölge 3: 2→1, 8 dış satır) ve `56.28°` kenar. Her sınırın altı, kendisi ve üstü iki işarette test edildi. Bu mantık kodda önceden yoktu: fonksiyonlar bağımsız ve henüz `dedup` eşleştirmesine bağlı değil; bow-tie silmenin eşleştirmeye uygulanması ayrı iştir.
+> - **Sunucu:** `GET /api/sensitivity` (`crates/server/src/sensitivity.rs`). Bbox ve zaman penceresi `/api/harmonize` ile aynı; `radius_km` ve `window_min` virgüllü listeler (her eksen en çok 5 farklı değer, yarıçap `0 < r ≤ 10` km, pencere 0–1440 dk). FIRMS verisi bir kez çekilip her ızgara hücresinde yeniden eşleştirilir; hücre başına `matched`, `modis_only`, `viirs_only`, `harmonized_total`. Entegrasyon testleri: `matched` sayısının yarıçap ve pencereyle azalmaması, 6 geçersiz yarıçap, sınır değerleri, ızgara üst sınırı, eksik parametre. `docs/API.md`'ye eklendi.
+> - **Öneri (Görkem):** Izgara hücreleri senkron sırayla çalışıyor (mevcut `/api/harmonize` ile aynı desen); büyük bbox'larda 25 harmonizasyon sunucuyu yavaşlatabilir, `spawn_blocking` düşünülebilir.
 
 ### [ ] S12 — Dış doğrulama pilotu (atmosfer)
 - **Bekler:** G12 · **Açar:** —
