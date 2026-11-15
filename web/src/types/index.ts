@@ -39,6 +39,7 @@ export interface AnalyticsSnapshot {
 
 export type Lang = "en" | "tr";
 export type Theme = "dark" | "light";
+export type Palette = "default" | "viridis" | "cividis";
 
 /** Phase of the Raw <-> Harmonized choreography. See hooks/useHarmonizeTransition. */
 export type Phase = "idle" | "detect" | "merge" | "settle";
@@ -302,6 +303,10 @@ export interface EffortFactor {
   total: number;
   modisObservable: number;
   omega: number | null;
+  totalHighIntensity?: number;
+  modisObservableHighIntensity?: number;
+  omegaHighIntensity?: number | null;
+  snppAquaHighIntensityRatio?: number | null;
 }
 
 export interface EffortInfo {

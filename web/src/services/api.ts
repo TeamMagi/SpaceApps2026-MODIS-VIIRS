@@ -219,6 +219,10 @@ interface WireEffortFactor {
   total: number;
   modis_observable: number;
   omega: number | null;
+  total_high_intensity?: number;
+  modis_observable_high_intensity?: number;
+  omega_high_intensity?: number | null;
+  snpp_aqua_high_intensity_ratio?: number | null;
 }
 
 interface WireEffortInfo {
@@ -593,6 +597,10 @@ function adaptEffortInfo(w: WireEffortInfo): EffortInfo {
       total: f.total,
       modisObservable: f.modis_observable,
       omega: f.omega,
+      totalHighIntensity: f.total_high_intensity,
+      modisObservableHighIntensity: f.modis_observable_high_intensity,
+      omegaHighIntensity: f.omega_high_intensity,
+      snppAquaHighIntensityRatio: f.snpp_aqua_high_intensity_ratio,
     })),
   };
 }

@@ -177,6 +177,10 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 | `total` | integer | Toplam harmonize kayıt sayısı |
 | `modis_observable` | integer | MODIS ile gözlemlenebilen kayıt sayısı |
 | `omega` | number \| null | Ω değeri. Ay sayısı azsa (kodda eşik 3 aydır) `null` olabilir |
+| `total_high_intensity` | integer | `frp >= 40.0` MW (sonlu) toplam harmonize kayıt sayısı |
+| `modis_observable_high_intensity` | integer | `frp >= 40.0` MW (sonlu) MODIS ile gözlemlenebilen kayıt sayısı |
+| `omega_high_intensity` | number \| null | Yüksek şiddet (≥ 40 MW) rejimi için Ω; 3+ ay ve `modis_observable_high_intensity >= 30` gerekir |
+| `snpp_aqua_high_intensity_ratio` | number \| null | Gündüz ≥ 40 MW S-NPP / Aqua oranı (diurnal/swath tanı metriği, ayrı raporlanır ve sayımlara uygulanmaz; S-NPP yoksa veya Aqua < 30 ise `null`) |
 
 ## GET /api/health
 

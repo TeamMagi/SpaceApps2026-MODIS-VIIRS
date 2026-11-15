@@ -14,11 +14,11 @@
 | `dedup.rs` | İnterscan duplikat temizleme (varsayılan Δt<8s, overlap>30%), haversine mesafe hesabı |
 | `fleet.rs` | Aynı sensör ailesinin (MODIS Terra/Aqua, VIIRS SNPP/NOAA-20/21) eşzamanlı tespitlerini tek gözleme birleştirme |
 | `h3index.rs` | H3 (çözünürlük 8) uzamsal indeks; `k_ring_for_radius` arama halkasını eşleştirme yarıçapına göre ölçekler |
-| `vza.rs` | MODIS FRP görüş açısı düzeltmesi (`R_rel(θ)` kuadratik polinom × ham FRP, `VzaConfig`'ten) |
+| `vza.rs` | MODIS FRP görüş açısı düzeltmesi (`R_rel(θ)` kuadratik polinom × ham FRP, `VzaConfig`'ten), piksel alanı (`A_p`) ve analitik tespit limiti (`D_p`, `r_p`) |
 | `calibration.rs` | VIIRS öncesi (2012 öncesi) enlem bandı tamlık katsayısı `k_c` (gözlenen geçiş oranı + interpolasyon) |
 | `uncertainty.rs` | Analitik FRP güven aralığı (`frp_lower`/`frp_upper`, `mean_frp_*` ve `total_frp_*`) yayılımı |
 | `harmonize.rs` | 7 aşamalı pipeline: dedup → VZA → cross-sensor matching → fusion |
-| `effort.rs` | Gözlem eforu (EffortFactor) tahmini |
+| `effort.rs` | Gözlem eforu (EffortFactor) tahmini, ≥ 40 MW şiddet rejimli Ω (`omega_high_intensity`) ve ayrı raporlanan S-NPP/Aqua gündüz oranı |
 | `calendar.rs` | Aylık yanma takvimi oluşturma, anomali hesabı |
 | `export.rs` | Harmonize hotspot'ları CSV ve GeoJSON metnine dönüştürme |
 | `events.rs` | Yangın olayı kümeleme (ST-DBSCAN + ardışık gün kuralı) ve `no_detection_days` (bilinen Terra kesintileri dahil) |
@@ -26,6 +26,7 @@
 ## Teknik Kısıtlar
 
 - Terra-only dönem (2002-07 öncesi, Aqua yok): seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır (`count_normalized`, `effort_omega`, `anomaly` = `None`; Ω havuzlarına ve anomali tabanına girmez, `count`/FRP ham kalır). Seri tamamen 2002-07 öncesindeyse değişiklik yok. Gerekçe: Ω, MODIS referans kanalının kendi içindeki filo değişimini ölçemez (`effort::FIRST_TERRA_AQUA_MONTH`).
+- Şiddet rejimli efor (`effort.rs`): `frp >= HIGH_INTENSITY_FRP_MW` (`40.0` MW, MODIS tarama kenarı tespit limiti) kayıtları için ayrı `omega_high_intensity` hesaplanır (küçük yangın uçurumundan etkilenmez; en az 3 ay ve `modis_observable_high_intensity >= 30` gerekir). Gündüz yüksek şiddetli S-NPP / Aqua oranı (`snpp_aqua_high_intensity_ratio`) diurnal/swath farkı tanısı olarak ayrı raporlanır ve sayımlara uygulanmaz (`CalendarCell.count_normalized` tüm tespit Ω'sını kullanmaya devam eder).
 - `Confidence` enum'u `PartialOrd, Ord` derive eder: `Low < Nominal < High`.
 - `calendar.rs` içinde `use chrono::Datelike;` import'u gereklidir (`.year()` ve `.month()` için).
 - Cross-sensor matching: varsayılan 2 km mesafe, 180 dakika zaman penceresi (aynı yangının MODIS/VIIRS geçişleri FIRMS verisinde en az 34 dk arayla gelir). Tüm eşikler `PipelineConfig`'ten gelir; eski `harmonize`/`harmonize_with_links` fonksiyonları varsayılan konfigürasyonla çalışır, `*_config` varyantları konfigürasyon alır.
