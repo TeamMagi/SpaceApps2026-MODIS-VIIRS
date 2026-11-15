@@ -240,7 +240,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
-| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] sürüyor |
+| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] kod bitti, merge + precompute Görkem'de |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] (G7, K1, R1 [X]) |
@@ -288,7 +288,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10 sürüyor (hazır sonuçların yeniden üretilmesini bekliyor). Şu an başlanabilecek: R8 (`K1` bitti). (`R7` S7'yi bekliyor.)
+- **Serhat:** R1–R6, R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi. Şu an başlanabilecek: R8 (`K1` bitti). (`R7` S7'yi bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
 - **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
@@ -759,6 +759,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P5, Yol Haritası #3 (+ `[01, 02, 03, 14, 23]`, `flare-chronos`, `FireHarmonize`)
 - **Bitti sayılır:** aynı MODIS ayak izindeki çoklu VIIRS alt-pikselleri tek `Matched` kaydında toplanıyor (`ViirsOnly` artığı kalmıyor); birim testleri ve canlı/arşiv veride `Matched` FRP toplamı doğrulanıyor.
 - **Durum (Serhat, 2026-11-15):** Kod yazıldı ve birim testleri geçiyor. Henüz `main`'e alınmadı, Serhat'ın makinesindeki yerel `r10-footprint-aggregation` branch'inde duruyor. Sebep: yeni `matching.simultaneous_window_secs` alanı `PipelineConfig` hash'ini değiştiriyor. Bu yüzden repodaki hazır `/api/series` sonuçlarının hepsi (`data/derived/series`) geçersiz sayılıyor; arşivi olmayan biri harita ve takvim verisini göremez. **Gereken:** arşivi olan biri (`make data`) R10 ile `make precompute-local` ve `make bundle-derived` çalıştırmalı, `DERIVED_SCHEMA_VERSION` 3'e çıkarılmalı. Ondan sonra R10 ve yeni hazır sonuçlar birlikte merge edilecek. Arşiv verisiyle `Matched` FRP doğrulaması da o adımda yapılacak.
+- **Devir (Serhat → Görkem, 2026-11-15):** Kod tarafı bitti; branch artık remote'ta (`origin/r10-footprint-aggregation`, `9414e97`) ve güncel `main`'e çakışmasız birleşiyor. Bu arada K3 `DERIVED_SCHEMA_VERSION`'ı 4'e çıkardığı için yukarıdaki "3'e çıkar" adımı geçersiz. Kalan adımları arşivi olan Görkem üstlendi: branch'i merge et, `DERIVED_SCHEMA_VERSION`'ı 5'e çıkar, `make precompute` → `make bundle-derived` çalıştırıp `data/derived`'ı commit'le, push öncesi `make smoke`, arşiv verisinde `Matched` FRP toplamını doğrula ve "Bitti sayılır" sağlanınca kutuyu `[X]` yap.
 
 ### [X] R11 — Seed-anchored zaman penceresi
 - **Bekler:** — · **Açar:** —
