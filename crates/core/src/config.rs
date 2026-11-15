@@ -13,6 +13,11 @@ use crate::vza::{CORRECTION_A, CORRECTION_B, CORRECTION_C};
 /// Upper bound on the cross-sensor match radius; it bounds the H3 candidate search cost.
 pub const MAX_MATCH_RADIUS_KM: f64 = 10.0;
 
+/// Upper bound on the fleet merge radius, for the same reason: the H3 k-ring grows with the
+/// square of the radius, so an unbounded value (e.g. `fleet_radius_km=1e5` on a request) would
+/// ask for a ring of ~10^11 cells.
+pub const MAX_FLEET_RADIUS_KM: f64 = 10.0;
+
 /// All tunable thresholds of the harmonization pipeline.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
@@ -173,6 +178,12 @@ impl PipelineConfig {
         check_secs("fleet.viirs_window_secs", self.fleet.viirs_window_secs)?;
         check_secs("fleet.modis_window_secs", self.fleet.modis_window_secs)?;
         check_radius("fleet.radius_km", self.fleet.radius_km)?;
+        if self.fleet.radius_km > MAX_FLEET_RADIUS_KM {
+            return Err(format!(
+                "fleet.radius_km must be <= {MAX_FLEET_RADIUS_KM}, got {}",
+                self.fleet.radius_km
+            ));
+        }
         check_radius("matching.radius_km", self.matching.radius_km)?;
         if self.matching.radius_km > MAX_MATCH_RADIUS_KM {
             return Err(format!(
@@ -516,14 +527,18 @@ mod tests {
     }
 
     #[test]
-    fn radius_limits_matching_is_capped_but_fleet_is_not() {
+    fn radius_limits_matching_and_fleet_are_both_capped() {
         accepted(|c| c.matching.radius_km = f64::MIN_POSITIVE);
         accepted(|c| c.matching.radius_km = MAX_MATCH_RADIUS_KM - 0.001);
         rejected(|c| c.matching.radius_km = MAX_MATCH_RADIUS_KM + 0.001, "matching.radius_km");
         rejected(|c| c.matching.radius_km = f64::INFINITY, "matching.radius_km");
         rejected(|c| c.fleet.radius_km = -1.0, "fleet.radius_km");
         rejected(|c| c.fleet.radius_km = 0.0, "fleet.radius_km");
-        accepted(|c| c.fleet.radius_km = 1000.0);
+        accepted(|c| c.fleet.radius_km = f64::MIN_POSITIVE);
+        accepted(|c| c.fleet.radius_km = MAX_FLEET_RADIUS_KM);
+        rejected(|c| c.fleet.radius_km = MAX_FLEET_RADIUS_KM + 0.001, "fleet.radius_km");
+        rejected(|c| c.fleet.radius_km = 100_000.0, "fleet.radius_km");
+        rejected(|c| c.fleet.radius_km = f64::INFINITY, "fleet.radius_km");
     }
 
     #[test]
