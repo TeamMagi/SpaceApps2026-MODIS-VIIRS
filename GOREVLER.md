@@ -271,7 +271,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [X] |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [X] |
 | Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [X] |
-| Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [ ] |
+| Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [X] |
 | K5 | Area API sonuçlarını diske cache'leme | Sadık | — | K6, K7 | [X] |
 | K9 | SPA fallback gerçekten çalışmıyor | Sadık | — | R1 | [X] |
 | K8 | MODIS içi efor geçişi (2002 Aqua) | Sadık | — | — | [X] |
@@ -1204,14 +1204,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** 4 biyomda `ESA Fire_cci` / `Sentinel-2` / `Landsat` ile Lin's CCC ve omisyon/komisyon pilot raporu depoda.
 - **Kapanış notu (2026-11-15):** Tamamlandı. Araç `crates/firms-client/examples/burned_area_validation.rs` (+ `tools/firecci_extract.py`), rapor `docs/DIS_DOGRULAMA_YANMIS_ALAN.md`, veri `docs/vaka/firecci_validation_*`. Referans: ESA Fire_cci v5.1 0,25° aylık ızgara, 2012–2020 (CEDA, girişsiz). Bölge aylık toplamında sayım CCC ham → harmonize: Türkiye 0,839 → 0,873, Brezilya 0,952 → 0,965, Kanada 0,916 → 0,935, Hindistan 0,890 → 0,921 (mevsimsellik çıkarılınca 0,57–0,88 → 0,76–0,92); FRP CCC ve hücre-ay IOE/ICE neredeyse değişmiyor. Fire_cci MODIS türevi olduğu için tam bağımsız değil. Yapılmadı: Sentinel-2/Landsat, Rusya, 2012 öncesi, bootstrap güven aralıkları.
 
-### [ ] Y8 — Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti
+### [X] Y8 — Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti
 - **Bekler:** — · **Açar:** G5
 - **Amazon 2019–2021 iklim-insan ayrışması:** normal yağışa rağmen yükselen yangın anomalisinin (`[20, Şek. 10–11]`; `[20]`'nin `VIIRS=high` filtresi kullanılmadan tam FIRMS arşivimizle) ham vs harmonize seride gösterimi
 - **Hindistan WUI duman maruziyeti:** `20×20 km` ızgarada `275` şehir (`>100 bin` nüfus) ölçeğinde (`[21]`, Hindistan `6.3–7.7×` VIIRS/MODIS farkı, `<1 MW` yangınlar) kendi arşivimizle ham vs harmonize karşılaştırma
 - Sunum (`G5`) için iki vakanın grafikleri ve kısa anlatı metinleri
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P7 (+ `[20, 21]`)
 - **Bitti sayılır:** Amazon 2019–2021 ve Hindistan WUI vakalarının kendi arşivimizden üretilen ham vs harmonize grafikleri ve kısa sunum metinleri depoda.
-- **Durum (2026-11-15):** Hindistan WUI kısmı tamamlandı: `crates/firms-client/examples/amazon_india_case.rs`, `docs/VAKA_AMAZON_HINDISTAN.md`, `docs/vaka/india_*`. 2019–2023, nüfusu 100 binin üstünde 538 şehir (GeoNames; [21] 275 şehir), 20×20 km kutu: ham S-NPP/MODIS oranı şehir kutularında 7,45× (tüm Hindistan 6,58×), [21] aralığı 6,3–7,7× ile uyumlu; harmonizasyon kutulardaki toplam tespiti 313 899 → 222 333 (−%29) indiriyor; <1 MW payı VIIRS %11,0, harmonize %10,3. Amazon kısmı ölçülmedi (takvim/Ω havuzlama dönem başına 10 dk+); kutu bu yüzden açık.
+- **Durum (2026-11-15):** Hindistan WUI kısmı tamamlandı: `crates/firms-client/examples/amazon_india_case.rs`, `docs/VAKA_AMAZON_HINDISTAN.md`, `docs/vaka/india_*`. 2019–2023, nüfusu 100 binin üstünde 538 şehir (GeoNames; [21] 275 şehir), 20×20 km kutu: ham S-NPP/MODIS oranı şehir kutularında 7,45× (tüm Hindistan 6,58×), [21] aralığı 6,3–7,7× ile uyumlu; harmonizasyon kutulardaki toplam tespiti 313 899 → 222 333 (−%29) indiriyor; <1 MW payı VIIRS %11,0, harmonize %10,3. Amazon kısmı da tamamlandı (`docs/vaka/amazon_*`): Legal Amazon ham toplam sayım 2019/2020/2021 +%77 / +%111 / +%46, yalnız MODIS +%8 / +%22 / −%11, harmonize `count_normalized` +%4,5 / +%23,6 / −%13,6; ham anomalinin çoğu 2018 NOAA-20 girişinden geliyor, harmonize seride yalnız 2020 öne çıkıyor (orman hücreleri yangın mevsimi +%66, z 2,4). Yağış ölçülmedi, [20] aktarıldı. Kutu kapatıldı.
 
 ---
 
