@@ -41,6 +41,8 @@
 | `PYROSYNC_MATCH_RADIUS_KM` | `2.0` | MODIS/VIIRS eşleştirme yarıçapı (km, en fazla 10) |
 | `PYROSYNC_MATCH_WINDOW_SECS` | `10800` | MODIS/VIIRS eşleştirme zaman penceresi (sn) |
 | `PYROSYNC_VZA_A`, `PYROSYNC_VZA_B`, `PYROSYNC_VZA_C` | `0.2017`, `0.0168`, `1.0` | MODIS VZA düzeltme polinomu `R_rel(θ)` katsayıları (Zheng et al. 2026 Eq. 9 & Fig. 4 nadir normalize) |
+| `PYROSYNC_STATIC_MASK_ENABLED`, `PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS` | `true`, `10` | Kalıcı sıcak hücre (gaz meşalesi) maskesi: bir yıl içinde ≥ N farklı ayda tespit olan H3 r7 hücresi o yıl için elenir |
+| `PYROSYNC_SAMA_ENABLED` | `false` | SAMA kutusundaki gece VIIRS tespitlerini eler (C2 arşivinde fazla gürültü ölçülmediği için kapalı) |
 
 ## Teknik Notlar
 
@@ -49,5 +51,6 @@
 - `/api/harmonize`, `/api/compare` ve `/api/stats` yanıtları bellek bütçeli response cache kullanır ve `X-Cache: HIT` / `MISS` header'ı döner.
 - Response cache iki seviyeli TTL uygular: `days` (NRT) istekleri 600 sn, `start`/`end` (arşiv) istekleri 21600 sn (6 saat).
 - `/api/calendar` FIRMS ülke arşivini kullanır, transaction harcamaz ve `FIRMS_API_KEY` gerektirmez; buna karşılık arşiv NOAA-21 taşımadığı için (NOAA-20 `viirs-jpss1` olarak arşivde var) NRT endpoint'lerinden daha küçük bir filo kapsar.
+- `/api/series` yıllık statik maskeyi tüm yıldan bir kez kurar ve aylık sayımlarla paylaşır; `years[]` ve `/api/points` `stages` alanları `static_masked` / `sama_removed` sayılarını taşır. Bu alanlar eklendiği için `DERIVED_SCHEMA_VERSION = 3` oldu.
 - Docker'da `STATIC_DIR=/app/static` olarak ayarlanır.
 - Port 3001 üzerinde `0.0.0.0` dinler (container erişimi için).

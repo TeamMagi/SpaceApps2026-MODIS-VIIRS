@@ -48,6 +48,13 @@ fn override_from_env(
     set(env, "PYROSYNC_VZA_A", &mut config.vza.a)?;
     set(env, "PYROSYNC_VZA_B", &mut config.vza.b)?;
     set(env, "PYROSYNC_VZA_C", &mut config.vza.c)?;
+    set(env, "PYROSYNC_STATIC_MASK_ENABLED", &mut config.static_mask.enabled)?;
+    set(
+        env,
+        "PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS",
+        &mut config.static_mask.min_active_months,
+    )?;
+    set(env, "PYROSYNC_SAMA_ENABLED", &mut config.sama.enabled)?;
     Ok(())
 }
 
@@ -146,6 +153,48 @@ mod tests {
     fn explicit_missing_path_is_an_error() {
         let missing = std::env::temp_dir().join("pyrosync-config-test-does-not-exist.toml");
         assert!(load(Some(&missing), no_env).is_err());
+    }
+
+    #[test]
+    fn toml_round_trip_preserves_config() {
+        let mut config = PipelineConfig::default();
+        config.static_mask.min_active_months = 11;
+        config.sama.enabled = true;
+        config.sama.north = 0.0;
+        let text = toml::to_string(&config).unwrap();
+        assert_eq!(toml::from_str::<PipelineConfig>(&text).unwrap(), config);
+        let default_text = toml::to_string(&PipelineConfig::default()).unwrap();
+        assert_eq!(
+            toml::from_str::<PipelineConfig>(&default_text).unwrap(),
+            PipelineConfig::default()
+        );
+    }
+
+    #[test]
+    fn prefilters_toggle_independently_from_toml_and_env() {
+        let file = TempToml::new("prefilters", "[static_mask]\nenabled = false\n\n[sama]\nenabled = true\n");
+        let config = load(Some(&file.0), no_env).unwrap();
+        assert!(!config.static_mask.enabled);
+        assert!(config.sama.enabled);
+        assert_eq!(config.static_mask.min_active_months, PipelineConfig::default().static_mask.min_active_months);
+
+        let env = |name: &str| match name {
+            "PYROSYNC_STATIC_MASK_ENABLED" => Some("true".to_string()),
+            "PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS" => Some("12".to_string()),
+            "PYROSYNC_SAMA_ENABLED" => Some("false".to_string()),
+            _ => None,
+        };
+        let config = load(Some(&file.0), env).unwrap();
+        assert!(config.static_mask.enabled);
+        assert_eq!(config.static_mask.min_active_months, 12);
+        assert!(!config.sama.enabled);
+    }
+
+    #[test]
+    fn invalid_static_mask_months_from_env_names_the_field() {
+        let env = |name: &str| (name == "PYROSYNC_STATIC_MASK_MIN_ACTIVE_MONTHS").then(|| "13".to_string());
+        let err = format!("{:#}", load(None, env).unwrap_err());
+        assert!(err.contains("static_mask.min_active_months"), "{err}");
     }
 
     #[test]

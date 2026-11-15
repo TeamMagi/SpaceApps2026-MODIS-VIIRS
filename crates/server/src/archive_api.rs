@@ -20,10 +20,11 @@ use tokio::task::JoinSet;
 
 use pyrosync_core::calendar::compute_anomalies;
 use pyrosync_core::config::PipelineConfig;
-use pyrosync_core::harmonize::{harmonize_with_config, harmonize_with_links_config};
+use pyrosync_core::harmonize::harmonize_with_links_masked;
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
+use pyrosync_core::static_mask::StaticMask;
 use pyrosync_firms::archive::{ArchiveClient, ArchiveError, archive_slug, scan_local_archive};
 use pyrosync_firms::parse::{parse_csv, retain_wildfires};
 use pyrosync_firms::{FirmsSource, Processing};
@@ -807,6 +808,8 @@ struct YearEntry {
     matched: usize,
     modis_only: usize,
     viirs_only: usize,
+    static_masked: usize,
+    sama_removed: usize,
     interscan_removed: usize,
     fleet_merged: usize,
     first_date: Option<NaiveDate>,
@@ -883,6 +886,12 @@ fn year_stats_with(
     observed: &[DateSpan],
     config: &PipelineConfig,
 ) -> YearStats {
+    // The static mask is judged on the whole year and shared with the monthly runs, which alone
+    // could never reach its month threshold.
+    let mask = config
+        .static_mask
+        .enabled
+        .then(|| StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask));
     // Every month a contributing sensor observed gets an entry, zero fires included, so quiet
     // months count in the anomaly baselines; months outside coverage are left out. A month with
     // rows is always kept, so the raw monthly counts add up to the yearly totals.
@@ -904,7 +913,9 @@ fn year_stats_with(
                 // Each month is harmonized on its own, so matches and interscan duplicates
                 // that straddle a month boundary are not merged; the monthly harmonized counts
                 // need not add up to the yearly figure, which is harmonized over the whole year.
-                harmonized: harmonize_with_config(modis, viirs, config).len(),
+                harmonized: harmonize_with_links_masked(modis, viirs, config, mask.as_ref())
+                    .hotspots
+                    .len(),
                 anomaly_raw: None,
                 anomaly_harmonized: None,
             })
@@ -914,7 +925,7 @@ fn year_stats_with(
     let modis_span = date_span(&data.modis);
     let viirs_span = date_span(&data.viirs);
     let (raw_modis, raw_viirs) = (data.modis.len(), data.viirs.len());
-    let linked = harmonize_with_links_config(data.modis, data.viirs, config);
+    let linked = harmonize_with_links_masked(data.modis, data.viirs, config, mask.as_ref());
     let count_source = |source: HotspotSource| {
         linked
             .hotspots
@@ -932,6 +943,8 @@ fn year_stats_with(
         matched: count_source(HotspotSource::Matched),
         modis_only: count_source(HotspotSource::ModisOnly),
         viirs_only: count_source(HotspotSource::ViirsOnly),
+        static_masked: linked.static_masked,
+        sama_removed: linked.sama_removed,
         interscan_removed: linked.interscan_removed,
         fleet_merged: linked.fleet_merged,
         first_date: [modis_span, viirs_span].iter().flatten().map(|s| s.0).min(),
@@ -1460,6 +1473,8 @@ struct HarmonizedPoint {
 struct Stages {
     raw_modis: usize,
     raw_viirs: usize,
+    static_masked: usize,
+    sama_removed: usize,
     interscan_removed: usize,
     fleet_merged: usize,
     matched_pairs: usize,
@@ -1667,6 +1682,10 @@ async fn points(
     let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
+        // Judged on the whole year so a single-month request masks the same cells as /api/series.
+        let mask = config.static_mask.enabled.then(|| {
+            StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
+        });
         let (mut modis, mut viirs) = match month {
             Some(m) => (in_month(&data.modis, m), in_month(&data.viirs, m)),
             None => Arc::try_unwrap(data).map_or_else(
@@ -1684,7 +1703,7 @@ async fn points(
             .collect();
         let bbox = extent(raw_points.iter().map(|p| (p.lat, p.lon)));
         let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
-        let linked = harmonize_with_links_config(modis, viirs, &config);
+        let linked = harmonize_with_links_masked(modis, viirs, &config, mask.as_ref());
 
         let links: Vec<Option<usize>> = linked
             .modis_links
@@ -1710,6 +1729,8 @@ async fn points(
         let stages = Stages {
             raw_modis,
             raw_viirs,
+            static_masked: linked.static_masked,
+            sama_removed: linked.sama_removed,
             interscan_removed: linked.interscan_removed,
             fleet_merged: linked.fleet_merged,
             matched_pairs: linked.matched_pairs,
@@ -2009,6 +2030,43 @@ mod tests {
         let sum: usize = stats.months.iter().map(|m| m.raw_total).sum();
         assert_eq!(sum, stats.entry.raw_total);
         assert_eq!(stats.months[2].raw_modis, 2);
+    }
+
+    #[test]
+    fn year_stats_reports_static_mask_and_applies_it_to_every_month() {
+        // One VIIRS detection at the same spot on the 5th of every month: a year-round source.
+        let csv: String = std::iter::once(VIIRS_HEADER.to_string())
+            .chain((1..=12).map(|m| {
+                format!("31.0,47.5,320,0.5,0.5,2015-{m:02}-05,1200,N,VIIRS,n,2,290,10,N,0")
+            }))
+            .chain(std::iter::once(
+                "36.0,32.0,320,0.5,0.5,2015-08-11,1200,N,VIIRS,n,2,290,10,D,0".to_string(),
+            ))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let viirs = parse_csv(&csv, "VIIRS_SNPP_SP").unwrap();
+        let span = DateSpan {
+            first: d(2012, 1, 20),
+            last: d(2025, 12, 31),
+        };
+        let data = || YearData {
+            modis: Vec::new(),
+            viirs: viirs.clone(),
+        };
+
+        let stats = year_stats(2015, data(), &[span]);
+        assert_eq!(stats.entry.static_masked, 12);
+        assert_eq!(stats.entry.sama_removed, 0);
+        assert_eq!(stats.entry.harmonized, 1);
+        assert_eq!(stats.entry.raw_viirs, 13);
+        let monthly: usize = stats.months.iter().map(|m| m.harmonized).sum();
+        assert_eq!(monthly, 1, "the yearly mask must reach the monthly runs");
+
+        let mut off = PipelineConfig::default();
+        off.static_mask.enabled = false;
+        let stats = year_stats_with(2015, data(), &[span], &off);
+        assert_eq!(stats.entry.static_masked, 0);
+        assert_eq!(stats.entry.harmonized, 13);
     }
 
     #[test]

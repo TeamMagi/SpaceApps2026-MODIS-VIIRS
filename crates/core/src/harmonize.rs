@@ -3,6 +3,8 @@ use crate::dedup::{haversine_km, remove_interscan_duplicates_indexed_with};
 use crate::fleet::{self, FleetObservation};
 use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
 use crate::models::*;
+use crate::sama;
+use crate::static_mask::StaticMask;
 use crate::uncertainty::{self, SensorFamily, UncertaintyParams};
 use crate::vza;
 
@@ -17,16 +19,21 @@ pub(crate) const MATCH_WINDOW_SECS: i64 = 10_800;
 pub struct HarmonizeLinks {
     pub hotspots: Vec<HarmonizedHotspot>,
     /// `modis_links[i]` is the index in `hotspots` produced by input MODIS row `i`,
-    /// or `None` if interscan dedup removed that row.
+    /// or `None` if the SAMA filter, the static mask or interscan dedup removed that row.
     pub modis_links: Vec<Option<usize>>,
     /// Same as `modis_links`, for the VIIRS input rows.
     pub viirs_links: Vec<Option<usize>>,
+    /// Input rows dropped as persistent static sources (see [`crate::static_mask`]).
+    pub static_masked: usize,
+    /// Nighttime VIIRS input rows dropped inside the South Atlantic Magnetic Anomaly.
+    pub sama_removed: usize,
     pub interscan_removed: usize,
     pub fleet_merged: usize,
     pub matched_pairs: usize,
 }
 
 /// Full harmonization pipeline:
+/// 0. Drop SAMA nighttime VIIRS noise and persistent static-source cells (each optional)
 /// 1. Deduplicate interscan overlaps
 /// 2. Consolidate multi-platform MODIS and VIIRS fleet detections
 /// 3. Cross-sensor spatial-temporal matching
@@ -59,18 +66,56 @@ pub fn harmonize_with_links(modis: Vec<Hotspot>, viirs: Vec<Hotspot>) -> Harmoni
 
 /// Same as [`harmonize_with_links`] with configurable thresholds.
 pub fn harmonize_with_links_config(
+    modis: Vec<Hotspot>,
+    viirs: Vec<Hotspot>,
+    config: &PipelineConfig,
+) -> HarmonizeLinks {
+    harmonize_with_links_masked(modis, viirs, config, None)
+}
+
+/// Same as [`harmonize_with_links_config`]; `mask` replaces the static mask the pipeline would
+/// otherwise build from this batch, so sub-batches (e.g. one month of a year) can share the
+/// verdict of the whole year. It is ignored when `config.static_mask.enabled` is false.
+pub fn harmonize_with_links_masked(
     mut modis: Vec<Hotspot>,
     mut viirs: Vec<Hotspot>,
     config: &PipelineConfig,
+    mask: Option<&StaticMask>,
 ) -> HarmonizeLinks {
     let modis_input_len = modis.len();
     let viirs_input_len = viirs.len();
+
+    // Step 0: SAMA first, so its random noise does not count towards cell persistence.
+    let mut modis_pre: Vec<usize> = (0..modis_input_len).collect();
+    let mut viirs_pre: Vec<usize> = (0..viirs_input_len).collect();
+    let mut sama_removed = 0;
+    if config.sama.enabled {
+        sama_removed += retain_tracked(&mut modis, &mut modis_pre, |h| sama::is_sama_noise(h, &config.sama));
+        sama_removed += retain_tracked(&mut viirs, &mut viirs_pre, |h| sama::is_sama_noise(h, &config.sama));
+    }
+    let mut static_masked = 0;
+    if config.static_mask.enabled {
+        let built;
+        let mask = match mask {
+            Some(mask) => mask,
+            None => {
+                built = StaticMask::from_detections(modis.iter().chain(&viirs), &config.static_mask);
+                &built
+            }
+        };
+        if !mask.is_empty() {
+            static_masked += retain_tracked(&mut modis, &mut modis_pre, |h| mask.contains(h));
+            static_masked += retain_tracked(&mut viirs, &mut viirs_pre, |h| mask.contains(h));
+        }
+    }
+    let modis_filtered_len = modis.len();
+    let viirs_filtered_len = viirs.len();
 
     // Step 1: Remove interscan duplicates (also sorts both vectors by `acquired` ascending)
     let modis_origin = remove_interscan_duplicates_indexed_with(&mut modis, &config.dedup);
     let viirs_origin = remove_interscan_duplicates_indexed_with(&mut viirs, &config.dedup);
     let interscan_removed =
-        (modis_input_len - modis.len()) + (viirs_input_len - viirs.len());
+        (modis_filtered_len - modis.len()) + (viirs_filtered_len - viirs.len());
 
     // Step 2: Consolidate both fleets before cross-sensor matching so sibling detections
     // (Terra/Aqua and SNPP/NOAA-20/NOAA-21) do not leak into the output as duplicate singletons.
@@ -183,7 +228,7 @@ pub fn harmonize_with_links_config(
     for (mi, members) in modis_groups.iter().enumerate() {
         let out = final_pos[modis_fleet_out[mi]];
         for &dedup_idx in members {
-            modis_links[modis_origin[dedup_idx]] = Some(out);
+            modis_links[modis_pre[modis_origin[dedup_idx]]] = Some(out);
         }
     }
 
@@ -191,7 +236,7 @@ pub fn harmonize_with_links_config(
     for (vj, members) in viirs_groups.iter().enumerate() {
         let out = final_pos[viirs_fleet_out[vj].expect("every VIIRS fleet group produces or joins an output")];
         for &dedup_idx in members {
-            viirs_links[viirs_origin[dedup_idx]] = Some(out);
+            viirs_links[viirs_pre[viirs_origin[dedup_idx]]] = Some(out);
         }
     }
 
@@ -199,10 +244,27 @@ pub fn harmonize_with_links_config(
         hotspots,
         modis_links,
         viirs_links,
+        static_masked,
+        sama_removed,
         interscan_removed,
         fleet_merged,
         matched_pairs,
     }
+}
+
+/// Drops the rows for which `drop` holds, keeping `origin` aligned with `rows`; returns the count.
+fn retain_tracked(
+    rows: &mut Vec<Hotspot>,
+    origin: &mut Vec<usize>,
+    drop: impl Fn(&Hotspot) -> bool,
+) -> usize {
+    let keep: Vec<bool> = rows.iter().map(|h| !drop(h)).collect();
+    let before = rows.len();
+    let mut flags = keep.iter();
+    rows.retain(|_| *flags.next().expect("one flag per row"));
+    let mut flags = keep.iter();
+    origin.retain(|_| *flags.next().expect("one flag per origin"));
+    before - rows.len()
 }
 
 fn fuse_matched(
@@ -1111,7 +1173,12 @@ mod tests {
         assert_eq!(out.viirs_links.len(), viirs.len());
         assert_eq!(
             n_out,
-            modis.len() + viirs.len() - out.interscan_removed - out.fleet_merged - out.matched_pairs
+            modis.len() + viirs.len()
+                - out.sama_removed
+                - out.static_masked
+                - out.interscan_removed
+                - out.fleet_merged
+                - out.matched_pairs
         );
 
         let mut modis_by_out: Vec<Vec<usize>> = vec![Vec::new(); n_out];
@@ -1419,6 +1486,8 @@ mod tests {
             hotspots,
             modis_links,
             viirs_links,
+            static_masked: 0,
+            sama_removed: 0,
             interscan_removed,
             fleet_merged,
             matched_pairs,
@@ -1432,6 +1501,8 @@ mod tests {
         );
         assert_eq!(actual.fleet_merged, expected.fleet_merged, "{ctx}: fleet_merged");
         assert_eq!(actual.matched_pairs, expected.matched_pairs, "{ctx}: matched_pairs");
+        assert_eq!(actual.static_masked, expected.static_masked, "{ctx}: static_masked");
+        assert_eq!(actual.sama_removed, expected.sama_removed, "{ctx}: sama_removed");
         assert_eq!(actual.modis_links, expected.modis_links, "{ctx}: modis_links");
         assert_eq!(actual.viirs_links, expected.viirs_links, "{ctx}: viirs_links");
         assert_eq!(actual.hotspots.len(), expected.hotspots.len(), "{ctx}: len");
@@ -1595,13 +1666,18 @@ mod tests {
         zero_window.fleet.modis_window_secs = 0;
         zero_window.matching.window_secs = 0;
 
-        let configs = [
+        let mut configs = [
             ("default", PipelineConfig::default()),
             ("large_radius_10km", large_radius),
             ("zero_radius", zero_radius),
             ("neg_dedup_ratio", neg_dedup_ratio),
             ("zero_window", zero_window),
         ];
+        // The reference models steps 1-4 only; step 0 is checked in its own tests.
+        for (_, cfg) in &mut configs {
+            cfg.sama.enabled = false;
+            cfg.static_mask.enabled = false;
+        }
 
         for seed in [0x9E37_79B9_7F4A_7C15_u64, 0xCAFE_BABE_1357_2468_u64] {
             let full = synthetic_pipeline_dataset(seed, 1_200, 1_800);
@@ -1905,5 +1981,144 @@ mod tests {
         let h4 = from_modis_only_with(&obs4, &VzaConfig::default(), &sys_only);
         assert!((h1.frp_lower - h4.frp_lower).abs() < 1e-12);
         assert!((h1.frp_upper - h4.frp_upper).abs() < 1e-12);
+    }
+
+    fn night(mut h: Hotspot) -> Hotspot {
+        h.daynight = DayNight::Night;
+        h
+    }
+
+    /// One detection on the 10th of every month of 2024, at `(lat, lon)`.
+    fn year_round(sensor: Sensor, lat: f64, lon: f64) -> Vec<Hotspot> {
+        (1..=12)
+            .map(|m| {
+                let mut h = make_hotspot(sensor, lat, lon, 0, 8.0, Confidence::Nominal);
+                h.acquired = Utc.with_ymd_and_hms(2024, m, 10, 1, 0, 0).unwrap();
+                h
+            })
+            .collect()
+    }
+
+    fn sama_on() -> PipelineConfig {
+        let mut c = PipelineConfig::default();
+        c.sama.enabled = true;
+        c
+    }
+
+    fn prefilters_off() -> PipelineConfig {
+        let mut c = PipelineConfig::default();
+        c.sama.enabled = false;
+        c.static_mask.enabled = false;
+        c
+    }
+
+    #[test]
+    fn sama_filter_drops_only_night_viirs_inside_the_box_and_reports_the_count() {
+        let viirs = vec![
+            night(make_hotspot(Sensor::ViirsSNPP, -15.0, -50.0, 0, 1.0, Confidence::Nominal)),
+            make_hotspot(Sensor::ViirsSNPP, -15.1, -50.1, 0, 1.0, Confidence::Nominal),
+            night(make_hotspot(Sensor::ViirsNOAA20, -12.0, 18.0, 0, 1.0, Confidence::Nominal)),
+        ];
+        let modis = vec![night(make_hotspot(Sensor::ModisAqua, -20.0, -45.0, 0, 9.0, Confidence::Nominal))];
+
+        let on = harmonize_with_links_config(modis.clone(), viirs.clone(), &sama_on());
+        assert_eq!(on.sama_removed, 1);
+        assert_eq!(on.static_masked, 0);
+        assert_eq!(on.hotspots.len(), 3);
+        assert_eq!(on.viirs_links[0], None);
+        assert!(on.viirs_links[1].is_some() && on.viirs_links[2].is_some());
+        assert!(on.modis_links[0].is_some());
+        assert_links_valid(&modis, &viirs, &on);
+
+        let off = harmonize_with_links_config(modis, viirs, &PipelineConfig::default());
+        assert_eq!(off.sama_removed, 0);
+        assert_eq!(off.hotspots.len(), 4);
+    }
+
+    #[test]
+    fn static_mask_drops_year_round_cells_and_keeps_seasonal_ones() {
+        let flare = year_round(Sensor::ViirsSNPP, 4.80, 6.90);
+        let mut seasonal = year_round(Sensor::ViirsSNPP, 9.50, 8.00);
+        seasonal.truncate(7);
+        let modis = year_round(Sensor::ModisAqua, 4.80, 6.90);
+        let viirs: Vec<Hotspot> = flare.into_iter().chain(seasonal).collect();
+
+        let on = harmonize_with_links_config(modis.clone(), viirs.clone(), &PipelineConfig::default());
+        assert_eq!(on.static_masked, 24);
+        assert_eq!(on.sama_removed, 0);
+        assert_eq!(on.hotspots.len(), 7);
+        assert!(on.modis_links.iter().all(Option::is_none));
+        assert!(on.viirs_links[..12].iter().all(Option::is_none));
+        assert!(on.viirs_links[12..].iter().all(Option::is_some));
+        assert_links_valid(&modis, &viirs, &on);
+
+        let mut cfg = PipelineConfig::default();
+        cfg.static_mask.enabled = false;
+        let off = harmonize_with_links_config(modis, viirs, &cfg);
+        assert_eq!(off.static_masked, 0);
+        // The 12 co-located MODIS/VIIRS flare pairs match: 12 matched + 7 seasonal VIIRS.
+        assert_eq!(off.hotspots.len(), 19);
+    }
+
+    #[test]
+    fn static_mask_threshold_edge_follows_config() {
+        let mut viirs = year_round(Sensor::ViirsSNPP, 4.80, 6.90);
+        viirs.truncate(8);
+        let mut cfg = PipelineConfig::default();
+        cfg.static_mask.min_active_months = 8;
+        assert_eq!(harmonize_with_links_config(vec![], viirs.clone(), &cfg).static_masked, 8);
+        cfg.static_mask.min_active_months = 9;
+        assert_eq!(harmonize_with_links_config(vec![], viirs, &cfg).static_masked, 0);
+    }
+
+    #[test]
+    fn supplied_mask_applies_to_a_sub_batch_that_alone_would_not_reach_the_threshold() {
+        let year = year_round(Sensor::ViirsSNPP, 4.80, 6.90);
+        let config = PipelineConfig::default();
+        let mask = StaticMask::from_detections(&year, &config.static_mask);
+        let march = vec![year[2].clone()];
+
+        let alone = harmonize_with_links_config(vec![], march.clone(), &config);
+        assert_eq!(alone.static_masked, 0);
+        let shared = harmonize_with_links_masked(vec![], march.clone(), &config, Some(&mask));
+        assert_eq!(shared.static_masked, 1);
+        assert!(shared.hotspots.is_empty());
+        let disabled = harmonize_with_links_masked(vec![], march, &prefilters_off(), Some(&mask));
+        assert_eq!(disabled.static_masked, 0);
+    }
+
+    #[test]
+    fn prefiltered_pipeline_equals_pipeline_on_manually_filtered_rows() {
+        let (modis, viirs) = synthetic_pipeline_dataset(0x5EED_1234_ABCD_0001, 600, 900);
+        let config = sama_on();
+        let actual = harmonize_with_links_config(modis.clone(), viirs.clone(), &config);
+        assert!(actual.sama_removed > 0);
+
+        let kept = |rows: &[Hotspot]| -> Vec<usize> {
+            (0..rows.len())
+                .filter(|&i| !sama::is_sama_noise(&rows[i], &config.sama))
+                .collect()
+        };
+        let (mk, vk) = (kept(&modis), kept(&viirs));
+        let expected = harmonize_with_links_config(
+            mk.iter().map(|&i| modis[i].clone()).collect(),
+            vk.iter().map(|&i| viirs[i].clone()).collect(),
+            &prefilters_off(),
+        );
+        assert_eq!(actual.sama_removed, modis.len() + viirs.len() - mk.len() - vk.len());
+        assert_eq!(actual.hotspots.len(), expected.hotspots.len());
+        assert_eq!(actual.interscan_removed, expected.interscan_removed);
+        assert_eq!(actual.fleet_merged, expected.fleet_merged);
+        assert_eq!(actual.matched_pairs, expected.matched_pairs);
+        let remap = |links: &[Option<usize>], keep: &[usize], n: usize| {
+            let mut full = vec![None; n];
+            for (k, &i) in keep.iter().enumerate() {
+                full[i] = links[k];
+            }
+            full
+        };
+        assert_eq!(actual.modis_links, remap(&expected.modis_links, &mk, modis.len()));
+        assert_eq!(actual.viirs_links, remap(&expected.viirs_links, &vk, viirs.len()));
+        assert_links_valid(&modis, &viirs, &actual);
     }
 }
