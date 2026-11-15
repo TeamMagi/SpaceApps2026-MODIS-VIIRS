@@ -4,14 +4,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::{HotspotSource, Sensor};
 
-/// Varsayım: `academic-papers/*_ANALYSIS.md` özetlerinde tek piksel MODIS radyometrik 1σ rastgele
-/// gürültüsü doğrudan raporlanmadığından başlangıç varsayımı (1 km piksel ve yüksek tespit eşiği
-/// nedeniyle VIIRS'ten yüksek; bkz. `02_ANALYSIS.md`, `06_07_08_COMBINED_ANALYSIS.md`).
-pub const DEFAULT_MODIS_SENSOR_SIGMA: f64 = 0.12;
+/// Yayımlanmış değer: Freeborn et al. 2014a alt-piksel yerleşim belirsizliği, tek piksel MODIS
+/// göreli FRP 1σ = 0.266 (`docs/REFERANS_ANALIZI.md` `[12, Bölüm 5.1]`). Radyometrik gürültüyü
+/// değil, pikselin içinde yangının konumundan doğan FRP belirsizliğini yansıtır.
+pub const DEFAULT_MODIS_SENSOR_SIGMA: f64 = 0.266;
 
-/// Varsayım: `academic-papers/*_ANALYSIS.md` özetlerinde tek piksel VIIRS radyometrik 1σ rastgele
-/// gürültüsü doğrudan raporlanmadığından başlangıç varsayımı (375 m I-band çözünürlüğü ve
-/// 0.4–3.7 MW düşük tespit tabanı nedeniyle MODIS'ten düşük; bkz. `02_ANALYSIS.md`, `06_07_08`).
+/// Varsayım (geçici): 375 m VIIRS tek-piksel 1σ literatürde tablo olarak yoktur (`metinde yok`).
+/// Geçici üst sınır `[05, Bölüm 3.4]` MIR ±%30; 375 m çözünürlük nedeniyle MODIS'ten düşük
+/// varsayılır. Arşiv ölçümü (`tools/viirs_sigma.py`, SNPP×NOAA-20, |Δt| ≤ 5 dk, FRP > 40 MW,
+/// A_p < 0.3 km²) yetersiz çift verdiği için değer değiştirilmedi.
 pub const DEFAULT_VIIRS_SENSOR_SIGMA: f64 = 0.08;
 
 /// Türetilmiş tahmin / varsayım: VZA düzeltmesi arttıkça (`factor - 1.0`) eklenen göreli 1σ hata
@@ -736,7 +737,7 @@ mod tests {
     #[test]
     fn default_params_are_pinned_to_documented_values() {
         let p = UncertaintyParams::default();
-        assert_eq!(p.modis_sensor_sigma, 0.12);
+        assert_eq!(p.modis_sensor_sigma, 0.266);
         assert_eq!(p.viirs_sensor_sigma, 0.08);
         assert_eq!(p.vza_error_coeff, 0.05);
         assert_eq!(p.modis_scale_sigma, 0.10);
