@@ -156,13 +156,12 @@ pub fn apply_fusion_model(
         let mut h = original.clone();
         match (model, original.source) {
             (FusionModel::EqualWeight, HotspotSource::Matched) => {
-                if let (Some(m), Some(v)) = (
-                    group_stats(&modis_members[i], config),
-                    group_stats(&viirs_members[i], config),
-                ) {
-                    h.frp_corrected = (m.frp_corrected + v.frp_corrected) / 2.0;
-                    h.lat = (m.lat + v.lat) / 2.0;
-                    h.lon = (m.lon + v.lon) / 2.0;
+                // The record's own value is the VIIRS side: after pass aggregation it is a
+                // footprint total over all linked VIIRS pixels, not a mean of linked rows.
+                if let Some(m) = group_stats(&modis_members[i], config) {
+                    h.frp_corrected = (m.frp_corrected + original.frp_corrected) / 2.0;
+                    h.lat = (m.lat + original.lat) / 2.0;
+                    h.lon = (m.lon + original.lon) / 2.0;
                     h.vza_factor = None;
                     let n_obs = h.n_obs;
                     set_interval(&mut h, SensorFamily::Viirs, n_obs, config);
@@ -288,6 +287,24 @@ mod tests {
         assert!((m.lon - 30.002).abs() < 1e-9);
         assert!(m.frp_lower <= m.frp_corrected && m.frp_corrected <= m.frp_upper);
         assert_eq!(out.dropped_below_modis_limit, 0);
+    }
+
+    #[test]
+    fn equal_weight_uses_the_summed_viirs_value_of_the_record() {
+        let config = PipelineConfig::default();
+        let modis = vec![hotspot(Sensor::ModisTerra, 38.000, 30.000, 40.0, 0, Some(0.0))];
+        let viirs = vec![
+            hotspot(Sensor::ViirsSNPP, 38.002, 30.0, 20.0, 60, None),
+            hotspot(Sensor::ViirsSNPP, 37.998, 30.0, 10.0, 60, None),
+        ];
+        let links = harmonize_with_links_config(modis.clone(), viirs.clone(), &config);
+        let out = apply_fusion_model(&links, &modis, &viirs, FusionModel::EqualWeight, &config);
+        let original = matched(&links.hotspots);
+        assert!((original.frp_corrected - 30.0).abs() < 1e-9, "{}", original.frp_corrected);
+        assert_eq!(links.viirs_links[0], links.viirs_links[1]);
+        let m = matched(&out.hotspots);
+        assert!((m.frp_corrected - 35.0).abs() < 1e-9, "{}", m.frp_corrected);
+        assert!((m.lat - (38.0 + original.lat) / 2.0).abs() < 1e-9);
     }
 
     #[test]
