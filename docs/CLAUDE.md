@@ -31,6 +31,7 @@
 | `test/TEST_PLANI.md` | IEEE 829 ana test planı: kapsam, seviyeler, giriş/çıkış ölçütleri, riskler, hata yönetimi, metrikler, geçerleme planı |
 | `test/TEST_TASARIMI.md` | ID'li test vakaları: EP/BVA, karar tabloları, durum geçişi (0-switch), geçerleme vakaları (`TC-VAL`); otomatik testi olmayanlar `EKSİK` |
 | `test/IZLENEBILIRLIK.md` | Gereksinim → test vakası → otomatik test izlenebilirlik matrisi ve risk sırasına göre boşluk özeti |
+| `test/CI_SURE_VE_GOREV_BOLUSUMU.md` | CI'ın en çok 30 dk'da bitmesi için süre bütçesi, ölçülenler ve ölçülmeyenler, iki kişiye eşit bölünmüş iş paketleri (A: Rust hattı, B: web ve tetikleyiciler), ölçüm tablosu |
 
 ## Doküman Ekleme Kuralları
 
