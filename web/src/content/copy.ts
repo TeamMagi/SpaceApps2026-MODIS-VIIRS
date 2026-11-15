@@ -61,6 +61,7 @@ const enBase = {
   headlineRawDropped: "Detections dropped {x}% in {year}. Fewer fires, or different satellites?",
   headlineHarmonized: "After harmonization: {pct} change from {from} to {to}",
   headlineNoCliff: "No sensor transition in this region's record",
+  headlineNoBaseline: "No detections in {from} to compare with, so the change into {to} cannot be shown as a percentage",
   headlinePartialNote: "{year} is a partial year for {sensor}",
   headlineLoading: "Loading archive fire record…",
   headlineEmpty: "No fire detections in the archive for this region.",
@@ -284,10 +285,10 @@ const enBase = {
   confidenceFilterExcluded: "{count} removed from this view",
 
   // Methods drawer
-  methodsTitle: "How three satellites' detections are harmonized",
+  methodsTitle: "How MODIS and VIIRS detections are harmonized",
   methodsCliffDef:
     "Sensor cliff: a jump in detection counts that coincides with a new sensor joining the record; part of it can come from the sensor, not from more fires.",
-  methodsSensors: "Satellites in archive: MODIS (Terra, Aqua) and VIIRS (Suomi NPP)",
+  methodsSensors: "Satellites in archive: MODIS (Terra, Aqua) and VIIRS (Suomi NPP, NOAA-20)",
   methodsStepsTitle: "Six applied steps · one planned",
   methodsStepCollect: "Every MODIS and VIIRS detection for the region, from the NASA FIRMS archive.",
   methodsStepDedup: "One sensor sometimes sees a fire in two overlapping scans. We keep one.",
@@ -325,11 +326,11 @@ const enBase = {
   presentationMode: "Presentation mode",
   presentationModeHint: "Press P to turn it on or off",
   angleDegrees: "{value}°",
-  methodsSources: "NASA FIRMS archive · MODIS C6.1 · VIIRS S-NPP",
+  methodsSources: "NASA FIRMS archive · MODIS C6.1 · VIIRS S-NPP / NOAA-20",
   methodsSourceCitation:
-    "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP ({viirsFirst}–{viirsLast})",
+    "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP / NOAA-20 ({viirsFirst}–{viirsLast})",
   methodsSourceCitationModis: "NASA FIRMS archive · MODIS C6.1 ({modisFirst}–{modisLast})",
-  methodsSourceCitationFallback: "NASA FIRMS archive · MODIS C6.1 / VIIRS S-NPP",
+  methodsSourceCitationFallback: "NASA FIRMS archive · MODIS C6.1 / VIIRS S-NPP / NOAA-20",
   methodsSourceCitationDemo:
     "Synthetic demo data · 2021 Mediterranean cluster + 2000–2025 synthetic series (not NASA FIRMS data)",
 
@@ -402,6 +403,7 @@ const trBase = {
   headlineRawDropped: "{year|loc} tespitler %{x} düştü. Yangınlar mı azaldı, uydular mı değişti?",
   headlineHarmonized: "Harmonizasyon sonrası: {from}–{to} arasında {pct} değişim",
   headlineNoCliff: "Bu bölgenin kaydında sensör geçişi yok",
+  headlineNoBaseline: "{from|loc} karşılaştırılacak tespit yok; {to} yılındaki değişim yüzde olarak gösterilemez",
   headlinePartialNote: "{year}, {sensor} için kısmi bir yıldır",
   headlineLoading: "Arşiv yangın kaydı yükleniyor…",
   headlineEmpty: "Bu bölge için arşivde yangın tespiti yok.",
@@ -613,10 +615,10 @@ const trBase = {
     "FIRMS düşük güvenli tespitlerini harmonizasyondan önce çıkarır. Haritaya, CSV'ye ve canlı sayılara uygulanır; yıllık seri önceden hesaplandığı için filtresiz kalır.",
   confidenceFilterExcluded: "Bu görünümden {count} tespit çıkarıldı",
 
-  methodsTitle: "Üç uydunun tespitleri nasıl harmonize edilir",
+  methodsTitle: "MODIS ve VIIRS tespitleri nasıl harmonize edilir",
   methodsCliffDef:
     "Sensör uçurumu: kayda yeni bir sensörün katılmasıyla aynı döneme denk gelen tespit sayısı sıçraması; bunun bir kısmı daha fazla yangından değil, sensörden kaynaklanabilir.",
-  methodsSensors: "Arşivdeki uydular: MODIS (Terra, Aqua) ve VIIRS (Suomi NPP)",
+  methodsSensors: "Arşivdeki uydular: MODIS (Terra, Aqua) ve VIIRS (Suomi NPP, NOAA-20)",
   methodsStepsTitle: "Altı uygulanan adım · bir planlanan",
   methodsStepCollect: "Bölgedeki tüm MODIS ve VIIRS tespitleri, NASA FIRMS arşivinden.",
   methodsStepDedup: "Bir sensör bazen tek yangını üst üste binen iki taramada görür. Birini tutarız.",
@@ -654,11 +656,11 @@ const trBase = {
   presentationMode: "Sunum modu",
   presentationModeHint: "Açıp kapatmak için P'ye bas",
   angleDegrees: "{value}°",
-  methodsSources: "NASA FIRMS arşivi · MODIS C6.1 · VIIRS S-NPP",
+  methodsSources: "NASA FIRMS arşivi · MODIS C6.1 · VIIRS S-NPP / NOAA-20",
   methodsSourceCitation:
-    "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP ({viirsFirst}–{viirsLast})",
+    "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast}) · VIIRS S-NPP / NOAA-20 ({viirsFirst}–{viirsLast})",
   methodsSourceCitationModis: "NASA FIRMS arşivi · MODIS C6.1 ({modisFirst}–{modisLast})",
-  methodsSourceCitationFallback: "NASA FIRMS arşivi · MODIS C6.1 / VIIRS S-NPP",
+  methodsSourceCitationFallback: "NASA FIRMS arşivi · MODIS C6.1 / VIIRS S-NPP / NOAA-20",
   methodsSourceCitationDemo:
     "Sentetik demo verisi · 2021 Akdeniz kümesi + 2000–2025 sentetik seri (NASA FIRMS verisi değildir)",
 

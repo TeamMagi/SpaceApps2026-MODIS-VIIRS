@@ -11,6 +11,7 @@ import { formatApiError } from "../../content/copy";
 import { useCopy } from "../../hooks/useCopy";
 import { useHarmonizeTransition } from "../../hooks/useHarmonizeTransition";
 import { useRegionData } from "../../hooks/useRegionData";
+import { headlineFigure } from "../../lib/headline";
 import styles from "./Headline.module.css";
 
 const FROM_TOKEN = "\u0000FROM\u0000";
@@ -143,13 +144,21 @@ export default function Headline() {
 
   const fromStr = String(cliff.fromYear);
   const yearStr = String(cliff.toYear);
-  const rawAbsPct = Math.round(Math.abs(cliff.rawChangePct ?? 0));
-  const pctStr = revealAnswer ? fmt.signedPercent(cliff.harmonizedChangeRatio ?? 0) : "";
-  const text = revealAnswer
-    ? t("headlineHarmonized", { pct: pctStr, from: fromStr, to: yearStr })
-    : (cliff.rawChangePct ?? 0) < 0
-      ? t("headlineRawDropped", { x: rawAbsPct, year: yearStr })
-      : t("headlineRaw", { x: rawAbsPct, year: yearStr });
+  const figure = headlineFigure(cliff, revealAnswer);
+  if (figure.kind === "noBaseline") {
+    return (
+      <h1 className={styles.headline} data-state="empty">
+        <span className={styles.placeholder}>{t("headlineNoBaseline", { from: fromStr, to: yearStr })}</span>
+      </h1>
+    );
+  }
+  const pctStr = figure.kind === "harmonized" ? fmt.signedPercent(figure.ratio) : "";
+  const text =
+    figure.kind === "harmonized"
+      ? t("headlineHarmonized", { pct: pctStr, from: fromStr, to: yearStr })
+      : figure.dropped
+        ? t("headlineRawDropped", { x: figure.absPct, year: yearStr })
+        : t("headlineRaw", { x: figure.absPct, year: yearStr });
   const content = revealAnswer
     ? renderHarmonizedHeadline(
         t("headlineHarmonized", { pct: PCT_TOKEN, from: FROM_TOKEN, to: TO_TOKEN }),

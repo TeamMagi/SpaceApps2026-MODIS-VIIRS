@@ -1,5 +1,5 @@
 /**
- * MethodsDrawer — "How three satellites' detections are harmonized" (layer 3 of the information hierarchy).
+ * MethodsDrawer — "How MODIS and VIIRS detections are harmonized" (layer 3 of the information hierarchy).
  *
  * Built on Drawer (id "methods"). Sections in order:
  *   1. methodsCliffDef — the ONLY place "sensor cliff" is defined; methodsSensors.
