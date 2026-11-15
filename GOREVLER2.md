@@ -76,8 +76,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 | Kimlik | Görev | Sahip | Bekler | Açar | Durum |
 |--------|-------|-------|--------|------|-------|
 | G7 | Config-driven pipeline | Görkem | v1:G2 | G8, R8, K2, S6 | ✅ |
-| G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | ⏸ |
-| G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | ⏸ |
+| G8 | Bölgesel/biyom kalibrasyon modülü | Görkem | G7 | G9 | 🔄 |
+| G9 | Belirsizlik aralıkları hesaplama | Görkem | G8 | K3, S6 | ✅ |
 | G10 | Export engine + /api/export | Görkem | v1:G4 | R7, S6 | ✅ |
 | C5 | Methods sayfası + disclaimer tasarımı | Can | v1:C1 | R6, S8 | ⏸ |
 | C6 | Export UI + brifingi tasarımı | Can | v1:C1 | R7 | ⏸ |
@@ -120,7 +120,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
 - **Bitti sayılır:** `PipelineConfig::default()` ile mevcut testler hâlâ geçiyor; TOML'dan farklı config yüklenince pipeline davranışı değişiyor; `pyrosync.example.toml` depoda.
 - **Durum (2026-11-15):** Sadık tarafından tamamlandı (`4f3e23d`). `PipelineConfig`, `pyrosync.toml` yükleme ve `pyrosync.example.toml` depoda.
 
-### G8 — Bölgesel/biyom kalibrasyon modülü ⏸
+### G8 — Bölgesel/biyom kalibrasyon modülü 🔄
 - **Bekler:** G7 · **Açar:** G9
 - Tek global FRP oranı yerine bölgesel katsayılar (Li et al. 2018):
   - `calibration.rs` modülü: biyom tipine göre MODIS/VIIRS FRP kalibrasyon oranları
@@ -131,8 +131,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Config'den override edilebilir (`PipelineConfig.calibration`)
 - **Kaynak:** Li et al. 2018 — "Tek global katsayı yetersiz — savan %1 fark, boreal %47 fark"
 - **Bitti sayılır:** farklı bölgelerde (tropik, boreal, savan) farklı kalibrasyon uygulanıyor; test: Türkiye (Akdeniz) ve Sibirya (boreal) verileriyle FRP oranları beklenen aralıkta.
+- **Durum (2026-11-15):** Kod tamamlandı (`a883a82`, `c82641d`), bitti şartı SAĞLANMADI. Li et al. 2018 katsayıları 750 m VIIRS ürününden; FIRMS verisi 375 m. Aqua–SNPP 1° ızgara ölçümü: tropik 1,21–1,22 (model 1,16), Türkiye 1,33 (model 0,97), boreal 1,34–1,40 (model 0,82). Literatür 375 m için bu ölçümü doğruluyor (Li 2020: Afrika'da MODIS toplam FRP ~%26 düşük; GMD 2026: küresel %38). Katsayılar 375 m ölçeğine göre güncellenmeli (bkz. `docs/REFERANS_ANALIZI.md` P1).
 
-### G9 — Belirsizlik aralıkları hesaplama ⏸
+### G9 — Belirsizlik aralıkları hesaplama ✅
 - **Bekler:** G8 · **Açar:** K3, S6
 - Her harmonize FRP değerine güven aralığı eklemek (fire-harmony'den ilham):
   - `uncertainty.rs` modülü: `UncertaintyEstimate { lower: f64, upper: f64, confidence: f64 }`
@@ -143,6 +144,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Turuncu: Sadık
   - Bilimsel disclaimer metni: "Harmonize değerler model tahminidir, ground truth değil"
 - **Kaynak:** fire-harmony — belirsizlik aralıkları; tüm akademik makaleler — model sınırları
 - **Bitti sayılır:** her harmonize değerin lower/upper aralığı var; aralık VZA arttıkça genişliyor (beklenen); API response'unda uncertainty alanları mevcut.
+- **Durum (2026-11-15):** Tamamlandı (`3213e11`, `9c6a718`) ve bağımsız denetimle doğrulandı: Türkiye 2019-08 (5483) ve Angola 2019-04 (10386) kayıtta `lower <= frp_corrected <= upper` ihlali 0; ModisOnly aralık genişliği VZA kovalarında monoton artıyor; `/api/calendar` yanıtında `uncertainty` nesnesi ve hücrelerde `mean_frp_lower/upper` var. Açık kalanlar: Matched kayıtlarda rastgele bileşen MODIS üyelerini de sayarak fazla daralıyor; sensör gürültüsü ve VZA parametreleri hâlâ varsayım (bkz. `docs/REFERANS_ANALIZI.md` P3).
 
 ### G10 — Export engine + /api/export endpoint ✅
 - **Bekler:** v1:G4 · **Açar:** R7, S6
