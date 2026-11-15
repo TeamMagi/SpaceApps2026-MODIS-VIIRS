@@ -14,6 +14,7 @@ import {
 } from "../../hooks/useHarmonizeTransition";
 import { useMapPoints, useRegionData } from "../../hooks/useRegionData";
 import { useNrtData } from "../../hooks/useNrtData";
+import { summarizePointStages } from "../../lib/receiptCounts";
 import { PIPELINE_NODE_COUNT, useAppStore } from "../../store/useAppStore";
 import styles from "./PipelineStrip.module.css";
 
@@ -45,16 +46,17 @@ export default function PipelineStrip() {
   const activeStatus = activeStage ? t(PIPELINE_COPY[activeStage].progress) : null;
 
   const usePeriodStages = selectedMonth !== null && points.status === "ready" && points.hasData;
+  const periodCounts = summarizePointStages(points.stages);
   const dedupRemoved = usePeriodStages
-    ? points.stages.interscanRemoved
+    ? periodCounts.interscanRemoved
     : (stages.find((stage) => stage.key === "dedup")?.removed ?? 0);
   const fleetRemoved = usePeriodStages
-    ? points.stages.fleetMerged
+    ? periodCounts.fleetMerged
     : (stages.find((stage) => stage.key === "fleet")?.removed ?? 0);
   const matchRemoved = usePeriodStages
-    ? points.stages.matchedPairs
+    ? periodCounts.matchedPairs
     : (stages.find((stage) => stage.key === "match")?.removed ?? 0);
-  const totalRemoved = usePeriodStages ? dedupRemoved + fleetRemoved + matchRemoved : totals.doubleCounts;
+  const totalRemoved = usePeriodStages ? periodCounts.doubleCounts : totals.doubleCounts;
 
   const canShowTotals =
     revealAnswer &&

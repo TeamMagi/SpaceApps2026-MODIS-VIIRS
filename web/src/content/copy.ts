@@ -89,6 +89,8 @@ const enBase = {
   // Correction receipt
   receiptTitle: "From raw to harmonized detections",
   receiptRaw: "Raw detections",
+  receiptStaticMasked: "Static sources / gas flares removed",
+  receiptSamaRemoved: "SAMA night noise removed",
   receiptDedup: "− Duplicate detections removed",
   receiptUnique: "= Harmonized detections",
   receiptAngle: "FRP corrected for angle",
@@ -341,6 +343,8 @@ const trBase = {
 
   receiptTitle: "Ham tespitten harmonize tespite",
   receiptRaw: "Ham tespitler",
+  receiptStaticMasked: "Sabit kaynaklar / gaz meşaleleri çıkarıldı",
+  receiptSamaRemoved: "SAMA gece gürültüsü çıkarıldı",
   receiptDedup: "− Ayıklanan mükerrer tespitler",
   receiptUnique: "= Harmonize tespit",
   receiptAngle: "Bakış açısına göre düzeltilmiş FRP",

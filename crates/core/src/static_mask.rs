@@ -51,24 +51,53 @@ pub struct StaticMask {
     cell_years: HashSet<(u64, i32)>,
 }
 
+/// Incremental accumulator for [`StaticMask`] so callers that filter batches by confidence or
+/// split them by sensor/year can record active months before dropping detections.
+#[derive(Debug, Clone, Default)]
+pub struct StaticMaskBuilder {
+    months: HashMap<(u64, i32), u16>,
+}
+
+impl StaticMaskBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn add_detections<'a>(&mut self, rows: impl IntoIterator<Item = &'a Hotspot>) {
+        for h in rows {
+            if let Some(cell) = mask_cell(h.lat, h.lon) {
+                *self.months.entry((cell, h.acquired.year())).or_default() |=
+                    1 << h.acquired.month0();
+            }
+        }
+    }
+
+    pub fn merge(&mut self, other: Self) {
+        for (key, mask) in other.months {
+            *self.months.entry(key).or_default() |= mask;
+        }
+    }
+
+    pub fn build(self, config: &StaticMaskConfig) -> StaticMask {
+        let min = u32::from(config.min_active_months);
+        let cell_years = self
+            .months
+            .into_iter()
+            .filter(|(_, m)| m.count_ones() >= min)
+            .map(|(key, _)| key)
+            .collect();
+        StaticMask { cell_years }
+    }
+}
+
 impl StaticMask {
     pub fn from_detections<'a>(
         rows: impl IntoIterator<Item = &'a Hotspot>,
         config: &StaticMaskConfig,
     ) -> Self {
-        let mut months: HashMap<(u64, i32), u16> = HashMap::new();
-        for h in rows {
-            if let Some(cell) = mask_cell(h.lat, h.lon) {
-                *months.entry((cell, h.acquired.year())).or_default() |= 1 << h.acquired.month0();
-            }
-        }
-        let min = u32::from(config.min_active_months);
-        let cell_years = months
-            .into_iter()
-            .filter(|(_, m)| m.count_ones() >= min)
-            .map(|(key, _)| key)
-            .collect();
-        Self { cell_years }
+        let mut builder = StaticMaskBuilder::new();
+        builder.add_detections(rows);
+        builder.build(config)
     }
 
     pub fn contains(&self, h: &Hotspot) -> bool {
@@ -171,5 +200,16 @@ mod tests {
         assert!(mask.contains(&at(4.8, 6.9, 2020, 1)));
         assert!(!mask.contains(&at(-20.0, 30.0, 2020, 1)));
         assert!(!StaticMask::default().contains(&at(4.8, 6.9, 2020, 1)));
+    }
+
+    #[test]
+    fn builder_merge_matches_single_batch_from_detections() {
+        let rows: Vec<Hotspot> = (1..=10).map(|m| at(4.8, 6.9, 2020, m)).collect();
+        let mut left = StaticMaskBuilder::new();
+        left.add_detections(&rows[..5]);
+        let mut right = StaticMaskBuilder::new();
+        right.add_detections(&rows[5..]);
+        left.merge(right);
+        assert_eq!(left.build(&config(10)), StaticMask::from_detections(&rows, &config(10)));
     }
 }

@@ -1981,8 +1981,13 @@ fn format_archive_error(err: ArchiveError) -> String {
 }
 
 enum CountryYearOutcome {
-    /// Detections kept and the number dropped by the confidence filter.
-    Found(Vec<Hotspot>, usize),
+    /// Detections kept, the number dropped by the confidence filter, and pre-filter
+    /// static-mask month bitmasks so persistent low-confidence cells stay masked.
+    Found(
+        Vec<Hotspot>,
+        usize,
+        pyrosync_core::static_mask::StaticMaskBuilder,
+    ),
     CompleteNoFile,
 }
 
@@ -1998,6 +2003,8 @@ async fn run_calendar_pipeline(
     let mut attempted_any = false;
     let mut found_any_file = false;
     let mut excluded_detections = 0usize;
+    let mut mask_builder = pyrosync_core::static_mask::StaticMaskBuilder::new();
+    let static_mask_enabled = config.static_mask.enabled;
 
     if query.years.effective_from <= query.years.effective_to {
         let semaphore = Arc::new(Semaphore::new(ARCHIVE_FETCH_CONCURRENCY));
@@ -2035,8 +2042,18 @@ async fn run_calendar_pipeline(
                     if let Some(ref bbox) = bbox {
                         hotspots = filter_bbox(hotspots, bbox);
                     }
+                    // Build static-mask persistence from detections before confidence filtering,
+                    // matching /api/series and /api/points.
+                    let mut year_mask = pyrosync_core::static_mask::StaticMaskBuilder::new();
+                    if static_mask_enabled {
+                        year_mask.add_detections(&hotspots);
+                    }
                     let excluded = min_confidence.retain(&mut hotspots);
-                    Ok::<CountryYearOutcome, String>(CountryYearOutcome::Found(hotspots, excluded))
+                    Ok::<CountryYearOutcome, String>(CountryYearOutcome::Found(
+                        hotspots,
+                        excluded,
+                        year_mask,
+                    ))
                 });
                 handles.push((sensor, year, handle));
             }
@@ -2044,9 +2061,10 @@ async fn run_calendar_pipeline(
 
         for (sensor, year, handle) in handles {
             match handle.await {
-                Ok(Ok(CountryYearOutcome::Found(mut hotspots, excluded))) => {
+                Ok(Ok(CountryYearOutcome::Found(mut hotspots, excluded, year_mask))) => {
                     found_any_file = true;
                     excluded_detections += excluded;
+                    mask_builder.merge(year_mask);
                     per_sensor_year.push(SensorYearFetch {
                         sensor,
                         year,
@@ -2094,7 +2112,17 @@ async fn run_calendar_pipeline(
     let query = query.clone();
     tokio::task::spawn_blocking(move || {
         let raw_detections = modis.len() + viirs.len();
-        let harmonized = pyrosync_core::harmonize::harmonize_with_config(modis, viirs, &config);
+        let mask = config
+            .static_mask
+            .enabled
+            .then(|| mask_builder.build(&config.static_mask));
+        let harmonized = pyrosync_core::harmonize::harmonize_with_links_masked(
+            modis,
+            viirs,
+            &config,
+            mask.as_ref(),
+        )
+        .hotspots;
         let calendar_cells = pyrosync_core::calendar::build_calendar_with(
             &harmonized,
             &config.uncertainty,

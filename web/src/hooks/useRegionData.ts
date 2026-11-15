@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { formatRegionName, t } from "../content/copy";
+import { aggregateRegionTotals } from "../lib/receiptCounts";
 import {
   DEFAULT_REGION,
   getExplicitHashRegion,
@@ -455,6 +456,8 @@ function releasePoints(key: string): void {
 const EMPTY_STAGES: PointStages = {
   rawModis: 0,
   rawViirs: 0,
+  staticMasked: 0,
+  samaRemoved: 0,
   interscanRemoved: 0,
   fleetMerged: 0,
   matchedPairs: 0,
@@ -466,6 +469,8 @@ const EMPTY_TOTALS: RegionTotals = {
   viirs: 0,
   raw: 0,
   harmonized: 0,
+  staticMasked: 0,
+  samaRemoved: 0,
   interscanRemoved: 0,
   fleetMerged: 0,
   matched: 0,
@@ -837,39 +842,8 @@ export function useRegionData(): UseRegionDataResult {
     }
 
     const years = activeSeries.years;
-
-    let modis = 0;
-    let viirs = 0;
-    let raw = 0;
-    let harmonized = 0;
-    let interscanRemoved = 0;
-    let fleetMerged = 0;
-    let matched = 0;
-
-    for (const y of years) {
-      modis += y.rawModis;
-      viirs += y.rawViirs;
-      raw += y.raw;
-      harmonized += y.harmonized;
-      interscanRemoved += y.interscanRemoved;
-      fleetMerged += y.fleetMerged;
-      matched += y.matched;
-    }
-
-    const doubleCounts = Math.max(0, raw - harmonized);
-    const doubleCountShare = raw > 0 ? doubleCounts / raw : 0;
-
-    const totals: RegionTotals = {
-      modis,
-      viirs,
-      raw,
-      harmonized,
-      interscanRemoved,
-      fleetMerged,
-      matched,
-      doubleCounts,
-      doubleCountShare,
-    };
+    const totals = aggregateRegionTotals(years);
+    const { interscanRemoved, fleetMerged, matched, doubleCountShare } = totals;
 
     const months = buildCalendarMonths(activeSeries, firstYear, lastYear);
 

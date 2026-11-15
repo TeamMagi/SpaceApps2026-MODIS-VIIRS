@@ -1243,6 +1243,43 @@ async fn calendar_min_confidence_filters_archive_rows_and_keeps_bias_note() {
     assert_eq!(bad.status, StatusCode::BAD_REQUEST, "body: {}", bad.body);
 }
 
+#[tokio::test]
+async fn calendar_static_mask_uses_low_confidence_detections_even_when_filtered() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    // Cell at 37.0°N, 30.0°E burns across 11 months in 2010: 10 Low months + 1 High month.
+    // A second cell at 38.0°N, 30.0°E burns once in November (High) and is not persistent.
+    let mut rows: Vec<String> = (1..=10u32)
+        .map(|month| {
+            archive_row(&format!("2010-{month:02}-01"), 37.0, 0)
+                .replace(",MODIS,80,", ",MODIS,20,")
+        })
+        .collect();
+    rows.push(archive_row("2010-11-01", 37.0, 0));
+    rows.push(archive_row("2010-11-02", 38.0, 0));
+    write_archive_year(dir.path(), 2010, &rows);
+
+    let app = app(None, Some(dir.path()), Some(Duration::from_secs(30)));
+
+    let nominal = call(
+        &app,
+        "/api/calendar?country=Testland&from=2010&to=2010&min_confidence=nominal",
+    )
+    .await;
+    assert_eq!(nominal.status, StatusCode::OK, "body: {}", nominal.body);
+    let n = nominal.json();
+    assert_eq!(n["counts"]["raw_detections"], 2);
+    assert_eq!(n["counts"]["harmonized_records"], 1);
+    assert_eq!(
+        n["filters"],
+        json!({"min_confidence": "nominal", "excluded_detections": 10})
+    );
+    let cells = n["calendar"].as_array().expect("calendar array");
+    assert_eq!(cells.len(), 1);
+    assert_eq!(cells[0]["year"], 2010);
+    assert_eq!(cells[0]["month"], 11);
+    assert_eq!(cells[0]["count"], 1);
+}
+
 // ---------- C10: tropical swath-gap flag ----------
 
 /// Testland rows in July 2010 at 5°N (inside the belt) and 35°N (outside), one per day.

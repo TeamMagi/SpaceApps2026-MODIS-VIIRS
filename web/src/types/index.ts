@@ -153,6 +153,8 @@ export interface HarmonizedPoint {
 export interface PointStages {
   rawModis: number;
   rawViirs: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   matchedPairs: number;
@@ -202,6 +204,8 @@ export interface YearlyPoint {
   matched: number;
   modisOnly: number;
   viirsOnly: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   firstDate: string | null;
@@ -231,6 +235,8 @@ export interface RegionTotals {
   viirs: number;
   raw: number;
   harmonized: number;
+  staticMasked: number;
+  samaRemoved: number;
   interscanRemoved: number;
   fleetMerged: number;
   matched: number;
