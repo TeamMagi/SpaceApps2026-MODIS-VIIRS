@@ -667,4 +667,15 @@ mod tests {
         let e = total_frp_uncertainty(&junk, &p).unwrap();
         assert_eq!((e.lower, e.upper), (0.0, 0.0));
     }
+
+    // A silent change to a documented model assumption must fail a test.
+    #[test]
+    fn default_params_are_pinned_to_documented_values() {
+        let p = UncertaintyParams::default();
+        assert_eq!(p.modis_sensor_sigma, 0.12);
+        assert_eq!(p.viirs_sensor_sigma, 0.08);
+        assert_eq!(p.vza_error_coeff, 0.05);
+        assert_eq!(p.modis_scale_sigma, 0.10);
+        assert_eq!(p.z, 1.0);
+    }
 }

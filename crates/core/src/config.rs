@@ -393,7 +393,7 @@ mod tests {
 
     #[test]
     fn vza_coefficients_each_independently_must_be_finite() {
-        // MC/DC: each coefficient alone flips the outcome; negatives and zero are allowed.
+        // Equivalence partitioning and boundary values of each independent check; negatives and zero are allowed.
         rejected(|c| c.vza.c = f64::NEG_INFINITY, "vza.c");
         rejected(|c| c.vza.a = f64::NAN, "vza.a");
         rejected(|c| c.vza.b = f64::INFINITY, "vza.b");
