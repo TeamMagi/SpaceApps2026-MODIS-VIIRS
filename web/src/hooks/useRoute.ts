@@ -21,6 +21,24 @@ export function useRoute(): Route {
   return parseRoute(hash);
 }
 
+/** The dashboard hash rebuilt from the store (region, mode, month, language, palette, data mode, overrides, confidence). */
+export function dashboardHashFromStore(): string {
+  const s = useAppStore.getState();
+  return serializeHash(
+    {
+      region: s.region,
+      mode: s.mode,
+      month: s.selectedMonth,
+      lang: s.lang,
+      palette: s.palette,
+      data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
+      overrides: s.pipelineOverrides,
+      minConfidence: s.minConfidence,
+    },
+    s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+  );
+}
+
 /**
  * Returns to the dashboard by rebuilding its hash from the store rather than calling
  * history.back(): the store kept region, mode, month and any language change made on the
@@ -28,19 +46,6 @@ export function useRoute(): Route {
  */
 export function useLeaveMethods(): () => void {
   return useCallback(() => {
-    const s = useAppStore.getState();
-    window.location.hash = serializeHash(
-      {
-        region: s.region,
-        mode: s.mode,
-        month: s.selectedMonth,
-        lang: s.lang,
-        palette: s.palette,
-        data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
-        overrides: s.pipelineOverrides,
-        minConfidence: s.minConfidence,
-      },
-      s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
-    );
+    window.location.hash = dashboardHashFromStore();
   }, []);
 }

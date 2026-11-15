@@ -110,6 +110,11 @@ export interface AppState {
   pipelineOverrides: PipelineOverrides;
   /** Lowest FIRMS confidence class sent as `min_confidence`; `low` keeps every detection. */
   minConfidence: MinConfidence;
+  /** Index into TOUR_STEPS while the guided tour runs; null when no tour is active. */
+  tourStep: number | null;
+  tourPaused: boolean;
+  /** Increments on every startTour, so restarting while on step 1 re-runs the step. */
+  tourRun: number;
 
   setRegion: (region: RegionId) => void;
   /** The single user-facing mode action (button click, H key). */
@@ -134,6 +139,11 @@ export interface AppState {
   setPipelineOverride: (key: PipelineOverrideKey, value: number | undefined) => void;
   resetPipelineOverrides: () => void;
   setMinConfidence: (minConfidence: MinConfidence) => void;
+  /** Starts (or restarts) the guided tour at step 1, unpaused, with no drawer open. */
+  startTour: () => void;
+  setTourStep: (step: number) => void;
+  endTour: () => void;
+  setTourPaused: (paused: boolean) => void;
   /** Applies a parsed URL hash; mode changes snap without animation. */
   applyUrlState: (url: Partial<UrlState>) => void;
   /** Jumps to the final state of the current target, cancelling any run. */
@@ -226,6 +236,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
   serverConfig: null,
   pipelineOverrides: initialUrl.overrides ? { ...initialUrl.overrides } : {},
   minConfidence: initialUrl.minConfidence ?? "low",
+  tourStep: null,
+  tourPaused: false,
+  tourRun: 0,
 
   setRegion: (region) => {
     const state = get();
@@ -292,6 +305,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
   setMinConfidence: (minConfidence) => {
     if (get().minConfidence !== minConfidence) set({ minConfidence });
   },
+  startTour: () => set((s) => ({ tourStep: 0, tourPaused: false, openDrawer: null, tourRun: s.tourRun + 1 })),
+  setTourStep: (tourStep) => set({ tourStep }),
+  endTour: () => set({ tourStep: null, tourPaused: false }),
+  setTourPaused: (tourPaused) => set({ tourPaused }),
   applyUrlState: (url) => {
     const state = get();
     const nextRegion = url.region ?? state.region;

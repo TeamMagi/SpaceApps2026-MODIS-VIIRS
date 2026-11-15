@@ -110,7 +110,7 @@ export default function AppShell({
         <div className={styles.headline}>
           <ErrorBoundary>{headline}</ErrorBoundary>
         </div>
-        <div className={styles.toggle}>
+        <div className={styles.toggle} data-tour="toggle">
           <ErrorBoundary>{toggle}</ErrorBoundary>
         </div>
         <div className={styles.count}>
@@ -119,13 +119,13 @@ export default function AppShell({
         <div className={styles.pipeline}>
           <ErrorBoundary>{pipeline}</ErrorBoundary>
         </div>
-        <div className={styles.map}>
+        <div className={styles.map} data-tour="map">
           <ErrorBoundary>{map}</ErrorBoundary>
         </div>
-        <div className={styles.chart}>
+        <div className={styles.chart} data-tour="chart">
           <ErrorBoundary>{chart}</ErrorBoundary>
         </div>
-        <div className={styles.calendar}>
+        <div className={styles.calendar} data-tour="calendar">
           <ErrorBoundary>{calendar}</ErrorBoundary>
         </div>
       </main>

@@ -34,11 +34,12 @@ src/
 │   ├── Charts/     → Uçurum grafiği ve SensorComparison (sensör karşılaştırma grafiği, elle yazılmış SVG)
 │   ├── Calendar/   → Radyal yanma takvimi (BurnCalendar) ve tooltip
 │   ├── BottomBar/  → Alt şerit (model uyarısı, CSV, brifing)
+│   ├── Tour/       → 60 saniyelik rehberli tur kartı (GuidedTour; zamanlayıcılar hooks/useGuidedTour'da)
 │   ├── Drawers/    → Sağdan açılan çekmeceler (Methods, Briefing)
 │   └── Methods/    → Tam Methods sayfası (#/methods: MethodsPage, MethodsPipeline akordeon, VzaCurveFigure, H3GridFigure, MethodsReferences, DisclaimerBanner, MethodsLink, useMethodsConfig)
 ├── content/
 │   ├── copy.ts     → Ana sözlük (EN + TR, tipli), t(), createTranslator
-│   ├── copyMap.ts, copyRegion.ts, copyState.ts, copyMethods.ts, copyAnalytics.ts → copy.ts parçaları
+│   ├── copyMap.ts, copyRegion.ts, copyState.ts, copyMethods.ts, copyAnalytics.ts, copyTour.ts → copy.ts parçaları
 │   └── references.ts → Methods sayfası kaynakça listesi
 ├── hooks/          → Custom React hooks (useHarmonizeTransition, useCopy, useRoute, vb.)
 ├── lib/
@@ -68,7 +69,7 @@ src/
 - State yönetimi için custom hook'lar `hooks/` dizininde oluşturulur.
 - **Yönlendirme (routing):** Hash tabanlıdır (`useRoute`, `lib/route.ts`). Rotalar `#/` ile başlar (`#/methods[/section]`, bölümler `lib/route.ts` içindeki `METHODS_SECTIONS`); dashboard'un kendi URL durumu (`lib/urlState.ts` ile üretilen `#region=...`) asla `/` ile başlamaz. Hash routing bilinçli tercihtir ve korunur; backend artık bilinmeyen yollarda `index.html` döndürse de (K9) dashboard URL durumu hash'te tutulduğu için pathname routing'e geçilmez.
 - **Zorunlu alan ekleme:** `types/index.ts`, bir API yanıt tipi veya `UrlState` içine zorunlu bir alan eklendiğinde bu nesneyi oluşturan tüm yerler güncellenmelidir: `services/api.ts` eşleyicileri, `src/mocks/index.ts`, `hooks/useRoute.ts` (`serializeHash` çağrısı) ve `tests/`. `npm run typecheck` yalnızca `src/` altındakileri yakalar; `tests/` tip kontrolünden geçmediği için elle aranmalıdır.
-- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`, `copyMethods.ts`, `copyAnalytics.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
+- Görünür tüm metinler ve `aria-label` değerleri `content/copy.ts` üzerinden gelir; her anahtar hem `en` hem `tr` içermeli ve parça dosyalar (`copyMap.ts`, `copyRegion.ts`, `copyState.ts`, `copyMethods.ts`, `copyAnalytics.ts`, `copyTour.ts`) `copy.ts` anahtarlarıyla çakışmamalıdır.
 - Tüm animasyon zamanlaması `useHarmonizeTransition` (tek saat) üzerinden okunur; bileşenler kendi geçiş zamanlayıcısı kurmaz.
 - Raw modu, `revealAnswer` true olmadan harmonize cevabı (sayı, başlık veya fiş) asla sızdırmaz.
 

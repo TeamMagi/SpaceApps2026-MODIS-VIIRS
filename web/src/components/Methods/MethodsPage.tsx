@@ -88,7 +88,7 @@ export default function MethodsPage({ section }: { section: MethodsSection | nul
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main className={styles.main} data-tour="methods">
         <DisclaimerBanner />
 
         <h1 className={styles.title}>{t("methodsPageTitle")}</h1>

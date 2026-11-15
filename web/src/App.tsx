@@ -6,6 +6,7 @@ import CliffChart from "./components/Charts/CliffChart";
 import BriefingDrawer from "./components/Drawers/BriefingDrawer";
 import MethodsDrawer from "./components/Drawers/MethodsDrawer";
 import SettingsDrawer from "./components/Drawers/SettingsDrawer";
+import GuidedTour from "./components/Tour/GuidedTour";
 import Header from "./components/Header/Header";
 import Headline from "./components/Headline/Headline";
 import MethodsPage from "./components/Methods/MethodsPage";
@@ -15,6 +16,7 @@ import CountDelta from "./components/Stats/CountDelta";
 import ViewToggle from "./components/Toggle/ViewToggle";
 import { useDataModeProbe } from "./hooks/useDataModeProbe";
 import { useDocumentSync } from "./hooks/useDocumentSync";
+import { useGuidedTour } from "./hooks/useGuidedTour";
 import { useHarmonizeClock } from "./hooks/useHarmonizeTransition";
 import { useRoute } from "./hooks/useRoute";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -25,7 +27,7 @@ const HotspotMap = lazy(() => import("./components/Map/HotspotMap"));
 
 /**
  * Composition root. Opens in Raw (the question before the answer) unless the URL says otherwise.
- * The five app-wide hooks below are the only places that own timers or global listeners.
+ * The six app-wide hooks below are the only places that own timers or global listeners.
  */
 export default function App() {
   useDataModeProbe();
@@ -33,9 +35,17 @@ export default function App() {
   useUrlSync();
   useKeyboardShortcuts();
   useDocumentSync();
+  useGuidedTour();
   const route = useRoute();
 
-  if (route.name === "methods") return <MethodsPage section={route.section} />;
+  if (route.name === "methods") {
+    return (
+      <>
+        <MethodsPage section={route.section} />
+        <GuidedTour />
+      </>
+    );
+  }
 
   return (
     <AppShell
@@ -57,6 +67,7 @@ export default function App() {
           <MethodsDrawer />
           <SettingsDrawer />
           <BriefingDrawer />
+          <GuidedTour />
         </>
       }
     />

@@ -136,3 +136,22 @@ samp {
     color: #000;
   }
 }
+
+/* Guided tour highlight (set by hooks/useGuidedTour). */
+[data-tour-active="true"] {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  animation: tour-pulse 1.8s var(--ease-standard) infinite;
+}
+
+@keyframes tour-pulse {
+  50% {
+    outline-color: var(--color-accent-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-tour-active="true"] {
+    animation: none;
+  }
+}
