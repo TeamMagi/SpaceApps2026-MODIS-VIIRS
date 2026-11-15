@@ -181,6 +181,16 @@
   stroke-dasharray: 2 2;
 }
 
+.sliceGroup[data-wide-uncert="true"] .sliceWedge {
+  stroke: var(--uncert-slice-border);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 3;
+}
+
+.sliceHatch {
+  pointer-events: none;
+}
+
 .sliceGroup[data-highlighted="true"] .sliceWedge {
   stroke: var(--color-border-strong);
   stroke-width: 1.5;

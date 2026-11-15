@@ -172,6 +172,10 @@ export default function MethodsDrawer() {
 
       <h3 className={styles.heading}>{t("methodsLimitsTitle")}</h3>
       <p className={styles.bodyText}>{t("disclaimer")}</p>
+      <p className={styles.bodyText}>
+        {t("uncertaintyConfidenceLabel")}. {t("uncertaintyWideBody")}
+      </p>
+      <p className={styles.bodyText}>{t("uncertaintyModelCaveat")}</p>
 
       <div className={styles.references} aria-label={t("methodsSensors")}>
         <p className={styles.refSource}>{sourceCitation}</p>

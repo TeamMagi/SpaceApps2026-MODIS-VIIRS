@@ -5,6 +5,11 @@
 
 import type { CopyApi } from "../../hooks/useCopy";
 import { useCopy } from "../../hooks/useCopy";
+import {
+  formatFrpInterval,
+  relativeUncertaintyWidth,
+  WIDE_UNCERTAINTY_THRESHOLD,
+} from "../../lib/format";
 import { anomalyCopyKey } from "../../lib/scales";
 import type { MonthCell } from "../../types";
 import styles from "./CalendarTooltip.module.css";
@@ -41,8 +46,13 @@ export interface CalendarTooltipProps {
 }
 
 export default function CalendarTooltip({ id, cell, harmonized, position, bounds }: CalendarTooltipProps) {
-  const { t, fmt } = useCopy();
+  const { lang, t, fmt } = useCopy();
   const text = formatCalendarCellText(cell, harmonized, { t, fmt });
+  const showMeanFrp = harmonized && cell.hasData && cell.meanFrp !== null;
+  const relWidth = showMeanFrp
+    ? relativeUncertaintyWidth(cell.meanFrpLower, cell.meanFrpUpper, cell.meanFrp)
+    : null;
+  const isWideUncert = relWidth !== null && relWidth > WIDE_UNCERTAINTY_THRESHOLD;
 
   const flipBottom = position.y < 52;
   const top = flipBottom ? position.y + (bounds?.cellHeight ?? 18) : position.y;
@@ -60,6 +70,16 @@ export default function CalendarTooltip({ id, cell, harmonized, position, bounds
       style={{ left: clampedX, top }}
     >
       <span>{text}</span>
+      {showMeanFrp && cell.meanFrp !== null && (
+        <span className={styles.frpLine}>
+          {formatFrpInterval(cell.meanFrp, cell.meanFrpLower, cell.meanFrpUpper, lang)}
+        </span>
+      )}
+      {isWideUncert && (
+        <span className={styles.wideHint}>
+          <strong>{t("uncertaintyWideTitle")}:</strong> {t("uncertaintyWideBody")}
+        </span>
+      )}
       <span className={styles.arrow} style={{ left: `calc(50% + ${arrowOffset - 140}px)` }} aria-hidden="true" />
     </div>
   );

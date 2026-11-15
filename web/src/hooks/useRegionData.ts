@@ -650,6 +650,9 @@ function buildCalendarMonths(
           harmonizedCount: found.harmonized,
           anomalyRaw: found.anomalyRaw,
           anomalyHarmonized: found.anomalyHarmonized,
+          meanFrp: found.meanFrp,
+          meanFrpLower: found.meanFrpLower,
+          meanFrpUpper: found.meanFrpUpper,
         });
       } else {
         const ym = year * 12 + month;
@@ -664,6 +667,9 @@ function buildCalendarMonths(
           harmonizedCount: 0,
           anomalyRaw: null,
           anomalyHarmonized: null,
+          meanFrp: null,
+          meanFrpLower: null,
+          meanFrpUpper: null,
         });
       }
     }

@@ -26,6 +26,64 @@ struct MonthBucket {
     mean_uncertainty_items: Vec<(f64, f64, f64)>,
 }
 
+fn mean_frp_uncertainty_item(
+    h: &HarmonizedHotspot,
+    uncertainty: &UncertaintyParams,
+) -> (f64, f64, f64) {
+    let sensor_family = SensorFamily::from(h.source);
+    // Native-pixel `mean_frp` never includes completeness k_c, so its systematic uncertainty
+    // comes solely from `modis_scale_sigma` (on ModisOnly) without `ratio_sigma`.
+    let mean_rel = relative_uncertainty_for_obs(
+        h.vza_factor,
+        sensor_family,
+        None,
+        h.n_obs,
+        uncertainty,
+    );
+    (h.frp_corrected, mean_rel.random, mean_rel.systematic)
+}
+
+fn mean_frp_bounds_from_items(
+    sum_corrected: f64,
+    items: &[(f64, f64, f64)],
+    uncertainty: &UncertaintyParams,
+) -> Option<(f64, f64, f64)> {
+    if items.is_empty() {
+        return None;
+    }
+    let mean = sum_corrected / items.len() as f64;
+    let est = mean_frp_uncertainty(items, uncertainty)?;
+    if !mean.is_finite()
+        || !est.lower.is_finite()
+        || !est.upper.is_finite()
+        || est.lower < 0.0
+        || est.lower > mean
+        || mean > est.upper
+    {
+        return None;
+    }
+    Some((mean, est.lower, est.upper))
+}
+
+/// Compute `(mean_frp, mean_frp_lower, mean_frp_upper)` for a slice of harmonized hotspots using
+/// the same native-pixel formula as [`build_calendar_with`]. Returns `None` when `hotspots` is
+/// empty or any bound is non-finite.
+pub fn mean_frp_with_uncertainty(
+    hotspots: &[HarmonizedHotspot],
+    uncertainty: &UncertaintyParams,
+) -> Option<(f64, f64, f64)> {
+    if hotspots.is_empty() {
+        return None;
+    }
+    let mut sum_corrected = 0.0_f64;
+    let mut items = Vec::with_capacity(hotspots.len());
+    for h in hotspots {
+        sum_corrected += h.frp_corrected;
+        items.push(mean_frp_uncertainty_item(h, uncertainty));
+    }
+    mean_frp_bounds_from_items(sum_corrected, &items, uncertainty)
+}
+
 /// Build a burning activity calendar from harmonized hotspot data using default uncertainty and calibration configs.
 ///
 /// Groups hotspots by (year, month) and computes:
@@ -76,18 +134,9 @@ pub fn build_calendar_with(
         }
 
         let sensor_family = SensorFamily::from(h.source);
-        // Native-pixel `mean_frp` never includes completeness k_c, so its systematic uncertainty
-        // comes solely from `modis_scale_sigma` (on ModisOnly) without `ratio_sigma`.
-        let mean_rel = relative_uncertainty_for_obs(
-            h.vza_factor,
-            sensor_family,
-            None,
-            h.n_obs,
-            uncertainty,
-        );
         entry
             .mean_uncertainty_items
-            .push((h.frp_corrected, mean_rel.random, mean_rel.systematic));
+            .push(mean_frp_uncertainty_item(h, uncertainty));
         entry.records.push(BucketRecord {
             lat: h.lat,
             frp_corrected: h.frp_corrected,
@@ -104,7 +153,11 @@ pub fn build_calendar_with(
             let count_normalized = effort_omega.and_then(|omega| {
                 (omega > 0.0 && omega.is_finite()).then_some(bucket.count as f64 / omega)
             });
-            let mean_estimate = mean_frp_uncertainty(&bucket.mean_uncertainty_items, uncertainty);
+            let mean_bounds = mean_frp_bounds_from_items(
+                bucket.sum_corrected,
+                &bucket.mean_uncertainty_items,
+                uncertainty,
+            );
 
             // Apply empirical pre-VIIRS completeness k_c(lat) to `total_frp` ONLY when the cell
             // has no VIIRS detections at all (pre-2012 MODIS-only era). Once VIIRS is present,
@@ -147,10 +200,10 @@ pub fn build_calendar_with(
                 count: bucket.count,
                 count_normalized,
                 effort_omega,
-                mean_frp: bucket.sum_corrected / bucket.count as f64,
+                mean_frp: mean_bounds.map_or(bucket.sum_corrected / bucket.count as f64, |(m, _, _)| m),
                 mean_frp_raw: bucket.sum_raw / bucket.count as f64,
-                mean_frp_lower: mean_estimate.map(|e| e.lower),
-                mean_frp_upper: mean_estimate.map(|e| e.upper),
+                mean_frp_lower: mean_bounds.map(|(_, lower, _)| lower),
+                mean_frp_upper: mean_bounds.map(|(_, _, upper)| upper),
                 total_frp,
                 total_frp_lower: total_estimate.map(|e| e.lower),
                 total_frp_upper: total_estimate.map(|e| e.upper),
@@ -983,5 +1036,34 @@ mod tests {
         let era_cells = build_calendar(&[terra_2001, terra_2003]);
         assert!(era_cells[0].count_normalized.is_none());
         assert!(era_cells[0].frp_per_detection_eq.is_none());
+    }
+
+    #[test]
+    fn mean_frp_with_uncertainty_matches_calendar_cell_and_handles_edge_cases() {
+        let params = UncertaintyParams::default();
+        assert_eq!(mean_frp_with_uncertainty(&[], &params), None);
+
+        let mut modis = make_harmonized(2021, 7, 1, 60.0, 72.0);
+        modis.vza_factor = Some(1.2);
+        let mut viirs = make_harmonized(2021, 7, 2, 24.0, 24.0);
+        viirs.platforms = vec![Sensor::ViirsSNPP];
+        viirs.source = HotspotSource::ViirsOnly;
+        viirs.vza_factor = None;
+
+        let hotspots = [modis.clone(), viirs];
+        let cells = build_calendar_with(&hotspots, &params, &CalibrationConfig::default());
+        assert_eq!(cells.len(), 1);
+
+        let (mean, lower, upper) = mean_frp_with_uncertainty(&hotspots, &params).unwrap();
+        assert_eq!(mean, cells[0].mean_frp);
+        assert_eq!(Some(lower), cells[0].mean_frp_lower);
+        assert_eq!(Some(upper), cells[0].mean_frp_upper);
+        assert!(0.0 <= lower && lower <= mean && mean <= upper);
+
+        let nan_frp = make_harmonized(2021, 7, 3, 10.0, f64::NAN);
+        assert_eq!(mean_frp_with_uncertainty(&[nan_frp], &params), None);
+
+        let neg_frp = make_harmonized(2021, 7, 3, -5.0, -5.0);
+        assert_eq!(mean_frp_with_uncertainty(&[neg_frp], &params), None);
     }
 }

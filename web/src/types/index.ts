@@ -138,6 +138,8 @@ export interface HarmonizedPoint {
   vzaFactor: number | null;
   nObs: number;
   platforms: string[];
+  frpLower: number | null;
+  frpUpper: number | null;
 }
 
 export interface PointStages {
@@ -178,6 +180,9 @@ export interface MonthCell {
   /** z-score against the same calendar month in other years; null when fewer than 3 years or sd == 0. */
   anomalyRaw: number | null;
   anomalyHarmonized: number | null;
+  meanFrp: number | null;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
 }
 
 export interface YearlyPoint {

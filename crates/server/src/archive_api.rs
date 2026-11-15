@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::{OnceCell, Semaphore};
 use tokio::task::JoinSet;
 
-use pyrosync_core::calendar::compute_anomalies;
+use pyrosync_core::calendar::{compute_anomalies, mean_frp_with_uncertainty};
 use pyrosync_core::config::PipelineConfig;
 use pyrosync_core::events::{
     EventClustering, EventParams, FireEvent, NoDetectionDay, cluster_events, no_detection_days,
@@ -822,6 +822,7 @@ struct YearEntry {
 }
 
 #[derive(Serialize)]
+#[cfg_attr(test, derive(Deserialize))]
 struct MonthEntry {
     year: i32,
     month: u32,
@@ -829,6 +830,9 @@ struct MonthEntry {
     raw_viirs: usize,
     raw_total: usize,
     harmonized: usize,
+    mean_frp: Option<f64>,
+    mean_frp_lower: Option<f64>,
+    mean_frp_upper: Option<f64>,
     anomaly_raw: Option<f64>,
     anomaly_harmonized: Option<f64>,
 }
@@ -897,16 +901,25 @@ fn year_stats_with(
                 return None;
             }
             let (raw_modis, raw_viirs) = (modis.len(), viirs.len());
+            // Each month is harmonized on its own, so matches and interscan duplicates
+            // that straddle a month boundary are not merged; the monthly harmonized counts
+            // need not add up to the yearly figure, which is harmonized over the whole year.
+            let harmonized_hotspots = harmonize_with_config(modis, viirs, config);
+            let (mean_frp, mean_frp_lower, mean_frp_upper) =
+                match mean_frp_with_uncertainty(&harmonized_hotspots, &config.uncertainty) {
+                    Some((mean, lower, upper)) => (Some(mean), Some(lower), Some(upper)),
+                    None => (None, None, None),
+                };
             Some(MonthEntry {
                 year,
                 month,
                 raw_modis,
                 raw_viirs,
                 raw_total: raw_modis + raw_viirs,
-                // Each month is harmonized on its own, so matches and interscan duplicates
-                // that straddle a month boundary are not merged; the monthly harmonized counts
-                // need not add up to the yearly figure, which is harmonized over the whole year.
-                harmonized: harmonize_with_config(modis, viirs, config).len(),
+                harmonized: harmonized_hotspots.len(),
+                mean_frp,
+                mean_frp_lower,
+                mean_frp_upper,
                 anomaly_raw: None,
                 anomaly_harmonized: None,
             })
@@ -1739,7 +1752,6 @@ async fn points(
         .expect("semaphore is never closed");
     let data = load_year(&state, &region, year).await?;
     let coverage = load_coverage(&state).await?;
-    let config = state.config.clone();
     let response = tokio::task::spawn_blocking(move || {
         let _slot = slot;
         let (modis, viirs) = match month {
@@ -1978,6 +1990,7 @@ mod tests {
                 year: Some("2010".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2259,6 +2272,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("0".into()),
+                ..Default::default()
             }),
         )
         .await
@@ -2276,6 +2290,7 @@ mod tests {
                     year: Some("2021".into()),
                     month: None,
                     limit: Some("1".into()),
+                    ..Default::default()
                 }),
             ),
         )
@@ -2320,6 +2335,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: Some("1".into()),
+                ..Default::default()
             }),
         )
         .await
@@ -2468,6 +2484,7 @@ mod tests {
                 year: Some("2021".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2836,6 +2853,7 @@ mod tests {
                 year: Some("2018".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -2851,6 +2869,7 @@ mod tests {
                 year: Some("2020".into()),
                 month: None,
                 limit: None,
+                ..Default::default()
             }),
         )
         .await
@@ -3211,6 +3230,119 @@ mod tests {
             Some(u64::from(crate::derived_cache::DERIVED_SCHEMA_VERSION))
         );
         assert!(refreshed_meta["files"][0].get("mtime_secs").is_none());
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_treats_v2_schema_as_stale_and_recomputes() {
+        let dir = temp_archive("schema-v2-stale");
+        write_file(&dir, "modis", 2015, "Chios", &[(38.4, "2015-07-01", 0)]);
+
+        let writable_dir = dir.join("_writable");
+        let bundled_dir = dir.join("_bundled");
+
+        let seed_state = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir.clone(),
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (_, real_body) = series_raw(&seed_state, "Chios").await.ok().unwrap();
+
+        let csv_path = dir.join("modis/2015/modis_2015_Chios.csv");
+        let csv_bytes = std::fs::metadata(&csv_path).unwrap().len();
+        let v2_meta = serde_json::json!({
+            "schema_version": 2,
+            "config_hash": crate::derived_cache::config_digest(&PipelineConfig::default()),
+            "files": [{
+                "path": "modis/2015/modis_2015_Chios.csv",
+                "bytes": csv_bytes,
+            }],
+            "body_hash": format!("{:016x}", crate::derived_cache::fnv1a_64(&real_body)),
+        });
+        let v2_meta_bytes = serde_json::to_vec_pretty(&v2_meta).unwrap();
+
+        std::fs::create_dir_all(bundled_dir.join("series")).unwrap();
+        std::fs::write(bundled_dir.join("series/Chios.json"), &real_body).unwrap();
+        std::fs::write(bundled_dir.join("series/Chios.meta.json"), &v2_meta_bytes).unwrap();
+        std::fs::write(writable_dir.join("series/Chios.meta.json"), &v2_meta_bytes).unwrap();
+
+        let s = state_with_caches(
+            dir.clone(),
+            writable_dir.clone(),
+            bundled_dir,
+            u64::MAX,
+            PipelineConfig::default(),
+        );
+        let (src, body) = series_raw(&s, "Chios").await.ok().unwrap();
+        assert_eq!(src.as_deref(), Some("computed"));
+        assert_eq!(body, real_body);
+
+        let refreshed_meta: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(writable_dir.join("series/Chios.meta.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            refreshed_meta["schema_version"].as_u64(),
+            Some(u64::from(crate::derived_cache::DERIVED_SCHEMA_VERSION))
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn series_month_mean_frp_and_uncertainty_round_trips() {
+        let dir = temp_archive("month-mean-frp");
+        write_file(
+            &dir,
+            "modis",
+            2015,
+            "FrpLand",
+            &[(39.0, "2015-06-01", 0), (39.5, "2015-08-01", 0)],
+        );
+        write_file(
+            &dir,
+            "viirs-snpp",
+            2015,
+            "FrpLand",
+            &[(39.0, "2015-06-01", 0)],
+        );
+
+        let s1 = state(dir.clone(), u64::MAX);
+        let (src1, body1) = series_raw(&s1, "FrpLand").await.ok().unwrap();
+        assert_eq!(src1.as_deref(), Some("computed"));
+
+        let s2 = state(dir.clone(), u64::MAX);
+        let (src2, body2) = series_raw(&s2, "FrpLand").await.ok().unwrap();
+        assert_eq!(src2.as_deref(), Some("disk"));
+        assert_eq!(body1, body2);
+
+        let json: serde_json::Value = serde_json::from_slice(&body2).unwrap();
+        let months = json["months"].as_array().unwrap();
+        let listed: Vec<u64> = months.iter().map(|m| m["month"].as_u64().unwrap()).collect();
+        // Uncovered months (1..=5, 9..=12) are omitted; covered empty month 7 stays with None.
+        assert_eq!(listed, [6, 7, 8]);
+
+        for m in [6u64, 8u64] {
+            let entry = months.iter().find(|e| e["month"] == m).unwrap();
+            let mean = entry["mean_frp"].as_f64().expect("mean_frp must be present");
+            let lower = entry["mean_frp_lower"].as_f64().expect("mean_frp_lower must be present");
+            let upper = entry["mean_frp_upper"].as_f64().expect("mean_frp_upper must be present");
+            assert!(0.0 <= lower && lower <= mean && mean <= upper);
+        }
+
+        let empty_july = months.iter().find(|e| e["month"] == 7).unwrap();
+        assert_eq!(empty_july["harmonized"], 0);
+        assert_eq!(empty_july.get("mean_frp"), Some(&serde_json::Value::Null));
+        assert_eq!(empty_july.get("mean_frp_lower"), Some(&serde_json::Value::Null));
+        assert_eq!(empty_july.get("mean_frp_upper"), Some(&serde_json::Value::Null));
+
+        let round_tripped: Vec<MonthEntry> =
+            serde_json::from_value(json["months"].clone()).unwrap();
+        let reserialized = serde_json::to_value(&round_tripped).unwrap();
+        assert_eq!(reserialized, json["months"]);
 
         let _ = std::fs::remove_dir_all(dir);
     }

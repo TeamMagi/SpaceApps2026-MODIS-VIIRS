@@ -1,5 +1,6 @@
 import { projectRing, type RegionProjection } from "../../../lib/geo/projection";
 import type { GeoDataset, GeoFeature } from "../../../lib/geo/types";
+import { relativeUncertaintyWidth } from "../../../lib/format";
 import { FRP_BREAKS, frpBucketFor } from "../../../lib/scales";
 import { HotspotSource, type HarmonizedPoint, type RawPoint, type Theme } from "../../../types";
 import { LOD_SPAN_DIVISORS, pickLodLevel, simplifyRing } from "./lod";
@@ -26,8 +27,21 @@ export const DEFAULT_MAX_DRAWN = 30_000;
 const TAU = Math.PI * 2;
 const VIEWPORT_MARGIN_PX = 12;
 const DUP_LINE_DASH: number[] = [2.5, 2];
+const UNCERT_ALPHA_STEPS = [1.0, 0.72, 0.48] as const;
 const SCRATCH_RADII = new Float64Array(8);
-const SCRATCH_PATHS: (Path2D | null)[] = [null, null, null, null, null, null, null, null];
+const SCRATCH_PATHS: (Path2D | null)[] = new Array<Path2D | null>(24).fill(null);
+
+export function uncertaintyAlpha(relWidth: number | null): number {
+  if (relWidth === null || !Number.isFinite(relWidth) || relWidth <= 0.20) return 1.0;
+  if (relWidth <= 0.40) return 0.72;
+  return 0.48;
+}
+
+function uncertaintyTierFor(relWidth: number | null): number {
+  if (relWidth === null || !Number.isFinite(relWidth) || relWidth <= 0.20) return 0;
+  if (relWidth <= 0.40) return 1;
+  return 2;
+}
 const SCRATCH_DIM_PATHS: Path2D[] = [];
 const SCRATCH_SELECTABLE_PATHS: Path2D[] = [];
 
@@ -328,6 +342,7 @@ function emptyPointLayer(): ScenePointLayer {
     buckets: emptyU8,
     shapes: emptyU8,
     flags: emptyU8,
+    uncertTiers: emptyU8,
     ids: [],
     indexById: new Map(),
     spatialIndex: buildIndex(emptyF32, emptyF32),
@@ -387,6 +402,7 @@ function buildRawLayer(
     buckets,
     shapes,
     flags,
+    uncertTiers: new Uint8Array(count),
     ids,
     indexById,
     spatialIndex: buildIndex(xs, ys),
@@ -408,6 +424,7 @@ function buildHarmonizedLayer(
   const buckets = new Uint8Array(count);
   const shapes = new Uint8Array(count);
   const flags = new Uint8Array(count);
+  const uncertTiers = new Uint8Array(count);
   const ids = new Array<string>(count);
   const indexById = new Map<string, number>();
 
@@ -419,6 +436,9 @@ function buildHarmonizedLayer(
     frp[i] = p.frpCorrected;
     buckets[i] = frpBucketFor(p.frpCorrected, frpBreaks);
     shapes[i] = PointShape.Circle;
+    uncertTiers[i] = uncertaintyTierFor(
+      relativeUncertaintyWidth(p.frpLower, p.frpUpper, p.frpCorrected),
+    );
 
     let flag =
       p.source === HotspotSource.ModisOnly
@@ -444,6 +464,7 @@ function buildHarmonizedLayer(
     buckets,
     shapes,
     flags,
+    uncertTiers,
     ids,
     indexById,
     spatialIndex: buildIndex(xs, ys),
@@ -758,6 +779,9 @@ function drawHighlightedPoint(
   const r = pointRadiusFor(bucket, shape, isHarmonized, zoomScale);
   const ringR = r + 4.5;
 
+  // Hovered/selected points always render at full opacity regardless of uncertainty tier.
+  ctx.globalAlpha = 1;
+
   // Contrast halo underneath the highlight ring so it stands out over dense fire clusters.
   ctx.beginPath();
   ctx.arc(sx, sy, ringR, 0, TAU);
@@ -1024,7 +1048,7 @@ export function drawMap(
   const minPlaneY = (-VIEWPORT_MARGIN_PX - ty) / k;
   const maxPlaneY = (height + VIEWPORT_MARGIN_PX - ty) / k;
 
-  const { xs, ys, buckets, shapes, flags } = layer;
+  const { xs, ys, buckets, shapes, flags, uncertTiers } = layer;
   let visibleTotal = 0;
   let inView = 0;
   for (let i = 0; i < layerTotal; i++) {
@@ -1113,8 +1137,10 @@ export function drawMap(
         ctx.restore();
       }
     } else {
+      for (let slot = 0; slot < 24; slot++) {
+        SCRATCH_PATHS[slot] = null;
+      }
       for (let bIdx = 0; bIdx < 8; bIdx++) {
-        SCRATCH_PATHS[bIdx] = null;
         SCRATCH_RADII[bIdx] = pointRadiusFor(bIdx + 1, PointShape.Circle, true, zoomScale);
       }
       const dupPath = showDupRings && hasPath2D ? new Path2D() : null;
@@ -1140,13 +1166,15 @@ export function drawMap(
         const sx = px * k + tx;
         const sy = py * k + ty;
         const bIdx = clamp((buckets[i] || 1) - 1, 0, 7);
+        const tier = uncertTiers[i] <= 2 ? uncertTiers[i] : 0;
+        const slot = tier * 8 + bIdx;
         const r = SCRATCH_RADII[bIdx];
 
         if (hasPath2D) {
-          let path = SCRATCH_PATHS[bIdx];
+          let path = SCRATCH_PATHS[slot];
           if (!path) {
             path = new Path2D();
-            SCRATCH_PATHS[bIdx] = path;
+            SCRATCH_PATHS[slot] = path;
           }
           if (shapes[i] === PointShape.Square) {
             path.rect(sx - r, sy - r, r * 2, r * 2);
@@ -1168,14 +1196,20 @@ export function drawMap(
 
       ctx.strokeStyle = palette.haloLight;
       ctx.lineWidth = clamp(0.6 * zoomScale, 0.45, 0.85);
-      for (let bIdx = 0; bIdx < 8; bIdx++) {
-        const path = SCRATCH_PATHS[bIdx];
-        SCRATCH_PATHS[bIdx] = null;
-        if (!path) continue;
-        ctx.fillStyle = palette.frp[bIdx];
-        ctx.fill(path);
-        ctx.stroke(path);
+      // Draw wider-interval (lower-alpha) points underneath high-certainty points.
+      for (let tier = 2; tier >= 0; tier--) {
+        ctx.globalAlpha = UNCERT_ALPHA_STEPS[tier];
+        for (let bIdx = 0; bIdx < 8; bIdx++) {
+          const slot = tier * 8 + bIdx;
+          const path = SCRATCH_PATHS[slot];
+          SCRATCH_PATHS[slot] = null;
+          if (!path) continue;
+          ctx.fillStyle = palette.frp[bIdx];
+          ctx.fill(path);
+          ctx.stroke(path);
+        }
       }
+      ctx.globalAlpha = 1;
 
       if (hasDup && dupPath) {
         ctx.save();

@@ -61,6 +61,53 @@ export function formatMw(lang: Lang, value: number): string {
   return `${formatNumber(lang, value, 1)} MW`;
 }
 
+export const WIDE_UNCERTAINTY_THRESHOLD = 0.30;
+
+export function relativeUncertaintyWidth(
+  lower: number | null | undefined,
+  upper: number | null | undefined,
+  estimate: number | null | undefined,
+): number | null {
+  if (
+    lower == null ||
+    upper == null ||
+    estimate == null ||
+    !Number.isFinite(lower) ||
+    !Number.isFinite(upper) ||
+    !Number.isFinite(estimate) ||
+    estimate <= 0
+  ) {
+    return null;
+  }
+  return (upper - lower) / estimate;
+}
+
+/**
+ * Format harmonized FRP with an optional +/-1 sigma interval:
+ * full: "45.2 MW (likely 38.7–51.8)" / "45,2 MW (olası aralık 38,7–51,8)"
+ * compact: "45.2 MW (38.7–51.8)" / "45,2 MW (38,7–51,8)"
+ * Uses a non-breaking space before MW and falls back to the plain value when bounds are missing.
+ */
+export function formatFrpInterval(
+  value: number,
+  lower: number | null | undefined,
+  upper: number | null | undefined,
+  lang: Lang,
+  compact = false,
+): string {
+  const base = `${formatNumber(lang, value, 1)}\u00A0MW`;
+  if (lower == null || upper == null || !Number.isFinite(lower) || !Number.isFinite(upper)) {
+    return base;
+  }
+  const lo = formatNumber(lang, lower, 1);
+  const hi = formatNumber(lang, upper, 1);
+  if (compact) {
+    return `${base} (${lo}\u2013${hi})`;
+  }
+  const label = lang === "tr" ? "olası aralık" : "likely";
+  return `${base} (${label} ${lo}\u2013${hi})`;
+}
+
 // en-US, not en-GB: en-GB abbreviates September as "Sept".
 const DATE_LOCALE: Record<Lang, string> = { en: "en-US", tr: "tr-TR" };
 const monthCache = new Map<string, readonly string[]>();

@@ -115,6 +115,9 @@ interface WireSeriesMonth {
   harmonized: number;
   anomaly_raw: number | null;
   anomaly_harmonized: number | null;
+  mean_frp?: number | null;
+  mean_frp_lower?: number | null;
+  mean_frp_upper?: number | null;
 }
 
 interface WireSeriesCliff {
@@ -172,6 +175,8 @@ interface WireHarmonizedPoint {
   vza_factor?: number | null;
   n_obs?: number;
   platforms?: string[];
+  frp_lower?: number | null;
+  frp_upper?: number | null;
 }
 
 interface WirePointStages {
@@ -426,6 +431,9 @@ export interface SeriesMonth {
   harmonized: number;
   anomalyRaw: number | null;
   anomalyHarmonized: number | null;
+  meanFrp: number | null;
+  meanFrpLower: number | null;
+  meanFrpUpper: number | null;
 }
 
 export interface SeriesResponse {
@@ -512,6 +520,10 @@ async function requestJson<T>(
 }
 
 // --- Adapters ----------------------------------------------------------------
+
+function finiteOrNull(value: number | null | undefined): number | null {
+  return value != null && Number.isFinite(value) ? value : null;
+}
 
 function adaptCliff(wire: WireSeriesCliff | null): CliffSummary | null {
   if (!wire) {
@@ -766,6 +778,9 @@ export async function fetchSeries(region: string, signal?: AbortSignal): Promise
         harmonized: m.harmonized,
         anomalyRaw: m.anomaly_raw,
         anomalyHarmonized: m.anomaly_harmonized,
+        meanFrp: finiteOrNull(m.mean_frp),
+        meanFrpLower: finiteOrNull(m.mean_frp_lower),
+        meanFrpUpper: finiteOrNull(m.mean_frp_upper),
       })),
       cliff: adaptCliff(wire.cliff),
       coverage: wire.coverage
@@ -841,6 +856,8 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
         vzaFactor: h.vza_factor ?? null,
         nObs: h.n_obs ?? 1,
         platforms: h.platforms ?? [],
+        frpLower: finiteOrNull(h.frp_lower),
+        frpUpper: finiteOrNull(h.frp_upper),
       })),
       stages: {
         rawModis: wire.stages.raw_modis,

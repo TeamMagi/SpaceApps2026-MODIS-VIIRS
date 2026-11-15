@@ -61,6 +61,7 @@ export interface ScenePointLayer {
   readonly buckets: Uint8Array;
   readonly shapes: Uint8Array;
   readonly flags: Uint8Array;
+  readonly uncertTiers: Uint8Array;
   readonly ids: readonly string[];
   readonly indexById: ReadonlyMap<string, number>;
   readonly spatialIndex: PointSpatialIndex;

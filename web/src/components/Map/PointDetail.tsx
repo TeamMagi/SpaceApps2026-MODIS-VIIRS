@@ -1,6 +1,11 @@
 import { memo, useLayoutEffect, useRef, type RefObject } from "react";
 import { useCopy, type CopyApi } from "../../hooks/useCopy";
 import {
+  formatFrpInterval,
+  relativeUncertaintyWidth,
+  WIDE_UNCERTAINTY_THRESHOLD,
+} from "../../lib/format";
+import {
   Confidence,
   DayNight,
   HotspotSource,
@@ -135,7 +140,7 @@ function PointDetail({
   cardRef: externalCardRef,
 }: PointDetailProps) {
   const copy = useCopy();
-  const { t, fmt } = copy;
+  const { lang, t, fmt } = copy;
   const localCardRef = useRef<HTMLDivElement | null>(null);
   const cardRef = externalCardRef ?? localCardRef;
 
@@ -187,42 +192,66 @@ function PointDetail({
       </div>
 
       {showHarmonized && harmPoint ? (
-        <>
-          <p className={styles.srOnly}>
-            {t("mapTooltip", {
-              frp: fmt.number(harmPoint.frpCorrected, 1),
-              from: fmt.number(harmPoint.frp, 1),
-              sources: t(sourceCopyKey(harmPoint.source)),
-              confidence: confidenceLabel,
-              date: timeLabel,
-            })}
-          </p>
-          <dl className={styles.grid}>
-            <div className={styles.row}>
-              <dt>{t("mapDetailFrp")}</dt>
-              <dd>
-                {fmt.mw(harmPoint.frpCorrected)} (
-                {t("mapDetailFrpCorrectedFrom", { from: fmt.number(harmPoint.frp, 1) })})
-              </dd>
-            </div>
-            <div className={styles.row}>
-              <dt>{t("mapDetailSources")}</dt>
-              <dd>{t(sourceCopyKey(harmPoint.source))}</dd>
-            </div>
-            <div className={styles.row}>
-              <dt>{t("mapDetailConfidence")}</dt>
-              <dd>{confidenceLabel}</dd>
-            </div>
-            <div className={styles.row}>
-              <dt>{t("mapDetailPass")}</dt>
-              <dd>{passLabel}</dd>
-            </div>
-            <div className={styles.row}>
-              <dt>{t("mapDetailTime")}</dt>
-              <dd>{timeLabel}</dd>
-            </div>
-          </dl>
-        </>
+        (() => {
+          const hasInterval = harmPoint.frpLower !== null && harmPoint.frpUpper !== null;
+          const relWidth = relativeUncertaintyWidth(
+            harmPoint.frpLower,
+            harmPoint.frpUpper,
+            harmPoint.frpCorrected,
+          );
+          const isWideInterval = relWidth !== null && relWidth > WIDE_UNCERTAINTY_THRESHOLD;
+          return (
+            <>
+              <p className={styles.srOnly}>
+                {t("mapTooltip", {
+                  frp: fmt.number(harmPoint.frpCorrected, 1),
+                  from: fmt.number(harmPoint.frp, 1),
+                  sources: t(sourceCopyKey(harmPoint.source)),
+                  confidence: confidenceLabel,
+                  date: timeLabel,
+                })}
+              </p>
+              <dl className={styles.grid}>
+                <div className={styles.row}>
+                  <dt>{t("mapDetailFrp")}</dt>
+                  <dd>
+                    {formatFrpInterval(
+                      harmPoint.frpCorrected,
+                      harmPoint.frpLower,
+                      harmPoint.frpUpper,
+                      lang,
+                    )}{" "}
+                    ({t("mapDetailFrpCorrectedFrom", { from: fmt.number(harmPoint.frp, 1) })})
+                  </dd>
+                </div>
+                <div className={styles.row}>
+                  <dt>{t("mapDetailSources")}</dt>
+                  <dd>{t(sourceCopyKey(harmPoint.source))}</dd>
+                </div>
+                <div className={styles.row}>
+                  <dt>{t("mapDetailConfidence")}</dt>
+                  <dd>{confidenceLabel}</dd>
+                </div>
+                <div className={styles.row}>
+                  <dt>{t("mapDetailPass")}</dt>
+                  <dd>{passLabel}</dd>
+                </div>
+                <div className={styles.row}>
+                  <dt>{t("mapDetailTime")}</dt>
+                  <dd>{timeLabel}</dd>
+                </div>
+              </dl>
+              {hasInterval && (
+                <p className={styles.uncertCaption}>{t("uncertaintyConfidenceLabel")}</p>
+              )}
+              {isWideInterval && (
+                <p className={styles.uncertHint}>
+                  <strong>{t("uncertaintyWideTitle")}:</strong> {t("uncertaintyWideBody")}
+                </p>
+              )}
+            </>
+          );
+        })()
       ) : (
         rawPoint && (
           <>
@@ -259,6 +288,7 @@ function PointDetail({
                 <dd>{timeLabel}</dd>
               </div>
             </dl>
+            <p className={styles.uncertCaption}>{t("uncertaintyRawNote")}</p>
           </>
         )
       )}
