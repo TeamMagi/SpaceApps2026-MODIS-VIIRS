@@ -4,7 +4,7 @@ pub use crate::calibration::CalibrationBand;
 use crate::calibration::default_bands;
 use crate::dedup::{MAX_TIME_DIFF_SECS, MIN_OVERLAP_RATIO};
 use crate::fleet::{FLEET_RADIUS_KM, MODIS_FLEET_WINDOW_SECS, VIIRS_FLEET_WINDOW_SECS};
-use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS};
+use crate::harmonize::{MATCH_RADIUS_KM, MATCH_WINDOW_SECS, SIMULTANEOUS_WINDOW_SECS};
 use crate::sama::{SAMA_EAST, SAMA_NORTH, SAMA_SOUTH, SAMA_WEST};
 use crate::static_mask::MIN_ACTIVE_MONTHS;
 use crate::uncertainty::UncertaintyParams;
@@ -48,6 +48,7 @@ pub struct FleetConfig {
 pub struct MatchingConfig {
     pub radius_km: f64,
     pub window_secs: i64,
+    pub simultaneous_window_secs: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -109,6 +110,7 @@ impl Default for MatchingConfig {
         Self {
             radius_km: MATCH_RADIUS_KM,
             window_secs: MATCH_WINDOW_SECS,
+            simultaneous_window_secs: SIMULTANEOUS_WINDOW_SECS,
         }
     }
 }
@@ -179,6 +181,10 @@ impl PipelineConfig {
             ));
         }
         check_secs("matching.window_secs", self.matching.window_secs)?;
+        check_secs(
+            "matching.simultaneous_window_secs",
+            self.matching.simultaneous_window_secs,
+        )?;
         for (name, value) in [
             ("vza.a", self.vza.a),
             ("vza.b", self.vza.b),
@@ -312,6 +318,7 @@ mod tests {
         assert_eq!(c.fleet.radius_km, 2.0);
         assert_eq!(c.matching.radius_km, 2.0);
         assert_eq!(c.matching.window_secs, 10_800);
+        assert_eq!(c.matching.simultaneous_window_secs, 1_200);
         assert_eq!((c.vza.a, c.vza.b, c.vza.c), (0.2017, 0.0168, 1.0));
         assert!(c.calibration.enabled);
         assert_eq!(c.calibration.bands.len(), 3);
@@ -483,11 +490,14 @@ mod tests {
     fn second_fields_reject_negative_and_accept_zero_and_one() {
         // 3-value BVA around the `>= 0` limit of every seconds field.
         type Setter = fn(&mut PipelineConfig, i64);
-        let fields: [(&str, Setter); 4] = [
+        let fields: [(&str, Setter); 5] = [
             ("dedup.max_time_diff_secs", |c, v| c.dedup.max_time_diff_secs = v),
             ("fleet.viirs_window_secs", |c, v| c.fleet.viirs_window_secs = v),
             ("fleet.modis_window_secs", |c, v| c.fleet.modis_window_secs = v),
             ("matching.window_secs", |c, v| c.matching.window_secs = v),
+            ("matching.simultaneous_window_secs", |c, v| {
+                c.matching.simultaneous_window_secs = v
+            }),
         ];
         for (name, set) in fields {
             rejected(|c| set(c, -1), name);
