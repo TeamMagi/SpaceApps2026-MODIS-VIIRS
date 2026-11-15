@@ -11,6 +11,15 @@
   min-width: 0;
 }
 
+.disclaimerLink {
+  color: var(--color-text-secondary);
+  text-underline-offset: 2px;
+}
+
+.disclaimerLink:hover {
+  color: var(--color-text);
+}
+
 .actions {
   display: flex;
   flex-direction: column;

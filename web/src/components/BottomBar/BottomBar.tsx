@@ -11,6 +11,7 @@
 import { useCopy } from "../../hooks/useCopy";
 import { useCopyLink } from "../../hooks/useCopyLink";
 import { useExportView } from "../../hooks/useExportView";
+import MethodsLink from "../Methods/MethodsLink";
 import { useAppStore } from "../../store/useAppStore";
 import styles from "./BottomBar.module.css";
 
@@ -24,7 +25,12 @@ export default function BottomBar() {
 
   return (
     <div className={styles.bar}>
-      <p className={styles.disclaimer}>{t("disclaimer")}</p>
+      <p className={styles.disclaimer}>
+        {t("disclaimer")}{" "}
+        <MethodsLink section="limits" className={styles.disclaimerLink}>
+          {t("disclaimerLink")}
+        </MethodsLink>
+      </p>
       <div className={styles.actions}>
         <button
           type="button"

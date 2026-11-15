@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { isRouteHash } from "../lib/route";
 import { parseHash, serializeHash, syncUrlHash, type UrlState } from "../lib/urlState";
 import { useAppStore, type AppState } from "../store/useAppStore";
 
@@ -32,6 +33,7 @@ export function useUrlSync(): void {
     });
 
     const onHashChange = () => {
+      if (isRouteHash(window.location.hash)) return;
       const state = useAppStore.getState();
       if (window.location.hash === serializeHash(urlStateOf(state))) return;
       state.applyUrlState(parseHash(window.location.hash));

@@ -240,11 +240,11 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
-| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] |
+| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] sürüyor |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [ ] bekliyor |
-| R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [ ] bekliyor |
+| R6 | Methods/About sayfası implementasyonu | Serhat | C5, R1 | — | [X] |
 | R7 | CSV/GeoJSON export + acil müdahale brifingi | Serhat | G10, C6, S7 | — | [ ] bekliyor |
 | R12 | 60 saniyelik rehberli tur | Serhat | R9, C8 | G5 | [ ] |
 | S1 | Core crate unit testleri | Samet | G2 | S5 | [X] |
@@ -744,6 +744,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Radyometrik parametre kestiriminde kullanılmak üzere yalnızca `|Δt| ≤ 5–20 dk` eşzamanlı alt-kümesinin ayrıştırılması (`[01, 02, 03, 14, 23]`)
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P1, P5, Yol Haritası #3 (+ `[01, 02, 03, 14, 23]`, `flare-chronos`, `FireHarmonize`)
 - **Bitti sayılır:** aynı MODIS ayak izindeki çoklu VIIRS alt-pikselleri tek `Matched` kaydında toplanıyor (`ViirsOnly` artığı kalmıyor); birim testleri ve canlı/arşiv veride `Matched` FRP toplamı doğrulanıyor.
+- **Durum (Serhat, 2026-11-15):** Kod yazıldı ve birim testleri geçiyor. Henüz `main`'e alınmadı, Serhat'ın makinesindeki yerel `r10-footprint-aggregation` branch'inde duruyor. Sebep: yeni `matching.simultaneous_window_secs` alanı `PipelineConfig` hash'ini değiştiriyor. Bu yüzden repodaki hazır `/api/series` sonuçlarının hepsi (`data/derived/series`) geçersiz sayılıyor; arşivi olmayan biri harita ve takvim verisini göremez. **Gereken:** arşivi olan biri (`make data`) R10 ile `make precompute-local` ve `make bundle-derived` çalıştırmalı, `DERIVED_SCHEMA_VERSION` 3'e çıkarılmalı. Ondan sonra R10 ve yeni hazır sonuçlar birlikte merge edilecek. Arşiv verisiyle `Matched` FRP doğrulaması da o adımda yapılacak.
 
 ### [X] R11 — Seed-anchored zaman penceresi
 - **Bekler:** — · **Açar:** —
@@ -773,7 +774,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Kaynak:** Strateji 1.2 — "Çoklu harmonizasyon modeli seçimi — kullanıcı yöntemi seçip farkı görebilecek"
 - **Bitti sayılır:** en az 2 farklı model arasında geçiş yapılabiliyor; sonuçlar gözle görülür şekilde farklı; istatistik farkı gösteriliyor.
 
-### [ ] R6 — Methods/About sayfası implementasyonu
+### [X] R6 — Methods/About sayfası implementasyonu
 - **Bekler:** C5, R1 · **Açar:** —
 - Can'ın C5 tasarımını koda dökmek:
   - `/methods` route (React Router veya conditional render)
@@ -783,6 +784,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Disclaimer banner component'i (sayfa altı veya header'da)
   - Responsive: mobilde de okunabilir
 - **Bitti sayılır:** `/methods` sayfası açılıyor; 7 pipeline aşaması görsel olarak anlaşılıyor; referanslar listelenmiş; disclaimer görünür.
+- **Kapanış (Serhat, 2026-11-15):** Sayfa `web/src/components/Methods/` altında, hash route ile açılıyor: `#/methods` ve `#/methods/{pipeline|vza|h3|references|limits}`. Path route yerine hash seçildi, çünkü backend SPA fallback'i çalışmıyor (K9) ve `/methods` linki yenilendiğinde 404 verirdi. Sayfa şunları içeriyor: 7 aşamalı pipeline şeması ve klavyeyle gezilebilen accordion (ne, neden, parametreler, girdi→çıktı); `/api/config`'ten canlı parametreler (backend yoksa koddaki varsayılanlar gösteriliyor); `R_rel(θ)` VZA eğrisi SVG'si, ±σ bandı ve açı slider'ı; H3 hexagon görseli; daraltılabilir disclaimer banner'ı; yazdırma görünümü. Sayfaya Methods çekmecesinden ve alt bardaki disclaimer linkinden giriliyor. Referanslar yalnızca repo dokümanlarındaki kaynaklardan `web/src/content/references.ts`'e alındı ve "tam künye bekleniyor" diye işaretlendi; içerik S8'de Samet tarafından güncellenecek. Metinler `copyMethods.ts`'te, EN ve TR. `tsc`, `build` ve `npm test` (15 test) temiz. **Sınır:** tarayıcıda görsel kontrol yapılmadı. Demo modu banner'ı K1 bekliyor. H/P kısayolları methods sayfasında da çalışıyor.
 
 ### [ ] R7 — CSV/GeoJSON export + acil müdahale brifingi
 - **Bekler:** G10, C6, S7 · **Açar:** —

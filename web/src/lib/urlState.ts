@@ -1,5 +1,6 @@
 import type { Lang, MonthRef, RegionId, ViewMode } from "../types";
 import { monthKey } from "./format";
+import { isRouteHash } from "./route";
 
 export const DEFAULT_REGION: RegionId = "Turkey";
 
@@ -95,7 +96,7 @@ export function serializeHash(state: UrlState): string {
 }
 
 export function syncUrlHash(state: UrlState): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isRouteHash(window.location.hash)) return;
   const next = serializeHash(state);
   if (window.location.hash !== next) {
     window.history.replaceState(
