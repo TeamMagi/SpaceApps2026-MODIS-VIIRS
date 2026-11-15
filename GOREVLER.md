@@ -569,6 +569,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `rust` ve `coverage` blokları. Samet `on:` ve `web` bloklarına dokunur; her değişiklikten önce `git pull --rebase`.
 - **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket A
 - **Bitti sayılır:** A1–A4 tamam; rapor §6 tablosunda Rust satırları dolu ve A3 kararı yazılı; üst üste 3 CI koşusunda `rust` ve `coverage` job'ları ≤ 30 dk.
+- **Durum (Samet, 2026-11-15):** Bu paket Görkem yerine Samet tarafından yapıldı. A1 (`cargo check` kaldırıldı), A2 (`cache-on-failure: true`; rust-cache anahtarı job kimliğini zaten içerir) ve A3 (karar: çift test yürütmesi korunur, çünkü soğuk önbellekle `rust` 136–158 sn, `coverage` 100–107 sn) tamamlandı. A4 yerel soğuk provayla yapıldı (temiz Linux klonu, 2 CPU / 7 GB); GitHub'daki ilk gerçek koşunun süreleri `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §6 tablosuna yazılmayı bekliyor. Kutu, üst üste 3 gerçek koşu ≤ 30 dk görülene kadar açık.
 
 ---
 
@@ -1100,6 +1101,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Dosya sahipliği:** `.github/workflows/ci.yml` içinde yalnız `on:` ve `web` blokları. Görkem `rust` ve `coverage` bloklarına dokunur.
 - **Kaynak:** `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` §5 Paket B
 - **Bitti sayılır:** B1–B4 tamam; rapor §6 web satırı dolu; `ci.yml`'de en büyük `timeout-minutes` 30 ve `actionlint` temiz; yalnız `docs/` değişen commit'te CI çalışmıyor, `crates/` ya da `data/` değişince çalışıyor. S5 kutusu, GitHub'da yeşil bir koşu görüldüğünde ayrıca kapanır.
+- **Durum (Samet, 2026-11-15):** B2 (`coverage` zaman aşımı 40 → 30), B3 (`paths-ignore`: `docs/**`, `**/*.md`, `GOREVLER.md`; `data/**` ve `web/**` dışarıda) ve web job'ının Node 22'ye alınması yapıldı; Node 20 `node --test` glob'unu genişletmediği için web testleri CI'da her koşuda kırılacaktı. Soğuk önbellekli Linux provasında web job'ı 47–58 sn (B1), sorun giderme tablosu rapor §7'de (B4). Açık kalan: GitHub'daki ilk gerçek koşunun süreleri ve `paths-ignore` davranışının orada doğrulanması; kutu bu yüzden açık.
 
 ---
 
