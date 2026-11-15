@@ -241,7 +241,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | R3 | Burning activity calendar componenti | Serhat | C3, R1 | R5 | [X] |
 | R4 | Backend API bağlantısı + state management | Serhat | G4, R1 | R5 | [X] |
 | R5 | Raw ↔ Harmonized toggle implementasyonu | Serhat | R2, R3, R4, C4 | G5 | [X] |
-| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [ ] kod bitti, merge + precompute Görkem'de |
+| R10 | Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı | Serhat | — | G11 | [X] gerçek arşiv toplamı ve artık kontrolü doğrulandı |
 | R11 | Seed-anchored zaman penceresi | Serhat | — | — | [X] |
 | R9 | Frontend'i yeni API alanlarına geçirme | Serhat | — | R12 | [X] |
 | R8 | Çoklu harmonizasyon model seçimi | Serhat | G7, K1, R1 | — | [X] |
@@ -290,7 +290,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G6–G13 tamamlandı (12 görev). Açık: G5 (yalnız `Y8` bekliyor; `R5, C8, C11, Y1, G12, R12` tamamlandı). G6 teknik entegrasyonu, kullanıcının doğrudan talebiyle G5'i beklemeden kapatıldı; sunum/video G5'te kalır.
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
-- **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
+- **Serhat:** R1–R12 tamamlandı. R10 main'de ve hazır sonuçlara dahil; Görkem gerçek arşivde FRP toplamı ve ViirsOnly artık kontrolüyle kapanışı doğruladı.
 - **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
 - **Yusuf:** Y1–Y7 ve Y9 tamamlandı. Y8 (vaka çalışmaları, arşiv gerekir) doğrudan başlayabilir; Y10'un beklediği G12 tamamlandı.
 - **Sadık:** K1–K13 tamamlandı (K6 ve K12'yi Serhat kapattı). K6, K7 ile aynı MODIS-referanslı karar ölçütüyle kapatıldı. Açık kalan: K14 (teslim kapsamı dışında; `k14-biome-completeness` branch'inde).
@@ -795,7 +795,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Bitti sayılır:** toggle sorunsuz çalışıyor; Raw'dan Harmonized'a geçiş "sensor cliff" problemini açıkça gösteriyor; animasyon akıcı; jüri bu toggle'ı görünce farkı anlıyor.
 - **Doğrulama (2026-11-15):** Can'ın C4 prototipi R5 kapsamının tamamını kapsıyordu. `ViewToggle.tsx` (61 satır), `useHarmonizeTransition.ts` (3 vuruşlu koreografi motoru), `CliffChart.tsx`, `CountDelta.tsx`, `Receipt.tsx`, `PipelineStrip.tsx` hepsi `App.tsx`'te compose edilmiş ve çalışır durumda. Toggle'ın harita ve takvimi aynı anda güncellediği `useHarmonizeTransition` abonelik mekanizmasıyla doğrulandı. NRT veri entegrasyonu (R4'ten) CountDelta ve PipelineStrip'te canlı veri gösteriyor. `npx tsc --noEmit` ve `npm run build` temiz geçiyor.
 
-### [ ] R10 — Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı
+### [X] R10 — Eşleşmiş kayıtlarda 1 MODIS = N VIIRS ayak izi toplamı
 - **Bekler:** — · **Açar:** G11
 - `crates/core/src/harmonize.rs` içindeki 1-to-1 tüketim (`viirs_fleet_out[j].is_some()`) yerine, aynı VIIRS geçişinde MODIS ayak izi (veya `config.matching.radius_km` = 2 km) içindeki tüm VIIRS alt-piksellerinin FRP'sini toplayarak tek `HotspotSource::Matched` kaydında birleştirme (`[01]`, `flare-chronos`; `FireHarmonize` `%2–7` 1-to-1 hatasını giderir; fazla VIIRS pikselleri `ViirsOnly` kalmaz)
 - Büyük yangın kümelerinde komşu ayrı yangınların yutulmasını önlemek için alt-piksel atamasını en yakın MODIS merkezine ve aynı VIIRS geçişine kısıtlama
@@ -805,6 +805,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Durum (Serhat, 2026-11-15):** Kod yazıldı ve birim testleri geçiyor. Henüz `main`'e alınmadı, Serhat'ın makinesindeki yerel `r10-footprint-aggregation` branch'inde duruyor. Sebep: yeni `matching.simultaneous_window_secs` alanı `PipelineConfig` hash'ini değiştiriyor. Bu yüzden repodaki hazır `/api/series` sonuçlarının hepsi (`data/derived/series`) geçersiz sayılıyor; arşivi olmayan biri harita ve takvim verisini göremez. **Gereken:** arşivi olan biri (`make data`) R10 ile `make precompute-local` ve `make bundle-derived` çalıştırmalı, `DERIVED_SCHEMA_VERSION` 3'e çıkarılmalı. Ondan sonra R10 ve yeni hazır sonuçlar birlikte merge edilecek. Arşiv verisiyle `Matched` FRP doğrulaması da o adımda yapılacak.
 - **Devir (Serhat → Görkem, 2026-11-15):** Kod tarafı bitti; branch artık remote'ta (`origin/r10-footprint-aggregation`, `9414e97`) ve güncel `main`'e çakışmasız birleşiyor. Bu arada K3 `DERIVED_SCHEMA_VERSION`'ı 4'e çıkardığı için yukarıdaki "3'e çıkar" adımı geçersiz. Kalan adımları arşivi olan Görkem üstlendi: branch'i merge et, `DERIVED_SCHEMA_VERSION`'ı 5'e çıkar, `make precompute` → `make bundle-derived` çalıştırıp `data/derived`'ı commit'le, push öncesi `make smoke`, arşiv verisinde `Matched` FRP toplamını doğrula ve "Bitti sayılır" sağlanınca kutuyu `[X]` yap.
 - **Güncelleme (Görkem, 2026-11-15):** R10 `main`'e alındı (`23ff7dc`, yazar Serhat); uzak `r10-footprint-aggregation` branch'i silindi. Takip commit'i (`5f6fbdf`): `viirs_aggregated` `/api/series` `years[]` ve `/api/points` `stages` alanlarına eklendi, arayüzde eşleştirme aşaması ve fiş satırı artık `matched + viirs_aggregated` gösteriyor, Methods metni, README, `crates/core/CLAUDE.md`, `docs/API.md`, `.env.example` ve `pyrosync.example.toml` güncellendi. Sadık'ın K11 (aylık `mean_frp*`) değişikliği de şemayı 4'e çıkardığı için birleşik `DERIVED_SCHEMA_VERSION` **5** oldu (Serhat'ın notundaki "3'e çıkar" eski tabana göreydi). Ekip kararıyla (Can, 2026-11-15) precompute + bundle sona bırakıldı; repodaki `data/derived` final adımına kadar bayat kabul ediliyor. Kapanış için kalan: arşiv verisinde `Matched` FRP / ViirsOnly değişiminin doğrulanması. İnceleme bulguları: toplam kayıtlarda `1/√n_obs` belirsizlik ölçeklemesi eşitsiz piksellerde aralığı fazla daraltıyor (ayrı commit ile düzeltiliyor); 2 km yarıçapın geniş cephelerde `Matched` FRP'yi MODIS ayak izine göre şişirip şişirmediği arşiv doğrulamasında ölçülecek.
+
+- **Kapanış (Görkem, 2026-11-15):** `r10_archive_check` çevrimdışı arşiv denetleyicisiyle Kıbrıs 2021-07, Türkiye 2021-07/08 ve Angola 2019-04 doğrulandı: 44.643 ham kayıtta 2.627 Matched, bunların 1.392'si çoklu piksel; 3.596 ek VIIRS gözlemi toplandı (tek Matched kayıtta en çok 36 piksel). Her Matched FRP toplamı bağımsız yeniden kuruldu; en büyük fark 2,274e-13 MW. Zaman penceresindeki tüm MODIS gözlemlerini tarayan H3'ten bağımsız sahiplik kontrolünde uygun ViirsOnly artığı 0, ayak izi dışına eklenen piksel 0, tüm ihlal sayaçları 0; toplam VIIRS FRP korundu. Rapor ve örneklem sınırları: [R10_ARSIV_DOGRULAMA.md](docs/R10_ARSIV_DOGRULAMA.md). Kod main'de, G6 hazır sonuçları şema 10 ile güncel; üretim davranışı değişmediğinden tekrar precompute gerekmiyor. Workspace testleri ve all-targets clippy geçti. Önceki devir ve güncelleme notları tarihsel ara durumlardır.
 
 ### [X] R11 — Seed-anchored zaman penceresi
 - **Bekler:** — · **Açar:** —
@@ -1399,7 +1401,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 |------|-------------|------------|------|---------|------|
 | Görkem | 13 (G1–G13) | 12 (`G1–G4, G6–G13`) | 1 (`G5`) | Orta-ağır | Teknik entegrasyon, hazır sonuçlar, teslim paketi ve CI süre bütçesi tamamlandı; sunum G5'te |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
-| Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
+| Serhat | 12 (R1–R12) | 12 (`R1–R12`) | 0 | Ağır | R10 arşiv doğrulaması dahil tüm görevler tamamlandı |
 | Samet | 14 (S1–S14) | 13 (`S1–S11, S13, S14`) | 1 (`S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans, CI süre bütçesi (web ve tetikleyiciler) |
 | Yusuf | 10 (Y1–Y10) | 8 (`Y1–Y7, Y9`) | 2 (`Y8, Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 13 (`K1–K13`) | 1 (`K14`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
