@@ -954,6 +954,8 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > **Durum notu (Samet, 2026-11-15):** `.github/workflows/ci.yml` eklendi (7bfdb17). Üç iş paralel koşuyor: `rust` (check, clippy `-D warnings`, test), `coverage` (`cargo llvm-cov`, satır kapsamı %80'in altına düşerse kırmızı; yerelde %92) ve `web` (`npm ci`, typecheck, test, build). Actions'ta yeşil tik görülünce kutu işaretlenecek.
 >
 > **Güncelleme (Samet, 2026-11-15):** İnceleme sonrası `ci.yml` sertleştirildi: Rust araç zinciri 1.100'e sabitlendi (yeni stable'ın `clippy -D warnings`'i kod değişmeden kırmasını önler), job zaman aşımları eklendi, kapsam kapısı %80'den **%90**'a çıkarıldı (ölçülen satır kapsamı %94,7), kapı kırmızı olsa da kapsam özeti yazdırılıyor. GitHub'da yeşil tik henüz doğrulanmadı (repo özel); doğrulanınca kutu işaretlenecek.
+>
+> **Süre bütçesi (Samet, 2026-11-15):** CI'ın en çok 30 dk'da bitmesi için ölçülenler, ölçülmeyenler ve iki kişiye eşit bölünmüş iki iş paketi (A: Rust hattı, B: web ve tetikleyiciler) `docs/test/CI_SURE_VE_GOREV_BOLUSUMU.md` içinde. `coverage` job'unun `timeout-minutes` değeri 40 olduğundan hedefin üstünde; B2 işi bunu 30'a çeker.
 
 ### [X] S9 — Belirsizlik tabanının kaynakla güncellenmesi
 - **Bekler:** — · **Açar:** S10
