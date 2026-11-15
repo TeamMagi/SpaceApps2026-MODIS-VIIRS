@@ -280,10 +280,10 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [ ] etiketler tamam, regresyonla kurtarım yapılmadı |
 | K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
 | K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [ ] |
-| K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [ ] kod tamam, tarayıcıda görsel doğrulama bekliyor |
-| K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [ ] kod tamam, tarayıcıda görsel doğrulama bekliyor |
-| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] kod tamam, tarayıcıda görsel doğrulama bekliyor |
-| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [ ] kod tamam, tarayıcıda görsel doğrulama bekliyor |
+| K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [X] |
+| K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [X] |
+| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] kod tamam, harita opaklığının görsel doğrulaması bekliyor |
+| K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [X] |
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
@@ -291,7 +291,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Serhat:** R1–R6, R9, R11 tamamlandı; R10 sürüyor. Açık görevlerden şu an başlanabilecekler: R12 (`R9, C8` bitti). (`R7` S7'yi, `R8` K1'i bekliyor.)
 - **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
 - **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
-- **Sadık:** K5, K8, K9, K11 ve K13 tamamlandı. K1, K2, K3, K4'ün kodu tamam, tarayıcıda görsel doğrulama bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
+- **Sadık:** K1, K2, K4, K5, K8, K9, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K10'un kodu tamam, nadir değerlerinin kaynakla teyidi bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
@@ -1202,7 +1202,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - Güncel durum (2026-11-15): yerel arşiv (`make data`) MODIS + SNPP + NOAA-20'yi 2000-2025 boyunca içeriyor, yani seri 2018 geçişi dahil doğrudan arşivden kurulabilir. Area API (K5 cache'i) yalnız 2023 sonrası NOAA-21 katkısı için gerekiyor. Sonra `archive_ingest` örneğinin sıçrama kontrolü tam filo serisi üzerinde koşturulacak.
 - **Bitti sayılır:** 2000-present tam filo serisinde normalize Spearman ρ'nun mutlak değeri ham ρ'nun yarısından küçük; 2012, 2018 ve 2023 geçişlerinin üçünde de seviye kayması ölçütü sağlanıyor.
 
-### [ ] K1 — Live/demo/fallback modu
+### [X] K1 — Live/demo/fallback modu
 - **Bekler:** R4 · **Açar:** R8
 - FIRMS API çalışmadığında uygulamanın hâlâ demo yapılabilmesi (FireHarmonize'dan ilham):
   - API bağlantısı kontrol mekanizması (health check → timeout → fallback)
@@ -1213,9 +1213,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Jüri demo anında API çökerse sunum kesilmesin
 - **Kaynak:** FireHarmonize — "Live/demo/fallback modu: API çalışmazsa demo verisiyle devam"
 - **Bitti sayılır:** API key olmadan uygulama demo modunda açılıyor; API varken otomatik live'a geçiyor; mod göstergesi doğru; jüri demo'su API olmadan sorunsuz çalışıyor.
-- **Durum (2026-11-15):** Kod tamamlandı, tarayıcıda görsel doğrulama YAPILMADI. `/api/health` yoklaması (2,5 sn), erişilemezse `web/src/mocks` sentetik verisiyle demo modu, 30 sn'de bir yeniden yoklama ve otomatik canlıya dönüş, elle geçiş (rozet düğmesi, `#data=demo`), seçimler sıfırlanmıyor; demo modunda kaynak etiketleri ve CSV dosya adı/sütunu "sentetik demo" diyor, NRT paneli istek atmıyor. `tsc`, `vite build` ve saf fonksiyon testleri geçiyor. Kapsam kararı: demo, backend'e erişilemediğinde devreye girer; backend ayakta ama `FIRMS_API_KEY` yokken arşiv verisi canlı sayılır.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Tarayıcı doğrulaması (başsız Edge, gerçek arşiv, Kıbrıs): backend kapalıyken uygulama hata göstermeden "Demo data (synthetic)" rozetiyle açıldı, sentetik seri ve harita noktaları geldi; canlıya geçme isteği "Server not reachable, staying on demo data" notuyla demo'da kaldı; backend yeniden başlatılınca 20 sn içinde kendiliğinden canlıya döndü ve seçili bölge geri geldi; elle demo seçimi 35 sn sonra da korunuyor. İlk denemede bulunan iki kusur düzeltildi: demo modunda harita alt yazısı artık "Fire data: synthetic demo fixtures" diyor (önce "NASA FIRMS" yazıyordu) ve demo'ya girerken görünüm fixture'ın nokta taşıdığı aya (2021-07) taşınıyor (önce harita boş açılıyordu). Bilinen sınır: demo ile canlı arasında geçişte bölge korunuyor ama seçili ay korunmuyor (demo verisinde yalnız bir bölge ve bir yılın noktaları var). Uygulama ayrıntıları: `/api/health` yoklaması (2,5 sn), erişilemezse `web/src/mocks` sentetik verisiyle demo modu, 30 sn'de bir yeniden yoklama ve otomatik canlıya dönüş, elle geçiş (rozet düğmesi, `#data=demo`), seçimler sıfırlanmıyor; demo modunda kaynak etiketleri ve CSV dosya adı/sütunu "sentetik demo" diyor, NRT paneli istek atmıyor. `tsc`, `vite build` ve saf fonksiyon testleri geçiyor. Kapsam kararı: demo, backend'e erişilemediğinde devreye girer; backend ayakta ama `FIRMS_API_KEY` yokken arşiv verisi canlı sayılır.
 
-### [ ] K2 — Config ayarları frontend paneli
+### [X] K2 — Config ayarları frontend paneli
 - **Bekler:** G7, R1 · **Açar:** —
 - Pipeline parametrelerini UI'dan ayarlayabilme (EG FireTrack tarzı şeffaflık):
   - Settings panel/drawer: slider ve input alanlarıyla parametre düzenleme
@@ -1225,7 +1225,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - "Varsayılana dön" butonu
   - Ayarların URL query string'ine yansıması (paylaşılabilir link)
 - **Bitti sayılır:** en az 3 parametre UI'dan değiştirilebiliyor; sonuçlar değişiyor; varsayılan butonuyla geri dönülebiliyor; link paylaşılınca aynı ayarlarla açılıyor.
-- **Durum (2026-11-15):** Kod tamamlandı, tarayıcıda görsel doğrulama YAPILMADI. Backend: `/api/points` beş opsiyonel eşik parametresi alıyor (`dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`), aralık dışı değer HTTP 400, yanıtta etkin `config` ve `config_overridden`; gerçek arşivde denendi (Kıbrıs 2021-07: varsayılan 106, `match_window_secs=1800&dedup_time_secs=2` ile 119 harmonize kayıt). Frontend: Ayarlar çekmecesi (slider + sayı girişi), 400 ms gecikmeli yeniden istek, varsayılana dön, URL hash'i (`dt`, `ov`, `mr`, `mw`, `fr`), "Özel eşikler" göstergesi. Görev metninden bilinçli sapmalar: eşleştirme zaman aralığı `1–30 dk` yerine `30–360 dk` (varsayılan 180 dk; 30 dk altı eşleşmeyi neredeyse imkânsız kılar) ve ayarlar yalnız seçili ayın harita noktalarını ve aşama sayılarını yeniden hesaplıyor, yıllık seri ve takvim sunucu varsayılanında kalıyor.
+- **Kapanış notu (2026-11-15):** Tamamlandı. Tarayıcı doğrulaması (başsız Edge, gerçek arşiv, Kıbrıs): Ayarlar çekmecesinde beş slider görünüyor; üçü değiştirildiğinde (`dt=2`, `mr=1`, `mw=1800`) URL hash'i güncellendi, `/api/points` isteği bu parametrelerle yeniden atıldı ve "Custom thresholds" göstergesi çıktı; "Reset to defaults" hash'i ve göstergeyi temizledi; aynı hash'le açılan yeni sekme aynı parametrelerle istek attı. Sonuçların değiştiği backend'de ölçüldü (106 → 119 harmonize kayıt). Küçük verimsizlik: paylaşılan linkle açılışta aynı nokta isteği üç kez atılıyor. Uygulama ayrıntıları: Backend: `/api/points` beş opsiyonel eşik parametresi alıyor (`dedup_time_secs`, `dedup_overlap`, `match_radius_km`, `match_window_secs`, `fleet_radius_km`), aralık dışı değer HTTP 400, yanıtta etkin `config` ve `config_overridden`; gerçek arşivde denendi (Kıbrıs 2021-07: varsayılan 106, `match_window_secs=1800&dedup_time_secs=2` ile 119 harmonize kayıt). Frontend: Ayarlar çekmecesi (slider + sayı girişi), 400 ms gecikmeli yeniden istek, varsayılana dön, URL hash'i (`dt`, `ov`, `mr`, `mw`, `fr`), "Özel eşikler" göstergesi. Görev metninden bilinçli sapmalar: eşleştirme zaman aralığı `1–30 dk` yerine `30–360 dk` (varsayılan 180 dk; 30 dk altı eşleşmeyi neredeyse imkânsız kılar) ve ayarlar yalnız seçili ayın harita noktalarını ve aşama sayılarını yeniden hesaplıyor, yıllık seri ve takvim sunucu varsayılanında kalıyor.
 
 ### [ ] K3 — Belirsizlik aralıkları görselleştirme
 - **Bekler:** G9, C7, R1 · **Açar:** —
@@ -1237,9 +1237,9 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Belirsizlik açıklaması: "Geniş aralık = sensör açısı büyük veya kalibrasyon verisi az"
 - **Kaynak:** fire-harmony — belirsizlik gösterimi; Can'ın C7 tasarımına uygun
 - **Bitti sayılır:** en az 2 chart tipinde belirsizlik görünüyor; tooltip'te aralık var; yüksek VZA'lı noktalar geniş aralıklı (görsel olarak ayırt edilebilir).
-- **Durum (2026-11-15):** Kod tamamlandı, tarayıcıda görsel doğrulama YAPILMADI. Backend: `/api/series` ay kayıtları `mean_frp`, `mean_frp_lower`, `mean_frp_upper` taşıyor (`DERIVED_SCHEMA_VERSION` artırıldı, eski `make precompute` çıktıları geçersiz sayılır). Frontend (`docs/TASARIM_BELIRSIZLIK_RENK.md` bölüm 1, 2, 8.1): nokta detayında aralık metni ve geniş aralık uyarısı, düz haritada üç kademeli opaklık (`1,0 / 0,72 / 0,48`), takvimde geniş aralıklı dilimde tarama deseni ve kesikli kenar, takvim ipucunda aylık aralık. Yapılmayanlar: küre (WebGL) haritasında opaklık ve zaman serisi grafiğinde güven bandı. Görevdeki "Recharts ile" ifadesi uygulanmadı; grafikler projede elle yazılmış SVG.
+- **Durum (2026-11-15):** Kod tamamlandı, bitti şartı KISMEN doğrulandı. Tarayıcıda (başsız Edge, Kıbrıs 2021-07, Harmonized mod) doğrulananlar: nokta kartı `15.6 MW (likely 14.7–16.4)` ve `±1σ (~68% confidence interval)` satırını gösteriyor; takvim ipucu aylık ortalama ve toplam FRP aralığını gösteriyor; geniş aralıklı ay dilimi (Nisan 2021) tarama deseniyle çiziliyor. Doğrulanamayan: düz haritadaki üç kademeli opaklığın gözle ayırt edilebildiği (o ayda 106 noktanın yalnız 4'ü geniş aralıklı; ekran görüntüsünde fark seçilemedi). Bu madde doğrulanınca kutu işaretlenecek. Uygulama ayrıntıları: Backend: `/api/series` ay kayıtları `mean_frp`, `mean_frp_lower`, `mean_frp_upper` taşıyor (`DERIVED_SCHEMA_VERSION` artırıldı, eski `make precompute` çıktıları geçersiz sayılır). Frontend (`docs/TASARIM_BELIRSIZLIK_RENK.md` bölüm 1, 2, 8.1): nokta detayında aralık metni ve geniş aralık uyarısı, düz haritada üç kademeli opaklık (`1,0 / 0,72 / 0,48`), takvimde geniş aralıklı dilimde tarama deseni ve kesikli kenar, takvim ipucunda aylık aralık. Yapılmayanlar: küre (WebGL) haritasında opaklık ve zaman serisi grafiğinde güven bandı. Görevdeki "Recharts ile" ifadesi uygulanmadı; grafikler projede elle yazılmış SVG.
 
-### [ ] K4 — Erişilebilir renk skalası sistemi
+### [X] K4 — Erişilebilir renk skalası sistemi
 - **Bekler:** C7, R1 · **Açar:** —
 - Yarışma gereksinimlerinden "color ramps" + erişilebilirlik:
   - Renk skalası modülü: sequential (FRP), diverging (anomaly), categorical (sensör)
@@ -1250,7 +1250,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Quantile-based renk atama (outlier'lar skalayı bozmasın)
 - **Kaynak:** Yarışma gereksinimleri — "Color ramps"; erişilebilirlik en iyi pratikleri
 - **Bitti sayılır:** en az 2 palet var; renk körlüğü simülatörüyle kontrol edilmiş; legend'da değer aralıkları görünüyor; palet değiştirince tüm chart'lar güncelleniyor.
-- **Durum (2026-11-15):** Kod tamamlandı, tarayıcıda görsel doğrulama YAPILMADI. Üç palet (`default` inferno, `viridis`, `cividis`) koyu ve açık tema için `tokens.css`'te; seçim `MethodsDrawer` Görünüm bölümünde, `localStorage` (`pyrosync.palette`) ve URL hash'inde (`#palette=`) kalıcı; `data-palette` özniteliği CSS grafiklerini, palet imzası da canvas/WebGL haritasını yeniliyor; `computeQuantileBreaks` ve lejantta değer aralıkları eklendi. `python tools/cvd_check.py` çalıştırıldı ve `docs/RENK_DENETIMI.md` yeniden üretildi: mevcut token'larda 2 FAIL kaldı, ikisi de düşük FRP basamaklarının `map-land` zeminine karşı 3:1 altı kontrastı (tasarımın bölüm 7.2'sinde zorunlu kılıf/halo ile karşılanan bilinen durum).
+- **Kapanış notu (2026-11-15):** Tamamlandı. Tarayıcı doğrulaması (başsız Edge, gerçek arşiv, Kıbrıs): Methods çekmecesinde üç palet seçeneği var; `viridis` seçilince `data-palette=viridis`, `--frp-1 #440154 … --frp-8 #fde725`, `cividis` seçilince `#00204d … #ffea46`, varsayılana dönünce `#3d0f5e … #f6e27a`; seçim `localStorage` ve URL hash'ine (`palette=viridis`) yazıldı; lejant "Viridis · Quantile" başlığıyla değer aralıklarını gösterdi ve harita noktaları yeni paletle çizildi. Uygulama ayrıntıları: Üç palet (`default` inferno, `viridis`, `cividis`) koyu ve açık tema için `tokens.css`'te; seçim `MethodsDrawer` Görünüm bölümünde, `localStorage` (`pyrosync.palette`) ve URL hash'inde (`#palette=`) kalıcı; `data-palette` özniteliği CSS grafiklerini, palet imzası da canvas/WebGL haritasını yeniliyor; `computeQuantileBreaks` ve lejantta değer aralıkları eklendi. `python tools/cvd_check.py` çalıştırıldı ve `docs/RENK_DENETIMI.md` yeniden üretildi: mevcut token'larda 2 FAIL kaldı, ikisi de düşük FRP basamaklarının `map-land` zeminine karşı 3:1 altı kontrastı (tasarımın bölüm 7.2'sinde zorunlu kılıf/halo ile karşılanan bilinen durum).
 
 ---
 
@@ -1263,4 +1263,4 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Serhat | 12 (R1–R12) | 5 (`R1–R5`) | 7 (`R10, R11, R9, R8, R6, R7, R12`) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
 | Samet | 13 (S1–S13) | 4 (`S1–S3, S6`) | 9 (`S4, S5, S9–S13, S7, S8`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
 | Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
-| Sadık | 14 (K1–K14) | 5 (`K5, K8, K9, K11, K13`) | 9 (`K10, K12, K14, K6, K7, K1–K4`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
+| Sadık | 14 (K1–K14) | 8 (`K1, K2, K4, K5, K8, K9, K11, K13`) | 6 (`K3, K10, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
