@@ -22,7 +22,7 @@ tests/
 src/
 ├── components/     → UI bileşenleri (her bileşen kendi klasöründe)
 │   ├── ErrorBoundary/ → Hata sınırı
-│   ├── Layout/     → Sayfa düzeni (AppShell): açılışta yalnız header + tam ekran küre (dünya görünümü); ülke seçilince ince komut satırı ve alt bar görünür
+│   ├── Layout/     → Sayfa düzeni (AppShell): açılışta yalnız header + tam ekran küre (dünya görünümü); ülke seçilince ince komut satırı, (yalnız görünürken) komut satırı ile harita arasındaki `drift` yuvasına Orbital Drift şeridi ve alt bar görünür
 │   ├── Header/     → Üst çubuk, bölge seçici, dil ve mod rozeti
 │   ├── Headline/   → Soru / cevap başlığı
 │   ├── Toggle/     → Raw ↔ Harmonized geçiş düğmesi
@@ -39,9 +39,9 @@ src/
 │   ├── Charts/     → CliffChart, FrpBandChart, SensorCharts (Y2 sensör verileri), ChartPanel ve SensorComparison
 │   ├── Calendar/   → Radyal yanma takvimi (BurnCalendar), tooltip ve hücre tanı çekmecesi
 │   ├── OrbitalDrift/ → OrbitalDriftStrip (Y9): MODIS Terra/Aqua geçiş saati sapması hakkında bilgi şeridi
-│   ├── BottomBar/  → Alt şerit (model uyarısı, CSV, brifing)
+│   ├── BottomBar/  → Alt şerit (kısa model uyarısı + Yöntem bağlantısı, doğrulama kapısı sonucu, CSV/GeoJSON, brifing)
 │   ├── Tour/       → 60 saniyelik rehberli tur kartı (GuidedTour; zamanlayıcılar hooks/useGuidedTour'da)
-│   ├── Drawers/    → Sağdan açılan çekmeceler (Methods, Briefing, CellDiagnosticDrawer: hücre tanı çekmecesi, Y9)
+│   ├── Drawers/    → Sağdan açılan çekmeceler (Settings, Briefing, CellDiagnosticDrawer: hücre tanı çekmecesi, Y9); Methods çekmece değil, tam sayfadır (`#/methods`)
 │   └── Methods/    → Tam Methods sayfası (#/methods: MethodsPage, MethodsPipeline akordeon, VzaCurveFigure, H3GridFigure, MethodsReferences, DisclaimerBanner, MethodsLink, useMethodsConfig)
 ├── content/
 │   ├── copy.ts     → Ana sözlük (EN + TR, tipli), t(), createTranslator

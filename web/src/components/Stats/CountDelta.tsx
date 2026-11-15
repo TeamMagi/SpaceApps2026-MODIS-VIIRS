@@ -143,7 +143,7 @@ export default function CountDelta() {
           key={idx}
           className={styles.dot}
           style={{ "--i": idx } as CSSProperties}
-          data-removed={disappearingIndices.has(idx) ? "true" : undefined}
+          data-removed={geometryHarmonized && disappearingIndices.has(idx) ? "true" : undefined}
         />
       ))}
     </div>

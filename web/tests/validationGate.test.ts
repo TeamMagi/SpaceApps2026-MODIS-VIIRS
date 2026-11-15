@@ -103,11 +103,11 @@ test("gate copy covers all four statuses in English and Turkish", () => {
   for (const lang of ["en", "tr"] as const) {
     const t = createTranslator(lang);
     assert.ok(t("validationGatePass", { error: "0.0368" }).includes("0.0368"));
-    for (const key of ["validationGateInconclusive", "validationGateFail", "validationGateUnavailable"] as const) {
+    for (const key of ["validationGateLabel", "validationGateInconclusive", "validationGateFail", "validationGateUnavailable"] as const) {
       assert.ok(t(key).length > 0);
     }
   }
-  assert.equal(createTranslator("en")("validationGateFail"), "Validation gate: does not beat baseline - read with caution");
+  assert.equal(createTranslator("en")("validationGateFail"), "Does not beat baseline · interpret with care");
 });
 
 test("gate loading caches a missing file as unavailable without retrying", async (t) => {

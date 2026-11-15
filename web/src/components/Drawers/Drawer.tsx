@@ -1,5 +1,5 @@
 /**
- * Drawer — accessible modal side panel, the base for MethodsDrawer and BriefingDrawer.
+ * Drawer — accessible modal side panel, the base for SettingsDrawer, BriefingDrawer and CellDiagnosticDrawer.
  *
  * Behaviour (implemented): open when `store.openDrawer === id`; rendered in a portal on
  * <body>; role="dialog" + aria-modal + aria-labelledby the title; focus moves into the panel on

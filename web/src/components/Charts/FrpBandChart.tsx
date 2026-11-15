@@ -432,11 +432,11 @@ export default function FrpBandChart() {
   const chartTitle =
     firstYear !== null && lastYear !== null
       ? t("frpChartTitle", { first: String(firstYear), last: String(lastYear) })
-      : t("frpChartLabel");
+      : t("frpBandChartLabel");
 
   if (status === "error") {
     return (
-      <figure className={styles.chart} aria-label={t("frpChartLabel")}>
+      <figure className={styles.chart} aria-label={t("frpBandChartLabel")}>
         <div className={styles.header}>
           <figcaption className={styles.title}>{chartTitle}</figcaption>
         </div>
@@ -452,7 +452,7 @@ export default function FrpBandChart() {
 
   if (status === "loading" && n === 0) {
     return (
-      <figure className={styles.chart} aria-label={t("frpChartLabel")}>
+      <figure className={styles.chart} aria-label={t("frpBandChartLabel")}>
         <div className={styles.header}>
           <figcaption className={styles.title}>{chartTitle}</figcaption>
         </div>
@@ -465,7 +465,7 @@ export default function FrpBandChart() {
 
   if (status === "empty" || n === 0 || !hasAnyMean) {
     return (
-      <figure className={styles.chart} aria-label={t("frpChartLabel")}>
+      <figure className={styles.chart} aria-label={t("frpBandChartLabel")}>
         <div className={styles.header}>
           <figcaption className={styles.title}>{chartTitle}</figcaption>
         </div>
@@ -491,7 +491,7 @@ export default function FrpBandChart() {
   const muted = !geometryHarmonized;
 
   return (
-    <figure className={styles.chart} aria-label={t("frpChartLabel")} data-loading={status === "loading" ? "true" : undefined}>
+    <figure className={styles.chart} aria-label={t("frpBandChartLabel")} data-loading={status === "loading" ? "true" : undefined}>
       <div className={styles.header}>
         <figcaption className={styles.title}>{chartTitle}</figcaption>
         <div className={styles.legend}>
@@ -520,7 +520,7 @@ export default function FrpBandChart() {
           className={styles.svg}
           viewBox={`0 0 ${size.width} ${size.height}`}
           role="img"
-          aria-label={t("frpChartLabel")}
+          aria-label={t("frpBandChartLabel")}
           onPointerMove={handlePointerMove}
           onPointerLeave={() => setActiveIndex(null)}
         >

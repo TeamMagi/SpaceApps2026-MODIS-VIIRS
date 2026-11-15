@@ -37,13 +37,13 @@ export default function BottomBar() {
   return (
     <div className={styles.bar}>
       <p className={styles.disclaimer}>
-        {t("disclaimer")}{" "}
+        {t("bottomDisclaimerShort")}{" "}
         <MethodsLink section="limits" className={styles.disclaimerLink}>
-          {t("disclaimerLink")}
+          {t("bottomMethodsLink")}
         </MethodsLink>
         {" "}
         <span className={styles.gate} data-decision={gate?.decision} role="status" aria-live="polite" aria-atomic="true">
-          {gateText}
+          <span className={styles.gateLabel}>{t("validationGateLabel")}</span> {gateText}
         </span>
       </p>
       <div className={styles.actions}>

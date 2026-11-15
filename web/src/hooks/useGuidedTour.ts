@@ -113,23 +113,33 @@ export function useGuidedTour(): void {
     if (tourStep === null) return;
     const step = TOUR_STEPS[tourStep];
     if (!step) return;
-    const frame = window.requestAnimationFrame(() => {
-      clearHighlights();
+    let scrolled = false;
+    const highlight = () => {
       let first: Element | null = null;
       for (const target of step.targets) {
-        for (const element of document.querySelectorAll(`[data-tour="${target}"]`)) {
+        for (const element of document.querySelectorAll(`[data-tour="${target}"]:not([data-tour-active])`)) {
           element.setAttribute("data-tour-active", "true");
           first ??= element;
         }
       }
+      if (!first || scrolled) return;
+      scrolled = true;
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       // The card floats at the bottom, so on the long Methods page the highlighted block goes to the top.
-      first?.scrollIntoView({
+      first.scrollIntoView({
         block: step.route === "methods" ? "start" : "nearest",
         behavior: reduceMotion ? "auto" : "smooth",
       });
+    };
+    const frame = window.requestAnimationFrame(() => {
+      clearHighlights();
+      highlight();
     });
+    // Dock panels open (and the Methods page mounts) after the step starts, so late targets are picked up as they appear.
+    const observer = new MutationObserver(highlight);
+    observer.observe(document.body, { childList: true, subtree: true });
     return () => {
+      observer.disconnect();
       window.cancelAnimationFrame(frame);
       clearHighlights();
     };

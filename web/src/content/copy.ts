@@ -301,7 +301,7 @@ const enBase = {
   sensorDonutRawTitle: "Raw detections by sensor",
   sensorDonutRawNote: "Switch to Harmonized to see how many merge into matched records.",
   frpChartTitle: "Mean FRP per year · {first}–{last}",
-  frpChartLabel: "Mean fire radiative power per year",
+  frpBandChartLabel: "Mean fire radiative power per year",
   frpLegendMean: "Mean FRP",
   frpRawCaption: "Interval shown in the Harmonized view",
   frpTooltip: "{year} · Mean FRP {value}",
@@ -328,6 +328,7 @@ const enBase = {
   bottomDisclaimerShort: "Harmonized values are model estimates.",
   bottomMethodsLink: "Method →",
   exportMenu: "Export",
+  validationGateLabel: "Validation gate:",
   validationGatePass: "Beats both baselines · LOYO {error}",
   validationGateInconclusive: "Baseline comparison inconclusive",
   validationGateFail: "Does not beat baseline · interpret with care",
@@ -389,7 +390,6 @@ const enBase = {
   methodsSourceCitationFallback: "NASA FIRMS archive · MODIS C6.1 / VIIRS S-NPP / NOAA-20",
   methodsSourceCitationDemo:
     "Synthetic demo data · 2021 Mediterranean cluster + 2000–2025 synthetic series (not NASA FIRMS data)",
-  methodsSources: "NASA FIRMS archive · MODIS C6.1 · VIIRS S-NPP",
 
   // Settings
   settingsTitle: "Settings",
@@ -737,7 +737,7 @@ const trBase = {
   sensorDonutRawTitle: "Sensöre göre ham tespitler",
   sensorDonutRawNote: "Kaç tanesinin eşleşen kayıtlarda birleştiğini görmek için Harmonize görünümüne geç.",
   frpChartTitle: "Yıllık ortalama FRP · {first}–{last}",
-  frpChartLabel: "Yıllık ortalama yangın ışınım gücü",
+  frpBandChartLabel: "Yıllık ortalama yangın ışınım gücü",
   frpLegendMean: "Ortalama FRP",
   frpRawCaption: "Aralık Harmonize görünümde gösterilir",
   frpTooltip: "{year} · Ortalama FRP {value}",
@@ -762,6 +762,7 @@ const trBase = {
   bottomDisclaimerShort: "Harmonize değerler model tahminidir.",
   bottomMethodsLink: "Yöntem →",
   exportMenu: "Dışa aktar",
+  validationGateLabel: "Doğrulama sonucu:",
   validationGatePass: "Temel yöntemleri geçti · LOYO {error}",
   validationGateInconclusive: "Temel yöntemlerle karşılaştırma belirsiz",
   validationGateFail: "Temel yöntemleri geçemedi · dikkatle yorumlayın",
@@ -822,7 +823,6 @@ const trBase = {
   methodsSourceCitationFallback: "NASA FIRMS arşivi · MODIS C6.1 / VIIRS S-NPP / NOAA-20",
   methodsSourceCitationDemo:
     "Sentetik demo verisi · 2021 Akdeniz kümesi + 2000–2025 sentetik seri (NASA FIRMS verisi değildir)",
-  methodsSources: "NASA FIRMS arşivi · MODIS C6.1 · VIIRS S-NPP",
 
   settingsTitle: "Ayarlar",
   settingsAppearanceTitle: "Görünüm",

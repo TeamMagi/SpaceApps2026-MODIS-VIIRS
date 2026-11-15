@@ -2,7 +2,7 @@
  * AppShell — page layout only; owns no state and renders whatever is passed into its slots.
  *
  * Desktop (>= 1024 px, no page scroll): header | compact command row (headline · toggle · count) |
- * full-bleed map | slim bottom bar. The insight dock floats over the map.
+ * [drift note, only while the Orbital Drift strip shows] | full-bleed map | slim bottom bar. The insight dock floats over the map.
  * World view (`worldView`): the command row and bottom bar collapse to zero height and become inert,
  * leaving header + map. Both stay mounted. Entering a country opens the command row with a CSS intro.
  * Mobile (single column): header, stacked command row, map (>= 60dvh in region view), bottom bar.
@@ -81,6 +81,8 @@ export interface AppShellProps {
   headline: ReactNode;
   toggle: ReactNode;
   count: ReactNode;
+  /** Optional slim note between the command row and the map; renders nothing (and takes no space) when empty. */
+  drift?: ReactNode;
   map: ReactNode;
   bottomBar: ReactNode;
   overlays?: ReactNode;
@@ -92,6 +94,7 @@ export default function AppShell({
   headline,
   toggle,
   count,
+  drift,
   map,
   bottomBar,
   overlays,
@@ -115,6 +118,9 @@ export default function AppShell({
               </div>
             </div>
           </div>
+        </div>
+        <div className={styles.drift} inert={worldView}>
+          <ErrorBoundary>{drift}</ErrorBoundary>
         </div>
         <div className={styles.map} data-tour="map">
           <ErrorBoundary>{map}</ErrorBoundary>

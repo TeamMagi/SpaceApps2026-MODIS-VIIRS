@@ -8,6 +8,7 @@ import SettingsDrawer from "./components/Drawers/SettingsDrawer";
 import GuidedTour from "./components/Tour/GuidedTour";
 import Header from "./components/Header/Header";
 import Headline from "./components/Headline/Headline";
+import OrbitalDriftStrip from "./components/OrbitalDrift/OrbitalDriftStrip";
 import MethodsPage from "./components/Methods/MethodsPage";
 import MapStateOverlay from "./components/Map/MapStateOverlay";
 import CountDelta from "./components/Stats/CountDelta";
@@ -54,6 +55,7 @@ export default function App() {
       headline={<Headline />}
       toggle={<ViewToggle />}
       count={<CountDelta />}
+      drift={<OrbitalDriftStrip />}
       map={
         <>
           <Suspense fallback={<MapStateOverlay state="loading" />}>

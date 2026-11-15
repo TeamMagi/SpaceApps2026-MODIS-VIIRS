@@ -5,10 +5,11 @@
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     "header"
     "command"
+    "drift"
     "map"
     "bottom";
   min-height: 100dvh;
@@ -139,6 +140,19 @@
   justify-content: center;
 }
 
+.drift {
+  grid-area: drift;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg);
+  border-bottom: var(--border-width) solid var(--color-border-subtle);
+}
+
+.drift:empty,
+.shell[data-view="world"] .drift {
+  display: none;
+}
+
 .map {
   grid-area: map;
   position: relative;
@@ -221,7 +235,7 @@
 
 @media (min-width: 1024px) {
   .shell {
-    grid-template-rows: var(--h-header) auto minmax(0, 1fr) var(--h-bottom);
+    grid-template-rows: var(--h-header) auto auto minmax(0, 1fr) var(--h-bottom);
     height: 100dvh;
     min-height: 0;
     padding-bottom: 0;
@@ -247,6 +261,10 @@
   .count {
     justify-content: flex-end;
   }
+
+  .drift {
+    padding: var(--space-half) var(--space-3);
+  }
 }
 
 /*
@@ -262,6 +280,7 @@
   }
 
   :global(html[data-presentation]) .header,
+  :global(html[data-presentation]) .drift,
   :global(html[data-presentation]) .bottom {
     display: none;
   }

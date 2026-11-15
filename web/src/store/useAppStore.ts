@@ -266,7 +266,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const state = get();
     if (state.region === region) return;
     set({ region, selectedMonth: null, calendarYear: null, yearPlaying: false, ...snapped(state) });
-  },  pickRegion: (region) => {
+  },
+  pickRegion: (region) => {
     get().setRegion(region);
     if (!get().regionPicked) set({ regionPicked: true });
   },
