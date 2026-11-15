@@ -24,7 +24,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::EnvFilter;
 
 use pyrosync_core::config::PipelineConfig;
-use pyrosync_core::effort::EffortFactor;
+use pyrosync_core::effort::{EffortFactor, TropicalSwathGap};
 use pyrosync_core::models::{
     BBox, CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
 };
@@ -424,6 +424,8 @@ struct EffortResponse {
     reliable: bool,
     reason: Option<String>,
     factors: Vec<EffortFactor>,
+    /// `null` outside 30°S-30°N; see `pyrosync_core::effort::TropicalSwathGap`.
+    tropical_swath_gap: Option<TropicalSwathGap>,
 }
 
 #[derive(Serialize)]
@@ -552,7 +554,6 @@ struct StatsResponse {
 }
 
 struct PipelineRun {
-    #[allow(dead_code)] // Retained for upcoming /api/compare and /api/stats endpoints.
     bbox: BBox,
     modis_count: usize,
     viirs_count: usize,
@@ -1224,6 +1225,7 @@ fn build_effort_and_warnings_from_counts(
     singular: &str,
     plural: &str,
     uncovered: &[(String, String)],
+    tropical_swath_gap: Option<TropicalSwathGap>,
 ) -> (EffortResponse, Vec<String>) {
     let (reason, mut warnings) =
         build_warnings_from_counts(failure_count, singular, plural, uncovered);
@@ -1233,6 +1235,7 @@ fn build_effort_and_warnings_from_counts(
         reliable: reason.is_none(),
         reason,
         factors: pyrosync_core::effort::estimate_effort(harmonized),
+        tropical_swath_gap,
     };
 
     (effort, warnings)
@@ -1241,6 +1244,7 @@ fn build_effort_and_warnings_from_counts(
 fn build_effort_and_warnings(
     harmonized: &[HarmonizedHotspot],
     report: &ReportResponse,
+    tropical_swath_gap: Option<TropicalSwathGap>,
 ) -> (EffortResponse, Vec<String>) {
     build_effort_and_warnings_from_counts(
         harmonized,
@@ -1248,6 +1252,7 @@ fn build_effort_and_warnings(
         "FIRMS request",
         "FIRMS requests",
         &report.uncovered,
+        tropical_swath_gap,
     )
 }
 
@@ -1398,8 +1403,14 @@ async fn harmonize(
     ApiQuery(params): ApiQuery<HarmonizeParams>,
 ) -> Result<Response, ApiError> {
     let uncertainty = uncertainty_metadata(&state.config.uncertainty);
+    let uncertainty_params = state.config.uncertainty.clone();
     execute_cached_pipeline(&state, "harmonize", &params, |run, include_raw| {
-        let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report);
+        let swath_gap = pyrosync_core::calendar::calendar_swath_gap(
+            Some(&run.bbox),
+            &run.harmonized,
+            &uncertainty_params,
+        );
+        let (effort, warnings) = build_effort_and_warnings(&run.harmonized, &run.report, swath_gap);
         let raw = RawResponse {
             modis_count: run.modis_count,
             viirs_count: run.viirs_count,
@@ -1881,12 +1892,18 @@ fn build_calendar_response(
     failures: Vec<SensorYearFailure>,
     uncertainty_params: &pyrosync_core::uncertainty::UncertaintyParams,
 ) -> CalendarResponse {
+    let swath_gap = pyrosync_core::calendar::calendar_swath_gap(
+        query.bbox.as_ref(),
+        harmonized,
+        uncertainty_params,
+    );
     let (effort, mut warnings) = build_effort_and_warnings_from_counts(
         harmonized,
         failures.len(),
         "FIRMS archive download",
         "FIRMS archive downloads",
         &[],
+        swath_gap,
     );
 
     if query.clamped {

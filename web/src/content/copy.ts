@@ -185,6 +185,10 @@ const enBase = {
   calendarBelowNormalShort: "below normal",
   calendarAboveNormalShort: "above normal",
   calendarSliceHint: "Click a month to show it on the map",
+  calendarSwathGapNote:
+    "Tropical swath gap: {share}% of this region lies within 30°S–30°N, where gaps between MODIS orbits ({km} km at the equator) miss about {low}–{high}% of monthly VIIRS fire energy. Years with VIIRS fill those gaps; MODIS-only years before 2012 are not corrected for it.",
+  calendarSwathGapNoteCompensated:
+    "Tropical swath gap: {share}% of this region lies within 30°S–30°N, where gaps between MODIS orbits ({km} km at the equator) miss about {low}–{high}% of monthly VIIRS fire energy. Years with VIIRS fill those gaps; MODIS-only fire energy before 2012 is scaled up by {scale}% for it, with a wider uncertainty band.",
   calendarTooltip: "{date} · {count} detections · {anomaly} ({sigma})",
   calendarNoAnomalyCell: "{date} · {count} detections",
   calendarEmptyCell: "{month} · 0 detections",
@@ -430,6 +434,10 @@ const trBase = {
   calendarBelowNormalShort: "normal altı",
   calendarAboveNormalShort: "normal üstü",
   calendarSliceHint: "Haritada görmek için bir aya tıkla",
+  calendarSwathGapNote:
+    "Tropikal swath boşluğu: Bu bölgenin %{share|poss} 30°G–30°K kuşağında; burada MODIS yörüngeleri arasındaki boşluklar (ekvatorda {km} km) aylık VIIRS yangın enerjisinde yaklaşık %{low}–{high} kayba yol açar. VIIRS'li yıllar bu boşlukları doldurur; 2012 öncesi yalnız MODIS yılları bunun için düzeltilmez.",
+  calendarSwathGapNoteCompensated:
+    "Tropikal swath boşluğu: Bu bölgenin %{share|poss} 30°G–30°K kuşağında; burada MODIS yörüngeleri arasındaki boşluklar (ekvatorda {km} km) aylık VIIRS yangın enerjisinde yaklaşık %{low}–{high} kayba yol açar. VIIRS'li yıllar bu boşlukları doldurur; 2012 öncesi yalnız MODIS yangın enerjisi bunun için %{scale} artırılır ve belirsizlik bandı genişletilir.",
   calendarTooltip: "{date} · {count} tespit · {anomaly} ({sigma})",
   calendarNoAnomalyCell: "{date} · {count} tespit",
   calendarEmptyCell: "{month} · 0 tespit",

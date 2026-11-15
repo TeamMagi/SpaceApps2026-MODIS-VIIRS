@@ -23,6 +23,7 @@ import {
   type SensorFamily,
   type SeriesCoverage,
   type StatsResponse,
+  type TropicalSwathGapInfo,
   type UncertaintyInfo,
   type YearlyPoint,
   type YearSpan,
@@ -214,6 +215,7 @@ interface WirePointsResponse {
   stages: WirePointStages;
   bbox: BBox | null;
   filters?: WireConfidenceFilter | null;
+  tropical_swath_gap?: unknown;
 }
 
 // --- NRT wire types ---
@@ -243,6 +245,7 @@ interface WireEffortInfo {
   reliable: boolean;
   reason: string | null;
   factors: WireEffortFactor[];
+  tropical_swath_gap?: unknown;
 }
 
 interface WireReportInfo {
@@ -464,6 +467,7 @@ export interface PointsResponse {
   stages: PointStages;
   bbox: BBox | null;
   filters: ConfidenceFilterInfo;
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 // --- Core HTTP helper --------------------------------------------------------
@@ -612,6 +616,42 @@ function adaptEffortInfo(w: WireEffortInfo): EffortInfo {
       modisObservable: f.modis_observable,
       omega: f.omega,
     })),
+    tropicalSwathGap: adaptTropicalSwathGap(w.tropical_swath_gap),
+  };
+}
+
+function finiteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+/** Older servers send no flag, and a malformed one is dropped rather than shown half-read. */
+export function adaptTropicalSwathGap(w: unknown): TropicalSwathGapInfo | null {
+  if (!isRecord(w)) return null;
+  const { belt_abs_lat, belt_share, basis, swath_gap_km, missed_frp_low_pct, missed_frp_high_pct } = w;
+  if (
+    !finiteNumber(belt_abs_lat) ||
+    !finiteNumber(belt_share) ||
+    belt_share <= 0 ||
+    belt_share > 1 ||
+    (basis !== "bbox" && basis !== "detections") ||
+    !finiteNumber(swath_gap_km) ||
+    !finiteNumber(missed_frp_low_pct) ||
+    !finiteNumber(missed_frp_high_pct)
+  ) {
+    return null;
+  }
+  const comp = w.compensation;
+  return {
+    beltAbsLat: belt_abs_lat,
+    beltShare: belt_share,
+    basis,
+    swathGapKm: swath_gap_km,
+    missedFrpLowPct: missed_frp_low_pct,
+    missedFrpHighPct: missed_frp_high_pct,
+    compensation:
+      isRecord(comp) && finiteNumber(comp.factor) && finiteNumber(comp.factor_sigma)
+        ? { factor: comp.factor, factorSigma: comp.factor_sigma }
+        : null,
   };
 }
 
@@ -813,6 +853,7 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
     },
     bbox: wire.bbox ?? null,
     filters: adaptFilters(wire.filters),
+    tropicalSwathGap: adaptTropicalSwathGap(wire.tropical_swath_gap),
   };
 }
 

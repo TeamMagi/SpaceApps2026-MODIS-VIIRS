@@ -117,12 +117,26 @@ fn app(
     archive_dir: Option<&Path>,
     request_timeout: Option<Duration>,
 ) -> Router {
+    app_with_config(
+        firms,
+        archive_dir,
+        request_timeout,
+        pyrosync_core::config::PipelineConfig::default(),
+    )
+}
+
+fn app_with_config(
+    firms: Option<FirmsClient>,
+    archive_dir: Option<&Path>,
+    request_timeout: Option<Duration>,
+    config: pyrosync_core::config::PipelineConfig,
+) -> Router {
     let state = AppState {
         firms: firms.map(Arc::new),
         archive: archive_dir.map(|dir| Arc::new(ArchiveClient::offline(dir.to_path_buf()))),
         cache: Arc::new(RwLock::new(ResponseCache::new(8 * 1024 * 1024))),
         request_timeout,
-        config: Arc::new(pyrosync_core::config::PipelineConfig::default()),
+        config: Arc::new(config),
     };
     build_router(
         state,
@@ -1227,4 +1241,110 @@ async fn calendar_min_confidence_filters_archive_rows_and_keeps_bias_note() {
 
     let bad = call(&app, "/api/calendar?country=Testland&min_confidence=x").await;
     assert_eq!(bad.status, StatusCode::BAD_REQUEST, "body: {}", bad.body);
+}
+
+// ---------- C10: tropical swath-gap flag ----------
+
+/// Testland rows in July 2010 at 5°N (inside the belt) and 35°N (outside), one per day.
+fn seed_tropical_archive(root: &Path) {
+    write_archive_year(
+        root,
+        2010,
+        &[
+            archive_row("2010-07-01", 5.0, 0),
+            archive_row("2010-07-02", 35.0, 0),
+        ],
+    );
+}
+
+#[tokio::test]
+async fn calendar_effort_carries_tropical_swath_gap_flag_only_for_belt_regions() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    seed_archive(dir.path());
+    let mid_lat_app = app(None, Some(dir.path()), Some(Duration::from_secs(30)));
+    let mid_lat = call(&mid_lat_app, "/api/calendar?country=Testland&from=2008&to=2010").await;
+    assert_eq!(mid_lat.status, StatusCode::OK, "body: {}", mid_lat.body);
+    let v = mid_lat.json();
+    assert!(v["effort"].as_object().unwrap().contains_key("tropical_swath_gap"));
+    assert!(v["effort"]["tropical_swath_gap"].is_null());
+
+    let tropical_dir = tempfile::tempdir().expect("temp dir");
+    seed_tropical_archive(tropical_dir.path());
+    let app = app(None, Some(tropical_dir.path()), Some(Duration::from_secs(30)));
+
+    let extent = call(&app, "/api/calendar?country=Testland&from=2010&to=2010").await;
+    assert_eq!(extent.status, StatusCode::OK, "body: {}", extent.body);
+    let flag = &extent.json()["effort"]["tropical_swath_gap"];
+    assert_eq!(flag["basis"], "detections");
+    assert_eq!(flag["belt_abs_lat"], 30.0);
+    assert_eq!(flag["swath_gap_km"], 388.1);
+    assert_eq!(flag["missed_frp_low_pct"], 10.7);
+    assert_eq!(flag["missed_frp_high_pct"], 12.5);
+    assert!(flag["compensation"].is_null());
+    let share = flag["belt_share"].as_f64().expect("belt share");
+    let expected = pyrosync_core::effort::tropical_belt_share(5.0, 35.0);
+    assert!((share - expected).abs() < 1e-12, "{share} vs {expected}");
+    assert!(flag["reference"].as_str().unwrap().starts_with("[14]"));
+
+    let bbox = call(
+        &app,
+        "/api/calendar?country=Testland&from=2010&to=2010&west=29&south=-5&east=31&north=10",
+    )
+    .await;
+    assert_eq!(bbox.status, StatusCode::OK, "body: {}", bbox.body);
+    let flag = &bbox.json()["effort"]["tropical_swath_gap"];
+    assert_eq!(flag["basis"], "bbox");
+    assert_eq!(flag["belt_share"], 1.0);
+}
+
+#[tokio::test]
+async fn calendar_swath_gap_compensation_scales_tropical_modis_total_once() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    seed_tropical_archive(dir.path());
+    let uri = "/api/calendar?country=Testland&from=2010&to=2010";
+
+    let off = app(None, Some(dir.path()), Some(Duration::from_secs(30)));
+    let off = call(&off, uri).await.json();
+
+    let mut config = pyrosync_core::config::PipelineConfig::default();
+    config.uncertainty.tropical_swath_gap_compensation = true;
+    let on = app_with_config(None, Some(dir.path()), Some(Duration::from_secs(30)), config);
+    let on = call(&on, uri).await.json();
+
+    let comp = &on["effort"]["tropical_swath_gap"]["compensation"];
+    let factor = comp["factor"].as_f64().expect("factor");
+    assert!(comp["factor_sigma"].as_f64().expect("sigma") > 0.0);
+
+    // One 25 MW Terra row at 5°N (k_c 1.11, compensated) and one at 35°N (k_c 1.18, not).
+    let total = |v: &Value| v["calendar"][0]["total_frp"].as_f64().expect("total");
+    let width = |v: &Value| {
+        let c = &v["calendar"][0];
+        c["total_frp_upper"].as_f64().unwrap() - c["total_frp_lower"].as_f64().unwrap()
+    };
+    // Both rows share the same scan, so they carry the same VZA-corrected FRP.
+    let per_row = total(&off) / (1.11 + 1.18);
+    let expected_on = per_row * (1.11 * factor + 1.18);
+    assert!((total(&on) - expected_on).abs() < 1e-6, "{} vs {expected_on}", total(&on));
+    assert!(total(&on) > total(&off));
+    assert!(width(&on) > width(&off));
+    assert_eq!(on["calendar"][0]["count"], off["calendar"][0]["count"]);
+    assert_eq!(
+        on["calendar"][0]["count_normalized"],
+        off["calendar"][0]["count_normalized"]
+    );
+}
+
+#[tokio::test]
+async fn harmonize_effort_reports_no_swath_gap_outside_the_belt() {
+    let firms = healthy_firms().await;
+    let app = app(
+        Some(firms_client(&firms)),
+        None,
+        Some(Duration::from_secs(30)),
+    );
+    let reply = call(&app, &format!("/api/harmonize?{BBOX}&days=1")).await;
+    assert_eq!(reply.status, StatusCode::OK, "body: {}", reply.body);
+    let effort = reply.json()["effort"].clone();
+    assert!(effort.as_object().unwrap().contains_key("tropical_swath_gap"));
+    assert!(effort["tropical_swath_gap"].is_null());
 }

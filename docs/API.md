@@ -229,6 +229,39 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 | `total` | integer | Toplam harmonize kayıt sayısı |
 | `modis_observable` | integer | MODIS ile gözlemlenebilen kayıt sayısı |
 | `omega` | number \| null | Ω değeri. Ay sayısı azsa (kodda eşik 3 aydır) `null` olabilir |
+| `tropical_swath_gap` | object \| null | `effort` nesnesinin alanı (faktör öğesinin değil); aşağıya bakın |
+
+### effort.tropical_swath_gap (C10)
+
+`30°G–30°K` (`30°S–30°N`) kuşağında komşu MODIS yörüngeleri arasındaki ekvatoral swath boşlukları (`388.1 km`) aylık VIIRS FRP'sinin `%10.7–12.5`'ini kaçırır `[14, Bölüm 4.4]`. Bölgenin kuşak içinde alanı varsa bu bayrak dolu, yoksa `null` döner (alan her zaman bulunur). Taşıyan yanıtlar: `/api/calendar` ve `/api/harmonize` (`effort` içinde), `/api/points` (üst düzeyde). `/api/series` gövdesi önceden hesaplanıp coğrafya içermediği için bayrak türetilmiş veriye yazılmaz; arayüz bunu seçili bölgenin `/api/points` yanıtından okur.
+
+```json
+"tropical_swath_gap": {
+  "belt_abs_lat": 30.0,
+  "belt_share": 0.93,
+  "basis": "bbox",
+  "swath_gap_km": 388.1,
+  "missed_frp_low_pct": 10.7,
+  "missed_frp_high_pct": 12.5,
+  "compensation": null,
+  "note": "Between 30S and 30N adjacent MODIS orbits leave equatorial swath gaps ...",
+  "reference": "[14] Biomass burning in Africa: FRP missed by MODIS (2020), Sec. 4.4: ..."
+}
+```
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `belt_abs_lat` | number | Kuşak yarı genişliği (`30`) |
+| `belt_share` | number | Bölgenin kuşak içindeki **alan ağırlıklı** payı, `0 < pay ≤ 1`: `(sin(min(K,30°)) − sin(max(G,−30°))) / (sin K − sin G)`. Küre üzerinde iki paralel arası alan `sin` farkıyla orantılı olduğundan kısmi örtüşmede derece değil alan sayılır. Kuşak kenarına dışarıdan değen bölge (`G = 30°`) `null` alır; tek enlemli kapsam `|lat| ≤ 30°` ise `1` |
+| `basis` | string | `bbox`: sorgu bbox'ı (`calendar` bbox'lı, `harmonize`); `detections`: tespitlerin enlem kapsamı (`calendar` bbox'sız; `points` için istenen ayın değil **tüm yılın** kapsamı, böylece ay değiştikçe bayrak oynamaz) |
+| `swath_gap_km` | number | `388.1` |
+| `missed_frp_low_pct`, `missed_frp_high_pct` | number | `10.7` (yıllık) – `12.5` (aylık) |
+| `compensation` | object \| null | Telafi kapalıyken (varsayılan) `null`. Açıkken `{ "factor", "factor_sigma" }`: `factor = 1/(1 − 0.116) ≈ 1.1312`, `factor_sigma = ([1/(1−0.125)] − [1/(1−0.107)]) / 2 ≈ 0.0115` |
+| `note`, `reference` | string | Açıklama ve kaynak |
+
+**Telafi (`uncertainty.tropical_swath_gap_compensation`, varsayılan `false`):** Kapalıyken hiçbir sayı değişmez; yalnızca bayrak döner. Açıkken yalnızca VIIRS tespiti olmayan ayların (`k_c` ile aynı koşul) `total_frp` toplamında, `|lat| ≤ 30°` olan her tespitin katkısı `k_c × factor` ile **bir kez** çarpılır ve `factor_sigma / factor` göreli 1σ, `k_c` belirsizliğiyle karesel toplanarak sistematik bileşene eklenir (`total_frp_lower`/`total_frp_upper` genişler). `count`, `effort_omega`, `count_normalized`, `anomaly` ve `mean_frp*` hiçbir zaman değişmez.
+
+**Çift sayım yok:** `k_c` (`calibration.rs`) yalnızca Aqua MODIS ve S-NPP'nin `≤ 20 dk` içinde **birlikte** gözlediği `1°×1°` hücre-günlerinden ölçülür; MODIS swath boşluğundaki hücre-günlerinde MODIS kaydı olmadığından orana hiç girmez, yani `k_c` swath içi küçük yangın tamlığıdır ve boşluk kaybı ondan ayrıdır. Ω (`effort.rs`) VIIRS dönemindeki boşluk tespitlerini zaten `total` içinde sayar ve sayıları MODIS-gözlemlenebilir birime indirger; iki dönem de bu ortak referansta boşluğu aynı biçimde içerdiğinden sayılar telafi edilmez. VIIRS içeren aylarda `ViirsOnly` tespitler boşluğu doldurduğundan telafi uygulanmaz.
 
 ## GET /api/health
 
@@ -366,6 +399,7 @@ curl -s "http://localhost:3001/api/config"
 | `uncertainty.vza_error_coeff` | number | VZA düzeltmesi arttıkça eklenen göreli hata katsayısı |
 | `uncertainty.modis_scale_sigma` | number | MODIS ölçek/Terra vekil belirsizliği (göreli 1σ) |
 | `uncertainty.z` | number | Güven aralığı z çarpanı (`> 0`) |
+| `uncertainty.tropical_swath_gap_compensation` | boolean | Opsiyonel tropikal swath-gap telafisi (bkz. "effort.tropical_swath_gap"). Varsayılan `false`; `false` iken JSON'a yazılmaz, böylece konfigürasyon özeti ve önceden hesaplanmış seri damgaları değişmez. TOML: `[uncertainty] tropical_swath_gap_compensation = true` |
 | `static_mask.enabled` | boolean | Kalıcı sıcak hücre (gaz meşalesi, endüstri) maskesi açık mı |
 | `static_mask.min_active_months` | integer | H3 r7 hücresinin aynı takvim yılında maskelenmesi için gereken farklı ay sayısı (1-12). Yıl yıl değerlendirilir; bundan kısa pencereler maskelenmez |
 | `sama.enabled` | boolean | SAMA kutusundaki gece VIIRS tespitleri elensin mi |
@@ -2236,6 +2270,7 @@ Bu yanıt tek kayıtlı bir örnektir; `limit` değeri 1 olduğunda istek tamaml
 | `stages` | object | Aşamaların sayıları (aşağıda) |
 | `bbox` | object \| null | Yıl (veya ay) içindeki **tüm** ham satırların kapsadığı alan. Ham satır yoksa `null`. Örnekleme sonrası döndürülen noktaların alanı değildir |
 | `filters` | object | Bkz. "Güven filtresi". `excluded_detections` örneklemeden önceki tüm yıl/ay içindir |
+| `tropical_swath_gap` | object \| null | Bkz. "effort.tropical_swath_gap". `basis: "detections"`; `month` verilse bile istenen yılın tüm ham satırlarının enlem kapsamından, güven filtresinden önce hesaplanır |
 
 `raw[]` öğeleri:
 

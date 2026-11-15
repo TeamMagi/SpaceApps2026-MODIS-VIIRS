@@ -62,6 +62,13 @@ pub struct UncertaintyParams {
     pub vza_error_coeff: f64,
     pub modis_scale_sigma: f64,
     pub z: f64,
+    /// Optional tropical MODIS swath-gap compensation (default off). When on, VIIRS-less
+    /// `total_frp` from detections within 30°S-30°N is scaled by
+    /// [`crate::effort::swath_gap_compensation`] and its spread joins the systematic term.
+    /// Lives here rather than in `PipelineConfig` so it reuses the `[uncertainty]` TOML table;
+    /// skipped when false so the config digest (and every precomputed series stamp) is unchanged.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub tropical_swath_gap_compensation: bool,
 }
 
 impl Default for UncertaintyParams {
@@ -72,6 +79,7 @@ impl Default for UncertaintyParams {
             vza_error_coeff: DEFAULT_VZA_ERROR_COEFF,
             modis_scale_sigma: DEFAULT_MODIS_SCALE_SIGMA,
             z: DEFAULT_Z,
+            tropical_swath_gap_compensation: false,
         }
     }
 }
@@ -176,6 +184,23 @@ pub fn relative_uncertainty(
         random: sensor_sigma.hypot(vza_sigma),
         systematic: scale_sigma.hypot(cal_sigma),
     }
+}
+
+/// İki bağımsız çarpımsal katsayıyı (`ratio`, `ratio_sigma`) tek katsayıya birleştirir: oranlar
+/// çarpılır, göreli 1σ'lar karesel toplanır (`modis_scale_sigma ⊕ cal_sigma` ile aynı kural).
+///
+/// Takvimde `k_c` ile tropikal swath-gap telafisini birleştirmek için kullanılır; böylece
+/// `relative_uncertainty` sistematik bileşeni her iki yayılımı da tek seferde taşır.
+pub fn combine_factors(a: (f64, f64), b: (f64, f64)) -> (f64, f64) {
+    let rel = |(ratio, sigma): (f64, f64)| {
+        if ratio.is_finite() && ratio > 0.0 {
+            sanitized_non_neg(sigma) / ratio
+        } else {
+            0.0
+        }
+    };
+    let ratio = a.0 * b.0;
+    (ratio, ratio * rel(a).hypot(rel(b)))
 }
 
 /// Tek bir harmonize FRP gözlemi için analitik güven aralığı üretir.
@@ -609,6 +634,45 @@ mod tests {
         let m = frp_uncertainty(20.0, Some(1.2), SensorFamily::Modis, None, &p);
         let v = frp_uncertainty(20.0, Some(1.2), SensorFamily::Viirs, None, &p);
         assert!(width(m) > width(v));
+    }
+
+    #[test]
+    fn combine_factors_multiplies_ratios_and_adds_relative_sigmas_in_quadrature() {
+        let (ratio, sigma) = combine_factors((1.11, 0.08), (1.13, 0.0113));
+        assert!((ratio - 1.11 * 1.13).abs() < 1e-12);
+        let rel = (0.08_f64 / 1.11).hypot(0.0113 / 1.13);
+        assert!((sigma / ratio - rel).abs() < 1e-12);
+
+        // Identity on either side leaves the other factor untouched.
+        assert_eq!(combine_factors((1.0, 0.0), (1.2, 0.06)), (1.2, 1.2 * (0.06 / 1.2)));
+        let (r, s) = combine_factors((1.11, 0.08), (1.0, 0.0));
+        assert!((r - 1.11).abs() < 1e-12 && (s - 0.08).abs() < 1e-12);
+
+        // The combined systematic term is wider than k_c alone, so the band widens.
+        let p = UncertaintyParams::default();
+        let kc_only = relative_uncertainty(None, SensorFamily::Modis, Some((1.11, 0.08)), &p);
+        let both = relative_uncertainty(
+            None,
+            SensorFamily::Modis,
+            Some(combine_factors((1.11, 0.08), (1.13, 0.0113))),
+            &p,
+        );
+        assert!(both.systematic > kc_only.systematic);
+        assert_eq!(both.random, kc_only.random);
+    }
+
+    #[test]
+    fn swath_gap_compensation_flag_defaults_off_and_is_omitted_from_serialization() {
+        let default = UncertaintyParams::default();
+        assert!(!default.tropical_swath_gap_compensation);
+        let json = serde_json::to_string(&default).unwrap();
+        assert!(!json.contains("tropical_swath_gap_compensation"), "{json}");
+
+        let on: UncertaintyParams =
+            serde_json::from_str(r#"{"tropical_swath_gap_compensation":true}"#).unwrap();
+        assert!(on.tropical_swath_gap_compensation);
+        assert_eq!(on.validate(), Ok(()));
+        assert!(serde_json::to_string(&on).unwrap().contains("\"tropical_swath_gap_compensation\":true"));
     }
 
     #[test]

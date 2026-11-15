@@ -55,6 +55,8 @@ SpaceApps2026-MODIS-VIIRS/
 7. Calendar      → Aylık yanma takvimi çıktısı
 ```
 
+**Tropikal swath boşluğu (C10):** `effort.rs` bölgenin `30°G–30°K` kuşağındaki alan ağırlıklı payını hesaplayıp `tropical_swath_gap` bayrağı üretir (MODIS yörünge arası `388.1 km` boşluk, aylık VIIRS FRP'sinin `%10.7–12.5`'i `[14]`). Varsayılan olarak yalnızca bilgi notudur. Opsiyonel telafi (`uncertainty.tropical_swath_gap_compensation`) açılırsa `calendar.rs` yalnızca VIIRS'siz ayların kuşak içi `total_frp` katkısını `k_c × g` ile bir kez çarpar ve `g` yayılımını sistematik belirsizliğe ekler. `k_c` yalnızca iki sensörün birlikte gözlediği hücre-günlerinden ölçüldüğü ve Ω sayıları MODIS-gözlemlenebilir birimde tuttuğu için kayıp çift sayılmaz (ayrıntı: `docs/API.md`, "effort.tropical_swath_gap").
+
 ### Ön filtre: kalıcı sıcak hücre maskesi ve SAMA
 
 FIRMS C2 aylık dosyalarında `type` alanı sürüm 1-2'de tutarsızdır (VIIRS C2 375 m User Guide v1.2, Bölüm 6.1); belirgin statik kaynaklar sıkça `type 0` olarak gelir. `static_mask.rs`, bir H3 r7 hücresini (~5 km²) aynı takvim yılında ≥ `min_active_months` farklı ayda tespit içeriyorsa o yıl için eler. Eşik, `crates/firms-client/examples/static_mask_check.rs` (`tools/static-mask-check.sh`) ile 2013-2024 arşivinden ölçüldü: FIRMS'in kendi `type 1/2` hücreleri doğruluk için alt sınır kabul edildi.

@@ -1041,6 +1041,7 @@ export function useMapPoints(): UseMapPointsResult {
         limit: 4000,
         frpAngleCorrectionPct: null,
         filters: UNFILTERED,
+        tropicalSwathGap: null,
       };
     }
 
@@ -1059,6 +1060,7 @@ export function useMapPoints(): UseMapPointsResult {
       limit: activeData.limit,
       frpAngleCorrectionPct,
       filters: activeData.filters,
+      tropicalSwathGap: activeData.tropicalSwathGap,
     };
   }, [activeData, status, regionsEmpty, error, retry, targetYear, targetMonthNum, frpAngleCorrectionPct]);
 }

@@ -175,6 +175,8 @@ export interface MapPointSet {
   limit: number;
   frpAngleCorrectionPct: number | null;
   filters: ConfidenceFilterInfo;
+  /** From `/api/points`, measured on the period's whole year; null outside the tropical belt. */
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 export interface MonthCell {
@@ -311,10 +313,27 @@ export interface EffortFactor {
   omega: number | null;
 }
 
+/**
+ * MODIS equatorial swath-gap flag (effort metadata): the region has area inside 30°S–30°N, where
+ * gaps between MODIS orbits miss ~10.7–12.5% of monthly VIIRS FRP. Informational unless
+ * `compensation` is set, in which case VIIRS-less tropical totals were scaled by `factor` once.
+ */
+export interface TropicalSwathGapInfo {
+  beltAbsLat: number;
+  /** Area-weighted share of the region inside the belt, 0 < share <= 1. */
+  beltShare: number;
+  basis: "bbox" | "detections";
+  swathGapKm: number;
+  missedFrpLowPct: number;
+  missedFrpHighPct: number;
+  compensation: { factor: number; factorSigma: number } | null;
+}
+
 export interface EffortInfo {
   reliable: boolean;
   reason: string | null;
   factors: EffortFactor[];
+  tropicalSwathGap: TropicalSwathGapInfo | null;
 }
 
 export interface ReportInfo {

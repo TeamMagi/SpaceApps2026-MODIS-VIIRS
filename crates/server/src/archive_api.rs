@@ -20,6 +20,7 @@ use tokio::task::JoinSet;
 
 use pyrosync_core::calendar::compute_anomalies;
 use pyrosync_core::config::PipelineConfig;
+use pyrosync_core::effort::{SwathGapBasis, TropicalSwathGap, flag_tropical_swath_gap};
 use pyrosync_core::harmonize::harmonize_with_links_masked;
 use pyrosync_core::models::{
     CalendarCell, Confidence, DayNight, HarmonizedHotspot, Hotspot, HotspotSource, Sensor,
@@ -1503,6 +1504,9 @@ struct PointsResponse {
     stages: Stages,
     bbox: Option<Extent>,
     filters: ConfidenceFilter,
+    /// Effort metadata for the region. The `/api/series` body is precomputed without any
+    /// geometry, so the flag is computed here at serve time from the year's detection extent.
+    tropical_swath_gap: Option<TropicalSwathGap>,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1686,6 +1690,21 @@ async fn points(
         let mask = config.static_mask.enabled.then(|| {
             StaticMask::from_detections(data.modis.iter().chain(&data.viirs), &config.static_mask)
         });
+        // Measured on the whole year so the flag stays put while the user steps through months.
+        let tropical_swath_gap = extent(
+            data.modis
+                .iter()
+                .chain(&data.viirs)
+                .map(|h| (h.lat, h.lon)),
+        )
+        .and_then(|e| {
+            flag_tropical_swath_gap(
+                e.south,
+                e.north,
+                SwathGapBasis::Detections,
+                config.uncertainty.tropical_swath_gap_compensation,
+            )
+        });
         let (mut modis, mut viirs) = match month {
             Some(m) => (in_month(&data.modis, m), in_month(&data.viirs, m)),
             None => Arc::try_unwrap(data).map_or_else(
@@ -1762,6 +1781,7 @@ async fn points(
                 min_confidence,
                 excluded_detections,
             },
+            tropical_swath_gap,
         }
     })
     .await
@@ -2723,6 +2743,46 @@ mod tests {
             .expect("unknown min_confidence must fail with 400");
         assert_eq!(err.status, StatusCode::BAD_REQUEST);
         assert!(err.message.contains("min_confidence"), "{}", err.message);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn points_flag_tropical_swath_gap_from_the_whole_year_extent() {
+        let dir = temp_archive("points-swath-gap");
+        // July sits outside the belt; August reaches into it, so the yearly extent is 25..35.
+        write_file(
+            &dir,
+            "modis",
+            2010,
+            "Savanna",
+            &[(35.0, "2010-07-01", 0), (34.0, "2010-07-02", 0), (25.0, "2010-08-01", 0)],
+        );
+        write_file(&dir, "modis", 2010, "Steppe", &[(45.0, "2010-07-01", 0)]);
+        let state = state(dir.clone(), u64::MAX);
+        let query = |region: &str| PointsParams {
+            region: Some(region.into()),
+            year: Some("2010".into()),
+            month: Some("7".into()),
+            limit: None,
+            min_confidence: None,
+        };
+
+        let Json(tropical) = points(State(state.clone()), Query(query("Savanna"))).await.ok().unwrap();
+        let json = serde_json::to_value(&tropical).unwrap();
+        let flag = &json["tropical_swath_gap"];
+        assert_eq!(flag["basis"], "detections");
+        assert_eq!(flag["missed_frp_low_pct"], 10.7);
+        assert_eq!(flag["missed_frp_high_pct"], 12.5);
+        assert!(flag["compensation"].is_null());
+        let share = flag["belt_share"].as_f64().unwrap();
+        let expected = pyrosync_core::effort::tropical_belt_share(25.0, 35.0);
+        assert!((share - expected).abs() < 1e-12, "{share} vs {expected}");
+
+        let Json(steppe) = points(State(state), Query(query("Steppe"))).await.ok().unwrap();
+        let json = serde_json::to_value(&steppe).unwrap();
+        assert!(json["tropical_swath_gap"].is_null());
+        assert!(json.as_object().unwrap().contains_key("tropical_swath_gap"));
 
         let _ = std::fs::remove_dir_all(&dir);
     }
