@@ -1,6 +1,6 @@
 import { mockMetadata, mockPoints, mockSeries } from "../mocks";
 import type { FetchPointsParams, PointsResponse, RegionsResponse, SeriesResponse } from "../services/api";
-import { HotspotSource, type PointStages } from "../types";
+import { HotspotSource, type MonthRef, type PointStages } from "../types";
 
 export const DEMO_SOURCE_LABEL = "Synthetic demo data (not NASA FIRMS)";
 
@@ -131,4 +131,55 @@ export function buildDemoPoints(params: FetchPointsParams): PointsResponse {
     filters: { minConfidence: "low", excludedDetections: 0 },
     tropicalSwathGap: null,
   };
+}
+
+/**
+ * Returns the `{ year, month }` covered by the fixture points with the most
+ * harmonized detections, so demo mode can land on a populated map view.
+ */
+export function demoCoveredMonth(): { year: number; month: number } {
+  const counts = new Map<string, { year: number; month: number; count: number }>();
+  for (const point of mockPoints.harmonized) {
+    const year = yearOfIsoTimestamp(point.acquired);
+    const month = monthOfIsoTimestamp(point.acquired);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) continue;
+    const key = `${year}-${month}`;
+    const existing = counts.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      counts.set(key, { year, month, count: 1 });
+    }
+  }
+  let best: { year: number; month: number; count: number } | null = null;
+  for (const entry of counts.values()) {
+    if (!best || entry.count > best.count) {
+      best = entry;
+    }
+  }
+  return best ? { year: best.year, month: best.month } : { year: mockPoints.year, month: 1 };
+}
+
+/**
+ * Reports whether the current region, calendar year, and selected month
+ * already resolve to non-empty demo fixture points on the map.
+ */
+export function isDemoPeriodCovered(
+  region: string,
+  calendarYear: number | null,
+  selectedMonth: MonthRef | null,
+): boolean {
+  if (region !== mockPoints.region || selectedMonth === null) {
+    return false;
+  }
+  if (calendarYear !== null && calendarYear !== selectedMonth.year) {
+    return false;
+  }
+  return (
+    buildDemoPoints({
+      region,
+      year: selectedMonth.year,
+      month: selectedMonth.month,
+    }).harmonized.length > 0
+  );
 }

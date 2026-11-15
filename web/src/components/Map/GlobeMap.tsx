@@ -34,6 +34,7 @@ import MapStateOverlay from "./MapStateOverlay";
 import MapStatusBar from "./MapStatusBar";
 import PointDetail, { applyPointCardAnchor, pointCardAnchor } from "./PointDetail";
 import { useMapModel, useMapSummary, usePaletteVersion, usePointSelection } from "./useMapModel";
+import { useAppStore } from "../../store/useAppStore";
 import styles from "./HotspotMap.module.css";
 import globeStyles from "./GlobeMap.module.css";
 
@@ -95,6 +96,7 @@ export interface GlobeMapProps {
 
 function GlobeMap({ onUnsupported }: GlobeMapProps) {
   const model = useMapModel();
+  const dataMode = useAppStore((state) => state.dataMode);
   const {
     t,
     region,
@@ -793,7 +795,9 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
               <span>{t("mapGlobeOrbitsNote")}</span>
             </p>
           )}
-          <p className={globeStyles.credit}>{t("mapGlobeCredit")}</p>
+          <p className={globeStyles.credit}>
+            {t(dataMode === "demo" ? "mapGlobeCreditDemo" : "mapGlobeCredit")}
+          </p>
         </div>
 
         <MapStateOverlay

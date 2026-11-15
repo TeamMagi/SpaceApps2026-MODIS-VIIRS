@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { formatRegionName, t } from "../content/copy";
+import { buildDemoRegions, demoCoveredMonth, isDemoPeriodCovered } from "../lib/demoData";
 import { aggregateRegionTotals } from "../lib/receiptCounts";
 import {
   areOverridesEqual,
@@ -178,6 +179,19 @@ function invalidateRegionCaches(): void {
   emitChange();
 }
 
+let pendingDemoEntrySelection = useAppStore.getState().dataMode === "demo";
+
+function applyDemoCoveredSelection(): void {
+  const store = useAppStore.getState();
+  if (store.dataMode !== "demo") return;
+  if (isDemoPeriodCovered(store.region, store.calendarYear, store.selectedMonth)) return;
+  const covered = demoCoveredMonth();
+  store.selectMonth(covered);
+  if (useAppStore.getState().calendarYear !== covered.year) {
+    store.setCalendarYear(covered.year);
+  }
+}
+
 useAppStore.subscribe((state, prev) => {
   if (state.dataMode !== prev.dataMode) {
     if (overrideDebounceTimer !== null) {
@@ -185,6 +199,18 @@ useAppStore.subscribe((state, prev) => {
       overrideDebounceTimer = null;
     }
     committedOverrides = state.pipelineOverrides;
+    if (state.dataMode === "demo") {
+      const demoRegionExists = buildDemoRegions().regions.some((r) => r.id === state.region);
+      if (demoRegionExists) {
+        pendingDemoEntrySelection = false;
+        applyDemoCoveredSelection();
+      } else {
+        // Wait for reconcileRegionWithList to fall back to a valid demo region before selecting.
+        pendingDemoEntrySelection = true;
+      }
+    } else {
+      pendingDemoEntrySelection = false;
+    }
     invalidateRegionCaches();
     return;
   }
@@ -369,6 +395,10 @@ function startRegionsFetch(force: boolean): void {
         controller: null,
       };
       reconcileRegionWithList(res.regions);
+      if (pendingDemoEntrySelection && useAppStore.getState().dataMode === "demo") {
+        pendingDemoEntrySelection = false;
+        applyDemoCoveredSelection();
+      }
       emitChange();
     })
     .catch((err: unknown) => {

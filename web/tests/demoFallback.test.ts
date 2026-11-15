@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { decideNextDataMode } from "../src/lib/dataMode.ts";
-import { buildDemoPoints, buildDemoRegions, buildDemoSeries, DEMO_SOURCE_LABEL } from "../src/lib/demoData.ts";
+import {
+  buildDemoPoints,
+  buildDemoRegions,
+  buildDemoSeries,
+  demoCoveredMonth,
+  DEMO_SOURCE_LABEL,
+  isDemoPeriodCovered,
+} from "../src/lib/demoData.ts";
 import { parseHash, serializeHash, type UrlState } from "../src/lib/urlState.ts";
 import { mockPoints, mockSeries } from "../src/mocks/index.ts";
 
@@ -180,4 +187,33 @@ check("decideNextDataMode maps fetch and probe outcomes accurately", () => {
     ),
     { dataMode: "live", dataModeSource: "auto" },
   );
+});
+
+check("demoCoveredMonth returns the busiest covered year/month for buildDemoPoints", () => {
+  const covered = demoCoveredMonth();
+  const points = buildDemoPoints({
+    region: mockPoints.region,
+    year: covered.year,
+    month: covered.month,
+  });
+  assert.ok(points.harmonized.length > 0);
+
+  for (let month = 1; month <= 12; month += 1) {
+    const candidate = buildDemoPoints({
+      region: mockPoints.region,
+      year: mockPoints.year,
+      month,
+    });
+    assert.ok(
+      points.harmonized.length >= candidate.harmonized.length,
+      `expected covered month ${covered.year}-${covered.month} (${points.harmonized.length}) >= month ${month} (${candidate.harmonized.length})`,
+    );
+  }
+
+  assert.equal(isDemoPeriodCovered(mockPoints.region, covered.year, covered), true);
+  assert.equal(isDemoPeriodCovered(mockPoints.region, null, covered), true);
+  assert.equal(isDemoPeriodCovered(mockPoints.region, 2025, null), false);
+  assert.equal(isDemoPeriodCovered(mockPoints.region, 2025, { year: 2025, month: 8 }), false);
+  assert.equal(isDemoPeriodCovered(mockPoints.region, 2025, covered), false);
+  assert.equal(isDemoPeriodCovered("UnknownRegion", covered.year, covered), false);
 });
