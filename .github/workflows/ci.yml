@@ -3,8 +3,17 @@ name: CI
 on:
   push:
     branches: [main]
+    # Documentation-only changes skip CI. data/** and web/** must keep triggering it (web imports data/case-study/turkey/stats.json).
+    paths-ignore:
+      - docs/**
+      - '**/*.md'
+      - GOREVLER.md
   pull_request:
     branches: [main]
+    paths-ignore:
+      - docs/**
+      - '**/*.md'
+      - GOREVLER.md
   workflow_dispatch:
 
 concurrency:
@@ -39,7 +48,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       # Pinned to the local dev image's Rust (1.100); bump together with the Dockerfile.
