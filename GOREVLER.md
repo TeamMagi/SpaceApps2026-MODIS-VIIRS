@@ -253,7 +253,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S6 | Config + calibration + export testleri | Samet | G7, G9, G10 | — | [X] |
 | S4 | Sample/demo veri pipeline'ı | Samet | G1 | Y1, Y2 | [ ] |
 | S5 | GitHub Actions CI/CD kurulumu | Samet | S1 | — | [ ] |
-| S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [ ] |
+| S9 | Belirsizlik tabanının kaynakla güncellenmesi | Samet | — | S10 | [X] |
 | S10 | Mondrian split conformal aralıkları | Samet | S9 | G12 | [ ] |
 | S11 | VIIRS bow-tie silme bölgeleri testi ve eşleştirme duyarlılık API'si | Samet | — | — | [ ] |
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
@@ -922,13 +922,20 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 
 > **Durum notu (Samet, 2026-11-15):** `.github/workflows/ci.yml` eklendi (7bfdb17). Üç iş paralel koşuyor: `rust` (check, clippy `-D warnings`, test), `coverage` (`cargo llvm-cov`, satır kapsamı %80'in altına düşerse kırmızı; yerelde %92) ve `web` (`npm ci`, typecheck, test, build). Actions'ta yeşil tik görülünce kutu işaretlenecek.
 
-### [ ] S9 — Belirsizlik tabanının kaynakla güncellenmesi
+### [X] S9 — Belirsizlik tabanının kaynakla güncellenmesi
 - **Bekler:** — · **Açar:** S10
 - `crates/core/src/uncertainty.rs` içindeki kaynaksız `DEFAULT_MODIS_SENSOR_SIGMA = 0.12` değerini `[12, Bölüm 5.1]` (Freeborn et al. 2014a alt-piksel yerleşim belirsizliği) gereği **`0.266`** olarak güncelleme
 - Literatürde 375 m VIIRS tek-piksel `σ` değeri tablo olarak bulunmadığından (`metinde yok`), `DEFAULT_VIIRS_SENSOR_SIGMA` değerini arşivimizdeki eşzamanlı (`|Δt| ≤ 5 dk`, `FRP > 40 MW`, `A_p < 0.3 km²`) çiftlerin kalıntı yayılımından ölçme ve belgeleme (ölçüm öncesi geçici üst sınır notu: `[05, Bölüm 3.4]` MIR `±%30`)
 - `crates/core/src/uncertainty.rs` ve `crates/core/CLAUDE.md` içindeki varsayım yorumlarını yeni kaynaklarla güncelleme
 - **Kaynak:** `docs/REFERANS_ANALIZI.md` P3, Yol Haritası #6 (+ `[05, 12]`)
 - **Bitti sayılır:** `DEFAULT_MODIS_SENSOR_SIGMA = 0.266` güncellendi, VIIRS tek-piksel `σ` kalıntı ölçümü (ve `[05]` geçici üst sınır notu) belgelendi, `cargo test -p pyrosync-core` geçiyor.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+>
+> - `DEFAULT_MODIS_SENSOR_SIGMA` 0,12 → **0,266** (`[12, Bölüm 5.1]`, Freeborn et al. 2014a alt-piksel yerleşim belirsizliği). `uncertainty.rs` yorumları, `crates/core/CLAUDE.md` ve `pyrosync.example.toml` güncellendi; varsayılan değerleri sabitleyen test yeni değere göre düzeltildi.
+> - **VIIRS tek-piksel σ ölçümü sonuç vermedi:** `tools/viirs_sigma.py` (SNPP × NOAA-20, 2018–2024, 7 büyük yangın ülkesi, `|Δt| ≤ 5 dk`, ≤ 375 m, `FRP > 40 MW`, `A_p < 0.3 km²`) **0 çift** buldu. SNPP ve NOAA-20 yaklaşık 50 dk arayla geçtiği için eşzamanlı çift pratikte yok; NOAA-21 arşivde yok. `DEFAULT_VIIRS_SENSOR_SIGMA = 0.08` geçici varsayım olarak kaldı ve `[05, Bölüm 3.4]` MIR `±%30` geçici üst sınırıyla belgelendi. Pencereyi ~50 dk'ya açmak FRP değişkenliği düzeltmesi gerektirdiğinden temiz bir σ vermez; ayrı karar.
+> - **Yan etki (Görkem için):** `config_digest` tüm `PipelineConfig`'i hash'lediğinden varsayılan değişince `data/derived` paketi bayatlar. Ayrıca `main`'de önceki pipeline değişikliği (statik maske, SAMA) önbellek şemasını 2 → 3 yaptığından paket ve coverage dosyası şu an zaten geçersiz: sunucu `computed` döner, bazı bölgelerde istek zaman aşımına (504) düşer. Paket birleşik kodla yeniden üretilmeli (238 bölge, bu makinede ~100 dk).
+> - `docs/API.md`'deki MODIS `*_lower`/`*_upper` örnekleri ve `docs/TASARIM_METHODS.md` içindeki iki `0.12` ifadesi (Can) güncellenmeli.
 
 ### [ ] S10 — Mondrian split conformal aralıkları
 - **Bekler:** S9 · **Açar:** G12
