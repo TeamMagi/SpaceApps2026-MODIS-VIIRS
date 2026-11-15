@@ -1,7 +1,7 @@
 use std::ops::ControlFlow;
 
 use crate::config::DedupConfig;
-use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
+use crate::h3index::{TimedH3Index, indexed_k_ring, shift_time_clamped};
 use crate::models::Hotspot;
 
 pub(crate) const MAX_TIME_DIFF_SECS: i64 = 8;
@@ -76,13 +76,15 @@ pub fn remove_interscan_duplicates_indexed_with(
         if index.is_some() && (a_size <= 0.0 || a_size.is_nan()) {
             continue;
         }
+        // `None` (no index, or a pixel size so large that the ring would be absurd) selects the
+        // linear time-window scan below, which finds the same pairs.
         let search_k = if index.is_some() {
             let max_extent = (a_size + max_pixel_km) * 0.5;
             let overlap_scale = (1.0 - config.min_overlap_ratio + 1e-12).clamp(0.0, 1.0);
             // +1 ring accounts for cell-edge queries and smaller icosahedron face-center cells.
-            k_ring_for_radius(max_extent * overlap_scale) + 1
+            indexed_k_ring(max_extent * overlap_scale, 1)
         } else {
-            0
+            None
         };
 
         let mut group = vec![i];
@@ -111,8 +113,8 @@ pub fn remove_interscan_duplicates_indexed_with(
                 hotspots[i].acquired,
                 config.max_time_diff_secs.saturating_add(1),
             );
-            let used_index = index.as_ref().is_some_and(|idx| {
-                idx.candidates_for_pos_within_into(i, search_k, t_min, t_max, &mut candidates)
+            let used_index = index.as_ref().zip(search_k).is_some_and(|(idx, k)| {
+                idx.candidates_for_pos_within_into(i, k, t_min, t_max, &mut candidates)
             });
 
             if used_index {
@@ -834,6 +836,28 @@ mod tests {
         assert_eq!(hotspots.len(), 1);
         assert_eq!(hotspots[0].confidence, Confidence::High);
         assert_eq!(frp_values(&hotspots), vec![20.0]);
+    }
+
+    #[test]
+    fn corrupt_pixel_size_scans_linearly_and_matches_reference() {
+        // One absurd `scan` sizes every anchor's search ring by the dataset-wide maximum pixel,
+        // which used to overflow `u32` (debug) or request a planet-sized H3 disk (release).
+        let cfg = DedupConfig::default();
+        for scan in [1.0e300, 1.0e12, 1.0e5] {
+            let mut data = synthetic_dedup_dataset(0x0BAD_C0DE_u64, 300);
+            data[150].scan = scan;
+
+            let mut actual = data.clone();
+            let mut expected = data.clone();
+            let actual_origin = remove_interscan_duplicates_indexed_with(&mut actual, &cfg);
+            let expected_origin = reference_dedup(&mut expected, &cfg);
+
+            assert_eq!(actual_origin, expected_origin, "origin scan={scan}");
+            assert_eq!(actual.len(), expected.len(), "len scan={scan}");
+            for (i, (a, e)) in actual.iter().zip(expected.iter()).enumerate() {
+                assert_hotspot_bits_eq(a, e, &format!("scan={scan} idx={i}"));
+            }
+        }
     }
 
     #[test]

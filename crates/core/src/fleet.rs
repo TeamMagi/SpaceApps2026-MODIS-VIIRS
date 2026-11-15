@@ -2,7 +2,7 @@ use std::ops::ControlFlow;
 
 use crate::config::{FleetConfig, VzaConfig};
 use crate::dedup::haversine_km;
-use crate::h3index::{TimedH3Index, k_ring_for_radius, shift_time_clamped};
+use crate::h3index::{TimedH3Index, indexed_k_ring, shift_time_clamped};
 use crate::models::{Hotspot, Sensor};
 use crate::vza;
 
@@ -115,21 +115,21 @@ pub fn consolidate_fleet_indexed_with(
     let mut used = vec![false; order.len()];
     let mut entries: Vec<(FleetObservation, Vec<usize>)> = Vec::with_capacity(order.len());
 
-    let use_spatial = fleet.radius_km.is_finite();
-    let index = use_spatial.then(|| {
+    // +1 ring accounts for cell-edge queries and smaller icosahedron face-center cells so the
+    // spatial filter remains a strict superset of `haversine_km <= fleet.radius_km`. A radius
+    // that is not finite, or so wide that the ring would exhaust memory, scans linearly instead.
+    let search_k = fleet
+        .radius_km
+        .is_finite()
+        .then(|| indexed_k_ring(fleet.radius_km, 1))
+        .flatten();
+    let index = search_k.map(|_| {
         TimedH3Index::build(
             order
                 .iter()
                 .map(|&idx| (hotspots[idx].lat, hotspots[idx].lon, hotspots[idx].acquired)),
         )
     });
-    let search_k = if use_spatial {
-        // +1 ring accounts for cell-edge queries and smaller icosahedron face-center cells so
-        // the spatial filter remains a strict superset of `haversine_km <= fleet.radius_km`.
-        k_ring_for_radius(fleet.radius_km) + 1
-    } else {
-        0
-    };
     let mut candidates = Vec::new();
 
     for p in 0..order.len() {
@@ -174,8 +174,8 @@ pub fn consolidate_fleet_indexed_with(
 
         let t_min = shift_time_clamped(anchor.acquired, -1);
         let t_max = shift_time_clamped(anchor.acquired, window_secs.saturating_add(1));
-        let used_index = index.as_ref().is_some_and(|idx| {
-            idx.candidates_for_pos_within_into(p, search_k, t_min, t_max, &mut candidates)
+        let used_index = index.as_ref().zip(search_k).is_some_and(|(idx, k)| {
+            idx.candidates_for_pos_within_into(p, k, t_min, t_max, &mut candidates)
         });
 
         if used_index {
@@ -913,6 +913,24 @@ mod tests {
                 let expected = reference_fleet(&data, *window_secs, fleet_cfg, &vza_cfg);
                 assert_fleet_bits_eq(&actual, &expected, &format!("{label} seed={seed}"));
             }
+        }
+    }
+
+    #[test]
+    fn unvalidated_huge_radius_scans_linearly_and_matches_reference() {
+        // `validate` caps the radius, but the library accepts any finite value; a ring of that
+        // size used to overflow `u32` (debug) or ask for a planet-sized disk (release).
+        let vza_cfg = VzaConfig::default();
+        let data = synthetic_fleet_dataset(0x5E_ED0F_CAFE_u64, 300);
+        for radius_km in [1.0e12, 1.0e5, 1.0e300] {
+            let fleet_cfg = FleetConfig {
+                viirs_window_secs: 3600,
+                modis_window_secs: 10_800,
+                radius_km,
+            };
+            let actual = consolidate_fleet_indexed_with(&data, 3600, &fleet_cfg, &vza_cfg);
+            let expected = reference_fleet(&data, 3600, &fleet_cfg, &vza_cfg);
+            assert_fleet_bits_eq(&actual, &expected, &format!("radius_km={radius_km}"));
         }
     }
 
