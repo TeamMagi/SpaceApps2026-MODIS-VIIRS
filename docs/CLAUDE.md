@@ -21,6 +21,7 @@
 | `TASARIM_BELIRSIZLIK_RENK.md` | Grafik türüne göre belirsizlik gösterimi, erişilebilir renk skalaları, palet seçici (C7) |
 | `RENK_DENETIMI.md` | `tools/cvd_check.py` ile üretilen renk körlüğü / kontrast denetim raporu (elle düzenlenmez) |
 | `SUREKLILIK_ANALIZI.md` | G11 sensör dikişleri (2002 Aqua, 2012 SNPP, 2018 NOAA-20) süreklilik referans ölçümü: 10 ülkede ham vs harmonize metrik analizi |
+| `KOPRU_KATSAYILARI.md` | K13 S-NPP ↔ NOAA-20 sayım/FRP köprü katsayıları ve Terra `≤20 dk` VZA kontrolü: 6 ülkede arşiv ölçümü |
 
 ## Doküman Ekleme Kuralları
 
