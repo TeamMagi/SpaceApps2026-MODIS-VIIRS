@@ -17,3 +17,4 @@ pub mod events;
 pub mod density;
 pub mod quality;
 pub mod fusion;
+pub mod pre_aqua;

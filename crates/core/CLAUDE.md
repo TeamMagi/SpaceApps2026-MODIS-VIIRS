@@ -26,7 +26,8 @@
 | `sama.rs` | Güney Atlantik Manyetik Anomalisi kutusu (110°B–11°D, 55°G–7°K) içindeki gece VIIRS tespiti testi |
 | `events.rs` | Yangın olayı kümeleme (ST-DBSCAN + ardışık gün kuralı) ve `no_detection_days` (bilinen Terra kesintileri dahil) |
 | `density.rs` | Eşit açılı global enlem/boylam ızgarası (`cell_index`) ve aylık hücre bazlı ham/harmonize sayı ve FRP toplamı (`aggregate_density`) |
-| `quality.rs` | Tarihsel sensör anomalisi ve kesinti dönemleri için ay bazında `QualityFlag` etiketleri ve uyarı açıklamaları |
+| `quality.rs` | Tarihsel sensör anomalisi ve kesinti dönemleri için ay bazında `QualityFlag` etiketleri ve uyarı açıklamaları; süregelen (bitiş tarihsiz) bayraklar `is_open_ended()` ile yanıt `warnings`'inden hariç tutulur, hücre bayrağı olarak kalır |
+| `pre_aqua.rs` | Terra-only dönem (2000-11..2002-06) için Remy & Kaiser (2014) uyarlaması kurtarma tahmini: `2002-07..2020-12` takvim-ayı Terra+Aqua/Terra oranı (havuz ≥ 400 Terra tespit olana dek ±1, ±2 ay, tüm aylara genişler; medyandan en uzak %10 ay çıkarılır), `CalendarCell.count_recovered*` (saf, bulut filtresi yok; K8 alanları `None` kalır) |
 
 ## Teknik Kısıtlar
 

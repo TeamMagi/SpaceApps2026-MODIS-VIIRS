@@ -291,6 +291,9 @@ interface WireCalendarCell {
   frp_per_detection_eq: number | null;
   anomaly: number | null;
   quality_flags?: string[];
+  count_recovered?: number;
+  count_recovered_lower?: number;
+  count_recovered_upper?: number;
 }
 
 interface WireEffortFactor {
@@ -744,6 +747,9 @@ function adaptCalendarCell(w: WireCalendarCell): CalendarCell {
     frpPerDetectionEq: w.frp_per_detection_eq,
     anomaly: w.anomaly,
     qualityFlags: w.quality_flags ?? [],
+    ...(w.count_recovered !== undefined && { countRecovered: w.count_recovered }),
+    ...(w.count_recovered_lower !== undefined && { countRecoveredLower: w.count_recovered_lower }),
+    ...(w.count_recovered_upper !== undefined && { countRecoveredUpper: w.count_recovered_upper }),
   };
 }
 

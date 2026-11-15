@@ -415,6 +415,10 @@ export interface CalendarCell {
   frpPerDetectionEq: number | null;
   anomaly: number | null;
   qualityFlags: readonly string[];
+  /** ESTIMATE of MODIS-observable detections for Terra-only months (2000-11..2002-06); not comparable with countNormalized. */
+  countRecovered?: number;
+  countRecoveredLower?: number;
+  countRecoveredUpper?: number;
 }
 
 export interface EffortFactor {

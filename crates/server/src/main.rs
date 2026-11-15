@@ -1420,6 +1420,18 @@ fn pre_aqua_warning(excluded: usize) -> Option<String> {
     })
 }
 
+fn pre_aqua_recovery_warning(calendar: &[CalendarCell]) -> Option<String> {
+    let recovered = calendar
+        .iter()
+        .filter(|c| c.count_recovered.is_some())
+        .count();
+    (recovered > 0).then(|| {
+        format!(
+            "{recovered} Terra-only months (2000-11..2002-06) carry an ESTIMATED MODIS-observable count (count_recovered): detections multiplied by a Terra+Aqua/Terra ratio calibrated per calendar month on 2002-07..2020-12 (pool widened to +-1, +-2 months or all months until at least 400 Terra detections; 10% outlier months trimmed). Adapted from Remy & Kaiser (2014) without their cloud-difference filter; comparable with the MODIS-only baseline era, not with count_normalized."
+        )
+    })
+}
+
 fn quality_flag_label(flag: pyrosync_core::quality::QualityFlag) -> &'static str {
     use pyrosync_core::quality::QualityFlag;
     match flag {
@@ -1437,7 +1449,7 @@ fn quality_flag_warnings(calendar: &[CalendarCell]) -> Vec<String> {
 
     let mut by_flag: BTreeMap<QualityFlag, Vec<(i32, u32)>> = BTreeMap::new();
     for cell in calendar {
-        for &flag in &cell.quality_flags {
+        for &flag in cell.quality_flags.iter().filter(|f| f.reported_as_warning()) {
             by_flag
                 .entry(flag)
                 .or_default()
@@ -1481,6 +1493,7 @@ fn build_effort_and_warnings_from_counts(
         build_warnings_from_counts(failure_count, singular, plural, uncovered);
     let excluded = pyrosync_core::effort::pre_aqua_excluded_months(harmonized).len();
     warnings.extend(pre_aqua_warning(excluded));
+    warnings.extend(pre_aqua_recovery_warning(calendar));
     warnings.extend(quality_flag_warnings(calendar));
     let effort = EffortResponse {
         reliable: reason.is_none(),
@@ -2590,6 +2603,16 @@ mod tests {
     }
 
     #[test]
+    fn pre_aqua_recovery_warning_counts_recovered_months_only() {
+        let mut cells = calendar_cells_for_test(2001, 1, 5);
+        assert_eq!(pre_aqua_recovery_warning(&cells), None);
+        cells[0].count_recovered = Some(7.0);
+        let text = pre_aqua_recovery_warning(&cells).unwrap();
+        assert!(text.starts_with("1 Terra-only months"), "{text}");
+        assert!(text.contains("Remy & Kaiser"));
+    }
+
+    #[test]
     fn quality_flag_warnings_summarize_and_truncate_months() {
         use pyrosync_core::quality::{QualityFlag, flag_description};
 
@@ -2607,19 +2630,15 @@ mod tests {
         cells.push(outage_cell);
 
         let warnings = quality_flag_warnings(&cells);
-        assert_eq!(warnings.len(), 2);
+        assert!(cells[..8]
+            .iter()
+            .all(|c| c.quality_flags == vec![QualityFlag::ModisOrbitalDrift]));
+        assert_eq!(warnings.len(), 1, "{warnings:?}");
         assert_eq!(
             warnings[0],
             format!(
                 "1 month is affected by Terra MOD14 data outages (2001-06): {}",
                 flag_description(QualityFlag::TerraOutage)
-            )
-        );
-        assert_eq!(
-            warnings[1],
-            format!(
-                "8 months are affected by MODIS orbital drift (2022-01, 2022-02, 2022-03, 2022-04, 2022-05, 2022-06, ...): {}",
-                flag_description(QualityFlag::ModisOrbitalDrift)
             )
         );
     }
@@ -3830,6 +3849,9 @@ mod tests {
             sfai: None,
             quality_flags: Vec::new(),
             conformal: None,
+            count_recovered: None,
+            count_recovered_lower: None,
+            count_recovered_upper: None,
         }]
     }
 

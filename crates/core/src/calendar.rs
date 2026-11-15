@@ -264,11 +264,15 @@ pub fn build_calendar_with_conformal(
                 sfai: None,
                 quality_flags: month_quality_flags(year, month, &bucket.platforms),
                 conformal: conformal_band,
+                count_recovered: None,
+                count_recovered_lower: None,
+                count_recovered_upper: None,
             }
         })
         .collect();
 
     compute_anomalies(&mut cells);
+    crate::pre_aqua::apply_recovery(hotspots, &mut cells);
     cells.sort_by_key(|a| (a.year, a.month));
     cells
 }
@@ -475,6 +479,9 @@ mod tests {
             sfai: None,
             quality_flags: Vec::new(),
             conformal: None,
+            count_recovered: None,
+            count_recovered_lower: None,
+            count_recovered_upper: None,
         }
     }
 

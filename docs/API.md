@@ -120,7 +120,9 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 | `frp_per_detection_eq` | number \| null | MODIS eşdeğeri FRP / normalize tespit (`total_frp / count_normalized`). 2012 MODIS→VIIRS geçişinde süreklilik için `mean_frp` yerine önerilen metrik |
 | `anomaly` | number \| null | `count_normalized` değerinin aynı takvim ayındaki diğer yıllara göre z-skoru |
 | `sfai` | number \| null | `count_normalized` için dayanıklı z-skoru (SFAI): `(x − medyan) / (0.65 × 1.4826 × MAD + 0.35 × σ)`; σ popülasyon standart sapmasıdır. Payda ağırlıkları flare-chronos referans projesinden gelir, medyan payı bize aittir. `anomaly` ile aynı havuz (aynı takvim ayı); en az 3 değer gerekir, payda 0 ise `null` |
-| `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz |
+| `quality_flags` | array of string | *(Opsiyonel; boşsa alanda yer almaz)* Ay içindeki tarihsel sensör anomalisi veya kesinti bayrakları: `terra_early_record` (Terra MODIS `< 2000-11`), `terra_outage` (bilinen Terra MOD14 kesintileri: `2000-08`, `2001-06`, `2001-07`, `2002-03`), `snpp_early_calibration` (S-NPP `< 2012-04-03`, ~50 K nadir sapması), `snpp_spurious_scan_lines` (S-NPP `< 2012-10-15`, sahte tarama satırları), `modis_orbital_drift` (`2021+` Terra/Aqua yörünge sürüklenmesi). Bayraklar yalnızca etiket amaçlıdır; normalleştirme veya baz değerlerden dışlama yapılmaz. Bitiş tarihi olmayan (süregelen) bayraklar (`modis_orbital_drift`) hücrede kalır ama `warnings` içine yazılmaz; her yanıtta çıkacak bir gürültü satırı olurdu (`QualityFlag::is_open_ended`) |
+| `count_recovered` | number \| yok | *(Opsiyonel; yalnızca Terra-only aylarda `2000-11..2002-06` ve faktör varsa)* **TAHMİN**: MODIS-gözlenebilir (Terra+Aqua eşdeğeri) tespit sayısı, `count × k`. `k`, `2002-07..2020-12` aylarında takvim-ayı bazında Terra+Aqua / Terra oranından kalibre edilir (Remy & Kaiser 2014'ün uyarlaması, bulut-farkı filtresi olmadan). MODIS-yalnız taban dönem sayısıyla karşılaştırılabilir; filo-normalize `count_normalized` ile karşılaştırılamaz |
+| `count_recovered_lower` / `count_recovered_upper` | number \| yok | `count_recovered` bandı: kalibrasyon aylarının oranlarının 10. / 90. yüzdeliği × `count` (havuzda 10 aydan azsa min / maks) |
 | `conformal` | object \| yok | Mondrian split conformal bandı (`total_frp` için): `p68_lower`/`p68_upper`, `p90_lower`/`p90_upper` (MW, alt sınır 0'a kırpılır), `era` (`pre_viirs` \| `viirs`), `bin`, `n_cal`, `extrapolated`. Yalnızca kalibre tablo yüklüyse ve hücre uygunsa bulunur; Terra-only aylarda (2002-07 öncesi) yoktur. Analitik `total_frp_lower`/`total_frp_upper` yerine geçmez, ayrı anlamdadır. Ayrıntı için "Belirsizlik" bölümüne bakın |
 
 `anomaly` hesabı: aynı takvim ayında en az 3 hücre ve sıfırdan farklı yayılım (standart sapma) gerekir. Standart sapma popülasyon standart sapmasıdır. Bu koşullar sağlanmazsa `null` döner.
@@ -143,6 +145,8 @@ Ham FRP kayıtlarından önce `type` değeri 0 olmayanlar (yanardağ, statik kay
 `*_covered = false` "gözlenemedi" demektir, sıfır değildir: bu durumda sayım ve toplam 0 gelir ancak istemci bu ayı eksik veri olarak ele almalıdır. `modis_count + viirs_count` toplamı tüm pencerede `counts.raw_detections` ile eşittir.
 
 Terra'nın tek başına çalıştığı dönem (2002-07'den önce) için: seri 2002-07 veya sonrasını da içeriyorsa bu aylar karşılaştırılamaz sayılır. Bu aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` olur; `count` ve FRP alanları ham değerleriyle kalır. Bu durumda `warnings` içinde bir uyarı bulunur. Seri tamamen 2002-07 öncesindeyse bu dışlama uygulanmaz.
+
+Terra-only aylarda `count_normalized`, `effort_omega` ve `anomaly` `null` kalır (K8 kararı değişmez); bu aylar için ayrı etiketli `count_recovered*` tahmini verilir. Faktör: takvim ayı havuzunda toplam Terra-görünür tespit ≥ 400 olmalıdır (makaledeki N ≥ 400); değilse havuz sırayla ±1 ay, ±2 ay, tüm aylara genişler, yine < 400 ise `count_recovered*` alanları yer almaz. Havuzdaki en uç %10 ay oranı (medyandan uzaklığa göre) çıkarılır. `2000-11` öncesi aylar (`terra_early_record`) tahmin almaz. Bu durumda `warnings` içinde bir uyarı bulunur.
 
 ### Güven filtresi (`min_confidence`)
 
@@ -229,7 +233,8 @@ String dizisidir. Boş olabilir. Şu durumlarda uyarı eklenir:
 - Arşiv yıl aralığı kırpıldığında (`calendar`).
 - Takvimde NOAA-21 eksikliği bildirildiğinde (`calendar`).
 - Yıl aralığında Terra-only dönem dışlandığında (bkz. "CalendarCell").
-- Takvim hücrelerinde tarihsel sensör anomalisi veya kesinti bayrağı (`quality_flags`) bulunan aylar olduğunda, her farklı bayrak için bir özet uyarı eklenir (en fazla 6 `YYYY-MM` ayı listelenir, fazlası `...` ile kısaltılır).
+- Terra-only aylara `count_recovered` tahmini eklendiğinde (ay sayısı, havuz kuralı, uyarlama notu).
+- Takvim hücrelerinde tarihsel sensör anomalisi veya kesinti bayrağı (`quality_flags`) bulunan aylar olduğunda, her farklı bayrak için bir özet uyarı eklenir (en fazla 6 `YYYY-MM` ayı listelenir, fazlası `...` ile kısaltılır). Süregelen bayraklar (`modis_orbital_drift`, `2021+`) için uyarı üretilmez, yalnızca hücre bayrağı kalır; sınırlı geçmiş bayraklar (Terra erken kayıt, Terra kesintileri, S-NPP erken kalibrasyon / tarama satırları) uyarı üretmeye devam eder.
 - Yerel arşivde beklenen dosya yoksa (`calendar`).
 
 ### report
