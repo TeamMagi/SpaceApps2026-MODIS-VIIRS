@@ -116,6 +116,22 @@
   background: var(--color-hover);
 }
 
+.subtitleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.customBadge {
+  padding: 1px var(--space-half);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-2xs);
+  white-space: nowrap;
+}
+
 @media (pointer: coarse) {
   .close,
   .retry {

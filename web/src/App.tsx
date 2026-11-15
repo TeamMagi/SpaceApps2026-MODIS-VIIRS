@@ -5,6 +5,7 @@ import BurnCalendar from "./components/Calendar/BurnCalendar";
 import CliffChart from "./components/Charts/CliffChart";
 import BriefingDrawer from "./components/Drawers/BriefingDrawer";
 import MethodsDrawer from "./components/Drawers/MethodsDrawer";
+import SettingsDrawer from "./components/Drawers/SettingsDrawer";
 import Header from "./components/Header/Header";
 import Headline from "./components/Headline/Headline";
 import MapStateOverlay from "./components/Map/MapStateOverlay";
@@ -49,6 +50,7 @@ export default function App() {
       overlays={
         <>
           <MethodsDrawer />
+          <SettingsDrawer />
           <BriefingDrawer />
         </>
       }

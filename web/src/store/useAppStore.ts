@@ -1,4 +1,10 @@
 import { create } from "zustand";
+import {
+  areOverridesEqual,
+  DEFAULT_PIPELINE_CONFIG,
+  isDefaultOverrideValue,
+  normalizeOverrides,
+} from "../lib/pipelineOverrides";
 import { DEFAULT_REGION, readUrlState, type UrlState } from "../lib/urlState";
 import type {
   ActivePhase,
@@ -11,6 +17,9 @@ import type {
   Palette,
   Phase,
   PhaseDurations,
+  PipelineConfig,
+  PipelineOverrideKey,
+  PipelineOverrides,
   RegionId,
   Theme,
   ViewMode,
@@ -96,6 +105,8 @@ export interface AppState {
   openDrawer: DrawerId | null;
   presentation: boolean;
   nrtDays: number;
+  serverConfig: PipelineConfig | null;
+  pipelineOverrides: PipelineOverrides;
 
   setRegion: (region: RegionId) => void;
   /** The single user-facing mode action (button click, H key). */
@@ -116,6 +127,9 @@ export interface AppState {
   setPresentation: (on: boolean) => void;
   togglePresentation: () => void;
   setNrtDays: (days: number) => void;
+  setServerConfig: (config: PipelineConfig) => void;
+  setPipelineOverride: (key: PipelineOverrideKey, value: number | undefined) => void;
+  resetPipelineOverrides: () => void;
   /** Applies a parsed URL hash; mode changes snap without animation. */
   applyUrlState: (url: Partial<UrlState>) => void;
   /** Jumps to the final state of the current target, cancelling any run. */
@@ -205,6 +219,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   openDrawer: null,
   presentation: false,
   nrtDays: 2,
+  serverConfig: null,
+  pipelineOverrides: initialUrl.overrides ? { ...initialUrl.overrides } : {},
 
   setRegion: (region) => {
     const state = get();
@@ -245,6 +261,29 @@ export const useAppStore = create<AppState>()((set, get) => ({
   setPresentation: (presentation) => set({ presentation }),
   togglePresentation: () => set((s) => ({ presentation: !s.presentation })),
   setNrtDays: (days) => set({ nrtDays: Math.max(1, Math.min(5, Math.round(days))) }),
+  setServerConfig: (config) =>
+    set((s) => {
+      const nextOverrides = normalizeOverrides(s.pipelineOverrides, config);
+      return {
+        serverConfig: config,
+        pipelineOverrides: areOverridesEqual(s.pipelineOverrides, nextOverrides)
+          ? s.pipelineOverrides
+          : nextOverrides,
+      };
+    }),
+  setPipelineOverride: (key, value) =>
+    set((s) => {
+      const defaults = s.serverConfig ?? DEFAULT_PIPELINE_CONFIG;
+      const next: PipelineOverrides = { ...s.pipelineOverrides };
+      if (value === undefined || !Number.isFinite(value) || isDefaultOverrideValue(key, value, defaults)) {
+        delete next[key];
+      } else {
+        next[key] = value;
+      }
+      return areOverridesEqual(s.pipelineOverrides, next) ? s : { pipelineOverrides: next };
+    }),
+  resetPipelineOverrides: () =>
+    set((s) => (Object.keys(s.pipelineOverrides).length === 0 ? s : { pipelineOverrides: {} })),
   applyUrlState: (url) => {
     const state = get();
     const nextRegion = url.region ?? state.region;
@@ -279,6 +318,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
         : url.data === "live" || (url.data === undefined && state.dataMode === "demo" && state.dataModeSource === "manual")
           ? "auto"
           : state.dataModeSource;
+    const defaults = state.serverConfig ?? DEFAULT_PIPELINE_CONFIG;
+    const nextOverrides = normalizeOverrides(url.overrides, defaults);
     set({
       region: nextRegion,
       lang: url.lang ?? state.lang,
@@ -288,6 +329,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
       selectedMonth: nextSelectedMonth,
       calendarYear: nextCalendarYear,
       yearPlaying: regionChanged ? false : state.yearPlaying,
+      pipelineOverrides: areOverridesEqual(state.pipelineOverrides, nextOverrides)
+        ? state.pipelineOverrides
+        : nextOverrides,
       ...snapped(state, url.mode ?? state.targetMode),
     });
   },

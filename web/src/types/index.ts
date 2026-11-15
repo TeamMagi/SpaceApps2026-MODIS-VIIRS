@@ -52,7 +52,46 @@ export type ActivePhase = Exclude<Phase, "idle">;
 export type PhaseDurations = Readonly<Record<ActivePhase, number>>;
 
 /** Overlay panels. `receipt` is the correction receipt popover under the count. */
-export type DrawerId = "methods" | "briefing" | "receipt";
+export type DrawerId = "methods" | "settings" | "briefing" | "receipt";
+
+export interface PipelineDedupConfig {
+  maxTimeDiffSecs: number;
+  minOverlapRatio: number;
+}
+
+export interface PipelineFleetConfig {
+  viirsWindowSecs: number;
+  modisWindowSecs: number;
+  radiusKm: number;
+}
+
+export interface PipelineMatchingConfig {
+  radiusKm: number;
+  windowSecs: number;
+}
+
+export interface PipelineVzaConfig {
+  a: number;
+  b: number;
+  c: number;
+}
+
+export interface PipelineConfig {
+  dedup: PipelineDedupConfig;
+  fleet: PipelineFleetConfig;
+  matching: PipelineMatchingConfig;
+  vza?: PipelineVzaConfig;
+}
+
+export interface PipelineOverrides {
+  dedupTimeSecs?: number;
+  dedupOverlap?: number;
+  matchRadiusKm?: number;
+  matchWindowSecs?: number;
+  fleetRadiusKm?: number;
+}
+
+export type PipelineOverrideKey = keyof PipelineOverrides;
 
 /** Async fetch status exposed by data hooks. */
 export type AsyncStatus = "loading" | "ready" | "empty" | "error";

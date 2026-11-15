@@ -17,6 +17,7 @@ import styles from "./Header.module.css";
 export default function Header() {
   const { t } = useCopy();
   const methodsOpen = useAppStore((state) => state.openDrawer === "methods");
+  const settingsOpen = useAppStore((state) => state.openDrawer === "settings");
   const showDrawer = useAppStore((state) => state.showDrawer);
 
   return (
@@ -38,6 +39,15 @@ export default function Header() {
           onClick={() => showDrawer("methods")}
         >
           {t("navMethods")}
+        </button>
+        <button
+          type="button"
+          className={styles.methods}
+          aria-haspopup="dialog"
+          aria-expanded={settingsOpen}
+          onClick={() => showDrawer("settings")}
+        >
+          {t("navSettings")}
         </button>
         <LangSwitch />
       </div>

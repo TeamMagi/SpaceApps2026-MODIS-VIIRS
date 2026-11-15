@@ -1,5 +1,11 @@
-import type { DataMode, Lang, MonthRef, Palette, RegionId, ViewMode } from "../types";
+import type { DataMode, Lang, MonthRef, Palette, PipelineConfig, PipelineOverrides, RegionId, ViewMode } from "../types";
 import { monthKey } from "./format";
+import {
+  DEFAULT_PIPELINE_CONFIG,
+  normalizeOverrides,
+  parseBoundedNumber,
+  PIPELINE_PARAM_SPECS,
+} from "./pipelineOverrides";
 
 export const DEFAULT_REGION: RegionId = "Turkey";
 
@@ -45,6 +51,7 @@ export interface UrlState {
   lang: Lang;
   palette?: Palette;
   data?: DataMode;
+  overrides?: PipelineOverrides;
 }
 
 function parseMonth(value: string): MonthRef | null | undefined {
@@ -94,10 +101,31 @@ export function parseHash(hash: string): Partial<UrlState> {
   if (data === "demo" || data === "live") {
     result.data = data;
   }
+
+  const overrides: PipelineOverrides = {};
+  let hasOverrides = false;
+  for (const spec of PIPELINE_PARAM_SPECS) {
+    const parsed = parseBoundedNumber(
+      params.get(spec.hashKey),
+      spec.apiMin,
+      spec.apiMax,
+      spec.apiInteger,
+    );
+    if (parsed !== undefined) {
+      overrides[spec.key] = parsed;
+      hasOverrides = true;
+    }
+  }
+  if (hasOverrides) {
+    result.overrides = overrides;
+  }
   return result;
 }
 
-export function serializeHash(state: UrlState): string {
+export function serializeHash(
+  state: UrlState,
+  defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+): string {
   const params = new URLSearchParams();
   params.set("region", state.region);
   params.set("mode", state.mode);
@@ -109,12 +137,23 @@ export function serializeHash(state: UrlState): string {
   if (state.data === "demo") {
     params.set("data", "demo");
   }
+  const normalized = normalizeOverrides(state.overrides, defaults);
+  for (const spec of PIPELINE_PARAM_SPECS) {
+    const val = normalized[spec.key];
+    if (val !== undefined) {
+      const formatted = spec.apiInteger ? String(Math.round(val)) : String(Number(val.toFixed(4)));
+      params.set(spec.hashKey, formatted);
+    }
+  }
   return `#${params.toString()}`;
 }
 
-export function syncUrlHash(state: UrlState): void {
+export function syncUrlHash(
+  state: UrlState,
+  defaults: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+): void {
   if (typeof window === "undefined") return;
-  const next = serializeHash(state);
+  const next = serializeHash(state, defaults);
   if (window.location.hash !== next) {
     window.history.replaceState(
       window.history.state,

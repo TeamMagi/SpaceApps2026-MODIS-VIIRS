@@ -84,6 +84,7 @@ const enBase = {
 
   // Header
   navMethods: "Methods",
+  navSettings: "Settings",
   modeBadgeArchive: "FIRMS archive",
   modeBadgeArchiveYears: "FIRMS archive · {first}–{last}",
   modeBadgeDemo: "Demo data (synthetic)",
@@ -290,6 +291,32 @@ const enBase = {
   methodsSourceCitationDemo:
     "Synthetic demo data · 2021 Mediterranean cluster + 2000–2025 synthetic series (not NASA FIRMS data)",
 
+  // Settings
+  settingsTitle: "Settings",
+  settingsNote:
+    "Adjustments recompute the selected month’s map points and stage counts. The yearly chart and calendar always use server defaults.",
+  settingsDedupTimeLabel: "Dedup time window",
+  settingsDedupOverlapLabel: "Dedup overlap ratio",
+  settingsMatchRadiusLabel: "Cross-sensor match radius",
+  settingsMatchWindowLabel: "Cross-sensor match window",
+  settingsFleetRadiusLabel: "Fleet merge radius",
+  settingsHintSec: "Default {default} s · Range {min}–{max} s",
+  settingsHintPct: "Default {default}% · Range {min}–{max}%",
+  settingsHintKm: "Default {default} km · Range {min}–{max} km",
+  settingsHintMin: "Default {default} min · Range {min}–{max} min",
+  settingsUnitSec: "s",
+  settingsUnitPct: "%",
+  settingsUnitKm: "km",
+  settingsUnitMin: "min",
+  settingsValueSec: "{value} s",
+  settingsValuePct: "{value}%",
+  settingsValueKm: "{value} km",
+  settingsValueMin: "{value} min",
+  settingsNumberInputAria: "{label} ({unit})",
+  settingsReset: "Reset to defaults",
+  settingsCustomBadge: "Custom thresholds",
+  settingsCustomBadgeAria: "Custom thresholds active. Open settings",
+
   // Briefing
   briefingTitle: "Regional briefing",
   briefingFinding: "In {region}, {pct} of raw detections were duplicates ({removed} of {raw}).",
@@ -356,6 +383,7 @@ const trBase = {
   countOpenReceipt: "Bu sayıya nasıl ulaştığımızı göster",
 
   navMethods: "Yöntemler",
+  navSettings: "Ayarlar",
   modeBadgeArchive: "FIRMS arşivi",
   modeBadgeArchiveYears: "FIRMS arşivi · {first}–{last}",
   modeBadgeDemo: "Demo veri (sentetik)",
@@ -553,6 +581,31 @@ const trBase = {
   methodsSourceCitationFallback: "NASA FIRMS arşivi · MODIS C6.1 / VIIRS S-NPP",
   methodsSourceCitationDemo:
     "Sentetik demo verisi · 2021 Akdeniz kümesi + 2000–2025 sentetik seri (NASA FIRMS verisi değildir)",
+
+  settingsTitle: "Ayarlar",
+  settingsNote:
+    "Değişiklikler seçili ayın harita noktalarını ve aşama sayılarını yeniden hesaplar. Yıllık grafik ve takvim her zaman sunucu varsayılanlarını kullanır.",
+  settingsDedupTimeLabel: "Çakışma zaman penceresi",
+  settingsDedupOverlapLabel: "Çakışma örtüşme oranı",
+  settingsMatchRadiusLabel: "Sensörler arası eşleme yarıçapı",
+  settingsMatchWindowLabel: "Sensörler arası eşleme penceresi",
+  settingsFleetRadiusLabel: "Filo birleştirme yarıçapı",
+  settingsHintSec: "Varsayılan {default} sn · Aralık {min}–{max} sn",
+  settingsHintPct: "Varsayılan %{default} · Aralık %{min}–%{max}",
+  settingsHintKm: "Varsayılan {default} km · Aralık {min}–{max} km",
+  settingsHintMin: "Varsayılan {default} dk · Aralık {min}–{max} dk",
+  settingsUnitSec: "sn",
+  settingsUnitPct: "%",
+  settingsUnitKm: "km",
+  settingsUnitMin: "dk",
+  settingsValueSec: "{value} sn",
+  settingsValuePct: "%{value}",
+  settingsValueKm: "{value} km",
+  settingsValueMin: "{value} dk",
+  settingsNumberInputAria: "{label} ({unit})",
+  settingsReset: "Varsayılana dön",
+  settingsCustomBadge: "Özel eşikler",
+  settingsCustomBadgeAria: "Özel eşikler etkin. Ayarları aç",
 
   briefingTitle: "Bölge brifingi",
   briefingFinding: "{region} bölgesinde ham tespitlerin {pct|poss} mükerrer tespitti ({raw} tespitten {removed}).",

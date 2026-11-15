@@ -1,5 +1,6 @@
 import { decideNextDataMode, type ProbeOrFetchOutcome } from "../lib/dataMode";
 import { buildDemoPoints, buildDemoRegions, buildDemoSeries } from "../lib/demoData";
+import { DEFAULT_PIPELINE_CONFIG, overridesToQueryParams } from "../lib/pipelineOverrides";
 import { useAppStore } from "../store/useAppStore";
 import {
   Confidence,
@@ -16,6 +17,8 @@ import {
   type HarmonizedHotspot,
   type HarmonizedPoint,
   type HarmonizeResponse,
+  type PipelineConfig,
+  type PipelineOverrides,
   type PointStages,
   type RawHotspot,
   type RawPoint,
@@ -188,6 +191,27 @@ interface WirePointStages {
   harmonized: number;
 }
 
+interface WirePipelineConfig {
+  dedup: {
+    max_time_diff_secs: number;
+    min_overlap_ratio: number;
+  };
+  fleet: {
+    viirs_window_secs: number;
+    modis_window_secs: number;
+    radius_km: number;
+  };
+  matching: {
+    radius_km: number;
+    window_secs: number;
+  };
+  vza?: {
+    a: number;
+    b: number;
+    c: number;
+  };
+}
+
 interface WirePointsResponse {
   region: string;
   year: number;
@@ -198,6 +222,8 @@ interface WirePointsResponse {
   harmonized: WireHarmonizedPoint[];
   stages: WirePointStages;
   bbox: BBox | null;
+  config?: WirePipelineConfig;
+  config_overridden?: boolean;
 }
 
 // --- NRT wire types ---
@@ -455,6 +481,8 @@ export interface PointsResponse {
   harmonized: readonly HarmonizedPoint[];
   stages: PointStages;
   bbox: BBox | null;
+  config?: PipelineConfig;
+  configOverridden?: boolean;
 }
 
 // --- Core HTTP helper --------------------------------------------------------
@@ -523,6 +551,56 @@ async function requestJson<T>(
 
 function finiteOrNull(value: number | null | undefined): number | null {
   return value != null && Number.isFinite(value) ? value : null;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+export function adaptPipelineConfig(wire: unknown): PipelineConfig {
+  if (
+    !isRecord(wire) ||
+    !isRecord(wire.dedup) ||
+    !isRecord(wire.fleet) ||
+    !isRecord(wire.matching) ||
+    !isFiniteNumber(wire.dedup.max_time_diff_secs) ||
+    !isFiniteNumber(wire.dedup.min_overlap_ratio) ||
+    !isFiniteNumber(wire.fleet.viirs_window_secs) ||
+    !isFiniteNumber(wire.fleet.modis_window_secs) ||
+    !isFiniteNumber(wire.fleet.radius_km) ||
+    !isFiniteNumber(wire.matching.radius_km) ||
+    !isFiniteNumber(wire.matching.window_secs)
+  ) {
+    throw new ApiError("Invalid config response from server", 200, "server", "invalid_response");
+  }
+  const adapted: PipelineConfig = {
+    dedup: {
+      maxTimeDiffSecs: wire.dedup.max_time_diff_secs,
+      minOverlapRatio: wire.dedup.min_overlap_ratio,
+    },
+    fleet: {
+      viirsWindowSecs: wire.fleet.viirs_window_secs,
+      modisWindowSecs: wire.fleet.modis_window_secs,
+      radiusKm: wire.fleet.radius_km,
+    },
+    matching: {
+      radiusKm: wire.matching.radius_km,
+      windowSecs: wire.matching.window_secs,
+    },
+  };
+  if (
+    isRecord(wire.vza) &&
+    isFiniteNumber(wire.vza.a) &&
+    isFiniteNumber(wire.vza.b) &&
+    isFiniteNumber(wire.vza.c)
+  ) {
+    adapted.vza = {
+      a: wire.vza.a,
+      b: wire.vza.b,
+      c: wire.vza.c,
+    };
+  }
+  return adapted;
 }
 
 function adaptCliff(wire: WireSeriesCliff | null): CliffSummary | null {
@@ -798,19 +876,38 @@ export async function fetchSeries(region: string, signal?: AbortSignal): Promise
   }
 }
 
+export async function fetchConfig(signal?: AbortSignal): Promise<PipelineConfig> {
+  if (useAppStore.getState().dataMode === "demo") {
+    return DEFAULT_PIPELINE_CONFIG;
+  }
+  try {
+    const wire = await requestJson<WirePipelineConfig>("/config", undefined, signal);
+    return adaptPipelineConfig(wire);
+  } catch (err: unknown) {
+    if (handleLiveFetchError(err, signal)) {
+      return DEFAULT_PIPELINE_CONFIG;
+    }
+    throw err;
+  }
+}
+
 export interface FetchPointsParams {
   region: string;
   year: number;
   month?: number | null;
+  overrides?: PipelineOverrides;
+  defaults?: PipelineConfig;
 }
 
 export async function fetchPoints(params: FetchPointsParams, signal?: AbortSignal): Promise<PointsResponse> {
   if (useAppStore.getState().dataMode === "demo") {
     return buildDemoPoints(params);
   }
+  const defaults = params.defaults ?? useAppStore.getState().serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const query: Record<string, string> = {
     region: params.region,
     year: String(params.year),
+    ...overridesToQueryParams(params.overrides, defaults),
   };
   if (params.month !== undefined && params.month !== null) {
     query.month = String(params.month);
@@ -825,6 +922,14 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
       !isRecord(wire.stages)
     ) {
       throw new ApiError("Invalid points response from server", 200, "server", "invalid_response");
+    }
+    let adaptedConfig: PipelineConfig | undefined;
+    if (wire.config !== undefined) {
+      try {
+        adaptedConfig = adaptPipelineConfig(wire.config);
+      } catch {
+        // Ignore malformed optional config metadata on points response.
+      }
     }
     return {
       region: wire.region,
@@ -868,6 +973,8 @@ export async function fetchPoints(params: FetchPointsParams, signal?: AbortSigna
         harmonized: wire.stages.harmonized,
       },
       bbox: wire.bbox ?? null,
+      config: adaptedConfig,
+      configOverridden: Boolean(wire.config_overridden),
     };
   } catch (err: unknown) {
     if (handleLiveFetchError(err, signal)) {

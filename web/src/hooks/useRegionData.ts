@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { formatRegionName, t } from "../content/copy";
 import {
+  areOverridesEqual,
+  DEFAULT_PIPELINE_CONFIG,
+  makePointsKey,
+} from "../lib/pipelineOverrides";
+import {
   DEFAULT_REGION,
   getExplicitHashRegion,
   readRawHashRegion,
@@ -11,6 +16,7 @@ import {
 import {
   ApiError,
   type ApiErrorCode,
+  fetchConfig,
   fetchPoints,
   fetchRegions,
   fetchSeries,
@@ -24,10 +30,13 @@ import type {
   ApiErrorInfo,
   AsyncStatus,
   BriefingMetrics,
+  DataMode,
   Lang,
   MapPointSet,
   MonthCell,
   MonthRef,
+  PipelineConfig,
+  PipelineOverrides,
   PipelineStage,
   PointStages,
   Region,
@@ -36,6 +45,8 @@ import type {
   RegionTotals,
   SeriesCoverage,
 } from "../types";
+
+export { makePointsKey };
 
 // --- Shared reactive cache ---------------------------------------------------
 
@@ -92,12 +103,44 @@ let activeSeriesRegion: string | null = null;
 let seriesToken = 0;
 const seriesSubscribers = new Map<string, number>();
 
+let configRequested = false;
+let configController: AbortController | null = null;
+let configToken = 0;
+let configSubscribers = 0;
+
+const OVERRIDE_DEBOUNCE_MS = 400;
+let committedOverrides: PipelineOverrides = useAppStore.getState().pipelineOverrides;
+let overrideDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Flush any debounced pipeline override change immediately (used by Reset). */
+export function flushPipelineOverrides(): void {
+  if (overrideDebounceTimer !== null) {
+    globalThis.clearTimeout(overrideDebounceTimer);
+    overrideDebounceTimer = null;
+  }
+  const current = useAppStore.getState().pipelineOverrides;
+  if (!areOverridesEqual(committedOverrides, current)) {
+    committedOverrides = current;
+    emitChange();
+  }
+}
+
 const pointsCache = new Map<string, CacheEntry<PointsResponse>>();
+const lastGoodPoints = new Map<string, PointsResponse>();
 let activePointsKey: string | null = null;
 let pointsToken = 0;
 const pointsSubscribers = new Map<string, number>();
 
+function makeLastGoodKey(region: string, year: number, month: number | null, dataMode: DataMode): string {
+  return `${region}:${year}:${month ?? "all"}:${dataMode}`;
+}
+
 function invalidateRegionCaches(): void {
+  configToken += 1;
+  configController?.abort();
+  configController = null;
+  configRequested = false;
+
   regionsToken += 1;
   regionsEntry.controller?.abort();
   regionsRequested = false;
@@ -120,6 +163,7 @@ function invalidateRegionCaches(): void {
     entry.controller?.abort();
   }
   pointsCache.clear();
+  lastGoodPoints.clear();
   activePointsKey = null;
 
   emitChange();
@@ -127,7 +171,27 @@ function invalidateRegionCaches(): void {
 
 useAppStore.subscribe((state, prev) => {
   if (state.dataMode !== prev.dataMode) {
+    if (overrideDebounceTimer !== null) {
+      globalThis.clearTimeout(overrideDebounceTimer);
+      overrideDebounceTimer = null;
+    }
+    committedOverrides = state.pipelineOverrides;
     invalidateRegionCaches();
+    return;
+  }
+
+  if (!areOverridesEqual(state.pipelineOverrides, prev.pipelineOverrides)) {
+    if (overrideDebounceTimer !== null) {
+      globalThis.clearTimeout(overrideDebounceTimer);
+    }
+    overrideDebounceTimer = globalThis.setTimeout(() => {
+      overrideDebounceTimer = null;
+      const latest = useAppStore.getState().pipelineOverrides;
+      if (!areOverridesEqual(committedOverrides, latest)) {
+        committedOverrides = latest;
+        emitChange();
+      }
+    }, OVERRIDE_DEBOUNCE_MS);
   }
 });
 
@@ -217,7 +281,56 @@ function reconcileRegionWithList(regions: readonly RegionSummary[]): void {
   const rawHashRegion = typeof window === "undefined" ? null : readRawHashRegion(window.location.hash);
   if (rawHashRegion && !validIds.includes(rawHashRegion)) {
     const s = useAppStore.getState();
-    syncUrlHash({ region: s.region, mode: s.mode, month: s.selectedMonth, lang: s.lang });
+    syncUrlHash(
+      {
+        region: s.region,
+        mode: s.mode,
+        month: s.selectedMonth,
+        lang: s.lang,
+        palette: s.palette,
+        data: s.dataMode === "demo" && s.dataModeSource === "manual" ? "demo" : undefined,
+        overrides: s.pipelineOverrides,
+      },
+      s.serverConfig ?? DEFAULT_PIPELINE_CONFIG,
+    );
+  }
+}
+
+function startConfigFetch(): void {
+  if (configRequested) return;
+  configRequested = true;
+  configController?.abort();
+
+  const token = ++configToken;
+  const controller = new AbortController();
+  configController = controller;
+
+  fetchConfig(controller.signal)
+    .then((config) => {
+      if (controller.signal.aborted || token !== configToken) return;
+      configController = null;
+      useAppStore.getState().setServerConfig(config);
+      emitChange();
+    })
+    .catch((err: unknown) => {
+      if (isAbortError(err) || controller.signal.aborted || token !== configToken) return;
+      configController = null;
+      // Keep fallback defaults if /api/config cannot be loaded right now.
+    });
+}
+
+function acquireConfig(): void {
+  configSubscribers += 1;
+  startConfigFetch();
+}
+
+function releaseConfig(): void {
+  configSubscribers = Math.max(0, configSubscribers - 1);
+  if (configSubscribers === 0 && configController) {
+    configToken += 1;
+    configController.abort();
+    configController = null;
+    configRequested = false;
   }
 }
 
@@ -385,12 +498,15 @@ function releaseSeries(region: string): void {
   }
 }
 
-function makePointsKey(region: string, year: number, month: number | null): string {
-  return `${region}:${year}:${month ?? "all"}`;
-}
-
-function startPointsFetch(region: string, year: number, month: number | null, force: boolean): void {
-  const key = makePointsKey(region, year, month);
+function startPointsFetch(
+  region: string,
+  year: number,
+  month: number | null,
+  overrides: PipelineOverrides,
+  defaults: PipelineConfig,
+  force: boolean,
+): void {
+  const key = makePointsKey(region, year, month, overrides, defaults);
   if (activePointsKey && activePointsKey !== key) {
     const prev = pointsCache.get(activePointsKey);
     if (prev?.controller) {
@@ -412,6 +528,7 @@ function startPointsFetch(region: string, year: number, month: number | null, fo
   existing?.controller?.abort();
   const token = ++pointsToken;
   const controller = new AbortController();
+  const dataMode = useAppStore.getState().dataMode;
   touchCacheEntry(pointsCache, key, {
     status: "loading",
     data: null,
@@ -420,7 +537,7 @@ function startPointsFetch(region: string, year: number, month: number | null, fo
   });
   emitChange();
 
-  fetchPoints({ region, year, month }, controller.signal)
+  fetchPoints({ region, year, month, overrides, defaults }, controller.signal)
     .then((res) => {
       if (controller.signal.aborted || token !== pointsToken || activePointsKey !== key) return;
       const isEmpty = (res.raw.length === 0 && res.harmonized.length === 0) || res.bbox === null;
@@ -430,6 +547,9 @@ function startPointsFetch(region: string, year: number, month: number | null, fo
         error: null,
         controller: null,
       });
+      if (!isEmpty) {
+        lastGoodPoints.set(makeLastGoodKey(region, year, month, dataMode), res);
+      }
       evictCacheLru(pointsCache, pointsSubscribers, MAX_POINTS_CACHE);
       emitChange();
     })
@@ -447,10 +567,17 @@ function startPointsFetch(region: string, year: number, month: number | null, fo
     });
 }
 
-function acquirePoints(region: string, year: number, month: number | null): void {
-  const key = makePointsKey(region, year, month);
+function acquirePoints(
+  region: string,
+  year: number,
+  month: number | null,
+  overrides: PipelineOverrides,
+  defaults: PipelineConfig,
+): string {
+  const key = makePointsKey(region, year, month, overrides, defaults);
   pointsSubscribers.set(key, (pointsSubscribers.get(key) ?? 0) + 1);
-  startPointsFetch(region, year, month, false);
+  startPointsFetch(region, year, month, overrides, defaults, false);
+  return key;
 }
 
 function releasePoints(key: string): void {
@@ -739,11 +866,15 @@ export function useRegionData(): UseRegionDataResult {
   const lang = useAppStore((state) => state.lang);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
   const dataMode = useAppStore((state) => state.dataMode);
+  const serverConfig = useAppStore((state) => state.serverConfig);
+  const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const regionsEmpty = regionsEntry.status === "empty";
 
   useEffect(() => {
+    acquireConfig();
     acquireRegions();
     return () => {
+      releaseConfig();
       releaseRegions();
     };
   }, [dataMode]);
@@ -815,12 +946,20 @@ export function useRegionData(): UseRegionDataResult {
 
   const defaultMapMonth = useMemo(() => findDefaultMapMonth(activeSeries), [activeSeries]);
   const targetMonth = selectedMonth ?? defaultMapMonth;
-  const pointsKey = targetMonth ? makePointsKey(regionId, targetMonth.year, targetMonth.month) : null;
+  const pointsKey = targetMonth
+    ? makePointsKey(regionId, targetMonth.year, targetMonth.month, committedOverrides, defaults)
+    : null;
   const pointsEntry = pointsKey ? pointsCache.get(pointsKey) : undefined;
-  const activePoints =
-    pointsEntry?.status === "ready" && pointsEntry.data && pointsEntry.data.region === regionId
+  const fallbackPoints =
+    targetMonth && pointsEntry?.status === "error" && pointsEntry.error?.status === 400
+      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetMonth.year, targetMonth.month, dataMode))
+      : undefined;
+  const candidatePoints =
+    pointsEntry?.status === "ready" && pointsEntry.data
       ? pointsEntry.data
-      : null;
+      : fallbackPoints ?? null;
+  const activePoints =
+    candidatePoints && candidatePoints.region === regionId ? candidatePoints : null;
   const frpAngleCorrectionPct = useMemo(() => computeFrpCorrectionRatio(activePoints), [activePoints]);
 
   return useMemo<UseRegionDataResult>(() => {
@@ -979,6 +1118,7 @@ export interface UseMapPointsResult extends MapPointSet {
   regionsEmpty: boolean;
   hasData: boolean;
   error: ApiErrorInfo | null;
+  overrideError: string | null;
   retry: () => void;
 }
 
@@ -989,6 +1129,8 @@ export function useMapPoints(): UseMapPointsResult {
   const lang = useAppStore((state) => state.lang);
   const selectedMonth = useAppStore((state) => state.selectedMonth);
   const dataMode = useAppStore((state) => state.dataMode);
+  const serverConfig = useAppStore((state) => state.serverConfig);
+  const defaults = serverConfig ?? DEFAULT_PIPELINE_CONFIG;
   const {
     defaultMapMonth,
     status: seriesStatus,
@@ -1000,15 +1142,18 @@ export function useMapPoints(): UseMapPointsResult {
   const targetMonth = selectedMonth ?? defaultMapMonth;
   const targetYear = targetMonth?.year ?? null;
   const targetMonthNum = targetMonth?.month ?? null;
+  const pointsKey =
+    targetYear !== null
+      ? makePointsKey(regionId, targetYear, targetMonthNum, committedOverrides, defaults)
+      : null;
 
   useEffect(() => {
     if (targetYear === null || seriesStatus === "error" || seriesStatus === "empty") return;
-    const key = makePointsKey(regionId, targetYear, targetMonthNum);
-    acquirePoints(regionId, targetYear, targetMonthNum);
+    const key = acquirePoints(regionId, targetYear, targetMonthNum, committedOverrides, defaults);
     return () => {
       releasePoints(key);
     };
-  }, [regionId, targetYear, targetMonthNum, seriesStatus, dataMode]);
+  }, [regionId, targetYear, targetMonthNum, seriesStatus, dataMode, pointsKey, defaults]);
 
   const retry = useCallback(() => {
     if (regionsEntry.status === "error" || regionsEntry.status === "empty" || !regionsEntry.data) {
@@ -1019,14 +1164,21 @@ export function useMapPoints(): UseMapPointsResult {
       return;
     }
     if (targetYear !== null) {
-      startPointsFetch(regionId, targetYear, targetMonthNum, true);
+      startPointsFetch(regionId, targetYear, targetMonthNum, committedOverrides, defaults, true);
     }
-  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, regionId]);
+  }, [seriesStatus, retrySeries, targetYear, targetMonthNum, regionId, defaults]);
 
-  const key = targetYear !== null ? makePointsKey(regionId, targetYear, targetMonthNum) : null;
-  const entry = key ? pointsCache.get(key) : undefined;
+  const entry = pointsKey ? pointsCache.get(pointsKey) : undefined;
   const rawPointsError = entry?.error ?? null;
   const pointsError = useMemo(() => formatStoredError(rawPointsError, lang), [rawPointsError, lang]);
+  const overrideError =
+    entry?.status === "error" && rawPointsError?.status === 400
+      ? rawPointsError.detail || pointsError?.message || t(lang, "stateErrorServerStatus", { status: "400" })
+      : null;
+  const fallbackData =
+    targetYear !== null && entry?.status === "error" && rawPointsError?.status === 400
+      ? lastGoodPoints.get(makeLastGoodKey(regionId, targetYear, targetMonthNum, dataMode)) ?? null
+      : null;
 
   let status: AsyncStatus;
   let error: ApiErrorInfo | null = null;
@@ -1038,13 +1190,18 @@ export function useMapPoints(): UseMapPointsResult {
     error = seriesError;
   } else if (!entry) {
     status = "loading";
+  } else if (fallbackData && fallbackData.region === regionId) {
+    // Keep the last good data visible when an override triggers HTTP 400.
+    status = "ready";
+    error = null;
   } else {
     status = entry.status;
     error = pointsError;
   }
 
+  const candidateData = entry?.status === "ready" ? entry.data : fallbackData;
   const activeData =
-    status === "ready" && entry?.data && entry.data.region === regionId ? entry.data : null;
+    status === "ready" && candidateData && candidateData.region === regionId ? candidateData : null;
   const frpAngleCorrectionPct = useMemo(() => computeFrpCorrectionRatio(activeData), [activeData]);
 
   return useMemo<UseMapPointsResult>(() => {
@@ -1054,6 +1211,7 @@ export function useMapPoints(): UseMapPointsResult {
         regionsEmpty,
         hasData: false,
         error,
+        overrideError,
         retry,
         period:
           status === "error" || status === "empty" || targetYear === null
@@ -1074,6 +1232,7 @@ export function useMapPoints(): UseMapPointsResult {
       regionsEmpty,
       hasData: true,
       error,
+      overrideError,
       retry,
       period: { year: activeData.year, month: activeData.month },
       raw: activeData.raw,
@@ -1084,7 +1243,17 @@ export function useMapPoints(): UseMapPointsResult {
       limit: activeData.limit,
       frpAngleCorrectionPct,
     };
-  }, [activeData, status, regionsEmpty, error, retry, targetYear, targetMonthNum, frpAngleCorrectionPct]);
+  }, [
+    activeData,
+    status,
+    regionsEmpty,
+    error,
+    overrideError,
+    retry,
+    targetYear,
+    targetMonthNum,
+    frpAngleCorrectionPct,
+  ]);
 }
 
 export function useSelectedMonthCell(): MonthCell | null {

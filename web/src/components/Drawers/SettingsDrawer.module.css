@@ -1,0 +1,107 @@
+.errorBanner {
+  margin-bottom: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-status-error);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.paramCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.paramHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.paramLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.numberGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.numberInput {
+  width: 72px;
+  min-height: 28px;
+  padding: 2px var(--space-1);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.numberInput:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.unit {
+  min-width: 24px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.slider {
+  width: 100%;
+  margin: 2px 0;
+  accent-color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.resetButton {
+  min-height: 32px;
+  padding: var(--space-half) var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  transition:
+    background-color var(--dur-ui) var(--ease-standard),
+    opacity var(--dur-ui) var(--ease-standard);
+}
+
+.resetButton:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.resetButton:disabled {
+  color: var(--color-text-disabled);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}

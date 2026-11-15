@@ -1426,12 +1426,17 @@ pub async fn precompute_series(
 
 // ---------- points ----------
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default, Clone)]
 struct PointsParams {
     region: Option<String>,
     year: Option<String>,
     month: Option<String>,
     limit: Option<String>,
+    dedup_time_secs: Option<String>,
+    dedup_overlap: Option<String>,
+    match_radius_km: Option<String>,
+    match_window_secs: Option<String>,
+    fleet_radius_km: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -1577,6 +1582,8 @@ struct PointsResponse {
     bbox: Option<Extent>,
     events: EventsMeta,
     no_detection_days: Vec<NoDetectionDay>,
+    config: PipelineConfig,
+    config_overridden: bool,
 }
 
 fn parse_param<T: std::str::FromStr>(
@@ -1706,6 +1713,38 @@ fn sample_links(
     (k_start.max(2), keep_out, keep_raw)
 }
 
+fn resolve_points_config(
+    base: &PipelineConfig,
+    params: &PointsParams,
+) -> Result<(PipelineConfig, bool), ApiError> {
+    let mut config = base.clone();
+    let mut overridden = false;
+    if let Some(v) = parse_param::<i64>("dedup_time_secs", params.dedup_time_secs.as_deref())? {
+        config.dedup.max_time_diff_secs = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("dedup_overlap", params.dedup_overlap.as_deref())? {
+        config.dedup.min_overlap_ratio = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("match_radius_km", params.match_radius_km.as_deref())? {
+        config.matching.radius_km = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<i64>("match_window_secs", params.match_window_secs.as_deref())? {
+        config.matching.window_secs = v;
+        overridden = true;
+    }
+    if let Some(v) = parse_param::<f64>("fleet_radius_km", params.fleet_radius_km.as_deref())? {
+        config.fleet.radius_km = v;
+        overridden = true;
+    }
+    config
+        .validate()
+        .map_err(|msg| ApiError::new(StatusCode::BAD_REQUEST, msg))?;
+    Ok((config, overridden))
+}
+
 async fn points(
     State(state): State<Arc<ArchiveState>>,
     Query(params): Query<PointsParams>,
@@ -1733,6 +1772,7 @@ async fn points(
         Some(n) => n.min(MAX_POINTS_LIMIT),
         None => DEFAULT_POINTS_LIMIT,
     };
+    let (config, config_overridden) = resolve_points_config(&state.config, &params)?;
     if !region.modis_years.contains(&year)
         && !region.viirs_years.contains(&year)
         && !region.noaa20_years.contains(&year)
@@ -1841,6 +1881,8 @@ async fn points(
             bbox,
             events,
             no_detection_days: gaps,
+            config,
+            config_overridden,
         }
     })
     .await
@@ -3523,5 +3565,218 @@ mod tests {
         let logs = String::from_utf8(buf.0.lock().unwrap().clone()).unwrap();
         assert!(logs.contains("/api/slow"), "missing path in logs: {logs}");
         assert!(logs.contains("WARN"), "missing WARN level in logs: {logs}");
+    }
+
+    #[tokio::test]
+    async fn points_default_config_echoes_server_config_and_not_overridden() {
+        let dir = temp_archive("points-config-default");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+
+        let mut server_config = PipelineConfig::default();
+        server_config.matching.window_secs = 7200;
+        let state = state_with_config(
+            dir.clone(),
+            dir.join("_derived_cache"),
+            u64::MAX,
+            server_config.clone(),
+        );
+
+        let Json(pts) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+
+        assert!(!pts.config_overridden);
+        assert_eq!(pts.config, server_config);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_threshold_overrides_change_matching_and_echo_effective_config() {
+        let dir = temp_archive("points-config-override");
+        let modis_dir = dir.join("modis/2021");
+        let viirs_dir = dir.join("viirs-snpp/2021");
+        std::fs::create_dir_all(&modis_dir).unwrap();
+        std::fs::create_dir_all(&viirs_dir).unwrap();
+        // Same location, 1 hour apart: matched under default 10800s window, unmatched under 60s.
+        std::fs::write(
+            modis_dir.join("modis_2021_Malta.csv"),
+            format!(
+                "{MODIS_HEADER}\r\n35.9,32.0,320,0.5,0.5,2021-07-01,1200,Terra,MODIS,80,6.2,290,10,D,0\r\n"
+            ),
+        )
+        .unwrap();
+        std::fs::write(
+            viirs_dir.join("viirs-snpp_2021_Malta.csv"),
+            format!(
+                "{VIIRS_HEADER}\r\n35.9,32.0,320,0.5,0.5,2021-07-01,1300,N,VIIRS,n,2,290,10,D,0\r\n"
+            ),
+        )
+        .unwrap();
+
+        let state = state(dir.clone(), u64::MAX);
+
+        let Json(baseline) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(!baseline.config_overridden);
+        assert_eq!(baseline.config, PipelineConfig::default());
+        assert_eq!(baseline.stages.matched_pairs, 1);
+        assert_eq!(baseline.stages.harmonized, 1);
+
+        let Json(narrow) = points(
+            State(state.clone()),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                match_window_secs: Some("60".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(narrow.config_overridden);
+        assert_eq!(narrow.config.matching.window_secs, 60);
+        assert_eq!(narrow.stages.matched_pairs, 0);
+        assert_eq!(narrow.stages.harmonized, 2);
+
+        let Json(all_overrides) = points(
+            State(state),
+            Query(PointsParams {
+                region: Some("Malta".into()),
+                year: Some("2021".into()),
+                dedup_time_secs: Some("12".into()),
+                dedup_overlap: Some("0.5".into()),
+                match_radius_km: Some("5.5".into()),
+                match_window_secs: Some("120".into()),
+                fleet_radius_km: Some("3.5".into()),
+                ..Default::default()
+            }),
+        )
+        .await
+        .ok()
+        .unwrap();
+        assert!(all_overrides.config_overridden);
+        assert_eq!(all_overrides.config.dedup.max_time_diff_secs, 12);
+        assert_eq!(all_overrides.config.dedup.min_overlap_ratio, 0.5);
+        assert_eq!(all_overrides.config.matching.radius_km, 5.5);
+        assert_eq!(all_overrides.config.matching.window_secs, 120);
+        assert_eq!(all_overrides.config.fleet.radius_km, 3.5);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn points_rejects_out_of_range_and_non_numeric_threshold_overrides() {
+        let dir = temp_archive("points-config-invalid");
+        write_file(&dir, "modis", 2021, "Malta", &[(35.9, "2021-07-01", 0)]);
+        let state = state(dir.clone(), u64::MAX);
+
+        let base = PointsParams {
+            region: Some("Malta".into()),
+            year: Some("2021".into()),
+            ..Default::default()
+        };
+
+        let range_cases = [
+            (
+                PointsParams {
+                    match_radius_km: Some("50".into()),
+                    ..base.clone()
+                },
+                "matching.radius_km",
+            ),
+            (
+                PointsParams {
+                    dedup_overlap: Some("1.5".into()),
+                    ..base.clone()
+                },
+                "dedup.min_overlap_ratio",
+            ),
+            (
+                PointsParams {
+                    dedup_time_secs: Some("-1".into()),
+                    ..base.clone()
+                },
+                "dedup.max_time_diff_secs",
+            ),
+            (
+                PointsParams {
+                    match_window_secs: Some("-5".into()),
+                    ..base.clone()
+                },
+                "matching.window_secs",
+            ),
+            (
+                PointsParams {
+                    fleet_radius_km: Some("-1".into()),
+                    ..base.clone()
+                },
+                "fleet.radius_km",
+            ),
+        ];
+
+        for (params, field) in range_cases {
+            let err = points(State(state.clone()), Query(params))
+                .await
+                .err()
+                .expect("out-of-range threshold must fail with 400");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+            assert!(
+                err.message.contains(field),
+                "error `{}` does not name `{field}`",
+                err.message
+            );
+        }
+
+        let parse_cases = [
+            PointsParams {
+                match_radius_km: Some("abc".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                dedup_time_secs: Some("1.5".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                dedup_overlap: Some("nope".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                match_window_secs: Some("xyz".into()),
+                ..base.clone()
+            },
+            PointsParams {
+                fleet_radius_km: Some("bad".into()),
+                ..base
+            },
+        ];
+
+        for params in parse_cases {
+            let err = points(State(state.clone()), Query(params))
+                .await
+                .err()
+                .expect("non-numeric threshold must fail with 400");
+            assert_eq!(err.status, StatusCode::BAD_REQUEST);
+        }
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 }
