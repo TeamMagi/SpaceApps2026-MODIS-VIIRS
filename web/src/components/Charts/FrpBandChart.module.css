@@ -1,0 +1,342 @@
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  height: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+.chart[data-loading="true"] .canvasWrap {
+  opacity: 0.72;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.title {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-half) var(--space-1);
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-tight);
+}
+
+.loadingTag {
+  color: var(--color-text-secondary);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  white-space: nowrap;
+}
+
+.swatchLine {
+  width: 12px;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: var(--radius-pill);
+}
+
+.swatchLine[data-muted="true"] {
+  background: var(--color-text-muted);
+}
+
+.swatchBand {
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-uncertainty-band);
+  border: 1px solid var(--color-uncertainty-band-stroke);
+}
+
+.swatchPartial {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-text);
+  background: var(--color-bg);
+}
+
+.swatchPartial[data-muted="true"] {
+  border-color: var(--color-text-muted);
+}
+
+.canvasWrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+  transition: opacity var(--dur-ui) var(--ease-standard);
+}
+
+.stateBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.stateText {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.retry {
+  min-height: 32px;
+  padding: var(--space-half) var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.retry:hover {
+  background: var(--color-hover);
+}
+
+@media (pointer: coarse) {
+  .retry {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.yearSlider {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  outline: none;
+}
+
+.yearSlider:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.gridLine {
+  stroke: var(--color-border-subtle);
+  stroke-width: 1;
+}
+
+.axisLine {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.axisUnit {
+  fill: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.cliffLine {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.cliffLabel {
+  fill: var(--color-accent);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.cliffYearLabel {
+  fill: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.selectedYearBand {
+  fill: var(--color-text);
+  fill-opacity: 0.08;
+  pointer-events: none;
+}
+
+.selectedYearLine {
+  stroke: var(--color-text);
+  stroke-opacity: 0.36;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.selectedYearLabel {
+  fill: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.hitGroup {
+  pointer-events: all;
+}
+
+.hitCol {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.bandGroup {
+  pointer-events: none;
+}
+
+.bandPolygon {
+  fill: var(--color-uncertainty-band);
+  stroke: none;
+}
+
+.wideUpperLine {
+  fill: none;
+  stroke: var(--color-uncertainty-band-stroke);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 2;
+  stroke-linecap: round;
+}
+
+.seriesLine {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke var(--dur-ui) var(--ease-standard);
+}
+
+.seriesLine[data-muted="true"] {
+  stroke: var(--color-text-muted);
+}
+
+.partialLine {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  stroke-linecap: round;
+  transition: stroke var(--dur-ui) var(--ease-standard);
+}
+
+.partialLine[data-muted="true"] {
+  stroke: var(--color-text-muted);
+}
+
+.meanDot {
+  fill: var(--color-text);
+  stroke: var(--color-bg);
+  stroke-width: 1;
+  transition: fill var(--dur-ui) var(--ease-standard);
+}
+
+.meanDot[data-muted="true"] {
+  fill: var(--color-text-muted);
+}
+
+.partialDot {
+  fill: var(--color-bg);
+  stroke: var(--color-text);
+  stroke-width: 1.75;
+  transition: stroke var(--dur-ui) var(--ease-standard);
+}
+
+.partialDot[data-muted="true"] {
+  stroke: var(--color-text-muted);
+}
+
+.hoverGuide {
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+
+.hoverDot {
+  fill: var(--color-text);
+  stroke: var(--color-bg);
+  stroke-width: 1.5;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  padding: var(--space-half) var(--space-1);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-snug);
+  max-width: calc(100% - var(--space-2));
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - var(--space-1)));
+  transition: opacity var(--dur-ui) var(--ease-standard);
+}
+
+.tooltip[data-placement="below"] {
+  transform: translate(-50%, var(--space-1));
+}
+
+@media (max-width: 479px) {
+  .tooltip {
+    white-space: normal;
+  }
+}
+
+.rawCaption {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-tight);
+  flex-shrink: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

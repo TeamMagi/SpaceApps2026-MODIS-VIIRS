@@ -32,3 +32,7 @@ Base URL: `https://firms.modaps.eosdis.nasa.gov/api/area/csv`
 - `with_area_cache` ile önbellek açıksa cache hit istek atmaz, limiter'a girmez ve transaction harcamaz (`transactions_spent` yalnızca gerçek istekleri sayar). Boş (olaylı olmayan) geçerli yanıt da 0 baytlık dosya olarak önbelleğe alınır; hata ve doğrulamadan geçmeyen gövdeler asla yazılmaz.
 - SP pencereleri süresizdir; NRT pencereleri dosya değişim zamanına göre `nrt_ttl` süresince geçerlidir (`0` = NRT hiç önbellekten sunulmaz). Yazma hataları yalnızca loglanır.
 - Availability başarılı çekilince `availability.csv` olarak saklanır; çekim başarısız olursa bu dosya uyarı loglanarak kullanılır (ağsız çalışma).
+
+## Örnekler
+
+- `examples/fleet_trend.rs` (K7): tam filo trend ve seviye kayması ölçümü. Bayraklar: `--noaa21` (NOAA-21'i area API'den ekler, `FIRMS_API_KEY` gerekir), `--noaa21-union` (birleşik sınır kutusu, ülkelere çokgenle kırpılır), `--regions-geo`, `--yearly-omega`, `--out`. Rapor: `docs/TAM_FILO_TREND.md`.
