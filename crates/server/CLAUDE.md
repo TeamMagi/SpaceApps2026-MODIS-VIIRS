@@ -58,4 +58,5 @@
 - Global sensör kapsamı (`coverage.json` + `coverage.meta.json`) bellek → `DERIVED_CACHE_DIR` → `BUNDLED_DERIVED_DIR` → arşiv taraması sırasıyla önbelleklenir; damga `DERIVED_SCHEMA_VERSION` ve tüm arşiv dosyalarının sıralı `(path, bytes)` özetidir (`PipelineConfig`'e bağlı değildir).
 - `pyrosync-server precompute` bölgelerden önce kapsamı da yazılabilir diske yazar; `make bundle-derived` bunu `data/derived/` altına kopyalar.
 - Docker'da `STATIC_DIR=/app/static` olarak ayarlanır.
+- Docker'da `.cache/firms-area` host ile paylaşılır (`AREA_CACHE_HOST_DIR`), böylece satın alınmış area API pencereleri (ör. K7 için çekilen NOAA-21 2023–2025 pencereleri) konteyner yeniden başlasa da transaction harcamadan kullanılır.
 - Port 3001 üzerinde `0.0.0.0` dinler (container erişimi için).
