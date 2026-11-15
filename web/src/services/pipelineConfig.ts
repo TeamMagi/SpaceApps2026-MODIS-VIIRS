@@ -36,7 +36,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
       { minAbsLat: 55, maxAbsLat: 70, ratio: 1.28, ratioSigma: 0.11 },
     ],
   },
-  uncertainty: { modisSensorSigma: 0.12, viirsSensorSigma: 0.08, vzaErrorCoeff: 0.05, modisScaleSigma: 0.1, z: 1 },
+  uncertainty: { modisSensorSigma: 0.266, viirsSensorSigma: 0.08, vzaErrorCoeff: 0.05, modisScaleSigma: 0.1, z: 1 },
 };
 
 type Json = Record<string, unknown>;
@@ -57,7 +57,7 @@ function section(source: Json, key: string): Json {
   return value;
 }
 
-function parseConfig(wire: unknown): PipelineConfig {
+export function parseConfig(wire: unknown): PipelineConfig {
   const root = record(wire);
   if (!root) throw new Error("invalid config");
   const dedup = section(root, "dedup");
