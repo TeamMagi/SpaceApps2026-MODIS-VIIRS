@@ -1,0 +1,308 @@
+.lens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-snug);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-half);
+  flex-wrap: wrap;
+}
+
+.title {
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-half);
+  background: var(--color-surface);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.presetGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-half);
+}
+
+.presetBtn {
+  flex: 1 1 auto;
+  min-height: var(--space-3);
+  padding: 0 var(--space-half);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-ui) var(--ease-standard),
+    border-color var(--dur-ui) var(--ease-standard),
+    color var(--dur-ui) var(--ease-standard);
+}
+
+@media (pointer: coarse) {
+  .presetBtn {
+    min-height: var(--space-5);
+  }
+}
+
+.presetBtn:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.presetBtn[aria-pressed="true"] {
+  background: var(--color-active);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.presetBtn:focus-visible {
+  outline: var(--border-width) solid var(--map-focus, var(--color-focus));
+  outline-offset: 0;
+}
+
+.diagramWrap {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.diagramSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+.modisBox {
+  fill: var(--color-surface-raised);
+  stroke: var(--map-modis, var(--color-sensor-modis));
+  stroke-width: 1.5;
+}
+
+.gridLine {
+  stroke: var(--map-viirs, var(--color-sensor-viirs));
+  stroke-opacity: 0.45;
+  stroke-width: 0.6;
+}
+
+.nadirRef {
+  fill: none;
+  stroke: var(--color-text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+
+.viirsDetection {
+  fill: var(--frp-6);
+  fill-opacity: 0.85;
+  stroke: var(--color-surface);
+  stroke-width: 0.75;
+}
+
+.viirsOutside {
+  fill: var(--frp-6);
+  fill-opacity: 0.35;
+}
+
+.viirsLinked {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+
+.modisCenter {
+  fill: var(--map-modis, var(--color-sensor-modis));
+}
+
+.scaleBar {
+  stroke: var(--color-text-secondary);
+  stroke-width: 1.5;
+}
+
+.svgLabel {
+  fill: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2xs);
+}
+
+.ratioCaption {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-half) var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 1px;
+}
+
+.swatchModis {
+  background: var(--color-surface-raised);
+  border: 1.5px solid var(--map-modis, var(--color-sensor-modis));
+}
+
+.swatchGrid {
+  border: 1px solid var(--map-viirs, var(--color-sensor-viirs));
+}
+
+.swatchViirs {
+  background: var(--frp-6);
+}
+
+.swatchLinked {
+  border: 1.5px solid var(--color-accent);
+}
+
+.swatchNadir {
+  border: 1px dashed var(--color-text-secondary);
+}
+
+.metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.metricRow dt {
+  color: var(--color-text-secondary);
+}
+
+.metricRow dd {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+}
+
+.thresholdBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  padding-top: var(--space-half);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+}
+
+.thresholdHeader {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.thresholdSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.thresholdTrack {
+  fill: var(--color-surface);
+  stroke: var(--color-border-subtle);
+  stroke-width: 1;
+}
+
+.thresholdViirs {
+  fill: var(--map-viirs, var(--color-sensor-viirs));
+}
+
+.thresholdModis {
+  stroke: var(--map-modis, var(--color-sensor-modis));
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.thresholdViirsHere {
+  fill: var(--map-viirs, var(--color-sensor-viirs));
+  stroke: var(--color-text);
+  stroke-width: 1;
+}
+
+.thresholdModisHere {
+  fill: var(--frp-6);
+  stroke: var(--color-text);
+  stroke-width: 1.25;
+}
+
+.thresholdLabels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-half);
+  flex-wrap: wrap;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.thresholdModisValue {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.thresholdRatio {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.explanation {
+  margin: 0;
+  padding-top: var(--space-half);
+  border-top: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-text);
+}
+
+.refs {
+  margin: 0;
+  color: var(--color-text-muted);
+}

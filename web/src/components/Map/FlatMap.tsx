@@ -809,6 +809,7 @@ function FlatMap() {
             screenY={activeDetail.screenY}
             viewportSize={canvasSize}
             onClose={handleCloseDetail}
+            rawPoints={points.raw}
           />
         )}
 

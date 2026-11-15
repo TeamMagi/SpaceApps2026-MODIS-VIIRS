@@ -761,6 +761,7 @@ function GlobeMap({ onUnsupported }: GlobeMapProps) {
             screenY={activeDetail.screenY}
             viewportSize={size}
             onClose={handleCloseDetail}
+            rawPoints={points.raw}
             cardRef={detailCardRef}
           />
         )}
