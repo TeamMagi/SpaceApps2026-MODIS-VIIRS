@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { UNCERT_ALPHA_STEPS } from "../engine/renderer";
 import type { MapPalette, SensorFilter } from "../engine/types";
 import type { GlobePointLayer } from "./pointAttributes";
 
@@ -98,9 +99,11 @@ uniform vec3 uFillViirs;
 uniform vec3 uFrp[8];
 uniform float uModisAlpha;
 uniform float uViirsAlpha;
+uniform float uUncertAlpha[3];
 attribute float aKind;
 attribute float aSensor;
 attribute float aDup;
+attribute float aUncert;
 varying float vKind;
 varying float vExtent;
 varying vec3 vColor;
@@ -117,7 +120,7 @@ void main() {
   float half_ = uRing > 0.5 ? dupRingRadius(aKind) + 2.5 : markReach(aKind, 1.0);
   if (aKind < 0.5) { vColor = uFill; vAlpha = uModisAlpha; }
   else if (aKind < 1.5) { vColor = uFillViirs; vAlpha = uViirsAlpha; }
-  else { vColor = uFrp[int(aKind - 2.0 + 0.5)]; vAlpha = 1.0; }
+  else { vColor = uFrp[int(aKind - 2.0 + 0.5)]; vAlpha = uUncertAlpha[int(clamp(aUncert, 0.0, 2.0) + 0.5)]; }
   gl_Position = projectionMatrix * viewMatrix * world;
   gl_PointSize = min(2.0 * half_ * uDpr, MAX_SPRITE_PX);
   vExtent = gl_PointSize / uDpr;
@@ -268,6 +271,7 @@ export class PointLayers {
     uFrp: { value: Array.from({ length: 8 }, () => new THREE.Color()) },
     uModisAlpha: { value: 0.85 },
     uViirsAlpha: { value: 0.8 },
+    uUncertAlpha: { value: [...UNCERT_ALPHA_STEPS] as number[] },
     uDupColor: colorUniform(),
   };
   private readonly markerMaterial: THREE.ShaderMaterial;
@@ -326,6 +330,7 @@ export class PointLayers {
     geometry.setAttribute("aKind", new THREE.BufferAttribute(layer.kinds, 1));
     geometry.setAttribute("aSensor", new THREE.BufferAttribute(layer.sensors, 1));
     geometry.setAttribute("aDup", new THREE.BufferAttribute(layer.duplicates, 1));
+    geometry.setAttribute("aUncert", new THREE.BufferAttribute(layer.uncertTiers, 1));
     // Draw order only: attribute indices stay those of the layer, so picking is unaffected.
     if (layer.drawOrder) geometry.setIndex(new THREE.BufferAttribute(layer.drawOrder, 1));
     const markers = new THREE.Points(geometry, this.markerMaterial);

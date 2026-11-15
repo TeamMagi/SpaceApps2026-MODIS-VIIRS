@@ -27,14 +27,17 @@ export const DEFAULT_MAX_DRAWN = 30_000;
 const TAU = Math.PI * 2;
 const VIEWPORT_MARGIN_PX = 12;
 const DUP_LINE_DASH: number[] = [2.5, 2];
-const UNCERT_ALPHA_STEPS = [1.0, 0.72, 0.48] as const;
+export const UNCERT_ALPHA_STEPS = [1.0, 0.72, 0.48] as const;
 const SCRATCH_RADII = new Float64Array(8);
 const SCRATCH_PATHS: (Path2D | null)[] = new Array<Path2D | null>(24).fill(null);
 
+export function alphaForTier(tier: number): number {
+  const idx = tier === 1 || tier === 2 ? tier : 0;
+  return UNCERT_ALPHA_STEPS[idx];
+}
+
 export function uncertaintyAlpha(relWidth: number | null): number {
-  if (relWidth === null || !Number.isFinite(relWidth) || relWidth <= 0.20) return 1.0;
-  if (relWidth <= 0.40) return 0.72;
-  return 0.48;
+  return alphaForTier(uncertaintyTierFor(relWidth));
 }
 
 function uncertaintyTierFor(relWidth: number | null): number {
@@ -1198,7 +1201,7 @@ export function drawMap(
       ctx.lineWidth = clamp(0.6 * zoomScale, 0.45, 0.85);
       // Draw wider-interval (lower-alpha) points underneath high-certainty points.
       for (let tier = 2; tier >= 0; tier--) {
-        ctx.globalAlpha = UNCERT_ALPHA_STEPS[tier];
+        ctx.globalAlpha = alphaForTier(tier);
         for (let bIdx = 0; bIdx < 8; bIdx++) {
           const slot = tier * 8 + bIdx;
           const path = SCRATCH_PATHS[slot];

@@ -259,14 +259,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | S12 | Dış doğrulama pilotu (atmosfer) | Samet | G12 | — | [ ] |
 | S13 | Referans listesi güncellemesi | Samet | — | S8 | [X] |
 | S7 | Türkiye/Akdeniz case study veri seti | Samet | G1 | R7 | [X] |
-| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [ ] (C5 bekliyor) |
+| S8 | Bilimsel referans + disclaimer içerik | Samet | C5 | — | [X] |
 | Y5 | Mock veri hazırlığı (frontend için) | Yusuf | — | Y1, Y2, Y3, Y4 | [X] |
 | Y6 | Takvim analitiği (calendar.rs) | Yusuf | — | Y3 | [X] |
 | Y7 | Olay kümeleme ve kesinti şeffaflığı | Yusuf | — | — | [X] |
-| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] (R1 bekliyor) |
-| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] (R1 bekliyor) |
-| Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] bekliyor |
-| Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] bekliyor |
+| Y1 | FRP zaman serisi grafiği | Yusuf | R1, Y5, S4 | G5 | [ ] |
+| Y2 | Sensör karşılaştırma grafikleri | Yusuf | R1, Y5, S4 | — | [ ] |
+| Y3 | Aylık yangın yoğunluk heatmap'i | Yusuf | R1, Y5, Y6 | — | [ ] |
+| Y4 | İstatistik dashboard kartları | Yusuf | R1, Y5 | — | [ ] |
 | Y9 | Hücre tanı modalı ve yörünge sürüklenmesi şeridi | Yusuf | — | — | [ ] |
 | Y10 | Dış doğrulama pilotu (yanmış alan) | Yusuf | G12 | — | [ ] |
 | Y8 | Vaka çalışmaları: Amazon 2019–2021 ve Hindistan duman maruziyeti | Yusuf | — | G5 | [ ] |
@@ -279,31 +279,31 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | K14 | Biyom bazlı tamlık katsayısı | Sadık | K13 | — | [ ] |
 | K12 | Aqua öncesi dönem kurtarımı ve kesinti etiketleri | Sadık | — | — | [ ] etiketler tamam, regresyonla kurtarım yapılmadı |
 | K6 | 2023 (NOAA-21) efor geçişini ölçme | Sadık | K5 | — | [ ] |
-| K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [ ] |
+| K7 | Tam filo 2000-present trend serisi | Sadık | K5 | — | [ ] 2012/2018 ölçüldü; 2023 arşivde yok |
 | K1 | Live/demo/fallback modu | Sadık | R4 | R8 | [X] |
 | K2 | Config ayarları frontend paneli | Sadık | G7, R1 | — | [X] |
-| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] kod tamam, harita opaklığının görsel doğrulaması bekliyor |
+| K3 | Belirsizlik aralıkları görselleştirme | Sadık | G9, C7, R1 | — | [ ] frontend tamam; aralık VZA'ya duyarlı değil (G9 modeli) |
 | K4 | Erişilebilir renk skalası sistemi | Sadık | C7, R1 | — | [X] |
 
 **Şu an başlanabilecekler:**
 - **Görkem:** G1–G4 ve G7–G10 tamamlandı. Sıradaki açık görevler bağımlılık bekliyor: G11 (`R10, K11`), G12 (`G11, S10`), G5 (`Y1, G12, R12, Y8`; `R5, C8, C11` tamamlandı).
 - **Can:** C1–C12 tamamlandı; açık görev kalmadı.
 - **Serhat:** R1–R9, R11, R12 tamamlandı; R10'un kodu bitti, merge ve hazır sonuçların yeniden üretimi Görkem'e devredildi.
-- **Samet:** S1–S3 ve S6 tamamlandı. Şu an başlanabilecekler: S4 (G1 bitti), S5 (S1 bitti, Actions onayı bekliyor), S7 (G1 bitti), S9, S11, S13 (`Bekler: —`). (`S10` S9'u, `S12` G12'yi, `S8` C5+S13'ü bekliyor.)
-- **Yusuf:** Şu an başlanabilecekler: Y5, Y6, Y7, Y8, Y9 (`Bekler: —`). (`Y1–Y4` Y5/S4/Y6 bekliyor; `Y10` G12 bekliyor.)
+- **Samet:** S1–S4, S6–S11, S13 ve S8 tamamlandı (11 görev bitti). Kalan görevler: S5 (CI/CD hazır, Actions yeşil tik onayı bekleniyor), S12 (G12 iç doğrulama paketini bekliyor).
+- **Yusuf:** Y5, Y6, Y7 tamamlandı. Bağımlılıkları tamamlanan Y1, Y2, Y3, Y4 grafikleri ile Y8 ve Y9 doğrudan başlayabilir. (`Y10` G12'yi bekliyor.)
 - **Sadık:** K1, K2, K4, K5, K8, K9, K10, K11 ve K13 tamamlandı. K3'ün kodu tamam, harita opaklığının görsel doğrulaması bekliyor; K12'nin etiketleme kısmı tamam. Şu an başlanabilecekler: K6, K7 (K5 bitti; `FIRMS_API_KEY` gerekir), K14 (K13 bitti; arazi örtüsü verisi gerekir).
 
 **Birbirini bekleyen kritik yollar:**
 1. ~~**G1 → G2 → G4 → R4 → R5:**~~ [X] Tamamlandı. Backend pipeline ve frontend toggle zinciri tamam.
 2. ~~**C1 → C2 → R1:**~~ [X] Tamamlandı. Component mimarisi ve tasarım sistemi entegre.
 3. **G2 → S1 → S5:** Samet'in CI/CD'si S1'e bağlı, S1 bitti. S5 Actions onayı bekliyor.
-4. **R1 + Y5 + Y6 → Y1–Y4:** Yusuf'un grafikleri Y5 (mock veri), S4 ve (Y3 için) Y6'yı bekliyor. R1 bitti.
+4. ~~**R1 + Y5 + Y6 → Y1–Y4:**~~ [X] Bağımlılıklar tamamlandı. Yusuf'un grafikleri başlayabilir.
 5. **K10 → K11 + R10 → G11 → G12 → G5:** Piksel tespit limiti ve 1-to-N ayak izi toplamı olmadan süreklilik analizi, iç doğrulama paketi ve final sunum kapanamaz.
-6. **S9 → S10 → G12 → S12 / Y10:** Gerçekçi MODIS/VIIRS `σ` ve Mondrian split conformal aralıkları iç doğrulamayı ve 4 biyomluk dış doğrulama pilotlarını besler.
-7. **~~C9 → C11~~ → G5 ve ~~R9 + C8~~ → R12 → G5:** Statik/SAMA maskesi (`C9`), Çin vaka çalışması (`C11`), yeni API alanları (`R9`) ve Footprint Lens (`C8`) tamamlandı; `R12` artık başlayabilir, `G5` kalan sunum/doğrulama bağımlılıklarını bekliyor.
-8. **G4 → G10 → R7:** Export backend hazır; R7 için C6 tasarım ve S7 case study bekleniyor.
-9. **C5 + S13 → S8 / R6:** Methods sayfası tasarımı (C5) ve güncellenmiş referans/boşluk listesi (S13) hem içeriği (S8) hem frontend sayfasını (R6) besler.
-10. **R4 → K1 → R8:** Fallback modu API bağlantısına bağlı; model seçimi de fallback'e bağlı.
+6. **S9 → S10 → G12 → S12 / Y10:** Gerçekçi MODIS/VIIRS `σ` ve Mondrian split conformal aralıkları (`S9, S10` [X]) tamamlandı; G12 iç doğrulamayı ve 4 biyomluk dış doğrulama pilotlarını besler.
+7. ~~**C9 → C11 → G5** ve **R9 + C8 → R12 → G5:**~~ Statik/SAMA maskesi (`C9`), Çin vaka çalışması (`C11`), yeni API alanları (`R9`), Footprint Lens (`C8`) ve 60 sn tur (`R12`) tamamlandı; `G5` kalan sunum/doğrulama bağımlılıklarını bekliyor.
+8. ~~**G4 → G10 → R7:**~~ Backend ve case study hazır (`G10, C6, S7` [X]); Serhat R7'yi tamamlayabilir.
+9. ~~**C5 + S13 → S8 / R6:**~~ [X] Tamamlandı. Methods sayfası tasarımı (C5), referans envanteri (S13), bilimsel disclaimer içeriği (S8) ve frontend sayfası (R6) tamamlandı.
+10. ~~**R4 → K1 → R8:**~~ [X] Tamamlandı. Fallback modu ve model seçimi tamam.
 
 ---
 
@@ -1028,7 +1028,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 > - **2021 Akdeniz anomalisi belirgin:** Antalya Temmuz z=3.60, Ağustos z=3.60; Muğla Ağustos z=3.95; Akdeniz Temmuz z=3.72, Ağustos z=3.98 — tüm bölgelerde rank=1 veya rank=2 (152 aylık seri içinde).
 > - **R7 başlayabilir:** `calendar/*.json` ve `stats.json` doğrudan frontend brifingi component'i için hazır.
 
-### [ ] S8 — Bilimsel referans ve disclaimer içerik
+### [X] S8 — Bilimsel referans ve disclaimer içerik
 - **Bekler:** C5 · **Açar:** —
 - Methods sayfası için bilimsel içerik hazırlığı:
   - Her pipeline aşaması için 2–3 cümle açıklama (teknik ama anlaşılır)
@@ -1037,6 +1037,14 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Disclaimer metni: sınırlamalar, model varsayımları, veri kaynağı güvenilirliği
   - `docs/REFERENCES.md` dosyası olarak depoya
 - **Bitti sayılır:** `docs/REFERENCES.md` depoda; en az 5 makale referanslanmış; her pipeline aşaması en az bir referansla desteklenmiş; disclaimer metni net ve dürüst.
+
+> **Kapanış notu (Samet, 2026-11-15):**
+> - **`docs/REFERENCES.md` eksiksiz oluşturuldu:**
+>   - **Disclaimer ve Model Varsayımları:** VZA normalizasyonu ($R_{\text{rel}}$ nadir=1.0), Terra geometrik vekili ($\sigma_{\text{scale}}=0.10$), sensör gürültüleri ($\sigma_{\text{modis}}=0.266, \sigma_{\text{viirs}}=0.08$), duman/bulut asimetrik eksik tahmini (küresel %12–22), sahte alarmlar, 2020+ yörünge sürüklenmesi ve pre-VIIRS $k_c$ çarpanı ile yerel piksel `mean_frp` süreksizliği "sakin bilim insanı" üslubuyla belgelendi.
+>   - **Pipeline Aşama Açıklamaları (EN & TR):** 7 aşama (Topla, Çift Sayımı Ayıkla & Filo, VZA Açısı, H3 Izgarası, Eşleştirme 1:N, Füzyon & Belirsizlik, Takvim & Anomali) için 2–3 cümlelik sakin ve teknik açıklamalar yazıldı.
+>   - **Aşama ↔ Referans Eşleme Tablosu:** Her 7 aşama koddaki dosya/parametre dayanağı ve doğrulanmış APA 7 akademik kaynaklarıyla eşlendi (19 tam künye).
+>   - **32 Makalelik Envanter ve Doğrulanması Gereken İddialar:** Makale 04 bulguları dahil güncellendi.
+> - **Frontend entegrasyonu (`web/src/content/references.ts`):** Tüm referanslar doğrulanmış APA 7 künyeleri ve DOI bağlantılarıyla `complete: true` olarak frontend'e aktarıldı, typecheck ve 42 test suite'i başarıyla geçti.
 
 ---
 
@@ -1237,6 +1245,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 - **Neden:** G3'ün "monoton artan trend kalkıyor" şartı Spearman ρ +0,785 → +0,087 ile doğrulandı, **ama o seri yalnızca MODIS + SNPP içeriyor.** O ölçüm sırasında NOAA-20 arşivde yok sanılıyordu, bu yüzden dört efor geçişinden ikisi (2018, 2023) trend testinde hiç yok. Trend, 2012 geçişini içeren uzun seride düz; 2018 ayrı ve kısa bir veri setinde doğrulandı; ikisi tek sürekli seride birlikte sınanmadı.
 - Güncel durum (2026-11-15): yerel arşiv (`make data`) MODIS + SNPP + NOAA-20'yi 2000-2025 boyunca içeriyor, yani seri 2018 geçişi dahil doğrudan arşivden kurulabilir. Area API (K5 cache'i) yalnız 2023 sonrası NOAA-21 katkısı için gerekiyor. Sonra `archive_ingest` örneğinin sıçrama kontrolü tam filo serisi üzerinde koşturulacak.
 - **Bitti sayılır:** 2000-present tam filo serisinde normalize Spearman ρ'nun mutlak değeri ham ρ'nun yarısından küçük; 2012, 2018 ve 2023 geçişlerinin üçünde de seviye kayması ölçütü sağlanıyor.
+- **Durum (2026-11-15):** Arşivden ölçülebilen kısım yapıldı, bitti şartı TAM SAĞLANMADI. Araç `crates/firms-client/examples/fleet_trend.rs`, rapor `docs/TAM_FILO_TREND.md` (MODIS + S-NPP + NOAA-20, 2000–2025; 10 ülkelik G3 bölgesi ve 5 büyük ülke). Havuzlanmış serilerde trend kalkıyor (10 ülke ρ +0,928 → −0,020; 5 ülke +0,862 → −0,023) ve 2012 geçişi geçiyor (`|log|` 1,382 → 0,027; 1,600 → 0,092). 2018 karışık: 5 ülkelik havuzda iki ölçüm de geçiyor, 10 ülkelik havuzda 3 yıllık blok geçiyor ama aynı mevsim kıyası kalıyor (0,275 → 0,227); çoğu ülkede normalize kayma negatif, yani aşırı düzeltme eğilimi var (hipotez: 2018–2025 havuzu MODIS yörünge sürüklenmesi yıllarını içeriyor, Ω şişiyor). Ülke bazında trend 15 ülkenin 9'unda geçiyor; kalanların çoğunda normalize ρ belirgin negatif. 2023 geçişi ölçülemedi: NOAA-21 ülke arşivinde yok (`viirs-jpss2` HTTP 404).
 
 ### [X] K1 — Live/demo/fallback modu
 - **Bekler:** R4 · **Açar:** R8
@@ -1273,6 +1282,7 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
   - Belirsizlik açıklaması: "Geniş aralık = sensör açısı büyük veya kalibrasyon verisi az"
 - **Kaynak:** fire-harmony — belirsizlik gösterimi; Can'ın C7 tasarımına uygun
 - **Bitti sayılır:** en az 2 chart tipinde belirsizlik görünüyor; tooltip'te aralık var; yüksek VZA'lı noktalar geniş aralıklı (görsel olarak ayırt edilebilir).
+- **Durum güncellemesi (2026-11-15, ikinci tur):** Küre (WebGL, varsayılan görünüm) belirsizlik opaklığını hiç uygulamıyordu; düzeltildi: harmonize noktalar kürede de `1,0 / 0,72 / 0,48` adımlarıyla çiziliyor, adımlar iki haritada tek kaynaktan (`alphaForTier`) geliyor, seçili/üzerine gelinen nokta opak kalıyor. Düz haritada tarayıcıda ölçüldü (Türkiye 2021-10): geniş noktalar alfa `0,480`, dar noktalar `1,000`, aynı FRP kovasında parlaklık kontrastı oranı `0,26–0,27`. **Bitti şartının "yüksek VZA'lı noktalar geniş aralıklı" kısmı SAĞLANMIYOR ve sebep frontend değil:** `/api/points` verisinde (Türkiye 2021-10, Endonezya 2021-07, Kazakistan 2021-10) geniş sınıfın tamamı `ModisOnly`, dar sınıfın tamamı VIIRS/Matched; MODIS içinde göreli aralık genişliği görüş açısıyla neredeyse değişmiyor (`vza_factor` 1,000 → 1,224 arasında 0,565 → 0,568), orta sınıf (0,20–0,40) hiç oluşmuyor. Yani haritadaki opaklık bugün "MODIS mi VIIRS mi" bilgisini taşıyor, görüş açısını değil. VZA'nın aralığa katkısı sensör sigmasının (MODIS `0,266`) yanında kayboluyor; bu `uncertainty.rs` modelinin (G9/S9) konusu. Kutu, model VZA'ya duyarlı hale gelince ya da şart yeniden tanımlanınca işaretlenecek.
 - **Durum (2026-11-15):** Kod tamamlandı, bitti şartı KISMEN doğrulandı. Tarayıcıda (başsız Edge, Kıbrıs 2021-07, Harmonized mod) doğrulananlar: nokta kartı `15.6 MW (likely 14.7–16.4)` ve `±1σ (~68% confidence interval)` satırını gösteriyor; takvim ipucu aylık ortalama ve toplam FRP aralığını gösteriyor; geniş aralıklı ay dilimi (Nisan 2021) tarama deseniyle çiziliyor. Doğrulanamayan: düz haritadaki üç kademeli opaklığın gözle ayırt edilebildiği (o ayda 106 noktanın yalnız 4'ü geniş aralıklı; ekran görüntüsünde fark seçilemedi). Bu madde doğrulanınca kutu işaretlenecek. Uygulama ayrıntıları: Backend: `/api/series` ay kayıtları `mean_frp`, `mean_frp_lower`, `mean_frp_upper` taşıyor (`DERIVED_SCHEMA_VERSION` artırıldı, eski `make precompute` çıktıları geçersiz sayılır). Frontend (`docs/TASARIM_BELIRSIZLIK_RENK.md` bölüm 1, 2, 8.1): nokta detayında aralık metni ve geniş aralık uyarısı, düz haritada üç kademeli opaklık (`1,0 / 0,72 / 0,48`), takvimde geniş aralıklı dilimde tarama deseni ve kesikli kenar, takvim ipucunda aylık aralık. Yapılmayanlar: küre (WebGL) haritasında opaklık ve zaman serisi grafiğinde güven bandı. Görevdeki "Recharts ile" ifadesi uygulanmadı; grafikler projede elle yazılmış SVG.
 
 ### [X] K4 — Erişilebilir renk skalası sistemi
@@ -1297,6 +1307,6 @@ Mavi: Görkem · Pembe: Can · Yeşil: Serhat · Sarı: Samet · Mor: Yusuf · T
 | Görkem | 12 (G1–G12) | 8 (`G1–G4, G7–G10`) | 4 (`G11, G12, G5, G6`) | Orta-ağır | Süreklilik & iç doğrulama paketi, sunum ve final entegrasyon |
 | Can | 12 (C1–C12) | 12 (`C1–C12`) | 0 | Ağır | Statik/SAMA maskesi, swath/güven bayrakları, Footprint Lens, UI tasarımlar, Çin vakası (tamamlandı) |
 | Serhat | 12 (R1–R12) | 11 (`R1–R9, R11, R12`) | 1 (`R10`, kapanışı Görkem'de) | Ağır | `1 MODIS = N VIIRS` & seed-anchored pencere, yeni API alanları, Methods/Export/Model, 60 sn tur |
-| Samet | 13 (S1–S13) | 8 (`S1–S4, S6, S7, S9–S11, S13`) | 5 (`S5, S8, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
-| Yusuf | 10 (Y1–Y10) | 0 | 10 (`Y5–Y7, Y1–Y4, Y9, Y10, Y8`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
+| Samet | 13 (S1–S13) | 11 (`S1–S4, S6–S11, S13`) | 2 (`S5, S12`) | Ağır | Belirsizlik tabanı & Mondrian conformal, bow-tie/duyarlılık, atmosfer doğrulama, veri/CI/referans |
+| Yusuf | 10 (Y1–Y10) | 3 (`Y5–Y7`) | 7 (`Y1–Y4, Y8–Y10`) | Ağır | Mock veri, takvim analitiği (PCD/SFAI), DBSCAN/kesinti, grafikler, tanı modalı, yanmış alan & vakalar |
 | Sadık | 14 (K1–K14) | 9 (`K1, K2, K4, K5, K8, K9, K10, K11, K13`) | 5 (`K3, K12, K14, K6, K7`) | Çok ağır | Area cache, `D_p(A_p)` & şiddet `Ω`, N20/SNPP köprü & biyom `k_c`, pre-Aqua, trendler, frontend infra |
