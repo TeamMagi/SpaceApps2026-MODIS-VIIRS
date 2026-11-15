@@ -18,7 +18,8 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs on main are never cancelled by a newer push, so every pushed commit on main keeps its own verdict; PR and other branches still cancel older runs.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -28,7 +29,8 @@ env:
 
 jobs:
   rust:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is moving to a newer Ubuntu image. Unpin after the first green run on 24.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +49,7 @@ jobs:
         run: cargo test --workspace --locked
 
   coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +62,7 @@ jobs:
         with:
           cache-on-failure: true
       - uses: taiki-e/install-action@cargo-llvm-cov
-      # Quality gate: 90% line coverage (measured total is 92.7%). The gate sits a few
+      # Quality gate: 90% line coverage (measured total is 95.5%). The gate sits a few
       # points under the measured value so real decay turns CI red. Branch coverage is
       # not gated because `cargo llvm-cov --branch` requires a nightly toolchain.
       - name: Coverage gate
@@ -68,13 +70,14 @@ jobs:
       - name: Coverage summary
         if: always()
         run: cargo llvm-cov report --summary-only
-      - uses: actions/upload-artifact@v4
+      - if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: lcov
           path: lcov.info
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
       run:
