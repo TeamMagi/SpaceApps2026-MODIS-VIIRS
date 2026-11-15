@@ -27,6 +27,8 @@ export default function BottomBar() {
   const csvDescription = t("exportCsvDescription", { file: fileName });
   const minConfidence = useAppStore((state) => state.minConfidence);
   const setMinConfidence = useAppStore((state) => state.setMinConfidence);
+  const startTour = useAppStore((state) => state.startTour);
+  const tourDescription = t("tourStartDescription");
   const points = useMapPoints();
   const filterOn = minConfidence !== "low";
   const filterDescription = t("confidenceFilterDescription");
@@ -75,6 +77,15 @@ export default function BottomBar() {
         <span className="sr-only" role="status">
           {copied ? t("briefingLinkCopied") : ""}
         </span>
+        <button
+          type="button"
+          className={styles.action}
+          title={tourDescription}
+          aria-description={tourDescription}
+          onClick={startTour}
+        >
+          {t("tourStart")}
+        </button>
         <button
           type="button"
           className={styles.primary}

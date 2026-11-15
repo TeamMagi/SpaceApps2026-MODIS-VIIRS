@@ -19,6 +19,7 @@ import { regionCopyEn, regionCopyTr } from "./copyRegion";
 import { stateCopyEn, stateCopyTr } from "./copyState";
 import { analyticsCopyEn, analyticsCopyTr } from "./copyAnalytics";
 import { methodsPageCopyEn, methodsPageCopyTr } from "./copyMethods";
+import { tourCopyEn, tourCopyTr } from "./copyTour";
 
 export const TR_REGION_NAMES: Readonly<Record<string, string>> = {
   Turkey: "Türkiye",
@@ -303,7 +304,7 @@ const enBase = {
   nrtTransactions: "{n} API calls",
 } as const;
 
-const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn } as const;
+const en = { ...enBase, ...mapCopyEn, ...regionCopyEn, ...stateCopyEn, ...analyticsCopyEn, ...methodsPageCopyEn, ...tourCopyEn } as const;
 
 export type CopyKey = keyof typeof en;
 export type CopyDictionary = { readonly [K in CopyKey]: string };
@@ -555,7 +556,7 @@ const trBase = {
   nrtTransactions: "{n} API çağrısı",
 } as const;
 
-const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr };
+const tr: CopyDictionary = { ...trBase, ...mapCopyTr, ...regionCopyTr, ...stateCopyTr, ...analyticsCopyTr, ...methodsPageCopyTr, ...tourCopyTr };
 
 export const copy: Readonly<Record<Lang, CopyDictionary>> = { en, tr };
 

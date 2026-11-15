@@ -20,6 +20,12 @@ export function useRoute(): Route {
   return parseRoute(hash);
 }
 
+/** The dashboard hash rebuilt from the store (region, mode, month, language, confidence). */
+export function dashboardHashFromStore(): string {
+  const { region, mode, selectedMonth, lang, minConfidence } = useAppStore.getState();
+  return serializeHash({ region, mode, month: selectedMonth, lang, minConfidence });
+}
+
 /**
  * Returns to the dashboard by rebuilding its hash from the store rather than calling
  * history.back(): the store kept region, mode, month and any language change made on the
@@ -27,7 +33,6 @@ export function useRoute(): Route {
  */
 export function useLeaveMethods(): () => void {
   return useCallback(() => {
-    const { region, mode, selectedMonth, lang, minConfidence } = useAppStore.getState();
-    window.location.hash = serializeHash({ region, mode, month: selectedMonth, lang, minConfidence });
+    window.location.hash = dashboardHashFromStore();
   }, []);
 }
