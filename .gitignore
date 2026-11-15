@@ -32,6 +32,9 @@ data/*
 !data/sample/
 data/sample/*
 !data/sample/*.csv
+!data/sample/README.md
+# Per-region demo sets produced by the sample_region example (see data/sample/README.md).
+!data/sample/*/
 !data/archive-set.json
 !data/archive-manifest.sha256
 !data/derived/
